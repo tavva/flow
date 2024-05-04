@@ -1,0 +1,10 @@
+{
+	"id": "obsidian-gtd",
+	"name": "Obsidian GTD",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "A GTD plugin for Obsidian",
+	"author": "Ben Phillips",
+	"authorUrl": "https://ben-phillips.net",
+	"isDesktopOnly": false
+}
