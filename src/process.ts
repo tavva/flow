@@ -66,13 +66,12 @@ export class ProcessLineModal extends Modal {
 	}
 }
 
-export async function processInboxFile(app: App, inboxFilePath: string) {
-	console.log(`Processing inbox file: ${inboxFilePath}`);
-	file = await openFile(app, inboxFilePath);
-	console.log(`File: ${file}`);
-	console.log(`App: ${app}`);
-	let fileContent = await app.vault.read(file);
-	console.log(`File content: ${fileContent}`);
+export async function processInboxFile(
+	plugin: ObsidianGTDPlugin,
+	inboxFilePath: string,
+): Promise<void> {
+	file = await openFile(inboxFilePath, plugin);
+	let fileContent = await plugin.app.vault.read(file);
 
 	let lines = fileContent.split(/\r?\n/);
 
