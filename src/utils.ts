@@ -1,4 +1,4 @@
-import { TFile } from "obsidian";
+import { App, TFile } from "obsidian";
 
 export async function openFile(
 	filePath: string,
@@ -16,4 +16,25 @@ export async function openFile(
 		console.error(`Failed to read file: ${filePath}`, e);
 		return null;
 	}
+}
+
+export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
+	const { metadataCache, vault } = app;
+	const files = vault.getFiles();
+
+	return files.filter((file) => {
+		const cache = metadataCache.getFileCache(file);
+		if (!cache || !cache.frontmatter) {
+			return false;
+		}
+
+		let tags: string[] = [];
+		if (Array.isArray(cache.frontmatter.tags)) {
+			tags = cache.frontmatter.tags;
+		} else if (typeof cache.frontmatter.tags === "string") {
+			tags = cache.frontmatter.tags.split(/\s+/);
+		}
+
+		return tags.some((tag) => tag.startsWith(prefix));
+	});
 }

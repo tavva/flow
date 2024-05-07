@@ -1,6 +1,6 @@
 import { App, Modal, Setting, TFile } from "obsidian";
 
-import { openFile } from "./utils";
+import { openFile, getFilesWithTagPrefix } from "./utils";
 
 export interface UserActionResult {
 	action: "trash" | "addToProject" | "addToNextActions";
@@ -30,12 +30,34 @@ export class ProcessLineModal extends Modal {
 		);
 
 		new Setting(contentEl).setName("Add to project").addButton((button) =>
-			button.setButtonText("Select").onClick(() => {
-				this.result = {
-					action: "addToProject",
-					editedLine,
-					selectedProject: "", // You'd ideally use another modal to select the project here
-				};
+			button.setButtonText("Select").onClick(async () => {
+				const projectFiles: TFile[] = getFilesWithTagPrefix(
+					app,
+					"project",
+				);
+				console.log(`Found ${projectFiles.length} project files.`);
+				const projectModal = new SelectProjectModal(
+					this.app,
+					projectFiles,
+				);
+				projectModal.open();
+
+				await new Promise((resolve) => {
+					projectModal.onClose = resolve;
+				});
+
+				const selectedProject = projectModal.getSelectedProject();
+
+				if (selectedProject) {
+					this.result = {
+						action: "addToProject",
+						editedLine,
+						selectedProject: selectedProject.path,
+					};
+				} else {
+					console.error("No project was selected.");
+				}
+
 				this.close();
 			}),
 		);
@@ -63,6 +85,77 @@ export class ProcessLineModal extends Modal {
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
+	}
+}
+
+export class SelectProjectModal extends Modal {
+	availableProjects: TFile[];
+	selectedProject: TFile | null = null;
+
+	constructor(app: App, projectFiles: TFile[]) {
+		super(app);
+		this.availableProjects = projectFiles;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+		contentEl.empty();
+		contentEl.createEl("h4", { text: "Select a Project" });
+
+		this.availableProjects.forEach((projectFile) => {
+			new Setting(contentEl)
+				.setName(projectFile.basename)
+				.setDesc(projectFile.path)
+				.addButton((button) =>
+					button.setButtonText("Select").onClick(() => {
+						this.selectedProject = projectFile;
+						this.close();
+					}),
+				);
+		});
+	}
+
+	onClose() {
+		const { contentEl } = this;
+		contentEl.empty();
+	}
+
+	getSelectedProject(): TFile | null {
+		return this.selectedProject;
+	}
+}
+
+async function selectProjectAndProcess(app: App): Promise<string | null> {
+	const projectFiles: TFile[] = getFilesWithTagPrefix(app, "project");
+
+	if (projectFiles.length === 0) {
+		console.error("No project files found.");
+		return null;
+	}
+	console.log(`Found ${projectFiles.length} project files.`);
+
+	// Open the modal and wait for user selection
+	const modal = new SelectProjectModal(app, projectFiles);
+	modal.open();
+
+	// Wait for the modal to close
+	await new Promise((resolve) => {
+		modal.onClose = resolve;
+	});
+
+	// Get the selected project from the modal
+	const selectedProject = modal.getSelectedProject();
+	return selectedProject ? selectedProject.path : null;
+}
+
+async function processSelectedProject(app: App) {
+	const selectedProjectPath = await selectProjectAndProcess(app);
+
+	if (selectedProjectPath) {
+		console.log(`Selected project path: ${selectedProjectPath}`);
+		// Process the selected project as needed
+	} else {
+		console.log("No project selected.");
 	}
 }
 
