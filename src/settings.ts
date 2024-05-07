@@ -1,6 +1,14 @@
 import { ObsidianGTDPlugin } from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
+export interface ObsidianGTDSettings {
+	inboxFilePath: string;
+}
+
+export const DEFAULT_SETTINGS: Partial<ObsidianGTDSettings> = {
+	inboxFilePath: "inbox.md",
+};
+
 export class ObsidianGTDSettingsTab extends PluginSettingTab {
 	plugin: ObsidianGTDPlugin;
 

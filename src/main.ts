@@ -1,17 +1,14 @@
 import { Notice, Plugin, WorkspaceLeaf, TFile } from "obsidian";
 
-import { ObsidianGTDSettingsTab } from "./settings";
+import {
+	ObsidianGTDSettings,
+	DEFAULT_SETTINGS,
+	ObsidianGTDSettingsTab,
+} from "./settings";
+
 import { openFile } from "./utils";
 import { ProcessInboxesView, PROCESS_INBOXES_VIEW } from "./views";
 import { processInboxFile } from "./process";
-
-interface ObsidianGTDSettings {
-	inboxFilePath: string;
-}
-
-const DEFAULT_SETTINGS: Partial<ObsidianGTDSettings> = {
-	inboxFilePath: "inbox.md",
-};
 
 export default class ObsidianGTDPlugin extends Plugin {
 	settings: ObsidianGTDSettings;
