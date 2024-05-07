@@ -5,11 +5,11 @@ import { ObsidianGTDSettingsTab } from "./settings";
 export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
 
 interface ObsidianGTDSettings {
-	inboxFile: string;
+	inboxFilePath: string;
 }
 
 const DEFAULT_SETTINGS: Partial<ObsidianGTDSettings> = {
-	inboxFile: "inbox.md",
+	inboxFilePath: "inbox.md",
 };
 
 export default class ObsidianGTDPlugin extends Plugin {

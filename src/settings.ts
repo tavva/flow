@@ -20,9 +20,9 @@ export class ObsidianGTDSettingsTab extends PluginSettingTab {
 			.addText((text) =>
 				text
 					.setPlaceholder("path/to/file.md")
-					.setValue(this.plugin.settings.inboxFile)
+					.setValue(this.plugin.settings.inboxFilePath)
 					.onChange(async (value) => {
-						this.plugin.settings.inboxFile = value;
+						this.plugin.settings.inboxFilePath = value;
 						await this.plugin.saveSettings();
 					}),
 			);
