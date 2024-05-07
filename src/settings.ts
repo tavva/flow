@@ -7,7 +7,7 @@ export interface ObsidianGTDSettings {
 }
 
 export const DEFAULT_SETTINGS: Partial<ObsidianGTDSettings> = {
-	inboxFilePath: "inbox.md",
+	inboxFilePath: "Inbox.md",
 	nextActionsFilePath: "Next actions.md",
 };
 
