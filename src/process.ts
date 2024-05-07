@@ -17,7 +17,7 @@ export class ProcessLineModal extends Modal {
 		this.originalLine = originalLine;
 	}
 
-	onOpen() {
+	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.createEl("h4", { text: "Process Inbox Line" });
 
@@ -82,7 +82,7 @@ export class ProcessLineModal extends Modal {
 		);
 	}
 
-	onClose() {
+	onClose(): void {
 		const { contentEl } = this;
 		contentEl.empty();
 	}
@@ -97,7 +97,7 @@ export class SelectProjectModal extends Modal {
 		this.availableProjects = projectFiles;
 	}
 
-	onOpen() {
+	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.empty();
 		contentEl.createEl("h4", { text: "Select a Project" });
@@ -115,7 +115,7 @@ export class SelectProjectModal extends Modal {
 		});
 	}
 
-	onClose() {
+	onClose(): void {
 		const { contentEl } = this;
 		contentEl.empty();
 	}
@@ -148,7 +148,7 @@ async function selectProjectAndProcess(app: App): Promise<string | null> {
 	return selectedProject ? selectedProject.path : null;
 }
 
-async function processSelectedProject(app: App) {
+async function processSelectedProject(app: App): Promise<void> {
 	const selectedProjectPath = await selectProjectAndProcess(app);
 
 	if (selectedProjectPath) {
@@ -216,7 +216,11 @@ export async function processInboxFile(
 	}
 }
 
-async function addToProject(app: App, projectFilePath: string, line: string) {
+async function addToProject(
+	app: App,
+	projectFilePath: string,
+	line: string,
+): Promise<void> {
 	const file = app.vault.getAbstractFileByPath(projectFilePath);
 	line = `[ ] ${line}`;
 
@@ -247,7 +251,10 @@ async function addToProject(app: App, projectFilePath: string, line: string) {
 	}
 }
 
-async function addToNextActions(plugin: ObsidianGTDPlugin, line: string) {
+async function addToNextActions(
+	plugin: ObsidianGTDPlugin,
+	line: string,
+): Promise<void> {
 	const nextActionsFilePath = plugin.settings.nextActionsFilePath;
 	const file = app.vault.getAbstractFileByPath(nextActionsFilePath);
 	if (file && file instanceof TFile) {

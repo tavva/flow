@@ -9,15 +9,15 @@ export class ProcessInboxesView extends ItemView {
 		this.plugin = plugin;
 	}
 
-	getViewType() {
+	getViewType(): string {
 		return PROCESS_INBOXES_VIEW;
 	}
 
-	getDisplayText() {
+	getDisplayText(): string {
 		return "Process inboxes view";
 	}
 
-	async onOpen() {
+	async onOpen(): Promise<void> {
 		const container = this.containerEl.children[1];
 		container.empty();
 		container.createEl("h4", { text: "Process inboxes view" });
@@ -43,5 +43,5 @@ export class ProcessInboxesView extends ItemView {
 		return fileContent.split(/\r?\n/).length;
 	}
 
-	async onClose() {}
+	async onClose(): Promise<void> {}
 }

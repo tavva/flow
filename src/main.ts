@@ -13,7 +13,7 @@ import { processInboxFile } from "./process";
 export default class ObsidianGTDPlugin extends Plugin {
 	settings: ObsidianGTDSettings;
 
-	async onload() {
+	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new ObsidianGTDSettingsTab(this.app, this));
 
@@ -29,9 +29,9 @@ export default class ObsidianGTDPlugin extends Plugin {
 		});
 	}
 
-	async onunload() {}
+	async onunload(): Promise<void> {}
 
-	async loadSettings() {
+	async loadSettings(): Promise<void> {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
@@ -39,11 +39,11 @@ export default class ObsidianGTDPlugin extends Plugin {
 		);
 	}
 
-	async saveSettings() {
+	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 	}
 
-	private async processInboxes(): void {
+	private async processInboxes(): Promise<void> {
 		console.log("Processing inboxes...");
 		const { workspace } = this.app;
 
