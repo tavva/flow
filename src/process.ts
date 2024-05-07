@@ -205,7 +205,7 @@ export async function processInboxFile(
 				break;
 
 			case "addToNextActions":
-				await addToNextActions(app, result.editedLine);
+				await addToNextActions(plugin, result.editedLine);
 				lines[i] = "";
 				break;
 		}
@@ -247,15 +247,15 @@ async function addToProject(app: App, projectFilePath: string, line: string) {
 	}
 }
 
-async function addToNextActions(app: App, line: string) {
-	const nextActionsFilePath = "next_actions.md";
+async function addToNextActions(plugin: ObsidianGTDPlugin, line: string) {
+	const nextActionsFilePath = plugin.settings.nextActionsFilePath;
 	const file = app.vault.getAbstractFileByPath(nextActionsFilePath);
 	if (file && file instanceof TFile) {
-		const fileContent = await app.vault.read(file);
+		const fileContent = await plugin.app.vault.read(file);
 		const newContent = fileContent + "\n- " + line;
-		await app.vault.modify(file, newContent);
+		await plugin.app.vault.modify(file, newContent);
 	} else {
 		// Create the file if it doesn't exist
-		await app.vault.create(nextActionsFilePath, "- " + line);
+		await plugin.app.vault.create(nextActionsFilePath, "- " + line);
 	}
 }
