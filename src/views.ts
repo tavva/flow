@@ -1,5 +1,5 @@
 import { WorkspaceLeaf, ItemView } from "obsidian";
-import { openFile } from "./utils";
+import { openFile, countLinesInFile } from "./utils";
 
 export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
 
@@ -22,10 +22,10 @@ export class ProcessInboxesView extends ItemView {
 		container.empty();
 		container.createEl("h4", { text: "Process inboxes view" });
 
-		const inboxFilePath = this.plugin.settings.inboxFile;
+		const inboxFilePath = this.plugin.settings.inboxFilePath;
 		const inboxFile = await openFile(inboxFilePath, this.plugin);
 
-		const lineCount = await this.countLinesInFile(inboxFile);
+		const lineCount = await countLinesInFile(this.plugin, inboxFile);
 		if (lineCount === -1) {
 			container.createEl("p", {
 				text: `Failed to read inbox file: ${inboxFilePath}`,
@@ -36,11 +36,6 @@ export class ProcessInboxesView extends ItemView {
 		container.createEl("p", { text: `Lines in inbox: ${lineCount}` });
 
 		const inboxFileContent = await this.plugin.app.vault.read(inboxFile);
-	}
-
-	async countLinesInFile(file: TFile): Promise<number> {
-		const fileContent = await this.plugin.app.vault.read(file);
-		return fileContent.split(/\r?\n/).length;
 	}
 
 	async onClose(): Promise<void> {}

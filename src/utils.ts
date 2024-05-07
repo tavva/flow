@@ -38,3 +38,11 @@ export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
 		return tags.some((tag) => tag.startsWith(prefix));
 	});
 }
+
+export async function countLinesInFile(
+	plugin: ObsidianGTDPlugin,
+	file: TFile,
+): Promise<number> {
+	const fileContent = await plugin.app.vault.read(file);
+	return fileContent.split(/\r?\n/).length;
+}
