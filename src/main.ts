@@ -1,8 +1,9 @@
-import { Notice, Plugin, ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { Notice, Plugin, WorkspaceLeaf, TFile } from "obsidian";
 
 import { ObsidianGTDSettingsTab } from "./settings";
-
-export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
+import { openFile } from "./utils";
+import { ProcessInboxesView, PROCESS_INBOXES_VIEW } from "./views";
+import { processInboxFile } from "./process";
 
 interface ObsidianGTDSettings {
 	inboxFilePath: string;
@@ -65,67 +66,9 @@ export default class ObsidianGTDPlugin extends Plugin {
 			});
 		}
 
+		processInboxFile(this.app, this.settings.inboxFilePath);
+
 		// "Reveal" the leaf in case it is in a collapsed sidebar
 		workspace.revealLeaf(leaf);
 	}
-}
-
-export class ProcessInboxesView extends ItemView {
-	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
-		super(leaf);
-		this.plugin = plugin;
-	}
-
-	getViewType() {
-		return PROCESS_INBOXES_VIEW;
-	}
-
-	getDisplayText() {
-		return "Process inboxes view";
-	}
-
-	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
-		container.createEl("h4", { text: "Process inboxes view" });
-
-		const inboxFilePath = this.plugin.settings.inboxFile;
-		const inboxFile = await this.openFile(inboxFilePath);
-
-		const lineCount = await this.countLinesInFile(inboxFile);
-		if (lineCount === -1) {
-			container.createEl("p", {
-				text: `Failed to read inbox file: ${inboxFilePath}`,
-			});
-			return;
-		}
-		container.createEl("p", { text: `Inbox file: ${inboxFilePath}` });
-		container.createEl("p", { text: `Lines in inbox: ${lineCount}` });
-
-		console.log(`Opened inbox file: ${inboxFilePath}`);
-		const inboxFileContent = await this.plugin.app.vault.read(inboxFile);
-		console.log(`Inbox file content: ${inboxFileContent}`);
-	}
-
-	async openFile(filePath: string): Promise<TFile> {
-		try {
-			const file = this.plugin.app.vault.getAbstractFileByPath(filePath);
-			if (file && file instanceof TFile) {
-				return file;
-			} else {
-				console.error(`File not found: ${filePath}`);
-				return null;
-			}
-		} catch (e) {
-			console.error(`Failed to read file: ${filePath}`, e);
-			return null;
-		}
-	}
-
-	async countLinesInFile(file: TFile): Promise<number> {
-		const fileContent = await this.plugin.app.vault.read(file);
-		return fileContent.split(/\r?\n/).length;
-	}
-
-	async onClose() {}
 }
