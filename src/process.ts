@@ -218,6 +218,8 @@ export async function processInboxFile(
 
 async function addToProject(app: App, projectFilePath: string, line: string) {
 	const file = app.vault.getAbstractFileByPath(projectFilePath);
+	line = `[ ] ${line}`;
+
 	if (file && file instanceof TFile) {
 		const fileContent = await app.vault.read(file);
 
