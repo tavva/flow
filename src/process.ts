@@ -134,29 +134,15 @@ async function selectProjectAndProcess(app: App): Promise<string | null> {
 	}
 	console.log(`Found ${projectFiles.length} project files.`);
 
-	// Open the modal and wait for user selection
 	const modal = new SelectProjectModal(app, projectFiles);
 	modal.open();
 
-	// Wait for the modal to close
 	await new Promise((resolve) => {
 		modal.onClose = resolve;
 	});
 
-	// Get the selected project from the modal
 	const selectedProject = modal.getSelectedProject();
 	return selectedProject ? selectedProject.path : null;
-}
-
-async function processSelectedProject(app: App): Promise<void> {
-	const selectedProjectPath = await selectProjectAndProcess(app);
-
-	if (selectedProjectPath) {
-		console.log(`Selected project path: ${selectedProjectPath}`);
-		// Process the selected project as needed
-	} else {
-		console.log("No project selected.");
-	}
 }
 
 export async function processInboxFile(
@@ -172,7 +158,7 @@ export async function processInboxFile(
 		let line = lines[i];
 
 		if (line.trim() === "") {
-			continue; // Skip empty lines
+			continue;
 		}
 
 		const modal = new ProcessLineModal(app, line);
@@ -230,8 +216,8 @@ async function addToProject(
 		// Find the "## Next actions" section or append to the end
 		const nextActionsIndex = fileContent.indexOf("## Next actions");
 		let newContent = fileContent;
+
 		if (nextActionsIndex !== -1) {
-			// Insert after "## Next actions"
 			const insertionIndex =
 				nextActionsIndex + "## Next actions".length + 1;
 			newContent =
@@ -244,7 +230,6 @@ async function addToProject(
 			newContent += "\n## Next actions\n- " + line;
 		}
 
-		// Write back the updated content
 		await app.vault.modify(file, newContent);
 	} else {
 		console.error(`Project file not found: ${projectFilePath}`);
@@ -262,7 +247,6 @@ async function addToNextActions(
 		const newContent = fileContent + "\n- " + line;
 		await plugin.app.vault.modify(file, newContent);
 	} else {
-		// Create the file if it doesn't exist
 		await plugin.app.vault.create(nextActionsFilePath, "- " + line);
 	}
 }
