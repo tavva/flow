@@ -7,8 +7,13 @@ import {
 } from "./settings";
 
 import { openFile } from "./utils";
-import { ProcessInboxesView, PROCESS_INBOXES_VIEW } from "./views";
-import { processInboxFile } from "./process";
+import {
+	ProcessInboxesView,
+	PROCESS_INBOXES_VIEW,
+	ProcessEmailInboxView,
+	PROCESS_EMAIL_INBOX_VIEW,
+} from "./views";
+import { processInboxFile, processEmailInbox } from "./process";
 
 export default class ObsidianGTDPlugin extends Plugin {
 	settings: ObsidianGTDSettings;
@@ -21,11 +26,22 @@ export default class ObsidianGTDPlugin extends Plugin {
 			PROCESS_INBOXES_VIEW,
 			(leaf) => new ProcessInboxesView(leaf, this),
 		);
+		this.registerView(
+			PROCESS_EMAIL_INBOX_VIEW,
+			(leaf) => new ProcessEmailInboxView(leaf, this),
+		);
 
 		this.addCommand({
 			id: "process-inboxes",
 			name: "Process inboxes",
 			callback: this.processInboxes.bind(this),
+		});
+
+		// TODO: make this flow part of the entire process inboxes flow
+		this.addCommand({
+			id: "process-email-inbox",
+			name: "Process email inbox",
+			callback: this.processEmailInbox.bind(this),
 		});
 	}
 
@@ -43,12 +59,14 @@ export default class ObsidianGTDPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private async processInboxes(): Promise<void> {
-		console.log("Processing inboxes...");
+	private async startProcess(
+		view: string,
+		process_method: () => Promise<void>,
+	): Promise<void> {
 		const { workspace } = this.app;
 
 		let leaf: WorkspaceLeaf | null = null;
-		const leaves = workspace.getLeavesOfType(PROCESS_INBOXES_VIEW);
+		const leaves = workspace.getLeavesOfType(view);
 
 		if (leaves.length > 0) {
 			// A leaf with our view already exists, use that
@@ -58,14 +76,24 @@ export default class ObsidianGTDPlugin extends Plugin {
 			// in the right sidebar for it
 			leaf = workspace.getRightLeaf(false);
 			await leaf.setViewState({
-				type: PROCESS_INBOXES_VIEW,
+				type: view,
 				active: true,
 			});
 		}
 
-		processInboxFile(this, this.settings.inboxFilePath);
+		process_method(this);
 
 		// Open sidebar if collapsed
 		workspace.revealLeaf(leaf);
+	}
+
+	private async processInboxes(): Promise<void> {
+		console.log("Processing inboxes...");
+		this.startProcess(PROCESS_INBOXES_VIEW, processInboxFile);
+	}
+
+	private async processEmailInbox(): Promise<void> {
+		console.log("Processing email inbox...");
+		this.startProcess(PROCESS_EMAIL_INBOX_VIEW, processEmailInbox);
 	}
 }

@@ -2,6 +2,7 @@ import { WorkspaceLeaf, ItemView } from "obsidian";
 import { openFile, countLinesInFile } from "./utils";
 
 export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
+export const PROCESS_EMAIL_INBOX_VIEW = "process-email-inbox-view";
 
 export class ProcessInboxesView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
@@ -34,8 +35,29 @@ export class ProcessInboxesView extends ItemView {
 		}
 		container.createEl("p", { text: `Inbox file: ${inboxFilePath}` });
 		container.createEl("p", { text: `Lines in inbox: ${lineCount}` });
+	}
 
-		const inboxFileContent = await this.plugin.app.vault.read(inboxFile);
+	async onClose(): Promise<void> {}
+}
+
+export class ProcessEmailInboxView extends ItemView {
+	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
+		super(leaf);
+		this.plugin = plugin;
+	}
+
+	getViewType(): string {
+		return PROCESS_EMAIL_INBOX_VIEW;
+	}
+
+	getDisplayText(): string {
+		return "Process email inbox view";
+	}
+
+	async onOpen(): Promise<void> {
+		const container = this.containerEl.children[1];
+		container.empty();
+		container.createEl("h4", { text: "Process email inbox view" });
 	}
 
 	async onClose(): Promise<void> {}
