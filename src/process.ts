@@ -125,26 +125,6 @@ export class SelectProjectModal extends Modal {
 	}
 }
 
-async function selectProjectAndProcess(app: App): Promise<string | null> {
-	const projectFiles: TFile[] = getFilesWithTagPrefix(app, "project");
-
-	if (projectFiles.length === 0) {
-		console.error("No project files found.");
-		return null;
-	}
-	console.log(`Found ${projectFiles.length} project files.`);
-
-	const modal = new SelectProjectModal(app, projectFiles);
-	modal.open();
-
-	await new Promise((resolve) => {
-		modal.onClose = resolve;
-	});
-
-	const selectedProject = modal.getSelectedProject();
-	return selectedProject ? selectedProject.path : null;
-}
-
 export async function processInboxFile(
 	plugin: ObsidianGTDPlugin,
 ): Promise<void> {
