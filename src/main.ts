@@ -65,7 +65,7 @@ export default class ObsidianGTDPlugin extends Plugin {
 
 		processInboxFile(this, this.settings.inboxFilePath);
 
-		// "Reveal" the leaf in case it is in a collapsed sidebar
+		// Open sidebar if collapsed
 		workspace.revealLeaf(leaf);
 	}
 }
