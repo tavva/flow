@@ -124,7 +124,7 @@ async function addToProject(
 	}
 }
 
-async function addToNextActions(
+export async function addToNextActions(
 	plugin: ObsidianGTDPlugin,
 	line: string,
 ): Promise<void> {

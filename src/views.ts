@@ -1,5 +1,6 @@
-import { WorkspaceLeaf, ItemView } from "obsidian";
+import { WorkspaceLeaf, ItemView, Notice } from "obsidian";
 import { openFile, countLinesInFile } from "./utils";
+import { addToNextActions } from "./process";
 
 export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
 export const PROCESS_EMAIL_INBOX_VIEW = "process-email-inbox-view";
@@ -40,8 +41,6 @@ export class ProcessInboxesView extends ItemView {
 	async onClose(): Promise<void> {}
 }
 
-// New view class for processing email files
-// Updated ProcessEmailInboxView class to include processing options
 export class ProcessEmailInboxView extends ItemView {
 	plugin: ObsidianGTDPlugin;
 	emailFiles: TFile[];
@@ -63,14 +62,58 @@ export class ProcessEmailInboxView extends ItemView {
 
 	async onOpen(): Promise<void> {
 		await this.loadEmailFiles();
-		await this.displayEmailFiles();
+		await this.displayProcessingOptions();
 		await this.processCurrentEmail();
+		await this.displayEmailFiles();
 	}
 
-	async onClose(): Promise<void> {}
+	private async displayProcessingOptions(): Promise<void> {
+		const container = this.containerEl.children[1];
+		const optionsContainer = container.createDiv(
+			"email-processing-options",
+		);
+
+		const nextActionInput = optionsContainer.createEl("input", {
+			type: "text",
+			placeholder: "Enter next action text...",
+			cls: "next-action-input",
+		});
+
+		const buttons = [
+			{ text: "Add to Project", callback: this.addToProject.bind(this) },
+			{
+				text: "Add to Next Actions",
+				callback: () => this.addToNextActions(nextActionInput.value),
+			},
+			{ text: "Delete", callback: this.deleteFile.bind(this) },
+		];
+
+		buttons.forEach(({ text, callback }) => {
+			optionsContainer
+				.createEl("button", { text })
+				.addEventListener("click", callback);
+		});
+	}
+
+	private async refreshEmailFilesList(): Promise<void> {
+		await this.loadEmailFiles();
+		this.currentFileIndex = 0;
+		await this.processCurrentEmail();
+		await this.displayEmailFiles();
+	}
+
+	private closeTabsForFile(file: TFile): void {
+		const leaves = this.plugin.app.workspace.getLeavesOfType("markdown");
+		leaves.forEach((leaf) => {
+			if (leaf.view.getState().file === file.path) {
+				leaf.detach();
+			}
+		});
+	}
 
 	private async loadEmailFiles(): Promise<void> {
-		const incomingEmailFolderPath = this.plugin.settings.incomingEmailFolderPath;
+		const incomingEmailFolderPath =
+			this.plugin.settings.incomingEmailFolderPath;
 		this.emailFiles = this.plugin.app.vault.getFiles().filter((file) => {
 			return (
 				file.path.startsWith(incomingEmailFolderPath) &&
@@ -81,10 +124,13 @@ export class ProcessEmailInboxView extends ItemView {
 
 	private async displayEmailFiles(): Promise<void> {
 		const container = this.containerEl.children[1];
-		container.empty();
-		container.createEl("h4", { text: "Email Inbox" });
 
-		const fileListEl = container.createEl("ul");
+		let fileListEl = container.querySelector("ul");
+		if (fileListEl) {
+			fileListEl.remove();
+		}
+		fileListEl = container.createEl("ul");
+
 		this.emailFiles.forEach((file, index) => {
 			const fileEl = fileListEl.createEl("li", {
 				text: file.basename,
@@ -93,6 +139,7 @@ export class ProcessEmailInboxView extends ItemView {
 			fileEl.addEventListener("click", async () => {
 				this.currentFileIndex = index;
 				await this.processCurrentEmail();
+				await this.displayEmailFiles();
 			});
 		});
 	}
@@ -105,40 +152,30 @@ export class ProcessEmailInboxView extends ItemView {
 		const currentFile = this.emailFiles[this.currentFileIndex];
 		const leaf = this.plugin.app.workspace.getLeaf(true);
 		await leaf.openFile(currentFile);
-
-		// Display processing options for the current file
-		// Implement the logic for each option, including file deletion
-		// After an action, refresh the list and start with the first file
-		// For brevity, the implementation details are omitted here
-	}
-}
-
-// Updated view class to display file contents in the main panel
-export class ProcessEmailFileView extends ItemView {
-	plugin: ObsidianGTDPlugin;
-	file: TFile;
-
-	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin, file: TFile) {
-		super(leaf);
-		this.plugin = plugin;
-		this.file = file;
 	}
 
-	getViewType(): string {
-		return "process-email-file-view";
+	private async addToProject(): Promise<void> {
+		const currentFile = this.emailFiles[this.currentFileIndex];
+		// TODO: Wire this up
+		await this.refreshEmailFilesList();
 	}
 
-	getDisplayText(): string {
-		return "Process Email File";
+	private async addToNextActions(line: string): Promise<void> {
+		console.log("Adding to next actions:", line);
+		if (line.trim() == "") {
+			new Notice("Please enter a valid next action", 5000);
+			return;
+		}
+		await addToNextActions(this.plugin, line.trim());
+		console.log("Added to next actions");
+		await this.refreshEmailFilesList();
 	}
 
-	async onOpen(): Promise<void> {
-		const container = this.containerEl.children[1];
-		container.empty();
-		container.createEl("h4", { text: "Process Email File" });
-
-		const fileContent = await this.plugin.app.vault.read(this.file);
-		container.createEl("p", { text: fileContent });
+	private async deleteFile(): Promise<void> {
+		const currentFile = this.emailFiles[this.currentFileIndex];
+		await this.plugin.app.vault.trash(currentFile, true);
+		this.closeTabsForFile(currentFile);
+		await this.refreshEmailFilesList();
 	}
 
 	async onClose(): Promise<void> {}
