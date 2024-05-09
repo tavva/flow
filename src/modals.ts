@@ -1,3 +1,6 @@
+import { App, Modal, Setting } from "obsidian";
+import { getFilesWithTagPrefix } from "./utils";
+
 export class ProcessLineModal extends Modal {
 	originalLine: string;
 	result: UserActionResult | null = null;

@@ -2,6 +2,7 @@ import { App, Modal, Setting, TFile } from "obsidian";
 
 import { openFile, getFilesWithTagPrefix } from "./utils";
 import { ProcessLineModal, ProcessFileModal } from "./modals";
+import { PROCESS_EMAIL_INBOX_VIEW } from "./views";
 
 export interface UserActionResult {
 	action: "trash" | "addToProject" | "addToNextActions";
@@ -70,8 +71,6 @@ export async function processEmailInbox(
 	plugin: ObsidianGTDPlugin,
 ): Promise<void> {
 	const incomingEmailFolderPath = plugin.settings.incomingEmailFolderPath;
-
-	// Retrieve all the files in the inbox folder
 	const folderFiles = plugin.app.vault.getFiles().filter((file) => {
 		return (
 			file.path.startsWith(incomingEmailFolderPath) &&
@@ -79,48 +78,15 @@ export async function processEmailInbox(
 		);
 	});
 
-	// Loop through each file in the folder
-	for (const file of folderFiles) {
-		// Read the entire content of the file
-		let fileContent = await plugin.app.vault.read(file);
-
-		// Open a modal prompting the user what to do with the whole file content
-		const modal = new ProcessFileModal(app, fileContent, file.name);
-		modal.open();
-
-		await new Promise((resolve) => {
-			modal.onClose = resolve;
+	if (folderFiles.length > 0) {
+		const firstFile = folderFiles[0];
+		const leaf = plugin.app.workspace.getLeaf(true);
+		await leaf.openFile(firstFile);
+		await plugin.app.workspace.getRightLeaf(false).setViewState({
+			type: PROCESS_EMAIL_INBOX_VIEW,
+			state: { file: firstFile },
+			active: true,
 		});
-
-		const result = modal.result;
-		if (!result || result.editedContent.trim() === "") {
-			// Skip processing if no valid input is provided or 'edit content' is empty
-			continue;
-		}
-
-		// Process the result based on the selected action
-		switch (result.action) {
-			case "trash":
-				// Delete the file entirely
-				await plugin.app.vault.delete(file);
-				break;
-
-			case "addToProject":
-				if (result.selectedProject) {
-					await addToProject(
-						app,
-						result.selectedProject,
-						result.editedContent,
-					);
-					await plugin.app.vault.delete(file); // Optionally, delete the original file afterward
-				}
-				break;
-
-			case "addToNextActions":
-				await addToNextActions(plugin, result.editedContent);
-				await plugin.app.vault.delete(file); // Optionally, delete the original file afterward
-				break;
-		}
 	}
 }
 
