@@ -24,22 +24,7 @@ export class ProcessLineModal extends Modal {
 
 		new Setting(contentEl).setName("Add to project").addButton((button) =>
 			button.setButtonText("Select").onClick(async () => {
-				const projectFiles: TFile[] = getFilesWithTagPrefix(
-					app,
-					"project",
-				);
-				console.log(`Found ${projectFiles.length} project files.`);
-				const projectModal = new SelectProjectModal(
-					this.app,
-					projectFiles,
-				);
-				projectModal.open();
-
-				await new Promise((resolve) => {
-					projectModal.onClose = resolve;
-				});
-
-				const selectedProject = projectModal.getSelectedProject();
+				const selectedProject = openProjectModalForSelection(app);
 
 				if (selectedProject) {
 					this.result = {
@@ -86,6 +71,7 @@ export class SelectProjectModal extends Modal {
 	selectedProject: TFile | null = null;
 
 	constructor(app: App, projectFiles: TFile[]) {
+		this.app = app;
 		super(app);
 		this.availableProjects = projectFiles;
 	}
@@ -116,4 +102,17 @@ export class SelectProjectModal extends Modal {
 	getSelectedProject(): TFile | null {
 		return this.selectedProject;
 	}
+}
+
+export function openProjectModalForSelection(app: App): TFile | null {
+	const projectFiles: TFile[] = getFilesWithTagPrefix(app, "project");
+	console.log(`Found ${projectFiles.length} project files.`);
+	const projectModal = new SelectProjectModal(app, projectFiles);
+	projectModal.open();
+
+	await new Promise((resolve) => {
+		projectModal.onClose = resolve;
+	});
+
+	return projectModal.getSelectedProject();
 }
