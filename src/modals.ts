@@ -71,8 +71,8 @@ export class SelectProjectModal extends Modal {
 	selectedProject: TFile | null = null;
 
 	constructor(app: App, projectFiles: TFile[]) {
-		this.app = app;
 		super(app);
+		this.app = app;
 		this.availableProjects = projectFiles;
 	}
 
@@ -104,7 +104,7 @@ export class SelectProjectModal extends Modal {
 	}
 }
 
-export function openProjectModalForSelection(app: App): TFile | null {
+export async function openProjectModalForSelection(app: App): TFile | null {
 	const projectFiles: TFile[] = getFilesWithTagPrefix(app, "project");
 	console.log(`Found ${projectFiles.length} project files.`);
 	const projectModal = new SelectProjectModal(app, projectFiles);

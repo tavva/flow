@@ -1,6 +1,7 @@
 import { WorkspaceLeaf, ItemView, Notice, MarkdownView } from "obsidian";
 import { openFile, countLinesInFile } from "./utils";
-import { addToNextActions } from "./process";
+import { addToNextActions, addToProject } from "./process";
+import { openProjectModalForSelection } from "./modals";
 
 export const PROCESS_INBOXES_VIEW = "process-inboxes-view";
 export const PROCESS_EMAIL_INBOX_VIEW = "process-email-inbox-view";
@@ -81,7 +82,10 @@ export class ProcessEmailInboxView extends ItemView {
 		});
 
 		const buttons = [
-			{ text: "Add to Project", callback: this.addToProject.bind(this) },
+			{
+				text: "Add to Project",
+				callback: () => this.addToProject(this.nextActionInput.value),
+			},
 			{
 				text: "Add to Next Actions",
 				callback: () =>
@@ -163,9 +167,25 @@ export class ProcessEmailInboxView extends ItemView {
 		await emailLeaf.openFile(currentFile);
 	}
 
-	private async addToProject(): Promise<void> {
-		const currentFile = this.emailFiles[this.currentFileIndex];
-		// TODO: Wire this up
+	private async addToProject(line: string): Promise<void> {
+		const actionText = line.trim();
+		if (line.trim() == "") {
+			new Notice("Please enter a valid next action", 5000);
+			return;
+		}
+
+		const selectedProject = await openProjectModalForSelection(
+			this.plugin.app,
+		);
+
+		if (selectedProject) {
+			await addToProject(app, selectedProject.path, line);
+		} else {
+			console.error("No project was selected.");
+		}
+
+		this.nextActionInput.value = "";
+		await this.deleteFile();
 		await this.refreshEmailFilesList();
 	}
 

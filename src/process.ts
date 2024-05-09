@@ -90,7 +90,7 @@ export async function processEmailInbox(
 	}
 }
 
-async function addToProject(
+export async function addToProject(
 	app: App,
 	projectFilePath: string,
 	line: string,
