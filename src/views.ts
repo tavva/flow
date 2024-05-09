@@ -1,4 +1,4 @@
-import { WorkspaceLeaf, ItemView, Notice } from "obsidian";
+import { WorkspaceLeaf, ItemView, Notice, MarkdownView } from "obsidian";
 import { openFile, countLinesInFile } from "./utils";
 import { addToNextActions } from "./process";
 
@@ -45,6 +45,7 @@ export class ProcessEmailInboxView extends ItemView {
 	plugin: ObsidianGTDPlugin;
 	emailFiles: TFile[];
 	currentFileIndex: number = 0;
+	nextActionInput: HTMLInputElement;
 
 	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
 		super(leaf);
@@ -73,7 +74,7 @@ export class ProcessEmailInboxView extends ItemView {
 			"email-processing-options",
 		);
 
-		const nextActionInput = optionsContainer.createEl("input", {
+		this.nextActionInput = optionsContainer.createEl("input", {
 			type: "text",
 			placeholder: "Enter next action text...",
 			cls: "next-action-input",
@@ -83,7 +84,8 @@ export class ProcessEmailInboxView extends ItemView {
 			{ text: "Add to Project", callback: this.addToProject.bind(this) },
 			{
 				text: "Add to Next Actions",
-				callback: () => this.addToNextActions(nextActionInput.value),
+				callback: () =>
+					this.addToNextActions(this.nextActionInput.value),
 			},
 			{ text: "Delete", callback: this.deleteFile.bind(this) },
 		];
@@ -150,8 +152,15 @@ export class ProcessEmailInboxView extends ItemView {
 		}
 
 		const currentFile = this.emailFiles[this.currentFileIndex];
-		const leaf = this.plugin.app.workspace.getLeaf(true);
-		await leaf.openFile(currentFile);
+
+		let emailLeaf =
+			this.plugin.app.workspace.getLeavesOfType("markdown")[0];
+		if (!emailLeaf) {
+			emailLeaf = this.plugin.app.workspace.getLeaf(true);
+			emailLeaf.setViewState({ type: "markdown" });
+		}
+
+		await emailLeaf.openFile(currentFile);
 	}
 
 	private async addToProject(): Promise<void> {
@@ -161,13 +170,14 @@ export class ProcessEmailInboxView extends ItemView {
 	}
 
 	private async addToNextActions(line: string): Promise<void> {
-		console.log("Adding to next actions:", line);
+		const actionText = line.trim();
 		if (line.trim() == "") {
 			new Notice("Please enter a valid next action", 5000);
 			return;
 		}
 		await addToNextActions(this.plugin, line.trim());
-		console.log("Added to next actions");
+		this.nextActionInput.value = "";
+		await this.deleteFile();
 		await this.refreshEmailFilesList();
 	}
 
