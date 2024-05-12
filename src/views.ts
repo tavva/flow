@@ -1,5 +1,5 @@
 import { WorkspaceLeaf, ItemView, Notice, MarkdownView } from 'obsidian'
-import { openFile, countLinesInFile } from './utils'
+import { openFile } from './utils'
 import { addToNextActions, addToProject } from './process'
 import { openProjectModalForSelection } from './modals'
 
