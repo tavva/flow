@@ -29,7 +29,6 @@ export class ProcessInboxesView extends ItemView {
 		const { default: ProcessInboxesView } = await import(
 			'./components/ProcessInboxesView.svelte'
 		)
-		console.log('folder path:', folderPath)
 		const svelteComponent = new ProcessInboxesView({
 			target: container,
 			props: {
