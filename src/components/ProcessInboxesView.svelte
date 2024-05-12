@@ -1,29 +1,21 @@
 <script>
-  import { onMount } from 'svelte';
-  import { openFile, countLinesInFile } from '../utils';
+	import { writable } from 'svelte/store'
+	import { openFile, countLinesInFile } from '../utils'
 
-  export let plugin;
-  export let filePath;
+	export let plugin
+	export let filePath
+	let lineCount = writable(0)
 
-  let lineCount = 0;
-
-  async function updateLineCount() {
-    const file = await openFile(filePath, plugin);
-    lineCount = await countLinesInFile(plugin, file);
-  }
-
-  onMount(() => {
-    updateLineCount();
-    const interval = setInterval(updateLineCount, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  });
+	export async function updateLineCount() {
+		openFile(filePath, plugin).then((file) => {
+			countLinesInFile(plugin, file).then((count) => {
+				lineCount.set(count)
+			})
+		})
+	}
 </script>
 
 <div>
-  <p>Inbox file: {filePath}</p>
-  <p>Lines in inbox: {lineCount}</p>
+	<p>Inbox file: {filePath}</p>
+	<p>Lines in inbox: {$lineCount}</p>
 </div>
-
