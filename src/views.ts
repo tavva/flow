@@ -23,20 +23,15 @@ export class ProcessInboxesView extends ItemView {
 	async onOpen(): Promise<void> {
 		const container = this.containerEl.children[1];
 		container.empty();
-		container.createEl("h4", { text: "Process inboxes view" });
 
-		const inboxFilePath = this.plugin.settings.inboxFilePath;
-		const inboxFile = await openFile(inboxFilePath, this.plugin);
-
-		const lineCount = await countLinesInFile(this.plugin, inboxFile);
-		if (lineCount === -1) {
-			container.createEl("p", {
-				text: `Failed to read inbox file: ${inboxFilePath}`,
-			});
-			return;
-		}
-		container.createEl("p", { text: `Inbox file: ${inboxFilePath}` });
-		container.createEl("p", { text: `Lines in inbox: ${lineCount}` });
+		const SvelteComponent = require('./components/ProcessInboxesView.svelte').default;
+		new SvelteComponent({
+			target: container,
+			props: {
+				plugin: this.plugin,
+				filePath: this.plugin.settings.inboxFilePath
+			}
+		});
 	}
 
 	async onClose(): Promise<void> {}
