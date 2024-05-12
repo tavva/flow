@@ -1,10 +1,12 @@
 <script>
 	import { writable } from 'svelte/store'
-	import { openFile, countLinesInFile } from '../utils'
+	import { openFile, countLinesInFile, countFilesInFolder } from '../utils'
 
 	export let plugin
 	export let filePath
+	export let folderPath
 	let lineCount = writable(0)
+	let fileCount = writable(0)
 
 	export async function updateLineCount() {
 		openFile(filePath, plugin).then((file) => {
@@ -13,9 +15,14 @@
 			})
 		})
 	}
+	export async function updateFileCount() {
+		countFilesInFolder(plugin, folderPath).then((count) => {
+			fileCount.set(count)
+		})
+	}
 </script>
 
 <div>
-	<p>Inbox file: {filePath}</p>
-	<p>Lines in inbox: {$lineCount}</p>
+	<p>Items to process in inbox: {$lineCount}</p>
+	<p>Items to process from emails/Teams: {$fileCount}</p>
 </div>
