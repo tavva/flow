@@ -13,9 +13,9 @@ export interface UserActionResult {
 export async function processInboxFile(
 	plugin: ObsidianGTDPlugin,
 ): Promise<void> {
-	const inboxFilePath = plugin.settings.inboxFilePath;
-	file = await openFile(inboxFilePath, plugin);
-	let fileContent = await plugin.app.vault.read(file);
+	const inboxFilePath = plugin.settings.inboxFilePath
+	const file = await openFile(inboxFilePath, plugin)
+	let fileContent = await plugin.app.vault.read(file)
 
 	let lines = fileContent.split(/\r?\n/);
 
