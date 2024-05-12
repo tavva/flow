@@ -55,11 +55,8 @@ export async function countFilesInFolder(
 	folderPath: string,
 ): Promise<number> {
 	const allFiles = plugin.app.vault.getFiles()
-	console.log('All files:', allFiles)
 	const filesInFolder = allFiles.filter(
 		(file) => file.path.startsWith(folderPath) && file.extension === 'md',
 	)
-	console.log('Folder path:', folderPath)
-	console.log('Files in folder:', filesInFolder)
 	return filesInFolder.length
 }
