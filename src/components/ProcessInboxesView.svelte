@@ -25,9 +25,12 @@
 </script>
 
 <div>
-	<p>Items to process in inbox: {$lineCount}</p>
-	<p>Items to process from emails/Teams: {$fileCount}</p>
-	<main>
-		<ProcessingOptions />
-	</main>
+	<div class="process-inbox-header">GTD processing</div>
+	<div class="process-inbox-info">
+		<p>Items to process in inbox: {$lineCount}</p>
+		<p>Items to process from emails/Teams: {$fileCount}</p>
+		<main>
+			<ProcessingOptions />
+		</main>
+	</div>
 </div>

@@ -1,5 +1,6 @@
 <script>
 	let nextActionText = ''
+	let isDisabled = true
 
 	// Simulated methods for demonstration
 	function addToProject(text) {
@@ -18,7 +19,7 @@
 	}
 </script>
 
-<div class="processing-options">
+<div class="processing-options" class:disabled={isDisabled}>
 	<input
 		class="next-action-input"
 		type="text"

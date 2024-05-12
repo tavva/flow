@@ -1,12 +1,48 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
-
 .is-active {
 	font-weight: bold;
+}
+
+.process-inbox-container {
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	padding: 20px;
+	border-radius: 8px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.process-inbox-header {
+	font-size: 1.5em;
+	font-weight: bold;
+	margin-bottom: 10px;
+}
+
+.process-inbox-info {
+	font-size: 1em;
+	margin-bottom: 20px;
+}
+
+button {
+	background-color: var(--interactive-accent);
+	color: white;
+	padding: 10px 15px;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.2s;
+}
+
+button:hover {
+	background-color: var(--interactive-hover);
+}
+
+.processing-options.disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.processing-options.disabled .next-action-input,
+.processing-options.disabled button {
+	background-color: #e0e0e0;
+	color: #9e9e9e;
+	border: 1px solid #ccc;
 }
