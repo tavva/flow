@@ -1,4 +1,6 @@
 <script>
+	import ProcessingOptions from './ProcessingOptions.svelte'
+
 	import { writable } from 'svelte/store'
 	import { openFile, countLinesInFile, countFilesInFolder } from '../utils'
 
@@ -25,4 +27,7 @@
 <div>
 	<p>Items to process in inbox: {$lineCount}</p>
 	<p>Items to process from emails/Teams: {$fileCount}</p>
+	<main>
+		<ProcessingOptions />
+	</main>
 </div>
