@@ -14,7 +14,10 @@ export async function processInboxFile(
 	plugin: ObsidianGTDPlugin,
 ): Promise<void> {
 	const inboxFilePath = plugin.settings.inboxFilePath
-	const file = await openFile(inboxFilePath, plugin)
+	const leaf = plugin.app.workspace.getLeaf(true)
+	const file = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
+	await leaf.openFile(file)
+
 	let fileContent = await plugin.app.vault.read(file)
 
 	let lines = fileContent.split(/\r?\n/)
