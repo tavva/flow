@@ -81,10 +81,9 @@ export async function processEmailInbox(plugin: GTDPlugin): Promise<void> {
 		const firstFile = folderFiles[0]
 		const leaf = plugin.app.workspace.getLeaf(true)
 		await leaf.openFile(firstFile)
-		console.log('creating view')
 		await plugin.app.workspace.getRightLeaf(false).setViewState({
 			type: PROCESS_EMAIL_INBOX_VIEW,
-			state: { processing: 'email', file: firstFile },
+			state: { file: firstFile },
 			active: true,
 		})
 	}
