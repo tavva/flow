@@ -1,9 +1,9 @@
 {
 	"id": "obsidian-gtd",
-	"name": "Obsidian GTD",
+	"name": "Getting Things Done",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "A GTD plugin for Obsidian",
+	"description": "GTD in Obsidian",
 	"author": "Ben Phillips",
 	"authorUrl": "https://ben-phillips.net",
 	"isDesktopOnly": false
