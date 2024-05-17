@@ -76,13 +76,13 @@ export class ProcessEmailInboxView extends ItemView {
 	emailFiles: TFile[]
 	currentFileIndex: number = 0
 	nextActionInput: HTMLInputElement
-	private state: Record<string, any>
+	processingStage: string
 
 	constructor(leaf: WorkspaceLeaf, plugin: GTDPlugin) {
 		super(leaf)
 		this.plugin = plugin
-		this.state = {}
 		this.emailFiles = []
+		this.processingStage = 'email'
 	}
 
 	getViewType(): string {
@@ -94,25 +94,17 @@ export class ProcessEmailInboxView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
-		await this.displayProcessingOptions()
-		console.log(this.state)
-		console.log('this.state.processing', this.state.processing)
+		this.render()
+	}
 
-		if (this.state.processing === 'email') {
+	private async render(): Promise<void> {
+		await this.displayProcessingOptions()
+
+		if (this.processingStage === 'email') {
 			await this.loadEmailFiles()
 			await this.processCurrentEmail()
 			await this.displayEmailFiles()
 		}
-	}
-
-	setState(state: Record<string, any>): void {
-		console.log('setState: ', state)
-		this.state = { ...this.state, ...state }
-		console.log('new state: ', this.state)
-	}
-
-	getState(): Record<string, any> {
-		return this.state
 	}
 
 	private async displayProcessingOptions(): Promise<void> {
