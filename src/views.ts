@@ -7,7 +7,7 @@ export const PROCESS_INBOXES_VIEW = 'process-inboxes-view'
 export const PROCESS_EMAIL_INBOX_VIEW = 'process-email-inbox-view'
 
 export class ProcessInboxesView extends ItemView {
-	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: GTDPlugin) {
 		super(leaf)
 		this.plugin = plugin
 	}
@@ -72,14 +72,16 @@ export class ProcessInboxesView extends ItemView {
 }
 
 export class ProcessEmailInboxView extends ItemView {
-	plugin: ObsidianGTDPlugin
+	plugin: GTDPlugin
 	emailFiles: TFile[]
 	currentFileIndex: number = 0
 	nextActionInput: HTMLInputElement
+	private state: Record<string, any>
 
-	constructor(leaf: WorkspaceLeaf, plugin: ObsidianGTDPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: GTDPlugin) {
 		super(leaf)
 		this.plugin = plugin
+		this.state = {}
 		this.emailFiles = []
 	}
 
@@ -92,10 +94,25 @@ export class ProcessEmailInboxView extends ItemView {
 	}
 
 	async onOpen(): Promise<void> {
-		await this.loadEmailFiles()
 		await this.displayProcessingOptions()
-		await this.processCurrentEmail()
-		await this.displayEmailFiles()
+		console.log(this.state)
+		console.log('this.state.processing', this.state.processing)
+
+		if (this.state.processing === 'email') {
+			await this.loadEmailFiles()
+			await this.processCurrentEmail()
+			await this.displayEmailFiles()
+		}
+	}
+
+	setState(state: Record<string, any>): void {
+		console.log('setState: ', state)
+		this.state = { ...this.state, ...state }
+		console.log('new state: ', this.state)
+	}
+
+	getState(): Record<string, any> {
+		return this.state
 	}
 
 	private async displayProcessingOptions(): Promise<void> {
@@ -137,8 +154,8 @@ export class ProcessEmailInboxView extends ItemView {
 
 	private closeTabsForFile(file: TFile): void {
 		const leaves = this.plugin.app.workspace.getLeavesOfType('markdown')
-		leaves.forEach((leaf) => {
-			if (leaf.view.getState().file === file.path) {
+		leaves.forEach(async (leaf) => {
+			if ((await leaf.view.getState().file) === file.path) {
 				leaf.detach()
 			}
 		})

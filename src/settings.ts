@@ -1,66 +1,66 @@
-import { ObsidianGTDPlugin } from "./main";
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { GTDPlugin } from './main'
+import { App, PluginSettingTab, Setting } from 'obsidian'
 
-export interface ObsidianGTDSettings {
-	inboxFilePath: string;
-	nextActionsFilePath: string;
-	incomingEmailFolderPath: string;
+export interface GTDSettings {
+	inboxFilePath: string
+	nextActionsFilePath: string
+	incomingEmailFolderPath: string
 }
 
-export const DEFAULT_SETTINGS: Partial<ObsidianGTDSettings> = {
-	inboxFilePath: "Inbox.md",
-	nextActionsFilePath: "Next actions.md",
-	incomingEmailFolderPath: "Email inbox",
-};
+export const DEFAULT_SETTINGS: Partial<GTDSettings> = {
+	inboxFilePath: 'Inbox.md',
+	nextActionsFilePath: 'Next actions.md',
+	incomingEmailFolderPath: 'Email inbox',
+}
 
-export class ObsidianGTDSettingsTab extends PluginSettingTab {
-	plugin: ObsidianGTDPlugin;
+export class GTDSettingsTab extends PluginSettingTab {
+	plugin: GTDPlugin
 
-	constructor(app: App, plugin: ObsidianGTDPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
+	constructor(app: App, plugin: GTDPlugin) {
+		super(app, plugin)
+		this.plugin = plugin
 	}
 
 	display(): void {
-		let { containerEl } = this;
+		let { containerEl } = this
 
-		containerEl.empty();
+		containerEl.empty()
 
 		new Setting(containerEl)
-			.setName("Inbox file")
-			.setDesc("The file where our inbox items are stored")
+			.setName('Inbox file')
+			.setDesc('The file where our inbox items are stored')
 			.addText((text) =>
 				text
-					.setPlaceholder("path/to/file.md")
+					.setPlaceholder('path/to/file.md')
 					.setValue(this.plugin.settings.inboxFilePath)
 					.onChange(async (value) => {
-						this.plugin.settings.inboxFilePath = value;
-						await this.plugin.saveSettings();
+						this.plugin.settings.inboxFilePath = value
+						await this.plugin.saveSettings()
 					}),
-			);
+			)
 		new Setting(containerEl)
-			.setName("Next actions file")
-			.setDesc("The file where next actions with no project are stored")
+			.setName('Next actions file')
+			.setDesc('The file where next actions with no project are stored')
 			.addText((text) =>
 				text
-					.setPlaceholder("path/to/file.md")
+					.setPlaceholder('path/to/file.md')
 					.setValue(this.plugin.settings.nextActionsFilePath)
 					.onChange(async (value) => {
-						this.plugin.settings.nextActionsFilePath = value;
-						await this.plugin.saveSettings();
+						this.plugin.settings.nextActionsFilePath = value
+						await this.plugin.saveSettings()
 					}),
-			);
+			)
 		new Setting(containerEl)
-			.setName("Incoming email folder")
-			.setDesc("The folder where incoming email files are stored")
+			.setName('Incoming email folder')
+			.setDesc('The folder where incoming email files are stored')
 			.addText((text) =>
 				text
-					.setPlaceholder("path/to/folder")
+					.setPlaceholder('path/to/folder')
 					.setValue(this.plugin.settings.incomingEmailFolderPath)
 					.onChange(async (value) => {
-						this.plugin.settings.incomingEmailFolderPath = value;
-						await this.plugin.saveSettings();
+						this.plugin.settings.incomingEmailFolderPath = value
+						await this.plugin.saveSettings()
 					}),
-			);
+			)
 	}
 }

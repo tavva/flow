@@ -10,9 +10,7 @@ export interface UserActionResult {
 	selectedProject?: string
 }
 
-export async function processInboxFile(
-	plugin: ObsidianGTDPlugin,
-): Promise<void> {
+export async function processInboxFile(plugin: GTDPlugin): Promise<void> {
 	const inboxFilePath = plugin.settings.inboxFilePath
 	const leaf = plugin.app.workspace.getLeaf(true)
 	const file = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
@@ -70,9 +68,7 @@ export async function processInboxFile(
 	}
 }
 
-export async function processEmailInbox(
-	plugin: ObsidianGTDPlugin,
-): Promise<void> {
+export async function processEmailInbox(plugin: GTDPlugin): Promise<void> {
 	const incomingEmailFolderPath = plugin.settings.incomingEmailFolderPath
 	const folderFiles = plugin.app.vault.getFiles().filter((file) => {
 		return (
@@ -85,9 +81,10 @@ export async function processEmailInbox(
 		const firstFile = folderFiles[0]
 		const leaf = plugin.app.workspace.getLeaf(true)
 		await leaf.openFile(firstFile)
+		console.log('creating view')
 		await plugin.app.workspace.getRightLeaf(false).setViewState({
 			type: PROCESS_EMAIL_INBOX_VIEW,
-			state: { file: firstFile },
+			state: { processing: 'email', file: firstFile },
 			active: true,
 		})
 	}
@@ -128,7 +125,7 @@ export async function addToProject(
 }
 
 export async function addToNextActions(
-	plugin: ObsidianGTDPlugin,
+	plugin: GTDPlugin,
 	line: string,
 ): Promise<void> {
 	const nextActionsFilePath = plugin.settings.nextActionsFilePath

@@ -2,7 +2,7 @@ import { App, TFile } from 'obsidian'
 
 export async function openFile(
 	filePath: string,
-	plugin: ObsidianGTDPlugin,
+	plugin: GTDPlugin,
 ): Promise<TFile | null> {
 	try {
 		const file = plugin.app.vault.getAbstractFileByPath(filePath)
@@ -40,7 +40,7 @@ export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
 }
 
 export async function countLinesInFile(
-	plugin: ObsidianGTDPlugin,
+	plugin: GTDPlugin,
 	file: TFile,
 ): Promise<number> {
 	const fileContent = await plugin.app.vault.read(file)
@@ -51,7 +51,7 @@ export async function countLinesInFile(
 }
 
 export async function countFilesInFolder(
-	plugin: ObsidianGTDPlugin,
+	plugin: GTDPlugin,
 	folderPath: string,
 ): Promise<number> {
 	const allFiles = plugin.app.vault.getFiles()
