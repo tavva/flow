@@ -2,7 +2,7 @@ import { WorkspaceLeaf, ItemView, Notice, MarkdownView } from 'obsidian'
 import { openFile } from './utils'
 import { addToNextActions, addToProject, ProcessStage } from './process'
 import { openProjectModalForSelection } from './modals'
-import { updateLineCount, updateFileCount, updateStage } from './state'
+import { updateLineCount, updateFileCount } from './state'
 
 export const PROCESS_INBOXES_VIEW = 'process-inboxes-view'
 export const PROCESS_EMAIL_INBOX_VIEW = 'process-email-inbox-view'

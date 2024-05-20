@@ -11,16 +11,14 @@ export async function updateLineCount(plugin: any) {
 	const file = await openFile(filePath, plugin)
 	const count = await countLinesInFile(plugin, file)
 	lineCount.set(count)
+	determineStage()
 }
 
 export async function updateFileCount(plugin: any) {
 	const folderPath = plugin.settings.incomingEmailFolderPath
 	const count = await countFilesInFolder(plugin, folderPath)
 	fileCount.set(count)
-}
-
-export function updateStage(currentStage: ProcessStage) {
-	stage.set(currentStage)
+	determineStage()
 }
 
 export async function determineStage() {
@@ -31,10 +29,10 @@ export async function determineStage() {
 	fileCount.subscribe((value) => (currentFileCount = value))()
 
 	if (currentLineCount > 0) {
-		updateStage(ProcessStage.Inbox)
+		stage.set(ProcessStage.Inbox)
 	} else if (currentFileCount > 0) {
-		updateStage(ProcessStage.Email)
+		stage.set(ProcessStage.Email)
 	} else {
-		updateStage(ProcessStage.Done)
+		stage.set(ProcessStage.Done)
 	}
 }

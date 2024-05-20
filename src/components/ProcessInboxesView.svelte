@@ -13,7 +13,6 @@
 
 	$: updateLineCount(plugin)
 	$: updateFileCount(plugin)
-	$: determineStage()
 </script>
 
 <div>
