@@ -19,7 +19,7 @@
 	<div class="process-inbox-info">
 		<p>Items to process in inbox: {$lineCount}</p>
 		<p>Items to process from emails/Teams: {$fileCount}</p>
-		<p>Currently stage: {$stage}</p>
+		<p>Current stage: {$stage}</p>
 	</div>
 	<div class="process-inbox-content"></div>
 
