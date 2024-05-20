@@ -4,24 +4,25 @@ import { openFile, countLinesInFile, countFilesInFolder } from './utils'
 
 export const lineCount = writable(0)
 export const fileCount = writable(0)
-export const stage = writable(ProcessStage.Inbox)
+export const stage = writable(ProcessStage.Email)
+export const nextStage = writable(ProcessStage.Inbox)
 
 export async function updateLineCount(plugin: any) {
 	const filePath = plugin.settings.inboxFilePath
 	const file = await openFile(filePath, plugin)
 	const count = await countLinesInFile(plugin, file)
 	lineCount.set(count)
-	determineStage()
+	determineNextStage()
 }
 
 export async function updateFileCount(plugin: any) {
 	const folderPath = plugin.settings.incomingEmailFolderPath
 	const count = await countFilesInFolder(plugin, folderPath)
 	fileCount.set(count)
-	determineStage()
+	determineNextStage()
 }
 
-export async function determineStage() {
+export async function determineNextStage() {
 	let currentLineCount: number
 	let currentFileCount: number
 
@@ -29,10 +30,10 @@ export async function determineStage() {
 	fileCount.subscribe((value) => (currentFileCount = value))()
 
 	if (currentLineCount > 0) {
-		stage.set(ProcessStage.Inbox)
+		nextStage.set(ProcessStage.Inbox)
 	} else if (currentFileCount > 0) {
-		stage.set(ProcessStage.Email)
+		nextStage.set(ProcessStage.Email)
 	} else {
-		stage.set(ProcessStage.Done)
+		nextStage.set(ProcessStage.Done)
 	}
 }
