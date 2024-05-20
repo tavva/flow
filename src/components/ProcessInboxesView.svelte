@@ -33,6 +33,8 @@
 	<div class="process-inbox-content"></div>
 
 	<main>
-		<ProcessingOptions />
+		{#if $lineCount > 0 || $fileCount > 0}
+			<ProcessingOptions />
+		{/if}
 	</main>
 </div>
