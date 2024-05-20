@@ -10,6 +10,12 @@ export interface UserActionResult {
 	selectedProject?: string
 }
 
+export enum ProcessStage {
+	Inbox = 'Inbox',
+	Email = 'Email',
+	Done = 'Done',
+}
+
 export async function processInboxFile(plugin: GTDPlugin): Promise<void> {
 	const inboxFilePath = plugin.settings.inboxFilePath
 	const leaf = plugin.app.workspace.getLeaf(true)

@@ -1,7 +1,8 @@
 import { WorkspaceLeaf, ItemView, Notice, MarkdownView } from 'obsidian'
 import { openFile } from './utils'
-import { addToNextActions, addToProject } from './process'
+import { addToNextActions, addToProject, ProcessStage } from './process'
 import { openProjectModalForSelection } from './modals'
+import { updateLineCount, updateFileCount, updateStage } from './state'
 
 export const PROCESS_INBOXES_VIEW = 'process-inboxes-view'
 export const PROCESS_EMAIL_INBOX_VIEW = 'process-email-inbox-view'
@@ -10,6 +11,8 @@ export class ProcessInboxesView extends ItemView {
 	constructor(leaf: WorkspaceLeaf, plugin: GTDPlugin) {
 		super(leaf)
 		this.plugin = plugin
+		this.processingStage = ProcessStage.Inbox
+		this.svelteComponent = null
 	}
 
 	getViewType(): string {
@@ -29,7 +32,7 @@ export class ProcessInboxesView extends ItemView {
 		const { default: ProcessInboxesView } = await import(
 			'./components/ProcessInboxesView.svelte'
 		)
-		const svelteComponent = new ProcessInboxesView({
+		this.svelteComponent = new ProcessInboxesView({
 			target: container,
 			props: {
 				plugin: this.plugin,
@@ -45,14 +48,14 @@ export class ProcessInboxesView extends ItemView {
 		this.registerEvent(
 			this.plugin.app.vault.on('modify', (file) => {
 				if (file.path === inboxFile.path) {
-					svelteComponent.updateLineCount()
+					updateLineCount(this.plugin)
 				}
 			}),
 		)
 
 		function handleFolderChange(file, action) {
 			if (file.path.startsWith(folderPath)) {
-				svelteComponent.updateFileCount()
+				updateFileCount(this.plugin)
 				console.log(`File ${action} in folder:`, file.path)
 			}
 		}
@@ -63,9 +66,6 @@ export class ProcessInboxesView extends ItemView {
 		this.plugin.app.vault.on('delete', (file) =>
 			handleFolderChange(file, 'deleted'),
 		)
-
-		svelteComponent.updateLineCount()
-		svelteComponent.updateFileCount()
 	}
 
 	async onClose(): Promise<void> {}

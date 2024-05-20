@@ -1,27 +1,19 @@
 <script>
 	import ProcessingOptions from './ProcessingOptions.svelte'
-
-	import { writable } from 'svelte/store'
-	import { openFile, countLinesInFile, countFilesInFolder } from '../utils'
+	import {
+		lineCount,
+		fileCount,
+		stage,
+		updateLineCount,
+		updateFileCount,
+		determineStage,
+	} from '../state'
 
 	export let plugin
-	export let filePath
-	export let folderPath
-	let lineCount = writable(0)
-	let fileCount = writable(0)
 
-	export async function updateLineCount() {
-		openFile(filePath, plugin).then((file) => {
-			countLinesInFile(plugin, file).then((count) => {
-				lineCount.set(count)
-			})
-		})
-	}
-	export async function updateFileCount() {
-		countFilesInFolder(plugin, folderPath).then((count) => {
-			fileCount.set(count)
-		})
-	}
+	$: updateLineCount(plugin)
+	$: updateFileCount(plugin)
+	$: determineStage()
 </script>
 
 <div>
@@ -29,8 +21,11 @@
 	<div class="process-inbox-info">
 		<p>Items to process in inbox: {$lineCount}</p>
 		<p>Items to process from emails/Teams: {$fileCount}</p>
-		<main>
-			<ProcessingOptions />
-		</main>
+		<p>Currently stage: {$stage}</p>
 	</div>
+	<div class="process-inbox-content"></div>
+
+	<main>
+		<ProcessingOptions />
+	</main>
 </div>
