@@ -6,7 +6,6 @@
 		stage,
 		updateLineCount,
 		updateFileCount,
-		determineStage,
 	} from '../state'
 
 	export let plugin

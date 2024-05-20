@@ -56,7 +56,6 @@ export class ProcessInboxesView extends ItemView {
 		function handleFolderChange(file, action) {
 			if (file.path.startsWith(folderPath)) {
 				updateFileCount(this.plugin)
-				console.log(`File ${action} in folder:`, file.path)
 			}
 		}
 
