@@ -20,12 +20,10 @@ export async function updateFileCount(plugin: any) {
 }
 
 export function updateStage(currentStage: ProcessStage) {
-	console.log('Setting stage to:', currentStage)
 	stage.set(currentStage)
 }
 
 export async function determineStage() {
-	console.log('We are determining stage...')
 	let currentLineCount: number
 	let currentFileCount: number
 
