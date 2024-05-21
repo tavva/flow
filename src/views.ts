@@ -29,10 +29,10 @@ export class ProcessInboxesView extends ItemView {
 
 		const folderPath = this.plugin.settings.incomingEmailFolderPath
 
-		const { default: ProcessInboxesView } = await import(
+		const { default: ProcessInboxesViewComponent } = await import(
 			'./components/ProcessInboxesView.svelte'
 		)
-		this.svelteComponent = new ProcessInboxesView({
+		this.svelteComponent = new ProcessInboxesViewComponent({
 			target: container,
 			props: {
 				plugin: this.plugin,
