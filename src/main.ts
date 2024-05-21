@@ -57,7 +57,7 @@ export default class GTDPlugin extends Plugin {
 
 	private async startProcess(
 		view: string,
-		process_method: () => Promise<void>,
+		processMethod: () => Promise<void>,
 	): Promise<void> {
 		const { workspace } = this.app
 
@@ -77,7 +77,7 @@ export default class GTDPlugin extends Plugin {
 			})
 		}
 
-		process_method(this)
+		processMethod(this)
 
 		// Open sidebar if collapsed
 		workspace.revealLeaf(leaf)
