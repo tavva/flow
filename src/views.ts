@@ -31,7 +31,7 @@ export class ProcessInboxesView extends ItemView {
 		const { default: ProcessInboxesViewComponent } = await import(
 			'./components/ProcessInboxesView.svelte'
 		)
-		svelteComponent = new ProcessInboxesViewComponent({
+		const svelteComponent = new ProcessInboxesViewComponent({
 			target: container,
 			props: {
 				plugin: this.plugin,
