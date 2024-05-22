@@ -91,6 +91,9 @@ export class StateManager {
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
+				isProcessingComplete:
+					this.linesToProcess.length === 0 &&
+					this.emailFilesToProcess.length === 0,
 			})
 		} else {
 			console.error('ProcessingView not found')
@@ -109,6 +112,9 @@ export class StateManager {
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
+				isProcessingComplete:
+					this.linesToProcess.length === 0 &&
+					this.emailFilesToProcess.length === 0,
 			})
 		} else {
 			console.error('ProcessingView not found')
