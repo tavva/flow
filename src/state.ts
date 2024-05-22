@@ -9,13 +9,16 @@ import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
 import GTDPlugin from './main'
 import { ProjectSelectorModal } from './projectSelectorModal'
+import { STATUS_VIEW_TYPE } from './views/status'
+import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export class StateManager {
 	private app: App
 	private plugin: GTDPlugin
-	private inboxFile: TFile
-	private emailInboxFolder: TFolder
-	private statusLeaf: WorkspaceLeaf
+	private inboxFile: TFile | null = null
+	private emailInboxFolder: TFolder | null = null
+	private statusLeaf: WorkspaceLeaf | null = null
+	private mainLeaf: WorkspaceLeaf | null = null
 	private currentStage: 'inbox' | 'emailInbox' | null = null
 	private linesToProcess: string[] = []
 	private emailFilesToProcess: TFile[] = []
@@ -33,12 +36,24 @@ export class StateManager {
 			this.plugin.settings.emailInboxFolderPath,
 		) as TFolder
 
+		if (!this.inboxFile) {
+			new Notice('Inbox file not found. Please check your settings.')
+			return
+		}
+
+		if (!this.emailInboxFolder) {
+			new Notice(
+				'Email Inbox folder not found. Please check your settings.',
+			)
+			return
+		}
+
 		await this.setupStatusView()
 
 		if (await this.isInboxEmpty()) {
 			if (await this.isEmailInboxEmpty()) {
 				new Notice('Both inboxes are empty')
-				this.statusLeaf.view.containerEl.empty()
+				if (this.statusLeaf) this.statusLeaf.view.containerEl.empty()
 			} else {
 				this.currentStage = 'emailInbox'
 				await this.processEmailInbox()
@@ -67,49 +82,95 @@ export class StateManager {
 	}
 
 	private async processInbox() {
-		this.updateStatusView()
-		const inboxView = new InboxView({
-			target: this.statusLeaf.view.containerEl,
-			props: {
+		await this.updateStatusView()
+		await this.setupProcessingView()
+		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
+		if (view) {
+			view.setProps({
 				line: this.linesToProcess[0],
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
-			},
-		})
+			})
+		} else {
+			console.error('ProcessingView not found')
+		}
 	}
 
 	private async processEmailInbox() {
-		this.updateStatusView()
+		await this.updateStatusView()
+		await this.setupProcessingView()
 		const emailFile = this.emailFilesToProcess[0]
 		const content = await readFileContent(this.app, emailFile)
-		const emailInboxView = new InboxView({
-			target: this.statusLeaf.view.containerEl,
-			props: {
+		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
+		if (view) {
+			view.setProps({
 				line: content,
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
-			},
-		})
+			})
+		} else {
+			console.error('ProcessingView not found')
+		}
 	}
 
 	private async setupStatusView() {
-		const leaf = this.app.workspace.getRightLeaf(false)
-		leaf.setViewState({ type: 'status-view' })
-		this.statusLeaf = leaf
+		const existingLeaf =
+			this.app.workspace.getLeavesOfType(STATUS_VIEW_TYPE)
+		if (existingLeaf.length) {
+			this.statusLeaf = existingLeaf[0]
+		} else {
+			const leaf = this.app.workspace.getRightLeaf(false)
+			await leaf.setViewState({
+				type: STATUS_VIEW_TYPE,
+				active: true,
+			})
+			this.statusLeaf = leaf
+		}
+		this.updateStatusView()
 	}
 
-	private updateStatusView() {
-		new StatusView({
-			target: this.statusLeaf.view.containerEl,
-			props: {
-				currentStage: this.currentStage,
-				inboxCount: this.linesToProcess.length,
-				emailInboxCount: this.emailFilesToProcess.length,
-				onNextStage: this.startProcessing.bind(this),
-			},
-		})
+	private async updateStatusView() {
+		if (this.statusLeaf) {
+			const view = this.statusLeaf.view as StatusView
+			if (view.getViewType() === STATUS_VIEW_TYPE) {
+				view.setProps({
+					currentStage: this.currentStage,
+					inboxCount: this.linesToProcess.length,
+					emailInboxCount: this.emailFilesToProcess.length,
+					onNextStage: this.startProcessing.bind(this),
+				})
+			} else {
+				console.error('StatusView not found')
+			}
+		} else {
+			console.error('Status leaf is not initialized')
+		}
+	}
+
+	private async setupProcessingView() {
+		const existingLeaf =
+			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
+		if (existingLeaf.length) {
+			this.processingLeaf = existingLeaf[0]
+			console.log('Reusing existing ProcessingView')
+		} else {
+			const leaf = this.app.workspace.getLeaf(false)
+			await leaf.setViewState({
+				type: PROCESSING_VIEW_TYPE,
+				active: true,
+			})
+			this.processingLeaf = leaf
+			console.log('Created new ProcessingView')
+		}
+	}
+
+	private async setupMainView() {
+		if (!this.mainLeaf) {
+			const leaf = this.app.workspace.getLeaf(false)
+			this.mainLeaf = leaf
+		}
 	}
 
 	private removeProcessedItem() {
@@ -159,3 +220,5 @@ export class StateManager {
 		this.removeProcessedItem()
 	}
 }
+
+export default StateManager

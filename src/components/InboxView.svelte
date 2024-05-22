@@ -4,6 +4,7 @@
 	export let onAddToProject: (text: string) => void
 	export let onTrash: () => void
 	let inputText: string = line
+	$: inputText = line
 
 	function addToNextActions() {
 		if (inputText.trim() !== '') onAddToNextActions(inputText)
