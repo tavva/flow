@@ -101,7 +101,7 @@ export class StateManager {
 		await this.updateStatusView()
 		await this.setupProcessingView()
 		const emailFile = this.emailFilesToProcess[0]
-		const content = await readFileContent(this.app, emailFile)
+		const content = await readFileContent(emailFile)
 		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
 		if (view) {
 			view.setProps({
@@ -173,28 +173,58 @@ export class StateManager {
 		}
 	}
 
-	private removeProcessedItem() {
+	private async removeProcessedItem() {
 		if (this.currentStage === 'inbox') {
-			this.linesToProcess.shift()
+			const processedLine = this.linesToProcess.shift()
 			if (this.linesToProcess.length === 0) {
 				this.currentStage = null
-				this.startProcessing()
-			} else {
-				this.processInbox()
 			}
+			await this.updateInboxFile(processedLine)
+			this.startProcessing()
 		} else if (this.currentStage === 'emailInbox') {
-			this.emailFilesToProcess.shift()
+			const processedFile = this.emailFilesToProcess.shift()
 			if (this.emailFilesToProcess.length === 0) {
 				this.currentStage = null
-				this.startProcessing()
+			}
+			if (processedFile) {
+				await this.deleteEmailFile(processedFile)
+			}
+			this.startProcessing()
+		}
+	}
+
+	private async updateInboxFile(processedLine: string) {
+		if (this.inboxFile) {
+			const currentContent = await readFileContent(this.inboxFile)
+			const currentLines = currentContent.split('\n')
+			const firstNonEmptyLine = currentLines.find(
+				(line) => line.trim() !== '',
+			)
+
+			if (
+				firstNonEmptyLine &&
+				firstNonEmptyLine.trim() === processedLine.trim()
+			) {
+				const updatedContent = currentLines.slice(1).join('\n')
+				await this.app.vault.modify(this.inboxFile, updatedContent)
+				console.log('Inbox file updated')
 			} else {
-				this.processEmailInbox()
+				console.log('processedLine:', processedLine)
+				console.log('currentLines[0]:', currentLines[0])
+				console.error(
+					'Mismatch in the processed line and the current first line',
+				)
 			}
 		}
 	}
 
+	private async deleteEmailFile(file: TFile) {
+		await this.app.vault.delete(file)
+		console.log('Email file deleted:', file.path)
+	}
+
 	private async handleAddToNextActions(text: string) {
-		await addToNextActions(this.app, text)
+		await addToNextActions(this.plugin, text)
 		this.removeProcessedItem()
 	}
 
@@ -210,7 +240,7 @@ export class StateManager {
 			this.app,
 			projectFiles,
 			async (file: TFile) => {
-				await addToProject(this.app, file, text)
+				await addToProject(this.plugin, file, text)
 				this.removeProcessedItem()
 			},
 		).open()

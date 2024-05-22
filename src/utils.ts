@@ -1,23 +1,29 @@
 import { TFile } from 'obsidian'
 
-export async function addToNextActions(app: App, text: string) {
-	const nextActionsPath = 'NextActions.md' // TODO: use settings
-	let nextActionsFile = app.vault.getAbstractFileByPath(
-		nextActionsPath,
+export async function addToNextActions(plugin: Plugin, text: string) {
+	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
+		plugin.settings.nextActionsFilePath,
 	) as TFile
 
 	if (!nextActionsFile) {
-		nextActionsFile = await app.vault.create(nextActionsPath, '')
+		nextActionsFile = await plugin.app.vault.create(
+			plugin.settings.nextActionsFilePath,
+			'',
+		)
 	}
 
-	const content = await app.vault.read(nextActionsFile)
-	await app.vault.modify(nextActionsFile, content + '\n' + text)
+	const content = await plugin.app.vault.read(nextActionsFile)
+	await plugin.app.vault.modify(nextActionsFile, content + '\n' + text)
 }
 
-export async function addToProject(app: App, projectFile: TFile, text: string) {
-	const content = await app.vault.read(projectFile)
+export async function addToProject(
+	plugin: Plugin,
+	projectFile: TFile,
+	text: string,
+) {
+	const content = await plugin.app.vault.read(projectFile)
 	// TODO: Add line to ## Next actions section
-	await app.vault.modify(projectFile, updatedContent)
+	await plugin.app.vault.modify(projectFile, updatedContent)
 }
 
 export function readFileContent(file: TFile): Promise<string> {
