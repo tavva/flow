@@ -1,5 +1,10 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
-import { readFileContent, writeFileContent } from './utils'
+import {
+	addToNextActions,
+	addToProject,
+	readFileContent,
+	writeFileContent,
+} from './utils'
 import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
 
@@ -126,18 +131,26 @@ export class StateManager {
 	}
 
 	private async handleAddToNextActions(text: string) {
-		const nextActionsFile = this.app.vault.getAbstractFileByPath(
-			'NextActions.md',
-		) as TFile
-		const content = await readFileContent(nextActionsFile)
-		await writeFileContent(nextActionsFile, content + '\n' + text)
+		await addToNextActions(this.app, text)
 		this.removeProcessedItem()
 	}
 
-	private handleAddToProject(text: string) {
-		// TODO
-		new Notice(`Add to project: ${text}`)
-		this.removeProcessedItem()
+	private async handleAddToProject(text: string) {
+		const projectFiles = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => {
+				const cache = this.app.metadataCache.getFileCache(file)
+				return cache?.frontmatter?.tags?.includes('#project')
+			})
+
+		new ProjectSelectorModal(
+			this.app,
+			projectFiles,
+			async (file: TFile) => {
+				await addToProject(this.app, file, text)
+				this.removeProcessedItem()
+			},
+		).open()
 	}
 
 	private handleTrash() {
