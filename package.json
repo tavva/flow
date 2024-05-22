@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
+		"version": "node version-bump.mjs && git add manifest.json versions.json",
+		"sass": "sass --watch styles.scss styles.css"
 	},
 	"keywords": [],
 	"author": "",
@@ -17,10 +18,12 @@
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
-		"esbuild": "^0.17.3",
+		"esbuild": "^0.20.1",
 		"esbuild-svelte": "^0.8.0",
+		"esbuild-sass-plugin": "^3.3.0",
 		"obsidian": "latest",
 		"prettier-plugin-svelte": "^3.2.3",
+		"sass": "^1.77.2",
 		"svelte": "^4.2.16",
 		"svelte-preprocess": "^5.1.4",
 		"tslib": "2.4.0",
