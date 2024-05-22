@@ -4,6 +4,7 @@ import {
 	writeFileContent,
 	addToNextActions,
 	addToProject,
+	getFilesWithTagPrefix,
 } from './utils'
 import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
@@ -235,12 +236,7 @@ export class StateManager {
 	}
 
 	private async handleAddToProject(text: string) {
-		const projectFiles = this.app.vault
-			.getMarkdownFiles()
-			.filter((file) => {
-				const cache = this.app.metadataCache.getFileCache(file)
-				return cache?.frontmatter?.tags?.includes('#project')
-			})
+		const projectFiles = getFilesWithTagPrefix(this.app, 'project')
 
 		new ProjectSelectorModal(
 			this.app,

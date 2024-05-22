@@ -33,3 +33,24 @@ export function readFileContent(file: TFile): Promise<string> {
 export function writeFileContent(file: TFile, content: string): Promise<void> {
 	return app.vault.modify(file, content)
 }
+
+export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
+	const { metadataCache, vault } = app
+	const files = vault.getFiles()
+
+	return files.filter((file) => {
+		const cache = metadataCache.getFileCache(file)
+		if (!cache || !cache.frontmatter) {
+			return false
+		}
+
+		let tags: string[] = []
+		if (Array.isArray(cache.frontmatter.tags)) {
+			tags = cache.frontmatter.tags
+		} else if (typeof cache.frontmatter.tags === 'string') {
+			tags = cache.frontmatter.tags.split(/\s+/)
+		}
+
+		return tags.some((tag) => tag.startsWith(prefix))
+	})
+}
