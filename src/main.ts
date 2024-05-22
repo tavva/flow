@@ -40,5 +40,8 @@ export default class GTDPlugin extends Plugin {
 		await this.saveData(this.settings)
 	}
 
-	onunload() {}
+	onunload() {
+		this.app.workspace.detachLeavesOfType(STATUS_VIEW_TYPE)
+		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
+	}
 }
