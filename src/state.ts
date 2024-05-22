@@ -51,7 +51,7 @@ export class StateManager {
 
 	private async isInboxEmpty(): Promise<boolean> {
 		if (!this.inboxFile) return true
-		const content = await readFileContent(this.app, this.inboxFile)
+		const content = await readFileContent(this.inboxFile)
 		this.linesToProcess = content
 			.split('\n')
 			.filter((line) => line.trim() !== '')
