@@ -13,7 +13,7 @@ export async function addToNextActions(plugin: Plugin, text: string) {
 	}
 
 	const content = await plugin.app.vault.read(nextActionsFile)
-	await plugin.app.vault.modify(nextActionsFile, content + '\n' + text)
+	await plugin.app.vault.modify(nextActionsFile, content + '\n- [ ] ' + text)
 }
 
 export async function addToProject(
