@@ -1,6 +1,7 @@
 import { Plugin } from 'obsidian'
 import { registerCommands } from './commands'
 import { InboxProcessor } from './inboxProcessor'
+import { DEFAULT_SETTINGS } from './settings'
 
 export default class GTDPlugin extends Plugin {
 	private inboxProcessor: InboxProcessor
