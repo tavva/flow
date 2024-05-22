@@ -1,39 +1,24 @@
-import { writable } from 'svelte/store'
-import { ProcessStage } from './process'
-import { openFile, countLinesInFile, countFilesInFolder } from './utils'
+import { App, TFile, TFolder } from 'obsidian'
 
-export const lineCount = writable(0)
-export const fileCount = writable(0)
-export const stage = writable(ProcessStage.Email)
-export const nextStage = writable(ProcessStage.Inbox)
+export class StateManager {
+	// TODO: pass in plugin for settings
+	private app: App
+	private inboxFile: TFile
+	private emailInboxFolder: TFolder
 
-export async function updateLineCount(plugin: any) {
-	const filePath = plugin.settings.inboxFilePath
-	const file = await openFile(filePath, plugin)
-	const count = await countLinesInFile(plugin, file)
-	lineCount.set(count)
-	determineNextStage()
-}
-
-export async function updateFileCount(plugin: any) {
-	const folderPath = plugin.settings.incomingEmailFolderPath
-	const count = await countFilesInFolder(plugin, folderPath)
-	fileCount.set(count)
-	determineNextStage()
-}
-
-export async function determineNextStage() {
-	let currentLineCount: number
-	let currentFileCount: number
-
-	lineCount.subscribe((value) => (currentLineCount = value))()
-	fileCount.subscribe((value) => (currentFileCount = value))()
-
-	if (currentLineCount > 0) {
-		nextStage.set(ProcessStage.Inbox)
-	} else if (currentFileCount > 0) {
-		nextStage.set(ProcessStage.Email)
-	} else {
-		nextStage.set(ProcessStage.Done)
+	constructor(app: App, plugin: Plugin) {
+		this.app = app
+		this.inboxFile = this.app.vault.getAbstractFileByPath(
+			'Inbox.md', // TODO: use settings
+		) as TFile
+		this.emailInboxFolder = this.app.vault.getAbstractFileByPath(
+			'EmailInbox', // TODO: use settings
+		) as TFolder
 	}
+
+	isInboxEmpty(): boolean {}
+
+	isEmailInboxEmpty(): boolean {}
+
+	startProcessing() {}
 }
