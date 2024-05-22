@@ -32,8 +32,5 @@ export default class GTDPlugin extends Plugin {
 		await this.saveData(this.settings)
 	}
 
-	onunload() {
-		console.log('Unloading GTDPlugin')
-		this.stateManager.cleanup()
-	}
+	onunload() {}
 }
