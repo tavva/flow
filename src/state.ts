@@ -9,8 +9,8 @@ import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
 
 export class StateManager {
-	// TODO: pass in plugin for settings
 	private app: App
+	private plugin: Plugin
 	private inboxFile: TFile
 	private emailInboxFolder: TFolder
 	private statusLeaf: WorkspaceLeaf
@@ -20,13 +20,12 @@ export class StateManager {
 
 	constructor(app: App, plugin: Plugin) {
 		this.app = app
-		// TODO: use settings
+		this.plugin = plugin
 		this.inboxFile = this.app.vault.getAbstractFileByPath(
-			'Inbox.md',
+			this.plugin.settings.inboxFilePath,
 		) as TFile
-		// TODO: use settings
 		this.emailInboxFolder = this.app.vault.getAbstractFileByPath(
-			'EmailInbox',
+			this.plugin.settings.emailInboxFolderPath,
 		) as TFolder
 	}
 
