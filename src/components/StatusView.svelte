@@ -2,10 +2,16 @@
 	export let inboxCount: number
 	export let emailInboxCount: number
 	export let currentStage: string
+	export let goToInbox: () => void
+	export let goToEmailInbox: () => void
 
-	function goToInbox() {}
+	function handleGoToInbox() {
+		if (inboxCount > 0) goToInbox()
+	}
 
-	function goToEmailInbox() {}
+	function handleGoToEmailInbox() {
+		if (emailInboxCount > 0) goToEmailInbox()
+	}
 </script>
 
 <div>
@@ -13,9 +19,10 @@
 	<p>Inbox lines: {inboxCount}</p>
 	<p>Email Inbox files: {emailInboxCount}</p>
 	<p>Current Stage: {currentStage}</p>
-	<button on:click={goToInbox} disabled={inboxCount === 0}>Go to Inbox</button
+	<button on:click={handleGoToInbox} disabled={inboxCount === 0}
+		>Go to Inbox</button
 	>
-	<button on:click={goToEmailInbox} disabled={emailInboxCount === 0}
+	<button on:click={handleGoToEmailInbox} disabled={emailInboxCount === 0}
 		>Go to Email Inbox</button
 	>
 </div>
