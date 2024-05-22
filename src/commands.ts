@@ -1,13 +1,10 @@
 import { Plugin } from 'obsidian'
-import { InboxProcessor } from './inboxProcessor'
+import { StateManager } from './state'
 
-export function registerCommands(
-	plugin: Plugin,
-	inboxProcessor: InboxProcessor,
-) {
+export function registerCommands(plugin: Plugin, stateManager: StateManager) {
 	plugin.addCommand({
 		id: 'process-inboxes',
 		name: 'Process Inboxes',
-		callback: () => inboxProcessor.startProcessing(),
+		callback: () => stateManager.startProcessing(),
 	})
 }
