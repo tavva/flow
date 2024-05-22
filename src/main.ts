@@ -1,16 +1,23 @@
 import { Plugin } from 'obsidian'
 import { registerCommands } from './commands'
 import { InboxProcessor } from './inboxProcessor'
-import { DEFAULT_SETTINGS } from './settings'
+import { GTDSettings, DEFAULT_SETTINGS } from './settings'
+import { GTDSettingsTab } from './settingsTab'
 
 export default class GTDPlugin extends Plugin {
 	private inboxProcessor: InboxProcessor
+	settings: GTDSettings
 
 	async onload() {
-		console.log('Loading GTDPlugin')
 		await this.loadSettings()
-		this.inboxProcessor = new InboxProcessor(this.app, this)
-		registerCommands(this, this.inboxProcessor)
+		this.addSettingTab(new GTDSettingTab(this.app, this))
+
+		const stateManager = new StateManager(this.app, this)
+		this.addCommand({
+			id: 'process-inboxes',
+			name: 'Process Inboxes',
+			callback: () => stateManager.startProcessing(),
+		})
 	}
 
 	async loadSettings() {

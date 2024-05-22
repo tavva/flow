@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian'
 import GTDPlugin from './main'
 
-class GTDSettingTab extends PluginSettingTab {
+class GTDSettingsTab extends PluginSettingTab {
 	plugin: GTDPlugin
 
 	constructor(app: App, plugin: GTDPlugin) {
@@ -56,3 +56,5 @@ class GTDSettingTab extends PluginSettingTab {
 			)
 	}
 }
+
+export default GTDSettingsTab
