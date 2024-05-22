@@ -19,11 +19,26 @@ export async function addToNextActions(plugin: Plugin, text: string) {
 export async function addToProject(
 	plugin: Plugin,
 	projectFile: TFile,
-	text: string,
+	line: string,
 ) {
-	const content = await plugin.app.vault.read(projectFile)
-	// TODO: Add line to ## Next actions section
-	await plugin.app.vault.modify(projectFile, updatedContent)
+	const fileContent = await plugin.app.vault.read(projectFile)
+
+	const nextActionsIndex = fileContent.indexOf('## Next actions')
+
+	let newContent = fileContent
+
+	if (nextActionsIndex !== -1) {
+		const insertionIndex = nextActionsIndex + '## Next actions'.length + 1
+		newContent =
+			newContent.slice(0, insertionIndex) +
+			'\n- [ ] ' +
+			line +
+			newContent.slice(insertionIndex)
+	} else {
+		newContent += '\n## Next actions\n- [ ] ' + line
+	}
+
+	await plugin.app.vault.modify(projectFile, newContent)
 }
 
 export function readFileContent(file: TFile): Promise<string> {
