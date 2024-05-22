@@ -1,16 +1,18 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 import {
-	addToNextActions,
-	addToProject,
 	readFileContent,
 	writeFileContent,
+	addToNextActions,
+	addToProject,
 } from './utils'
 import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
+import GTDPlugin from './main'
+import { ProjectSelectorModal } from './projectSelectorModal'
 
 export class StateManager {
 	private app: App
-	private plugin: Plugin
+	private plugin: GTDPlugin
 	private inboxFile: TFile
 	private emailInboxFolder: TFolder
 	private statusLeaf: WorkspaceLeaf
@@ -18,115 +20,116 @@ export class StateManager {
 	private linesToProcess: string[] = []
 	private emailFilesToProcess: TFile[] = []
 
-	constructor(app: App, plugin: Plugin) {
+	constructor(app: App, plugin: GTDPlugin) {
 		this.app = app
 		this.plugin = plugin
+	}
+
+	async startProcessing() {
 		this.inboxFile = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFilePath,
 		) as TFile
 		this.emailInboxFolder = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.emailInboxFolderPath,
 		) as TFolder
-	}
 
-	async startProcessing() {
 		await this.setupStatusView()
 
-		if (!this.isInboxEmpty()) {
-			this.currentStage = 'inbox'
-			await this.processInbox()
-		} else if (!this.isEmailInboxEmpty()) {
-			this.currentStage = 'emailInbox'
-			await this.processEmailInbox()
-		} else {
-			new Notice('Both inboxes are empty')
-		}
-	}
-
-	isInboxEmpty(): boolean {
-		// TODO: Fix this
-		return this.inboxFile.stat.size === 0
-	}
-
-	isEmailInboxEmpty(): boolean {
-		// TODO: Fix this
-		return this.emailInboxFolder.children.length === 0
-	}
-
-	private async setupStatusView() {
-		this.statusLeaf = this.app.workspace.getRightLeaf(false)
-		new StatusView({
-			target: this.statusLeaf.view.containerEl,
-			props: {
-				inboxCount: await this.getInboxLineCount(),
-				emailInboxCount: this.getEmailFileCount(),
-				currentStage: this.currentStage,
-			},
-		})
-	}
-
-	private async getInboxLineCount(): Promise<number> {
-		const content = await readFileContent(this.inboxFile)
-		this.linesToProcess = content
-			.split('\n')
-			.filter((line) => line.trim() !== '')
-		return this.linesToProcess.length
-	}
-
-	private getEmailFileCount(): number {
-		this.emailFilesToProcess = this.emailInboxFolder.children as TFile[]
-		return this.emailFilesToProcess.length
-	}
-
-	private async processInbox() {
-		if (this.linesToProcess.length === 0) {
-			if (!this.isEmailInboxEmpty()) {
+		if (await this.isInboxEmpty()) {
+			if (await this.isEmailInboxEmpty()) {
+				new Notice('Both inboxes are empty')
+				this.statusLeaf.view.containerEl.empty()
+			} else {
 				this.currentStage = 'emailInbox'
 				await this.processEmailInbox()
 			}
-			return
+		} else {
+			this.currentStage = 'inbox'
+			await this.processInbox()
 		}
+	}
 
-		const firstLine = this.linesToProcess[0]
-		this.showInboxView(firstLine)
+	private async isInboxEmpty(): Promise<boolean> {
+		if (!this.inboxFile) return true
+		const content = await readFileContent(this.app, this.inboxFile)
+		this.linesToProcess = content
+			.split('\n')
+			.filter((line) => line.trim() !== '')
+		return this.linesToProcess.length === 0
+	}
+
+	private async isEmailInboxEmpty(): Promise<boolean> {
+		if (!this.emailInboxFolder) return true
+		this.emailFilesToProcess = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => file.path.startsWith(this.emailInboxFolder.path))
+		return this.emailFilesToProcess.length === 0
+	}
+
+	private async processInbox() {
+		this.updateStatusView()
+		const inboxView = new InboxView({
+			target: this.statusLeaf.view.containerEl,
+			props: {
+				line: this.linesToProcess[0],
+				onAddToNextActions: this.handleAddToNextActions.bind(this),
+				onAddToProject: this.handleAddToProject.bind(this),
+				onTrash: this.handleTrash.bind(this),
+			},
+		})
 	}
 
 	private async processEmailInbox() {
-		if (this.emailFilesToProcess.length === 0) return
-
-		const firstFile = this.emailFilesToProcess[0]
-		const content = await readFileContent(firstFile)
-		this.showEmailView(firstFile.name, content)
-	}
-
-	private showInboxView(line: string) {
-		const mainLeaf = this.app.workspace.getActiveLeaf()
-		new InboxView({
-			target: mainLeaf.view.containerEl,
+		this.updateStatusView()
+		const emailFile = this.emailFilesToProcess[0]
+		const content = await readFileContent(this.app, emailFile)
+		const emailInboxView = new InboxView({
+			target: this.statusLeaf.view.containerEl,
 			props: {
-				line,
-				onAddToNextActions: (text: string) =>
-					this.handleAddToNextActions(text),
-				onAddToProject: (text: string) => this.handleAddToProject(text),
-				onTrash: () => this.handleTrash(),
+				line: content,
+				onAddToNextActions: this.handleAddToNextActions.bind(this),
+				onAddToProject: this.handleAddToProject.bind(this),
+				onTrash: this.handleTrash.bind(this),
 			},
 		})
 	}
 
-	private showEmailView(filename: string, content: string) {
-		const mainLeaf = this.app.workspace.getActiveLeaf()
-		new InboxView({
-			target: mainLeaf.view.containerEl,
+	private async setupStatusView() {
+		const leaf = this.app.workspace.getRightLeaf(false)
+		leaf.setViewState({ type: 'status-view' })
+		this.statusLeaf = leaf
+	}
+
+	private updateStatusView() {
+		new StatusView({
+			target: this.statusLeaf.view.containerEl,
 			props: {
-				line: '',
-				filename,
-				content,
-				onAddToNextActions: (text: string) =>
-					this.handleAddToNextActions(text),
-				onAddToProject: (text: string) => this.handleAddToProject(text),
-				onTrash: () => this.handleTrash(),
+				currentStage: this.currentStage,
+				inboxCount: this.linesToProcess.length,
+				emailInboxCount: this.emailFilesToProcess.length,
+				onNextStage: this.startProcessing.bind(this),
 			},
 		})
+	}
+
+	private removeProcessedItem() {
+		if (this.currentStage === 'inbox') {
+			this.linesToProcess.shift()
+			if (this.linesToProcess.length === 0) {
+				this.currentStage = null
+				this.startProcessing()
+			} else {
+				this.processInbox()
+			}
+		} else if (this.currentStage === 'emailInbox') {
+			this.emailFilesToProcess.shift()
+			if (this.emailFilesToProcess.length === 0) {
+				this.currentStage = null
+				this.startProcessing()
+			} else {
+				this.processEmailInbox()
+			}
+		}
 	}
 
 	private async handleAddToNextActions(text: string) {
@@ -154,15 +157,5 @@ export class StateManager {
 
 	private handleTrash() {
 		this.removeProcessedItem()
-	}
-
-	private removeProcessedItem() {
-		if (this.currentStage === 'inbox') {
-			this.linesToProcess.shift()
-			this.processInbox()
-		} else if (this.currentStage === 'emailInbox') {
-			this.emailFilesToProcess.shift()
-			this.processEmailInbox()
-		}
 	}
 }

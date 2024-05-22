@@ -1,28 +1,20 @@
 <script lang="ts">
+	export let currentStage: 'inbox' | 'emailInbox' | null
 	export let inboxCount: number
 	export let emailInboxCount: number
-	export let currentStage: string
-	export let goToInbox: () => void
-	export let goToEmailInbox: () => void
+	export let onNextStage: () => void
 
-	function handleGoToInbox() {
-		if (inboxCount > 0) goToInbox()
-	}
-
-	function handleGoToEmailInbox() {
-		if (emailInboxCount > 0) goToEmailInbox()
+	function nextStage() {
+		onNextStage()
 	}
 </script>
 
 <div>
-	<h3>Processing Status</h3>
-	<p>Inbox lines: {inboxCount}</p>
-	<p>Email Inbox files: {emailInboxCount}</p>
+	<h2>Status</h2>
 	<p>Current Stage: {currentStage}</p>
-	<button on:click={handleGoToInbox} disabled={inboxCount === 0}
-		>Go to Inbox</button
-	>
-	<button on:click={handleGoToEmailInbox} disabled={emailInboxCount === 0}
-		>Go to Email Inbox</button
-	>
+	<p>Inbox Count: {inboxCount}</p>
+	<p>Email Inbox Count: {emailInboxCount}</p>
+	{#if currentStage === null}
+		<button on:click={nextStage}>Start Processing</button>
+	{/if}
 </div>
