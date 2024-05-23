@@ -14,6 +14,11 @@ import { ProjectNameModal } from './projectNameModal'
 import { STATUS_VIEW_TYPE } from './views/status'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
+export enum Stage {
+	Inbox,
+	EmailInbox,
+}
+
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
@@ -21,7 +26,7 @@ export class StateManager {
 	private emailInboxFolder: TFolder | null = null
 	private statusLeaf: WorkspaceLeaf | null = null
 	private mainLeaf: WorkspaceLeaf | null = null
-	private currentStage: 'inbox' | 'emailInbox' | null = null
+	private currentStage: Stage.Inbox | Stage.EmailInbox | null = null
 	private linesToProcess: string[] = []
 	private emailFilesToProcess: TFile[] = []
 
@@ -57,11 +62,11 @@ export class StateManager {
 				new Notice('Both inboxes are empty')
 				if (this.statusLeaf) this.statusLeaf.view.containerEl.empty()
 			} else {
-				this.currentStage = 'emailInbox'
+				this.currentStage = Stage.EmailInbox
 				await this.processEmailInbox()
 			}
 		} else {
-			this.currentStage = 'inbox'
+			this.currentStage = Stage.Inbox
 			await this.processInbox()
 		}
 	}
@@ -85,11 +90,12 @@ export class StateManager {
 
 	private async processInbox() {
 		await this.updateStatusView()
-		await this.setupProcessingView()
-		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
+		const view = await this.setupProcessingView()
+
 		if (view) {
 			view.setProps({
 				line: this.linesToProcess[0],
+				currentStage: this.currentStage,
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
 				onAddToNewProject: this.handleAddToNewProject.bind(this),
@@ -105,10 +111,11 @@ export class StateManager {
 
 	private async processEmailInbox() {
 		await this.updateStatusView()
-		await this.setupProcessingView()
+		console.log("we're processing the email inbox")
+		const view = await this.setupProcessingView()
+		console.log('we got a view!', view)
 		const emailFile = this.emailFilesToProcess[0]
 		const content = await readFileContent(emailFile)
-		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
 		if (view) {
 			view.setProps({
 				line: content,
@@ -159,20 +166,31 @@ export class StateManager {
 		}
 	}
 
-	private async setupProcessingView() {
-		const existingLeaf =
+	private async setupProcessingView(): Promise<ProcessingView | undefined> {
+		console.log('Setting up processing view')
+		const existingLeaves =
 			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
-		if (existingLeaf.length) {
-			this.processingLeaf = existingLeaf[0]
-			console.log('Reusing existing ProcessingView')
+
+		if (existingLeaves.length > 0) {
+			console.log('Reusing existing processing leaf')
+			this.processingLeaf = existingLeaves[0]
 		} else {
+			console.log('Creating new processing leaf')
 			const leaf = this.app.workspace.getLeaf(false)
 			await leaf.setViewState({
 				type: PROCESSING_VIEW_TYPE,
 				active: true,
 			})
 			this.processingLeaf = leaf
-			console.log('Created new ProcessingView')
+		}
+
+		const view = this.processingLeaf.view as ProcessingView
+		if (view.getViewType() === PROCESSING_VIEW_TYPE) {
+			console.log('ProcessingView found:', view)
+			return view
+		} else {
+			console.error('ProcessingView not found')
+			return undefined
 		}
 	}
 
@@ -184,14 +202,14 @@ export class StateManager {
 	}
 
 	private async removeProcessedItem() {
-		if (this.currentStage === 'inbox') {
+		if (this.currentStage === Stage.Inbox) {
 			const processedLine = this.linesToProcess.shift()
 			if (this.linesToProcess.length === 0) {
 				this.currentStage = null
 			}
 			await this.updateInboxFile(processedLine)
 			this.startProcessing()
-		} else if (this.currentStage === 'emailInbox') {
+		} else if (this.currentStage === Stage.EmailInbox) {
 			const processedFile = this.emailFilesToProcess.shift()
 			if (this.emailFilesToProcess.length === 0) {
 				this.currentStage = null
@@ -311,5 +329,3 @@ export class StateManager {
 		this.removeProcessedItem()
 	}
 }
-
-export default StateManager

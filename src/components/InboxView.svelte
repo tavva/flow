@@ -1,13 +1,20 @@
 <script lang="ts">
+	import { Stage } from '../state'
+
 	export let line: string
+	export let currentStage: Stage
 	export let onAddToNextActions: (text: string) => void
 	export let onAddToProject: (text: string) => void
 	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
 
-	let inputText: string = line
-	$: inputText = line
+	let inputText: string = currentStage === Stage.Inbox ? line : ''
+	$: if (currentStage === Stage.Inbox) {
+		inputText = line
+	} else if (currentStage === Stage.EmailInbox) {
+		inputText = ''
+	}
 
 	function addToNextActions() {
 		if (inputText.trim() !== '') onAddToNextActions(inputText)
