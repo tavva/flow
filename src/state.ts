@@ -56,6 +56,7 @@ export class StateManager {
 		}
 
 		await this.setupStatusView()
+		await this.updateStatusView()
 
 		if (await this.isInboxEmpty()) {
 			if (await this.isEmailInboxEmpty()) {
@@ -73,18 +74,11 @@ export class StateManager {
 
 	private async isInboxEmpty(): Promise<boolean> {
 		if (!this.inboxFile) return true
-		const content = await readFileContent(this.inboxFile)
-		this.linesToProcess = content
-			.split('\n')
-			.filter((line) => line.trim() !== '')
 		return this.linesToProcess.length === 0
 	}
 
 	private async isEmailInboxEmpty(): Promise<boolean> {
 		if (!this.emailInboxFolder) return true
-		this.emailFilesToProcess = this.app.vault
-			.getMarkdownFiles()
-			.filter((file) => file.path.startsWith(this.emailInboxFolder.path))
 		return this.emailFilesToProcess.length === 0
 	}
 
@@ -147,6 +141,14 @@ export class StateManager {
 	}
 
 	private async updateStatusView() {
+		this.emailFilesToProcess = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => file.path.startsWith(this.emailInboxFolder.path))
+		const content = await readFileContent(this.inboxFile)
+		this.linesToProcess = content
+			.split('\n')
+			.filter((line) => line.trim() !== '')
+
 		if (this.statusLeaf) {
 			const view = this.statusLeaf.view as StatusView
 			if (view.getViewType() === STATUS_VIEW_TYPE) {
