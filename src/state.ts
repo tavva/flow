@@ -111,9 +111,7 @@ export class StateManager {
 
 	private async processEmailInbox() {
 		await this.updateStatusView()
-		console.log("we're processing the email inbox")
 		const view = await this.setupProcessingView()
-		console.log('we got a view!', view)
 		const emailFile = this.emailFilesToProcess[0]
 		const content = await readFileContent(emailFile)
 		if (view) {
@@ -167,15 +165,12 @@ export class StateManager {
 	}
 
 	private async setupProcessingView(): Promise<ProcessingView | undefined> {
-		console.log('Setting up processing view')
 		const existingLeaves =
 			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
 
 		if (existingLeaves.length > 0) {
-			console.log('Reusing existing processing leaf')
 			this.processingLeaf = existingLeaves[0]
 		} else {
-			console.log('Creating new processing leaf')
 			const leaf = this.app.workspace.getLeaf(false)
 			await leaf.setViewState({
 				type: PROCESSING_VIEW_TYPE,
@@ -186,7 +181,6 @@ export class StateManager {
 
 		const view = this.processingLeaf.view as ProcessingView
 		if (view.getViewType() === PROCESSING_VIEW_TYPE) {
-			console.log('ProcessingView found:', view)
 			return view
 		} else {
 			console.error('ProcessingView not found')
@@ -235,7 +229,6 @@ export class StateManager {
 			) {
 				const updatedContent = currentLines.slice(1).join('\n')
 				await this.app.vault.modify(this.inboxFile, updatedContent)
-				console.log('Inbox file updated')
 			} else {
 				console.log('processedLine:', processedLine)
 				console.log('currentLines[0]:', currentLines[0])
@@ -248,7 +241,6 @@ export class StateManager {
 
 	private async deleteEmailFile(file: TFile) {
 		await this.app.vault.delete(file)
-		console.log('Email file deleted:', file.path)
 	}
 
 	private async handleAddToNextActions(text: string) {
