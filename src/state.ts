@@ -10,6 +10,7 @@ import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
 import FlowPlugin from './main'
 import { ProjectSelectorModal } from './projectSelectorModal'
+import { ProjectNameModal } from './projectNameModal'
 import { STATUS_VIEW_TYPE } from './views/status'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
@@ -251,36 +252,58 @@ export class StateManager {
 	}
 
 	private async handleAddToNewProject(text: string) {
-		const projectName = prompt('Enter the project name:')
-		if (!projectName) {
-			// TODO
-		}
-		const templateContent = await this.getTemplateContent()
-		const newProjectContent = templateContent.replace(
-			'## Next actions',
-			`## Next actions\n- ${text}`,
-		)
-		const newProjectFile = await this.createNewProjectFile(
-			projectName,
-			newProjectContent,
-		)
-		await addToProject(this.plugin, newProjectFile, text)
-		this.removeProcessedItem()
+		new ProjectNameModal(this.app, async (projectName: string) => {
+			const templateContent = await this.getTemplateContent()
+			const newProjectFile = await this.createNewProjectFile(
+				projectName,
+				templateContent,
+			)
+			await this.runThroughTemplater(newProjectFile)
+			await addToProject(this.plugin, newProjectFile, text)
+			this.removeProcessedItem()
+		}).open()
 	}
 
 	private async getTemplateContent(): Promise<string> {
-		const templatePath = this.plugin.settings.projectTemplatePath
+		const templatePath = this.plugin.settings.newProjectTemplateFilePath
 		const templateFile = this.app.vault.getAbstractFileByPath(
 			templatePath,
 		) as TFile
 		return templateFile ? await this.app.vault.read(templateFile) : ''
 	}
 
+	private async runThroughTemplater(file: TFile): Promise<void> {
+		const templaterPlugin = this.app.plugins.plugins['templater-obsidian']
+		if (templaterPlugin) {
+			// We replicate RunMode from the Templater plugin, but with
+			// the only mode we need here
+			enum RunMode {
+				CreateNewFromTemplate,
+			}
+
+			const templater = templaterPlugin.templater
+			const config = templater.create_running_config(
+				undefined,
+				file,
+				RunMode.CreateNewFromTemplate,
+			)
+
+			const fileContent = await this.app.vault.read(file)
+
+			const outputContent = await templater.parse_template(
+				config,
+				fileContent,
+			)
+			await this.app.vault.modify(file, outputContent)
+		}
+	}
+
 	private async createNewProjectFile(
 		projectName: string,
 		content: string,
 	): Promise<TFile> {
-		const newPath = `Projects/${projectName}.md`
+		const projectsFolder = this.plugin.settings.projectsFolderPath
+		const newPath = `${projectsFolder}/${projectName}.md`
 		return await this.app.vault.create(newPath, content)
 	}
 

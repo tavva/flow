@@ -54,5 +54,31 @@ export class FlowSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings()
 					}),
 			)
+
+		new Setting(containerEl)
+			.setName('New Project Template File Path')
+			.setDesc('Path to the New Project Template File')
+			.addText((text) =>
+				text
+					.setPlaceholder('Enter path to New Project Template file')
+					.setValue(this.plugin.settings.newProjectTemplateFilePath)
+					.onChange(async (value) => {
+						this.plugin.settings.newProjectTemplateFilePath = value
+						await this.plugin.saveSettings()
+					}),
+			)
+
+		new Setting(containerEl)
+			.setName('Projects Folder Path')
+			.setDesc('Path to the Projects Folder')
+			.addText((text) =>
+				text
+					.setPlaceholder('Enter path to Projects Folder')
+					.setValue(this.plugin.settings.projectsFolderPath)
+					.onChange(async (value) => {
+						this.plugin.settings.projectsFolderPath = value
+						await this.plugin.saveSettings()
+					}),
+			)
 	}
 }
