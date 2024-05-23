@@ -21,7 +21,7 @@
 	}
 </script>
 
-<div>
+<div class="flow-processing">
 	{#if isProcessingComplete}
 		<div>
 			<h3>Processing Complete</h3>
