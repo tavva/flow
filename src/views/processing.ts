@@ -15,7 +15,7 @@ export class ProcessingView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'GTD Processing View'
+		return 'Flow Processing View'
 	}
 
 	async onOpen() {

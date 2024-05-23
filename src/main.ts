@@ -1,18 +1,18 @@
 import { Plugin } from 'obsidian'
 import { registerCommands } from './commands'
 import { StateManager } from './state'
-import { GTDSettings, DEFAULT_SETTINGS } from './settings'
-import { GTDSettingsTab } from './settingsTab'
+import { FlowSettings, DEFAULT_SETTINGS } from './settings'
+import { FlowSettingsTab } from './settingsTab'
 import { StatusView, STATUS_VIEW_TYPE } from './views/status'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 
-export default class GTDPlugin extends Plugin {
+export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
-	settings: GTDSettings
+	settings: FlowSettings
 
 	async onload() {
 		await this.loadSettings()
-		this.addSettingTab(new GTDSettingsTab(this.app, this))
+		this.addSettingTab(new FlowSettingsTab(this.app, this))
 
 		this.registerView(STATUS_VIEW_TYPE, (leaf) => new StatusView(leaf))
 		this.registerView(

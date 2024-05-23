@@ -8,14 +8,14 @@ import {
 } from './utils'
 import InboxView from './components/InboxView.svelte'
 import StatusView from './components/StatusView.svelte'
-import GTDPlugin from './main'
+import FlowPlugin from './main'
 import { ProjectSelectorModal } from './projectSelectorModal'
 import { STATUS_VIEW_TYPE } from './views/status'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export class StateManager {
 	private app: App
-	private plugin: GTDPlugin
+	private plugin: FlowPlugin
 	private inboxFile: TFile | null = null
 	private emailInboxFolder: TFolder | null = null
 	private statusLeaf: WorkspaceLeaf | null = null
@@ -24,7 +24,7 @@ export class StateManager {
 	private linesToProcess: string[] = []
 	private emailFilesToProcess: TFile[] = []
 
-	constructor(app: App, plugin: GTDPlugin) {
+	constructor(app: App, plugin: FlowPlugin) {
 		this.app = app
 		this.plugin = plugin
 	}

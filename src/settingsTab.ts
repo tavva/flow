@@ -1,10 +1,10 @@
 import { App, PluginSettingTab, Setting } from 'obsidian'
-import GTDPlugin from './main'
+import FlowPlugin from './main'
 
-export class GTDSettingsTab extends PluginSettingTab {
-	plugin: GTDPlugin
+export class FlowSettingsTab extends PluginSettingTab {
+	plugin: FlowPlugin
 
-	constructor(app: App, plugin: GTDPlugin) {
+	constructor(app: App, plugin: FlowPlugin) {
 		super(app, plugin)
 		this.plugin = plugin
 	}
@@ -14,7 +14,7 @@ export class GTDSettingsTab extends PluginSettingTab {
 
 		containerEl.empty()
 
-		containerEl.createEl('h2', { text: 'GTD Plugin Settings' })
+		containerEl.createEl('h2', { text: 'Flow Plugin Settings' })
 
 		new Setting(containerEl)
 			.setName('Inbox File Path')

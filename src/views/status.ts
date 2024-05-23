@@ -15,7 +15,7 @@ export class StatusView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'GTD Status View'
+		return 'Flow Status View'
 	}
 
 	async onOpen() {

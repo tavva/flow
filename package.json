@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-gtd",
+	"name": "Flow",
 	"version": "1.0.0",
-	"description": "A GTD plugin for Obsidian",
+	"description": "Flow, inspired by David Allen's Getting Things Done (GTD), is a way of managing everything in your life so you focus on what's important.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
