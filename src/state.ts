@@ -91,6 +91,7 @@ export class StateManager {
 				line: this.linesToProcess[0],
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
+				onAddToNewProject: this.handleAddToNewProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
@@ -112,6 +113,7 @@ export class StateManager {
 				line: content,
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
+				onAddToNewProject: this.handleAddToNewProject.bind(this),
 				onTrash: this.handleTrash.bind(this),
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
@@ -246,6 +248,40 @@ export class StateManager {
 				this.removeProcessedItem()
 			},
 		).open()
+	}
+
+	private async handleAddToNewProject(text: string) {
+		const projectName = prompt('Enter the project name:')
+		if (!projectName) {
+			// TODO
+		}
+		const templateContent = await this.getTemplateContent()
+		const newProjectContent = templateContent.replace(
+			'## Next actions',
+			`## Next actions\n- ${text}`,
+		)
+		const newProjectFile = await this.createNewProjectFile(
+			projectName,
+			newProjectContent,
+		)
+		await addToProject(this.plugin, newProjectFile, text)
+		this.removeProcessedItem()
+	}
+
+	private async getTemplateContent(): Promise<string> {
+		const templatePath = this.plugin.settings.projectTemplatePath
+		const templateFile = this.app.vault.getAbstractFileByPath(
+			templatePath,
+		) as TFile
+		return templateFile ? await this.app.vault.read(templateFile) : ''
+	}
+
+	private async createNewProjectFile(
+		projectName: string,
+		content: string,
+	): Promise<TFile> {
+		const newPath = `Projects/${projectName}.md`
+		return await this.app.vault.create(newPath, content)
 	}
 
 	private handleTrash() {

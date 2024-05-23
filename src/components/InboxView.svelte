@@ -2,6 +2,7 @@
 	export let line: string
 	export let onAddToNextActions: (text: string) => void
 	export let onAddToProject: (text: string) => void
+	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
 
@@ -14,6 +15,10 @@
 
 	function addToProject() {
 		if (inputText.trim() !== '') onAddToProject(inputText)
+	}
+
+	function addToNewProject() {
+		if (inputText.trim() !== '') onAddToNewProject(inputText)
 	}
 
 	function trash() {
@@ -31,6 +36,7 @@
 		<textarea bind:value={inputText}></textarea>
 		<button on:click={addToNextActions}>Add to Next Actions</button>
 		<button on:click={addToProject}>Add to Project</button>
+		<button on:click={addToNewProject}>Add to New Project</button>
 		<button on:click={trash}>Trash</button>
 		<div>
 			<h3>Currently processing:</h3>
