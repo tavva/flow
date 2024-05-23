@@ -80,5 +80,18 @@ export class FlowSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings()
 					}),
 			)
+
+		new Setting(containerEl)
+			.setName('Append to task')
+			.setDesc('Text (such as a #tag) to append to tasks')
+			.addText((text) =>
+				text
+					.setPlaceholder('Enter text to append to tasks')
+					.setValue(this.plugin.settings.appendTask)
+					.onChange(async (value) => {
+						this.plugin.settings.appendTask = value
+						await this.plugin.saveSettings()
+					}),
+			)
 	}
 }

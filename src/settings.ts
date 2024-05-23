@@ -4,6 +4,7 @@ export interface FlowSettings {
 	nextActionsFilePath: string
 	newProjectTemplateFilePath: string
 	projectsFolderPath: string
+	appendTask: string
 }
 
 export const DEFAULT_SETTINGS: FlowSettings = {
@@ -12,4 +13,5 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 	nextActionsFilePath: 'NextActions.md',
 	newProjectTemplateFilePath: 'Templates/Project.md',
 	projectsFolderPath: 'Projects',
+	appendTask: '',
 }

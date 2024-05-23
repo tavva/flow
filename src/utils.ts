@@ -13,7 +13,10 @@ export async function addToNextActions(plugin: Plugin, text: string) {
 	}
 
 	const content = await plugin.app.vault.read(nextActionsFile)
-	await plugin.app.vault.modify(nextActionsFile, content + '\n- [ ] ' + text)
+	await plugin.app.vault.modify(
+		nextActionsFile,
+		content + '\n- [ ] ' + text + ' ' + plugin.settings.appendTask,
+	)
 }
 
 export async function addToProject(
@@ -35,7 +38,11 @@ export async function addToProject(
 			line +
 			newContent.slice(insertionIndex)
 	} else {
-		newContent += '\n## Next actions\n- [ ] ' + line
+		newContent +=
+			'\n## Next actions\n- [ ] ' +
+			line +
+			' ' +
+			plugin.settings.appendTask
 	}
 
 	await plugin.app.vault.modify(projectFile, newContent)
