@@ -172,6 +172,7 @@ export class StateManager {
 
 		if (existingLeaves.length > 0) {
 			this.processingLeaf = existingLeaves[0]
+			await this.app.workspace.revealLeaf(this.processingLeaf)
 		} else {
 			const leaf = this.app.workspace.getLeaf(false)
 			await leaf.setViewState({
