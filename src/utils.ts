@@ -1,6 +1,7 @@
 import { TFile } from 'obsidian'
 
 export async function addToNextActions(plugin: Plugin, text: string) {
+	text = text.trim()
 	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
 		plugin.settings.nextActionsFilePath,
 	) as TFile
@@ -24,25 +25,28 @@ export async function addToProject(
 	projectFile: TFile,
 	line: string,
 ) {
+	line = line.trim()
 	const fileContent = await plugin.app.vault.read(projectFile)
 
 	const nextActionsIndex = fileContent.indexOf('## Next actions')
 
 	let newContent = fileContent
 
+	const taskLine = '\n- [ ] ' + line
+
+	if (plugin.settings.appendTask) {
+		taskLine.concat(' ' + plugin.settings.appendTask)
+	}
+
 	if (nextActionsIndex !== -1) {
 		const insertionIndex = nextActionsIndex + '## Next actions'.length + 1
 		newContent =
 			newContent.slice(0, insertionIndex) +
-			'\n- [ ] ' +
-			line +
+			taskLine +
 			newContent.slice(insertionIndex)
 	} else {
 		newContent +=
-			'\n## Next actions\n- [ ] ' +
-			line +
-			' ' +
-			plugin.settings.appendTask
+			'\n## Next actions' + taskLine + ' ' + plugin.settings.appendTask
 	}
 
 	await plugin.app.vault.modify(projectFile, newContent)
