@@ -18,6 +18,8 @@ export async function addToNextActions(plugin: Plugin, text: string) {
 	if (plugin.settings.appendTask) {
 		content.concat(' ' + plugin.settings.appendTask)
 	}
+	content.concat('\n')
+
 	await plugin.app.vault.modify(nextActionsFile, content)
 }
 
@@ -38,6 +40,8 @@ export async function addToProject(
 	if (plugin.settings.appendTask) {
 		taskLine.concat(' ' + plugin.settings.appendTask)
 	}
+
+	taskLine.concat('\n')
 
 	if (nextActionsIndex !== -1) {
 		const insertionIndex = nextActionsIndex + '## Next actions'.length + 1
