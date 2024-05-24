@@ -61,6 +61,7 @@ export class StateManager {
 		if (await this.isInboxEmpty()) {
 			if (await this.isEmailInboxEmpty()) {
 				new Notice('Both inboxes are empty')
+				await this.completeProcessing()
 				if (this.statusLeaf) this.statusLeaf.view.containerEl.empty()
 			} else {
 				this.currentStage = Stage.EmailInbox
@@ -80,6 +81,19 @@ export class StateManager {
 	private async isEmailInboxEmpty(): Promise<boolean> {
 		if (!this.emailInboxFolder) return true
 		return this.emailFilesToProcess.length === 0
+	}
+
+	private async completeProcessing(): Promise<void> {
+		await this.updateStatusView()
+		const view = await this.setupProcessingView()
+
+		if (view) {
+			view.setProps({
+				isProcessingComplete: true,
+			})
+		} else {
+			console.error('ProcessingView not found')
+		}
 	}
 
 	private async processInbox() {
@@ -106,8 +120,12 @@ export class StateManager {
 	private async processEmailInbox() {
 		await this.updateStatusView()
 		const view = await this.setupProcessingView()
-		const emailFile = this.emailFilesToProcess[0]
-		const content = await readFileContent(emailFile)
+
+		if (this.emailFilesToProcess.length > 0) {
+			const emailFile = this.emailFilesToProcess[0]
+			const content = await readFileContent(emailFile)
+		}
+
 		if (view) {
 			view.setProps({
 				line: content,
@@ -140,7 +158,7 @@ export class StateManager {
 		this.updateStatusView()
 	}
 
-	private async updateStatusView() {
+	private async updateCounts() {
 		this.emailFilesToProcess = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.emailInboxFolder.path))
@@ -148,6 +166,10 @@ export class StateManager {
 		this.linesToProcess = content
 			.split('\n')
 			.filter((line) => line.trim() !== '')
+	}
+
+	private async updateStatusView() {
+		this.updateCounts()
 
 		if (this.statusLeaf) {
 			const view = this.statusLeaf.view as StatusView
