@@ -10,10 +10,10 @@
 </script>
 
 <div>
-	<h2>Status</h2>
-	<p>Current Stage: {currentStage}</p>
-	<p>Inbox Count: {inboxCount}</p>
-	<p>Email Inbox Count: {emailInboxCount}</p>
+	<h2>Flow inbox status</h2>
+	<p>Stage: {currentStage}</p>
+	<p>Inbox count: {inboxCount}</p>
+	<p>Folder count: {emailInboxCount}</p>
 	{#if currentStage === null}
 		<button on:click={nextStage}>Start Processing</button>
 	{/if}
