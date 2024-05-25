@@ -14,8 +14,6 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		containerEl.empty()
 
-		containerEl.createEl('h2', { text: 'Flow Plugin Settings' })
-
 		new Setting(containerEl)
 			.setName('Inbox File Path')
 			.setDesc('Path to the Inbox file')
