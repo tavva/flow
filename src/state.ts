@@ -13,20 +13,20 @@ import { ProjectNameModal } from './projectNameModal'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export enum Stage {
-	Inbox,
-	EmailInbox,
+	File = 'file',
+	Folder = 'folder',
 }
 
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
 	private inboxFile: TFile | null = null
-	private emailInboxFolder: TFolder | null = null
+	private inboxFolder: TFolder | null = null
 	private statusLeaf: WorkspaceLeaf | null = null
 	private mainLeaf: WorkspaceLeaf | null = null
-	private currentStage: Stage.Inbox | Stage.EmailInbox | null = null
+	private currentStage: Stage.File | Stage.Folder | null = null
 	private linesToProcess: string[] = []
-	private emailFilesToProcess: TFile[] = []
+	private filesToProcess: TFile[] = []
 
 	constructor(app: App, plugin: FlowPlugin) {
 		this.app = app
@@ -37,8 +37,8 @@ export class StateManager {
 		this.inboxFile = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFilePath,
 		) as TFile
-		this.emailInboxFolder = this.app.vault.getAbstractFileByPath(
-			this.plugin.settings.emailInboxFolderPath,
+		this.inboxFolder = this.app.vault.getAbstractFileByPath(
+			this.plugin.settings.inboxFolderPath,
 		) as TFolder
 
 		if (!this.inboxFile) {
@@ -46,38 +46,36 @@ export class StateManager {
 			return
 		}
 
-		if (!this.emailInboxFolder) {
-			new Notice(
-				'Email Inbox folder not found. Please check your settings.',
-			)
+		if (!this.inboxFolder) {
+			new Notice('Inbox folder not found. Please check your settings.')
 			return
 		}
 
 		await this.updateCounts()
 
-		if (await this.isInboxEmpty()) {
-			if (await this.isEmailInboxEmpty()) {
+		if (await this.isInboxFileEmpty()) {
+			if (await this.isFolderInboxEmpty()) {
 				new Notice('Both inboxes are empty')
 				await this.completeProcessing()
 				if (this.statusLeaf) this.statusLeaf.view.containerEl.empty()
 			} else {
-				this.currentStage = Stage.EmailInbox
-				await this.processEmailInbox()
+				this.currentStage = Stage.Folder
+				await this.processFolder()
 			}
 		} else {
-			this.currentStage = Stage.Inbox
+			this.currentStage = Stage.File
 			await this.processInbox()
 		}
 	}
 
-	private async isInboxEmpty(): Promise<boolean> {
+	private async isInboxFileEmpty(): Promise<boolean> {
 		if (!this.inboxFile) return true
 		return this.linesToProcess.length === 0
 	}
 
-	private async isEmailInboxEmpty(): Promise<boolean> {
-		if (!this.emailInboxFolder) return true
-		return this.emailFilesToProcess.length === 0
+	private async isFolderInboxEmpty(): Promise<boolean> {
+		if (!this.inboxFolder) return true
+		return this.filesToProcess.length === 0
 	}
 
 	private async completeProcessing(): Promise<void> {
@@ -107,21 +105,21 @@ export class StateManager {
 				onTrash: this.handleTrash.bind(this),
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
-					this.emailFilesToProcess.length === 0,
+					this.filesToProcess.length === 0,
 			})
 		} else {
 			console.error('ProcessingView not found')
 		}
 	}
 
-	private async processEmailInbox() {
+	private async processFolder() {
 		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 		let content = null
 
-		if (this.emailFilesToProcess.length > 0) {
-			const emailFile = this.emailFilesToProcess[0]
-			content = await readFileContent(emailFile)
+		if (this.filesToProcess.length > 0) {
+			const file = this.filesToProcess[0]
+			content = await readFileContent(file)
 		}
 
 		if (view) {
@@ -133,7 +131,7 @@ export class StateManager {
 				onTrash: this.handleTrash.bind(this),
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
-					this.emailFilesToProcess.length === 0,
+					this.filesToProcess.length === 0,
 			})
 		} else {
 			console.error('ProcessingView not found')
@@ -141,9 +139,9 @@ export class StateManager {
 	}
 
 	private async updateCounts() {
-		this.emailFilesToProcess = this.app.vault
+		this.filesToProcess = this.app.vault
 			.getMarkdownFiles()
-			.filter((file) => file.path.startsWith(this.emailInboxFolder.path))
+			.filter((file) => file.path.startsWith(this.inboxFolder.path))
 		const content = await readFileContent(this.inboxFile)
 		this.linesToProcess = content
 			.split('\n')
@@ -156,8 +154,8 @@ export class StateManager {
 		const view = await this.setupOrGetProcessingView()
 		view.setProps({
 			currentStage: this.currentStage,
-			inboxCount: this.linesToProcess.length,
-			emailInboxCount: this.emailFilesToProcess.length,
+			lineCount: this.linesToProcess.length,
+			fileCount: this.filesToProcess.length,
 		})
 	}
 
@@ -196,20 +194,20 @@ export class StateManager {
 	}
 
 	private async removeProcessedItem() {
-		if (this.currentStage === Stage.Inbox) {
+		if (this.currentStage === Stage.File) {
 			const processedLine = this.linesToProcess.shift()
 			if (this.linesToProcess.length === 0) {
 				this.currentStage = null
 			}
 			await this.updateInboxFile(processedLine)
 			this.startProcessing()
-		} else if (this.currentStage === Stage.EmailInbox) {
-			const processedFile = this.emailFilesToProcess.shift()
-			if (this.emailFilesToProcess.length === 0) {
+		} else if (this.currentStage === Stage.Folder) {
+			const processedFile = this.filesToProcess.shift()
+			if (this.filesToProcess.length === 0) {
 				this.currentStage = null
 			}
 			if (processedFile) {
-				await this.deleteEmailFile(processedFile)
+				await this.deleteFolderFile(processedFile)
 			}
 			this.startProcessing()
 		}
@@ -239,7 +237,7 @@ export class StateManager {
 		}
 	}
 
-	private async deleteEmailFile(file: TFile) {
+	private async deleteFolderFile(file: TFile) {
 		await this.app.vault.delete(file)
 	}
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Stage } from '../state'
 
-	export let inboxCount: number
-	export let emailInboxCount: number
+	export let lineCount: number
+	export let fileCount: number
 
 	export let line: string
 	export let currentStage: Stage
@@ -12,10 +12,10 @@
 	export let onTrash: () => void
 	export let isProcessingComplete: false
 
-	let inputText: string = currentStage === Stage.Inbox ? line : ''
-	$: if (currentStage === Stage.Inbox) {
+	let inputText: string = currentStage === Stage.File ? line : ''
+	$: if (currentStage === Stage.File) {
 		inputText = line
-	} else if (currentStage === Stage.EmailInbox) {
+	} else if (currentStage === Stage.Folder) {
 		inputText = ''
 	}
 
@@ -40,8 +40,9 @@
 	<div class="flow-status">
 		<h2>Flow status</h2>
 		<p>Stage: {currentStage}</p>
-		<p>Inbox count: {inboxCount}</p>
-		<p>Folder count: {emailInboxCount}</p>
+		<h3>Inbox counts</h3>
+		<p>Lines to process: {lineCount}</p>
+		<p>Files to process: {fileCount}</p>
 	</div>
 {/if}
 

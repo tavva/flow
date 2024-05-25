@@ -28,14 +28,14 @@ export class FlowSettingsTab extends PluginSettingTab {
 			)
 
 		new Setting(containerEl)
-			.setName('Email Inbox Folder Path')
-			.setDesc('Path to the Email Inbox folder')
+			.setName('Inbox Folder Path')
+			.setDesc('Path to the Inbox folder')
 			.addText((text) =>
 				text
-					.setPlaceholder('Enter path to Email Inbox folder')
-					.setValue(this.plugin.settings.emailInboxFolderPath)
+					.setPlaceholder('Enter path to Inbox folder')
+					.setValue(this.plugin.settings.inboxFolderPath)
 					.onChange(async (value) => {
-						this.plugin.settings.emailInboxFolderPath = value
+						this.plugin.settings.inboxFolderPath = value
 						await this.plugin.saveSettings()
 					}),
 			)
