@@ -120,10 +120,11 @@ export class StateManager {
 	private async processEmailInbox() {
 		await this.updateStatusView()
 		const view = await this.setupProcessingView()
+		let content = null
 
 		if (this.emailFilesToProcess.length > 0) {
 			const emailFile = this.emailFilesToProcess[0]
-			const content = await readFileContent(emailFile)
+			content = await readFileContent(emailFile)
 		}
 
 		if (view) {
