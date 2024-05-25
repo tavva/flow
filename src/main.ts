@@ -1,8 +1,8 @@
 import { Plugin } from 'obsidian'
 import { registerCommands } from './commands'
 import { StateManager } from './state'
-import { FlowSettings, DEFAULT_SETTINGS } from './settings'
-import { FlowSettingsTab } from './settingsTab'
+import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
+import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 
 export default class FlowPlugin extends Plugin {
