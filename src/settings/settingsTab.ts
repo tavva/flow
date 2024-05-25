@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian'
-import FlowPlugin from './main'
+import FlowPlugin from '../main'
 
 export class FlowSettingsTab extends PluginSettingTab {
 	plugin: FlowPlugin
