@@ -1,4 +1,4 @@
-import { TFile } from 'obsidian'
+import { TFile, TFolder, Vault, normalizePath } from 'obsidian'
 
 export async function addToNextActions(plugin: Plugin, text: string) {
 	text = text.trim()
@@ -84,4 +84,35 @@ export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
 
 		return tags.some((tag) => tag.startsWith(prefix))
 	})
+}
+
+export function resolveTFolder(folder_str: string): TFolder {
+	folder_str = normalizePath(folder_str)
+
+	const folder = app.vault.getAbstractFileByPath(folder_str)
+	if (!folder) {
+		throw new TemplaterError(`Folder "${folder_str}" doesn't exist`)
+	}
+	if (!(folder instanceof TFolder)) {
+		throw new TemplaterError(`${folder_str} is a file, not a folder`)
+	}
+
+	return folder
+}
+
+export function getTFilesFromFolder(folder_str: string): Array<TFile> {
+	const folder = resolveTFolder(folder_str)
+
+	const files: Array<TFile> = []
+	Vault.recurseChildren(folder, (file: TAbstractFile) => {
+		if (file instanceof TFile) {
+			files.push(file)
+		}
+	})
+
+	files.sort((a, b) => {
+		return a.basename.localeCompare(b.basename)
+	})
+
+	return files
 }
