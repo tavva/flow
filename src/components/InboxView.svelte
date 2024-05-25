@@ -36,12 +36,14 @@
 	}
 </script>
 
-<div class="flow-status">
-	<h2>Flow status</h2>
-	<p>Stage: {currentStage}</p>
-	<p>Inbox count: {inboxCount}</p>
-	<p>Folder count: {emailInboxCount}</p>
-</div>
+{#if !isProcessingComplete}
+	<div class="flow-status">
+		<h2>Flow status</h2>
+		<p>Stage: {currentStage}</p>
+		<p>Inbox count: {inboxCount}</p>
+		<p>Folder count: {emailInboxCount}</p>
+	</div>
+{/if}
 
 <div class="flow-processing">
 	{#if isProcessingComplete}
