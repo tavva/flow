@@ -7,11 +7,9 @@ import {
 	getFilesWithTagPrefix,
 } from './utils'
 import InboxView from './components/InboxView.svelte'
-import StatusView from './components/StatusView.svelte'
 import FlowPlugin from './main'
 import { ProjectSelectorModal } from './projectSelectorModal'
 import { ProjectNameModal } from './projectNameModal'
-import { STATUS_VIEW_TYPE } from './views/status'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export enum Stage {
@@ -55,8 +53,7 @@ export class StateManager {
 			return
 		}
 
-		await this.setupStatusView()
-		await this.updateStatusView()
+		await this.updateCounts()
 
 		if (await this.isInboxEmpty()) {
 			if (await this.isEmailInboxEmpty()) {
@@ -84,7 +81,7 @@ export class StateManager {
 	}
 
 	private async completeProcessing(): Promise<void> {
-		await this.updateStatusView()
+		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 
 		if (view) {
@@ -97,7 +94,7 @@ export class StateManager {
 	}
 
 	private async processInbox() {
-		await this.updateStatusView()
+		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 
 		if (view) {
@@ -118,7 +115,7 @@ export class StateManager {
 	}
 
 	private async processEmailInbox() {
-		await this.updateStatusView()
+		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 		let content = null
 
@@ -143,22 +140,6 @@ export class StateManager {
 		}
 	}
 
-	private async setupStatusView() {
-		const existingLeaf =
-			this.app.workspace.getLeavesOfType(STATUS_VIEW_TYPE)
-		if (existingLeaf.length) {
-			this.statusLeaf = existingLeaf[0]
-		} else {
-			const leaf = this.app.workspace.getRightLeaf(false)
-			await leaf.setViewState({
-				type: STATUS_VIEW_TYPE,
-				active: true,
-			})
-			this.statusLeaf = leaf
-		}
-		this.updateStatusView()
-	}
-
 	private async updateCounts() {
 		this.emailFilesToProcess = this.app.vault
 			.getMarkdownFiles()
@@ -169,24 +150,15 @@ export class StateManager {
 			.filter((line) => line.trim() !== '')
 	}
 
-	private async updateStatusView() {
+	private async updateStatus() {
 		this.updateCounts()
 
-		if (this.statusLeaf) {
-			const view = this.statusLeaf.view as StatusView
-			if (view.getViewType() === STATUS_VIEW_TYPE) {
-				view.setProps({
-					currentStage: this.currentStage,
-					inboxCount: this.linesToProcess.length,
-					emailInboxCount: this.emailFilesToProcess.length,
-					onNextStage: this.startProcessing.bind(this),
-				})
-			} else {
-				console.error('StatusView not found')
-			}
-		} else {
-			console.error('Status leaf is not initialized')
-		}
+		const view = await this.setupOrGetProcessingView()
+		view.setProps({
+			currentStage: this.currentStage,
+			inboxCount: this.linesToProcess.length,
+			emailInboxCount: this.emailFilesToProcess.length,
+		})
 	}
 
 	private async setupOrGetProcessingView(): Promise<

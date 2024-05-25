@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { Stage } from '../state'
 
+	export let inboxCount: number
+	export let emailInboxCount: number
+
 	export let line: string
 	export let currentStage: Stage
 	export let onAddToNextActions: (text: string) => void
@@ -32,6 +35,13 @@
 		onTrash()
 	}
 </script>
+
+<div class="flow-status">
+	<h2>Flow status</h2>
+	<p>Stage: {currentStage}</p>
+	<p>Inbox count: {inboxCount}</p>
+	<p>Folder count: {emailInboxCount}</p>
+</div>
 
 <div class="flow-processing">
 	{#if isProcessingComplete}

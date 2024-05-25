@@ -3,7 +3,6 @@ import { registerCommands } from './commands'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings'
 import { FlowSettingsTab } from './settingsTab'
-import { StatusView, STATUS_VIEW_TYPE } from './views/status'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 
 export default class FlowPlugin extends Plugin {
@@ -14,7 +13,6 @@ export default class FlowPlugin extends Plugin {
 		await this.loadSettings()
 		this.addSettingTab(new FlowSettingsTab(this.app, this))
 
-		this.registerView(STATUS_VIEW_TYPE, (leaf) => new StatusView(leaf))
 		this.registerView(
 			PROCESSING_VIEW_TYPE,
 			(leaf) => new ProcessingView(leaf),
