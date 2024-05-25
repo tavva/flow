@@ -85,7 +85,7 @@ export class StateManager {
 
 	private async completeProcessing(): Promise<void> {
 		await this.updateStatusView()
-		const view = await this.setupProcessingView()
+		const view = await this.setupOrGetProcessingView()
 
 		if (view) {
 			view.setProps({
@@ -98,7 +98,7 @@ export class StateManager {
 
 	private async processInbox() {
 		await this.updateStatusView()
-		const view = await this.setupProcessingView()
+		const view = await this.setupOrGetProcessingView()
 
 		if (view) {
 			view.setProps({
@@ -119,7 +119,7 @@ export class StateManager {
 
 	private async processEmailInbox() {
 		await this.updateStatusView()
-		const view = await this.setupProcessingView()
+		const view = await this.setupOrGetProcessingView()
 		let content = null
 
 		if (this.emailFilesToProcess.length > 0) {
@@ -189,7 +189,9 @@ export class StateManager {
 		}
 	}
 
-	private async setupProcessingView(): Promise<ProcessingView | undefined> {
+	private async setupOrGetProcessingView(): Promise<
+		ProcessingView | undefined
+	> {
 		const existingLeaves =
 			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
 
