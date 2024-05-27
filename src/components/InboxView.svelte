@@ -12,7 +12,8 @@
 	export let onTrash: () => void
 	export let isProcessingComplete: false
 
-	let inputText: string = currentStage === Stage.File ? line : ''
+	let inputText: string
+	$: inputText = currentStage === Stage.File ? line : inputText
 
 	function addToNextActions() {
 		if (inputText.trim() !== '') onAddToNextActions(inputText)
