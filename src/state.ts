@@ -241,7 +241,7 @@ export class StateManager {
 	}
 
 	private async handleAddToProject(text: string) {
-		const projectFiles = getFilesWithTagPrefix(this.app, 'project')
+		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
 
 		new ProjectSelectorModal(
 			this.app,
