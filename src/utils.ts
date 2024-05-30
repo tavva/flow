@@ -1,4 +1,4 @@
-import { TFile, TFolder, Vault, normalizePath } from 'obsidian'
+import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 import FlowPlugin from './main'
 
 export async function addToNextActions(plugin: FlowPlugin, text: string) {
