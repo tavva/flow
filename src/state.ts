@@ -283,6 +283,7 @@ export class StateManager {
 	}
 
 	private async runThroughTemplater(file: TFile): Promise<void> {
+		// @ts-ignore
 		const templaterPlugin = this.app.plugins.plugins['templater-obsidian']
 		if (templaterPlugin) {
 			// We replicate RunMode from the Templater plugin, but with
