@@ -4,6 +4,7 @@ export class ProjectSelectorModal extends Modal {
 	private projectFiles: TFile[]
 	private onSelect: (file: TFile) => void
 	private searchQuery: string = ''
+	private projectContainer: HTMLElement
 
 	constructor(
 		app: App,
@@ -13,6 +14,24 @@ export class ProjectSelectorModal extends Modal {
 		super(app)
 		this.projectFiles = projectFiles
 		this.onSelect = onSelect
+		this.updateProjectList = this.updateProjectList.bind(this)
+	}
+
+	updateProjectList = () => {
+		this.projectContainer.empty()
+		this.projectFiles
+			.filter((file) =>
+				file.basename.toLowerCase().includes(this.searchQuery),
+			)
+			.forEach((file) => {
+				const button = this.projectContainer.createEl('button', {
+					text: file.basename,
+				})
+				button.onclick = () => {
+					this.onSelect(file)
+					this.close()
+				}
+			})
 	}
 
 	onOpen() {
@@ -30,25 +49,8 @@ export class ProjectSelectorModal extends Modal {
 			this.updateProjectList()
 		}
 
-		const projectContainer = contentEl.createDiv()
-		projectContainer.addClass('project-container')
-
-		this.updateProjectList = () => {
-			projectContainer.empty()
-			this.projectFiles
-				.filter((file) =>
-					file.basename.toLowerCase().includes(this.searchQuery),
-				)
-				.forEach((file) => {
-					const button = projectContainer.createEl('button', {
-						text: file.basename,
-					})
-					button.onclick = () => {
-						this.onSelect(file)
-						this.close()
-					}
-				})
-		}
+		this.projectContainer = contentEl.createDiv()
+		this.projectContainer.addClass('project-container')
 
 		this.updateProjectList()
 	}
