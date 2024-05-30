@@ -1,6 +1,7 @@
 import { TFile, TFolder, Vault, normalizePath } from 'obsidian'
+import FlowPlugin from './main'
 
-export async function addToNextActions(plugin: Plugin, text: string) {
+export async function addToNextActions(plugin: FlowPlugin, text: string) {
 	text = text.trim()
 	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
 		plugin.settings.nextActionsFilePath,
@@ -24,7 +25,7 @@ export async function addToNextActions(plugin: Plugin, text: string) {
 }
 
 export async function addToProject(
-	plugin: Plugin,
+	plugin: FlowPlugin,
 	projectFile: TFile,
 	line: string,
 ) {
