@@ -23,6 +23,19 @@ export default class FlowPlugin extends Plugin {
 			name: 'Process Inboxes',
 			callback: () => this.stateManager.startProcessing(),
 		})
+
+		this.registerEvent(
+			this.app.workspace.on(
+				'active-leaf-change',
+				await this.onActiveLeafChange.bind(this),
+			),
+		)
+	}
+
+	async onActiveLeafChange(leaf: any) {
+		if (leaf.view.getViewType() === PROCESSING_VIEW_TYPE) {
+			this.stateManager.startProcessing()
+		}
 	}
 
 	async loadSettings() {
