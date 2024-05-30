@@ -1,5 +1,4 @@
 import { Plugin } from 'obsidian'
-import { registerCommands } from './commands'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
