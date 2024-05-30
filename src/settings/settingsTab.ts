@@ -20,7 +20,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			.setName('Inbox File Path')
 			.setDesc('Path to the Inbox file')
 			.addSearch((cb) => {
-				new FileSuggest(cb.inputEl, this.plugin)
+				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox.md')
 					.setValue(this.plugin.settings.inboxFilePath)
 					.onChange(async (value) => {
@@ -33,7 +33,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			.setName('Inbox Folder Path')
 			.setDesc('Path to the Inbox folder')
 			.addSearch((cb) => {
-				new FolderSuggest(cb.inputEl)
+				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox')
 					.setValue(this.plugin.settings.inboxFolderPath)
 					.onChange(async (value) => {
@@ -46,7 +46,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			.setName('Next Actions File Path')
 			.setDesc('Path to the Next Actions file')
 			.addSearch((cb) => {
-				new FileSuggest(cb.inputEl, this.plugin)
+				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Next Actions.md')
 					.setValue(this.plugin.settings.nextActionsFilePath)
 					.onChange(async (value) => {
@@ -59,7 +59,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			.setName('New Project Template File Path')
 			.setDesc('Path to the New Project Template File')
 			.addSearch((cb) => {
-				new FileSuggest(cb.inputEl, this.plugin)
+				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: templates/Project.md')
 					.setValue(this.plugin.settings.newProjectTemplateFilePath)
 					.onChange(async (value) => {
@@ -72,7 +72,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			.setName('Projects Folder Path')
 			.setDesc('Path to the Projects Folder')
 			.addSearch((cb) => {
-				new FolderSuggest(cb.inputEl)
+				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Projects')
 					.setValue(this.plugin.settings.projectsFolderPath)
 					.onChange(async (value) => {
