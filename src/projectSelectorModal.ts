@@ -23,6 +23,7 @@ export class ProjectSelectorModal extends Modal {
 			.filter((file) =>
 				file.basename.toLowerCase().includes(this.searchQuery),
 			)
+			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 			.forEach((file) => {
 				const button = this.projectContainer.createEl('button', {
 					text: file.basename,
