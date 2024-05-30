@@ -105,10 +105,10 @@ export function resolveTFolder(
 
 	const folder = plugin.app.vault.getAbstractFileByPath(folder_str)
 	if (!folder) {
-		throw new TemplaterError(`Folder "${folder_str}" doesn't exist`)
+		throw new Error(`Folder "${folder_str}" doesn't exist`)
 	}
 	if (!(folder instanceof TFolder)) {
-		throw new TemplaterError(`${folder_str} is a file, not a folder`)
+		throw new Error(`${folder_str} is a file, not a folder`)
 	}
 
 	return folder
