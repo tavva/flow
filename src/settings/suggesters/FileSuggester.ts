@@ -14,7 +14,7 @@ export class FileSuggest extends TextInputSuggest<TFile> {
 	}
 
 	getSuggestions(input_str: string): TFile[] {
-		const all_files = getTFilesFromFolder('')
+		const all_files = getTFilesFromFolder(this.plugin, '')
 		if (!all_files) {
 			return []
 		}

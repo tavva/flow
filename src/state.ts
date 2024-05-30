@@ -25,9 +25,9 @@ export class StateManager {
 	private linesToProcess: string[] = []
 	private filesToProcess: TFile[] = []
 
-	constructor(app: App, plugin: FlowPlugin) {
-		this.app = app
+	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
+		this.app = plugin.app // shortcut for nicer code
 	}
 
 	async startProcessing() {
@@ -115,7 +115,7 @@ export class StateManager {
 
 		if (this.filesToProcess.length > 0) {
 			const file = this.filesToProcess[0]
-			content = await readFileContent(file)
+			content = await readFileContent(this.plugin, file)
 		}
 
 		if (view) {
@@ -138,7 +138,7 @@ export class StateManager {
 		this.filesToProcess = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
-		const content = await readFileContent(this.inboxFile!)
+		const content = await readFileContent(this.plugin, this.inboxFile!)
 		this.linesToProcess = content
 			.split('\n')
 			.filter((line) => line.trim() !== '')
@@ -206,7 +206,10 @@ export class StateManager {
 
 	private async updateInboxFile(processedLine: string) {
 		if (this.inboxFile) {
-			const currentContent = await readFileContent(this.inboxFile)
+			const currentContent = await readFileContent(
+				this.plugin,
+				this.inboxFile,
+			)
 			const currentLines = currentContent.split('\n')
 			const firstNonEmptyLine = currentLines.find(
 				(line) => line.trim() !== '',

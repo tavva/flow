@@ -58,16 +58,26 @@ export async function addToProject(
 	await plugin.app.vault.modify(projectFile, newContent)
 }
 
-export function readFileContent(file: TFile): Promise<string> {
-	return app.vault.read(file)
+export function readFileContent(
+	plugin: FlowPlugin,
+	file: TFile,
+): Promise<string> {
+	return plugin.app.vault.read(file)
 }
 
-export function writeFileContent(file: TFile, content: string): Promise<void> {
-	return app.vault.modify(file, content)
+export function writeFileContent(
+	plugin: FlowPlugin,
+	file: TFile,
+	content: string,
+): Promise<void> {
+	return plugin.app.vault.modify(file, content)
 }
 
-export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
-	const { metadataCache, vault } = app
+export function getFilesWithTagPrefix(
+	plugin: FlowPlugin,
+	prefix: string,
+): TFile[] {
+	const { metadataCache, vault } = plugin.app
 	const files = vault.getFiles()
 
 	return files.filter((file) => {
@@ -87,10 +97,13 @@ export function getFilesWithTagPrefix(app: App, prefix: string): TFile[] {
 	})
 }
 
-export function resolveTFolder(folder_str: string): TFolder {
+export function resolveTFolder(
+	plugin: FlowPlugin,
+	folder_str: string,
+): TFolder {
 	folder_str = normalizePath(folder_str)
 
-	const folder = app.vault.getAbstractFileByPath(folder_str)
+	const folder = plugin.app.vault.getAbstractFileByPath(folder_str)
 	if (!folder) {
 		throw new TemplaterError(`Folder "${folder_str}" doesn't exist`)
 	}
@@ -101,8 +114,11 @@ export function resolveTFolder(folder_str: string): TFolder {
 	return folder
 }
 
-export function getTFilesFromFolder(folder_str: string): Array<TFile> {
-	const folder = resolveTFolder(folder_str)
+export function getTFilesFromFolder(
+	plugin: FlowPlugin,
+	folder_str: string,
+): Array<TFile> {
+	const folder = resolveTFolder(plugin, folder_str)
 
 	const files: Array<TFile> = []
 	Vault.recurseChildren(folder, (file: TAbstractFile) => {

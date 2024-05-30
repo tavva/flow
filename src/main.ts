@@ -17,7 +17,7 @@ export default class FlowPlugin extends Plugin {
 			(leaf) => new ProcessingView(leaf),
 		)
 
-		this.stateManager = new StateManager(this.app, this)
+		this.stateManager = new StateManager(this)
 		this.addCommand({
 			id: 'process-inboxes',
 			name: 'Process Inboxes',
