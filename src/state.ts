@@ -113,7 +113,7 @@ export class StateManager {
 	private async processFolder() {
 		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
-		let content = null
+		let content: string | null = null
 
 		if (this.filesToProcess.length > 0) {
 			const file = this.filesToProcess[0]
