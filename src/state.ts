@@ -1,12 +1,10 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 import {
 	readFileContent,
-	writeFileContent,
 	addToNextActions,
 	addToProject,
 	getFilesWithTagPrefix,
 } from './utils'
-import InboxView from './components/InboxView.svelte'
 import FlowPlugin from './main'
 import { ProjectSelectorModal } from './projectSelectorModal'
 import { ProjectNameModal } from './projectNameModal'
