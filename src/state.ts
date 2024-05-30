@@ -20,8 +20,7 @@ export class StateManager {
 	private plugin: FlowPlugin
 	private inboxFile: TFile | null = null
 	private inboxFolder: TFolder | null = null
-	private statusLeaf: WorkspaceLeaf | null = null
-	private mainLeaf: WorkspaceLeaf | null = null
+	private processingLeaf: WorkspaceLeaf | null = null
 	private currentStage: Stage.File | Stage.Folder | null = null
 	private linesToProcess: string[] = []
 	private filesToProcess: TFile[] = []
@@ -55,7 +54,6 @@ export class StateManager {
 			if (await this.isFolderInboxEmpty()) {
 				new Notice('Both inboxes are empty')
 				await this.completeProcessing()
-				if (this.statusLeaf) this.statusLeaf.view.containerEl.empty()
 			} else {
 				this.currentStage = Stage.Folder
 				await this.processFolder()
@@ -150,7 +148,7 @@ export class StateManager {
 		this.updateCounts()
 
 		const view = await this.setupOrGetProcessingView()
-		view.setProps({
+		view!.setProps({
 			currentStage: this.currentStage,
 			lineCount: this.linesToProcess.length,
 			fileCount: this.filesToProcess.length,
@@ -181,13 +179,6 @@ export class StateManager {
 		} else {
 			console.error('ProcessingView not found')
 			return undefined
-		}
-	}
-
-	private async setupMainView() {
-		if (!this.mainLeaf) {
-			const leaf = this.app.workspace.getLeaf(false)
-			this.mainLeaf = leaf
 		}
 	}
 
