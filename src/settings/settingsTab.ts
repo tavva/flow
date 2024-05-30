@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian'
 import FlowPlugin from '../main'
 import { FolderSuggest } from './suggesters/FolderSuggester'
-import { FileSuggest, FileSuggestMode } from './suggesters/FileSuggester'
+import { FileSuggest } from './suggesters/FileSuggester'
 
 export class FlowSettingsTab extends PluginSettingTab {
 	plugin: FlowPlugin
