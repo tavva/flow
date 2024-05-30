@@ -139,8 +139,8 @@ export class StateManager {
 	private async updateCounts() {
 		this.filesToProcess = this.app.vault
 			.getMarkdownFiles()
-			.filter((file) => file.path.startsWith(this.inboxFolder.path))
-		const content = await readFileContent(this.inboxFile)
+			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
+		const content = await readFileContent(this.inboxFile!)
 		this.linesToProcess = content
 			.split('\n')
 			.filter((line) => line.trim() !== '')
