@@ -188,7 +188,9 @@ export class StateManager {
 			if (this.linesToProcess.length === 0) {
 				this.currentStage = null
 			}
-			await this.updateInboxFile(processedLine)
+			if (processedLine) {
+				await this.updateInboxFile(processedLine)
+			}
 			this.startProcessing()
 		} else if (this.currentStage === Stage.Folder) {
 			const processedFile = this.filesToProcess.shift()
