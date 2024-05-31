@@ -152,7 +152,12 @@ export class StateManager {
 		this.updateCounts()
 
 		const view = await this.setupOrGetProcessingView()
-		view!.setProps({
+		if (!view) {
+			console.error('ProcessingView not found')
+			return
+		}
+
+		view.setProps({
 			currentStage: this.currentStage,
 			lineCount: this.linesToProcess.length,
 			fileCount: this.filesToProcess.length,
