@@ -93,6 +93,16 @@ export function getFilesWithTagPrefix(
 	const files = vault.getFiles()
 
 	return files.filter((file) => {
+		if (
+			file.path.startsWith(
+				// @ts-ignore
+				plugin.app.plugins.plugins['templater-obsidian'].settings
+					.template_folder,
+			)
+		) {
+			return false
+		}
+
 		const cache = metadataCache.getFileCache(file)
 		if (!cache || !cache.frontmatter) {
 			return false
