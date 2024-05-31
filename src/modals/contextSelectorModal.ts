@@ -22,11 +22,11 @@ export class ContextSelectorModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this
-		contentEl.createEl('h2', { text: 'Select a Context' })
+		contentEl.createEl('h2', { text: 'Select one or more contexts' })
 
 		this.contextContainer?.empty()
 		this.contextContainer = contentEl.createDiv()
-		this.contextContainer.addClass('flow-modal')
+		this.contextContainer.addClass('flow-modal-content')
 
 		this.contexts.forEach((context) => {
 			const button = this.contextContainer.createEl('button', {
