@@ -6,8 +6,8 @@ import {
 	getFilesWithTagPrefix,
 } from './utils'
 import FlowPlugin from './main'
-import { ProjectSelectorModal } from './projectSelectorModal'
-import { ProjectNameModal } from './projectNameModal'
+import { ProjectSelectorModal } from './modals/projectSelectorModal'
+import { ProjectNameModal } from './modals/projectNameModal'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export enum Stage {
