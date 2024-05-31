@@ -1,4 +1,4 @@
-import { Modal } from 'obsidian'
+import { Modal, ButtonComponent } from 'obsidian'
 
 export class ContextSelectorModal extends Modal {
 	private contexts: string[]
@@ -27,32 +27,42 @@ export class ContextSelectorModal extends Modal {
 		this.contextContainer?.empty()
 		this.contextContainer = contentEl.createDiv()
 		this.contextContainer.addClass('flow-modal-content')
+		this.warningEl = contentEl.createDiv()
+		this.warningEl.addClass('warning')
 
 		this.contexts.forEach((context) => {
-			const button = this.contextContainer.createEl('button', {
-				text: context,
-			})
-			button.onclick = () => {
+			const button = new ButtonComponent(this.contextContainer)
+			button.setButtonText(context)
+
+			button.onClick(() => {
+				this.warningEl.hide()
+
 				if (this.multiSelect) {
 					if (this.selectedContexts.has(context)) {
 						this.selectedContexts.delete(context)
-						button.removeClass('selected')
+						button.buttonEl.removeClass('selected')
 					} else {
 						this.selectedContexts.add(context)
-						button.addClass('selected')
+						button.setClass('selected')
 					}
 				} else {
 					this.onSelect([context])
 					this.close()
 				}
-			}
+			})
 		})
 
 		if (this.multiSelect) {
-			const doneButton = contentEl.createEl('button', {
-				text: 'Done',
-			})
-			doneButton.addEventListener('click', () => {
+			const doneButton = new ButtonComponent(contentEl)
+			doneButton.setButtonText('Done')
+			doneButton.setCta()
+
+			doneButton.onClick(() => {
+				if (this.selectedContexts.size === 0) {
+					this.warningEl.setText('Please select at least one context')
+					this.warningEl.show()
+					return
+				}
 				this.onSelect(Array.from(this.selectedContexts))
 				this.close()
 			})

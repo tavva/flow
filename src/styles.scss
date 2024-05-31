@@ -5,10 +5,18 @@
 }
 
 .flow-modal-content {
+	margin-bottom: 15px;
+
 	button {
+		margin-right: 10px;
+
 		&.selected {
 			background-color: var(--interactive-accent);
 		}
 	}
 
+}
+
+button.flow-modal-done {
+	background-color: var(--interactive-accent);
 }
