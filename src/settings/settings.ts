@@ -5,6 +5,8 @@ export interface FlowSettings {
 	newProjectTemplateFilePath: string
 	projectsFolderPath: string
 	appendTask: string
+
+	contexts: string[]
 }
 
 export const DEFAULT_SETTINGS: FlowSettings = {
@@ -14,4 +16,6 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 	newProjectTemplateFilePath: 'Templates/Project.md',
 	projectsFolderPath: 'Projects',
 	appendTask: '',
+
+	contexts: ['personal', 'work'],
 }

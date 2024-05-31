@@ -93,5 +93,20 @@ export class FlowSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings()
 					}),
 			)
+
+		new Setting(containerEl)
+			.setName('Contexts')
+			.setDesc('Comma separated list of contexts')
+			.addText((text) =>
+				text
+					.setPlaceholder('Enter contexts')
+					.setValue(this.plugin.settings.contexts.join(','))
+					.onChange(async (value) => {
+						this.plugin.settings.contexts = value
+							.split(',')
+							.map((context) => context.trim())
+						await this.plugin.saveSettings()
+					}),
+			)
 	}
 }
