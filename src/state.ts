@@ -25,10 +25,13 @@ export class StateManager {
 	private currentStage: Stage.File | Stage.Folder | null = null
 	private linesToProcess: string[] = []
 	private filesToProcess: TFile[] = []
+	private tp: any // TODO: make this a proper type
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
 		this.app = plugin.app // shortcut for nicer code
+		// @ts-ignore
+		this.tp = plugin.app.plugins.plugins['templater-obsidian']
 	}
 
 	async startProcessing() {
@@ -268,65 +271,95 @@ export class StateManager {
 		).open()
 	}
 
+	private replacer(str: string, regex: RegExp, replaceWith: string) {
+		return str.replace(regex, function () {
+			return replaceWith
+		})
+	}
+
 	private async handleAddToNewProject(text: string) {
 		new NewProjectModal(
 			this.app,
 			this.plugin.settings.contexts,
-			async (projectName: string, contexts: Set<string>) => {
-				const templateContent = await this.getTemplateContent()
-				const newProjectFile = await this.createNewProjectFile(
-					projectName,
-					templateContent,
+			async (
+				projectName: string,
+				contexts: Set<string>,
+				priority: number,
+			) => {
+				// Assert contexts only contains one
+				if (contexts.size !== 1) {
+					new Notice(
+						'Only one context can be selected for new project',
+					)
+					return
+				}
+
+				const context = contexts.values().next().value
+
+				const projectFile = await this.createNewProjectFile(projectName)
+				let content = await this.app.vault.read(projectFile)
+
+				content = await this.parseTemplate(
+					content,
+					priority,
+					`project/${context}`,
 				)
-				await this.runThroughTemplater(newProjectFile)
-				await addToProject(this.plugin, newProjectFile, text)
+
+				await this.app.vault.modify(projectFile, content)
+
+				await addToProject(this.plugin, projectFile, text)
+
 				this.removeProcessedItem()
 			},
 		).open()
 	}
 
-	private async getTemplateContent(): Promise<string> {
-		const templatePath = this.plugin.settings.newProjectTemplateFilePath
-		const templateFile = this.app.vault.getAbstractFileByPath(
-			templatePath,
-		) as TFile
-		return templateFile ? await this.app.vault.read(templateFile) : ''
-	}
-
-	private async runThroughTemplater(file: TFile): Promise<void> {
-		// @ts-ignore
-		const templaterPlugin = this.app.plugins.plugins['templater-obsidian']
-		if (templaterPlugin) {
-			// We replicate RunMode from the Templater plugin, but with
-			// the only mode we need here
-			enum RunMode {
-				CreateNewFromTemplate,
-			}
-
-			const templater = templaterPlugin.templater
-			const config = templater.create_running_config(
-				undefined,
-				file,
-				RunMode.CreateNewFromTemplate,
-			)
-
-			const fileContent = await this.app.vault.read(file)
-
-			const outputContent = await templater.parse_template(
-				config,
-				fileContent,
-			)
-			await this.app.vault.modify(file, outputContent)
-		}
-	}
-
-	private async createNewProjectFile(
-		projectName: string,
+	private async parseTemplate(
 		content: string,
-	): Promise<TFile> {
+		priority: number,
+		context: string,
+	) {
+		const replacements = [
+			{
+				regex: /{{\s*priority\s*}}/g,
+				replaceWith: priority.toString(),
+			},
+			{
+				regex: /{{\s*context\s*}}/g,
+				replaceWith: context,
+			},
+		]
+
+		for (const { regex, replaceWith } of replacements) {
+			content = this.replacer(content, regex, replaceWith)
+		}
+
+		return content
+	}
+
+	private async createNewProjectFile(projectName: string): Promise<TFile> {
 		const projectsFolder = this.plugin.settings.projectsFolderPath
-		const newPath = `${projectsFolder}/${projectName}.md`
-		return await this.app.vault.create(newPath, content)
+		const templateFile = this.app.vault.getAbstractFileByPath(
+			this.plugin.settings.newProjectTemplateFilePath,
+		) as TFile
+
+		const open_in_new_window = false
+		const create_new = await this.getTemplaterCreateNewFunction()
+		return create_new(
+			templateFile,
+			projectName,
+			open_in_new_window,
+			this.plugin.settings.projectsFolderPath,
+		)
+	}
+
+	private async getTemplaterCreateNewFunction() {
+		let tp_file =
+			this.tp.templater.functions_generator.internal_functions.modules_array.find(
+				(m) => m.name == 'file',
+			)
+
+		return await tp_file.static_functions.get('create_new')
 	}
 
 	private handleTrash() {
