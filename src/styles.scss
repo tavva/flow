@@ -3,3 +3,12 @@
 		width: 100%;
 	}
 }
+
+.flow-modal {
+	button {
+		&.selected {
+			background-color: var(--interactive-accent);
+		}
+	}
+
+}

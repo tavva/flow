@@ -26,7 +26,7 @@ export class ContextSelectorModal extends Modal {
 
 		this.contextContainer?.empty()
 		this.contextContainer = contentEl.createDiv()
-		this.contextContainer.addClass('flow-context-container')
+		this.contextContainer.addClass('flow-modal')
 
 		this.contexts.forEach((context) => {
 			const button = this.contextContainer.createEl('button', {
