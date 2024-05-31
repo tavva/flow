@@ -9,6 +9,7 @@ export class ProcessingView extends ItemView {
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf)
+		this.navigation = false
 	}
 
 	getViewType() {
