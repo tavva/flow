@@ -252,7 +252,6 @@ export class StateManager {
 				await addToNextActions(this.plugin, text, selectedContexts)
 				this.removeProcessedItem()
 			},
-			true,
 		).open()
 	}
 
