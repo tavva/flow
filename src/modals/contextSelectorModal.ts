@@ -1,22 +1,19 @@
-import { Modal, ButtonComponent } from 'obsidian'
+import { App, Modal, ButtonComponent } from 'obsidian'
 
 export class ContextSelectorModal extends Modal {
 	private contexts: string[]
 	private onSelect: (selected: string[]) => void
 	private contextContainer: HTMLElement
-	private multiSelect: boolean
 	private selectedContexts: Set<string>
 
 	constructor(
 		app: App,
 		contexts: string[],
 		onSelect: (selected: string[]) => void,
-		multiSelect: boolean = false,
 	) {
 		super(app)
 		this.contexts = contexts
 		this.onSelect = onSelect
-		this.multiSelect = multiSelect
 		this.selectedContexts = new Set()
 	}
 
@@ -27,46 +24,40 @@ export class ContextSelectorModal extends Modal {
 		this.contextContainer?.empty()
 		this.contextContainer = contentEl.createDiv()
 		this.contextContainer.addClass('flow-modal-content')
-		this.warningEl = contentEl.createDiv()
-		this.warningEl.addClass('warning')
+
+		const warningEl = contentEl.createDiv()
+		warningEl.addClass('warning')
 
 		this.contexts.forEach((context) => {
 			const button = new ButtonComponent(this.contextContainer)
 			button.setButtonText(context)
 
 			button.onClick(() => {
-				this.warningEl.hide()
+				warningEl.hide()
 
-				if (this.multiSelect) {
-					if (this.selectedContexts.has(context)) {
-						this.selectedContexts.delete(context)
-						button.buttonEl.removeClass('selected')
-					} else {
-						this.selectedContexts.add(context)
-						button.setClass('selected')
-					}
+				if (this.selectedContexts.has(context)) {
+					this.selectedContexts.delete(context)
+					button.buttonEl.removeClass('selected')
 				} else {
-					this.onSelect([context])
-					this.close()
+					this.selectedContexts.add(context)
+					button.setClass('selected')
 				}
 			})
 		})
 
-		if (this.multiSelect) {
-			const doneButton = new ButtonComponent(contentEl)
-			doneButton.setButtonText('Done')
-			doneButton.setCta()
+		const doneButton = new ButtonComponent(contentEl)
+		doneButton.setButtonText('Done')
+		doneButton.setCta()
 
-			doneButton.onClick(() => {
-				if (this.selectedContexts.size === 0) {
-					this.warningEl.setText('Please select at least one context')
-					this.warningEl.show()
-					return
-				}
-				this.onSelect(Array.from(this.selectedContexts))
-				this.close()
-			})
-		}
+		doneButton.onClick(() => {
+			if (this.selectedContexts.size === 0) {
+				warningEl.setText('Please select at least one context')
+				warningEl.show()
+				return
+			}
+			this.onSelect(Array.from(this.selectedContexts))
+			this.close()
+		})
 	}
 
 	onClose() {
