@@ -1,4 +1,5 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
+// @ts-ignore
 import InboxViewComponent from '../components/InboxView.svelte'
 
 export const PROCESSING_VIEW_TYPE = 'processing-view'
