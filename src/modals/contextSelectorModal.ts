@@ -2,7 +2,7 @@ import { Modal } from 'obsidian'
 
 export class ContextSelectorModal extends Modal {
 	private contexts: string[]
-	private onSelect: (selected: string[] | string) => void
+	private onSelect: (selected: string[]) => void
 	private contextContainer: HTMLElement
 	private multiSelect: boolean
 	private selectedContexts: Set<string>
@@ -10,7 +10,7 @@ export class ContextSelectorModal extends Modal {
 	constructor(
 		app: App,
 		contexts: string[],
-		onSelect: (selected: string[] | string) => void,
+		onSelect: (selected: string[]) => void,
 		multiSelect: boolean = false,
 	) {
 		super(app)
@@ -42,7 +42,7 @@ export class ContextSelectorModal extends Modal {
 						button.addClass('selected')
 					}
 				} else {
-					this.onSelect(context)
+					this.onSelect([context])
 					this.close()
 				}
 			}

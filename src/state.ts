@@ -8,6 +8,7 @@ import {
 import FlowPlugin from './main'
 import { ProjectSelectorModal } from './modals/projectSelectorModal'
 import { ProjectNameModal } from './modals/projectNameModal'
+import { ContextSelectorModal } from './modals/contextSelectorModal'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export enum Stage {
@@ -244,8 +245,15 @@ export class StateManager {
 	}
 
 	private async handleAddToNextActions(text: string) {
-		await addToNextActions(this.plugin, text)
-		this.removeProcessedItem()
+		new ContextSelectorModal(
+			this.app,
+			this.plugin.settings.contexts,
+			async (selectedContexts: string[]) => {
+				await addToNextActions(this.plugin, text, selectedContexts)
+				this.removeProcessedItem()
+			},
+			true,
+		).open()
 	}
 
 	private async handleAddToProject(text: string) {

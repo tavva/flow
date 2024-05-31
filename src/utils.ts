@@ -1,7 +1,11 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 import FlowPlugin from './main'
 
-export async function addToNextActions(plugin: FlowPlugin, text: string) {
+export async function addToNextActions(
+	plugin: FlowPlugin,
+	text: string,
+	contexts: string[],
+) {
 	text = text.trim()
 	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
 		plugin.settings.nextActionsFilePath,
@@ -14,10 +18,18 @@ export async function addToNextActions(plugin: FlowPlugin, text: string) {
 		)
 	}
 
+	const contextString = contexts
+		.map((context) => `#context/${context}`)
+		.join(' ')
+
 	let content = await plugin.app.vault.read(nextActionsFile)
 	content = content + '\n- [ ] ' + text
+
+	if (contextString) {
+		content = content + ' ' + contextString
+	}
 	if (plugin.settings.appendTask) {
-		content.concat(' ' + plugin.settings.appendTask)
+		content = content + ' ' + plugin.settings.appendTask
 	}
 	content.concat('\n')
 
