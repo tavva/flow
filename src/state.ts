@@ -269,16 +269,20 @@ export class StateManager {
 	}
 
 	private async handleAddToNewProject(text: string) {
-		new NewProjectModal(this.app, async (projectName: string) => {
-			const templateContent = await this.getTemplateContent()
-			const newProjectFile = await this.createNewProjectFile(
-				projectName,
-				templateContent,
-			)
-			await this.runThroughTemplater(newProjectFile)
-			await addToProject(this.plugin, newProjectFile, text)
-			this.removeProcessedItem()
-		}).open()
+		new NewProjectModal(
+			this.app,
+			this.plugin.settings.contexts,
+			async (projectName: string, contexts: Set<string>) => {
+				const templateContent = await this.getTemplateContent()
+				const newProjectFile = await this.createNewProjectFile(
+					projectName,
+					templateContent,
+				)
+				await this.runThroughTemplater(newProjectFile)
+				await addToProject(this.plugin, newProjectFile, text)
+				this.removeProcessedItem()
+			},
+		).open()
 	}
 
 	private async getTemplateContent(): Promise<string> {
