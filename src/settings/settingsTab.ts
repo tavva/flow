@@ -102,7 +102,12 @@ export class FlowSettingsTab extends PluginSettingTab {
 					.setPlaceholder('Enter contexts')
 					.setValue(this.plugin.settings.contexts.join(','))
 					.onChange(async (value) => {
-						if (!value.trim()) return
+						if (!value.trim()) {
+							text.setValue(
+								this.plugin.settings.contexts.join(','),
+							)
+							return
+						}
 
 						this.plugin.settings.contexts = value
 							.split(',')
