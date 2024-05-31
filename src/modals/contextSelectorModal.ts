@@ -2,18 +2,18 @@ import { App, Modal, ButtonComponent } from 'obsidian'
 
 export class ContextSelectorModal extends Modal {
 	private contexts: string[]
-	private onSelect: (selected: string[]) => void
+	private onSubmit: (selected: string[]) => void
 	private contextContainer: HTMLElement
 	private selectedContexts: Set<string>
 
 	constructor(
 		app: App,
 		contexts: string[],
-		onSelect: (selected: string[]) => void,
+		onSubmit: (selected: string[]) => void,
 	) {
 		super(app)
 		this.contexts = contexts
-		this.onSelect = onSelect
+		this.onSubmit = onSubmit
 		this.selectedContexts = new Set()
 	}
 
@@ -55,7 +55,7 @@ export class ContextSelectorModal extends Modal {
 				warningEl.show()
 				return
 			}
-			this.onSelect(Array.from(this.selectedContexts))
+			this.onSubmit(Array.from(this.selectedContexts))
 			this.close()
 		})
 	}
