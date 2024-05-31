@@ -1,6 +1,6 @@
 import { App, Modal, Setting } from 'obsidian'
 
-export class ProjectNameModal extends Modal {
+export class NewProjectModal extends Modal {
 	private onSubmit: (projectName: string) => void
 	private projectName: string = ''
 

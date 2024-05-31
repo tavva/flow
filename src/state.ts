@@ -7,7 +7,7 @@ import {
 } from './utils'
 import FlowPlugin from './main'
 import { ProjectSelectorModal } from './modals/projectSelectorModal'
-import { ProjectNameModal } from './modals/projectNameModal'
+import { NewProjectModal } from './modals/newProjectModal'
 import { ContextSelectorModal } from './modals/contextSelectorModal'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
@@ -270,7 +270,7 @@ export class StateManager {
 	}
 
 	private async handleAddToNewProject(text: string) {
-		new ProjectNameModal(this.app, async (projectName: string) => {
+		new NewProjectModal(this.app, async (projectName: string) => {
 			const templateContent = await this.getTemplateContent()
 			const newProjectFile = await this.createNewProjectFile(
 				projectName,
