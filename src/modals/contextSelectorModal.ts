@@ -20,8 +20,6 @@ export class ContextSelectorModal extends Modal {
 		this.selectedContexts = new Set()
 	}
 
-	updateContextList = () => {}
-
 	onOpen() {
 		const { contentEl } = this
 		contentEl.createEl('h2', { text: 'Select a Context' })
