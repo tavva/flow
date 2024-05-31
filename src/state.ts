@@ -338,7 +338,6 @@ export class StateManager {
 	}
 
 	private async createNewProjectFile(projectName: string): Promise<TFile> {
-		const projectsFolder = this.plugin.settings.projectsFolderPath
 		const templateFile = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.newProjectTemplateFilePath,
 		) as TFile
