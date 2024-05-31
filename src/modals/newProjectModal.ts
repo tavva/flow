@@ -12,9 +12,11 @@ export class NewProjectModal extends Modal {
 	onOpen() {
 		const { contentEl } = this
 
-		contentEl.createEl('h2', { text: 'Enter Project Name' })
+		contentEl.createEl('h2', {
+			text: 'Create a new project and add next action',
+		})
 
-		new Setting(contentEl).setName('Project Name').addText((text) =>
+		new Setting(contentEl).setName('Project name').addText((text) =>
 			text.onChange((value) => {
 				this.projectName = value
 			}),
