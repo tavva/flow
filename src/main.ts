@@ -31,6 +31,17 @@ export default class FlowPlugin extends Plugin {
 			id: 'view-personal-project',
 			name: 'View Personal Project',
 			callback: async () => {
+				const existingLeaves =
+					this.app.workspace.getLeavesOfType(PROJECT_VIEW_TYPE)
+
+				for (const l of existingLeaves) {
+					const projectView = l.view as ProjectView
+					if (projectView.context === 'personal') {
+						this.app.workspace.setActiveLeaf(l)
+						return
+					}
+				}
+
 				const leaf = this.app.workspace.getLeaf(false)
 				await leaf.setViewState({
 					type: PROJECT_VIEW_TYPE,
