@@ -75,5 +75,6 @@ export default class FlowPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
+		this.app.workspace.detachLeavesOfType(PROJECT_VIEW_TYPE)
 	}
 }
