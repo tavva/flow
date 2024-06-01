@@ -360,7 +360,7 @@ export class StateManager {
 	private async getTemplaterCreateNewFunction() {
 		let tp_file =
 			this.tp.templater.functions_generator.internal_functions.modules_array.find(
-				(m) => m.name == 'file',
+				(m: any) => m.name == 'file', // FIXME: any
 			)
 
 		return await tp_file.static_functions.get('create_new')
