@@ -3,6 +3,7 @@ import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
+import { ProjectView, PROJECT_VIEW_TYPE } from './views/project'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
@@ -17,11 +18,33 @@ export default class FlowPlugin extends Plugin {
 			(leaf) => new ProcessingView(leaf),
 		)
 
+		this.registerView(
+			PROJECT_VIEW_TYPE,
+			(leaf) => new ProjectView(leaf),
+		)
+
 		this.stateManager = new StateManager(this)
 		this.addCommand({
 			id: 'process-inboxes',
 			name: 'Process Inboxes',
 			callback: () => this.stateManager.startProcessing(),
+		})
+
+		this.addCommand({
+			id: 'view-personal-project',
+			name: 'View Personal Project',
+			callback: async () => {
+				const leaf = this.app.workspace.getLeaf(false)
+				await leaf.setViewState({
+					type: PROJECT_VIEW_TYPE,
+					active: true,
+				})
+
+				const view = leaf.view as ProjectView
+				view.plugin = this
+				view.context = 'personal'
+				await view.render()
+			}
 		})
 
 		this.registerEvent(
