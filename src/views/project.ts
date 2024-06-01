@@ -1,4 +1,5 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { getAPI } from 'obsidian-dataview'
 // @ts-ignore
 import ProjectComponent from '../components/ProjectView.svelte'
 import FlowPlugin from '../main'
@@ -49,25 +50,23 @@ export class ProjectView extends ItemView {
 	}
 
 	private async listProjectsWithNoNextActions() {
-		// @ts-ignore
-		const dv = this.plugin.app.plugins.plugins['dataview'].api;
+		const dv = getAPI()
 
 		const projects = dv
 			.pages(`#project/${this.context}`)
-			.filter((p) => p.status == "live" && !p.file.path.startsWith("Templates/"))
+			.filter(
+				(p) =>
+					p.status == 'live' && !p.file.path.startsWith('Templates/'),
+			)
 			.map((p) => ({
 				...p,
 				nextActions: p.file.tasks.filter(
-					(t) => t.section?.subpath == "Next actions" && !t.completed
+					(t) => t.section?.subpath == 'Next actions' && !t.completed,
 				),
 			}))
 			.filter((p) => p.nextActions.length > 0) // Only include projects with next actions
-			.sort((p) => p.priority, "asc");
+			.sort((p) => p.priority, 'asc')
 
-
-		console.log('projects', projects);
-
-		this.setProps({ projects: projects });
+		this.setProps({ projects: projects, dv: dv })
 	}
-
 }
