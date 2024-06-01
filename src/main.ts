@@ -18,10 +18,7 @@ export default class FlowPlugin extends Plugin {
 			(leaf) => new ProcessingView(leaf),
 		)
 
-		this.registerView(
-			PROJECT_VIEW_TYPE,
-			(leaf) => new ProjectView(leaf),
-		)
+		this.registerView(PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf))
 
 		this.stateManager = new StateManager(this)
 		this.addCommand({
@@ -44,7 +41,7 @@ export default class FlowPlugin extends Plugin {
 				view.plugin = this
 				view.context = 'personal'
 				await view.render()
-			}
+			},
 		})
 
 		this.registerEvent(
