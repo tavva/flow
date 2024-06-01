@@ -89,7 +89,8 @@ export function getFilesWithTagPrefix(
 	plugin: FlowPlugin,
 	prefix: string,
 ): TFile[] {
-	const { metadataCache, vault } = plugin.app
+	const metadataCache = plugin.app.metadataCache
+	const vault = plugin.app.vault
 	const files = vault.getFiles()
 
 	return files.filter((file) => {
@@ -154,4 +155,20 @@ export function getTFilesFromFolder(
 	})
 
 	return files
+}
+
+export async function getProjectFilePath(
+	plugin: FlowPlugin,
+	projectName: string,
+): Promise<string> {
+	const projectFiles = getFilesWithTagPrefix(plugin, 'project')
+	const projectFile = projectFiles.find(
+		(file) => file.name === `${projectName}.md`,
+	)
+
+	if (projectFile) {
+		return projectFile.path
+	} else {
+		return ''
+	}
 }

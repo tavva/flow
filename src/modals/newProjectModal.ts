@@ -1,6 +1,9 @@
 import { App, Modal, Setting, ButtonComponent, debounce } from 'obsidian'
+import { getProjectFilePath } from '../utils'
+import FlowPlugin from '../main'
 
 export class NewProjectModal extends Modal {
+	private plugin: FlowPlugin
 	private contexts: string[]
 	// TODO: we only allow one context. This is a Set to match the
 	// implementation in the ContextSelectorModal
@@ -16,16 +19,16 @@ export class NewProjectModal extends Modal {
 	private contextButtons: ButtonComponent[] = []
 
 	constructor(
-		app: App,
-		contexts: string[],
+		plugin: FlowPlugin,
 		onSubmit: (
 			projectName: string,
 			contexts: Set<string>,
 			priority: number,
 		) => void,
 	) {
-		super(app)
-		this.contexts = contexts
+		super(plugin.app)
+		this.plugin = plugin
+		this.contexts = plugin.settings.contexts
 		this.selectedContexts = new Set()
 		this.onSubmit = onSubmit
 	}
@@ -91,7 +94,7 @@ export class NewProjectModal extends Modal {
 			btn
 				.setButtonText('Create')
 				.setCta()
-				.onClick(() => {
+				.onClick(async () => {
 					if (!this.projectName) {
 						warningEl.setText('Please enter a project name')
 						warningEl.show()
@@ -114,7 +117,13 @@ export class NewProjectModal extends Modal {
 						return
 					}
 
-					// TODO: warn and don't submit if project already exists
+					if (
+						await getProjectFilePath(this.plugin, this.projectName)
+					) {
+						warningEl.setText('Project already exists')
+						warningEl.show()
+						return
+					}
 
 					this.onSubmit(
 						this.projectName,

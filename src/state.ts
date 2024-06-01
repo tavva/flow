@@ -284,8 +284,7 @@ export class StateManager {
 
 	private async handleAddToNewProject(text: string) {
 		new NewProjectModal(
-			this.app,
-			this.plugin.settings.contexts,
+			this.plugin,
 			async (
 				projectName: string,
 				contexts: Set<string>,
