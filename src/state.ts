@@ -291,7 +291,6 @@ export class StateManager {
 				contexts: Set<string>,
 				priority: number,
 			) => {
-				// Assert contexts only contains one
 				if (contexts.size !== 1) {
 					new Notice(
 						'Only one context can be selected for new project',
