@@ -2,7 +2,7 @@
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
 	"types": ["svelte", "node"],
-    "baseUrl": ".",
+    "baseUrl": "src",
 	"rootDir": "src",
 	"outDir": ".",
     "inlineSources": true,
