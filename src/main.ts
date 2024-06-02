@@ -1,4 +1,6 @@
-import { Plugin } from 'obsidian'
+import * as fs from 'fs'
+
+import { Plugin, FileSystemAdapter } from 'obsidian'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
@@ -7,6 +9,7 @@ import { ProjectView, PROJECT_VIEW_TYPE } from './views/project'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
+	private watchers: fs.FSWatcher[]
 	settings: FlowSettings
 
 	async onload() {
@@ -61,6 +64,42 @@ export default class FlowPlugin extends Plugin {
 				await this.onActiveLeafChange.bind(this),
 			),
 		)
+
+		this.setupWatchers()
+	}
+
+	private async setupWatchers() {
+		this.watchers = []
+
+		const foldersToWatch = [
+			this.settings.inboxFilesFolderPath,
+			this.settings.inboxFolderPath,
+		]
+
+		foldersToWatch.forEach((folderPath) => {
+			const folder = this.app.vault.getAbstractFileByPath(folderPath)
+			if (!folder) {
+				return
+			}
+			const folderPathFull = (
+				this.app.vault.adapter as FileSystemAdapter
+			).getFullPath(folder.path)
+
+			const watcher = fs.watch(
+				folderPathFull,
+				{ recursive: false },
+				async (eventType, filename) => {
+					if (filename) {
+						console.log(`Change detected in folder: ${folder}`)
+						console.log(
+							`File changed: ${filename}, Event type: ${eventType}`,
+						)
+						await this.stateManager.updateCounts()
+					}
+				},
+			)
+			this.watchers.push(watcher)
+		})
 	}
 
 	async onActiveLeafChange(leaf: any) {

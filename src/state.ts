@@ -144,7 +144,7 @@ export class StateManager {
 		}
 	}
 
-	private async updateCounts() {
+	async updateCounts() {
 		const inboxFiles = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.inboxFilesFolder!.path))
@@ -162,6 +162,14 @@ export class StateManager {
 		this.filesToProcess = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
+
+		const view = await this.getProcessingViewIfActive()
+		if (view) {
+			view.setProps({
+				lineCount: this.linesToProcess.length,
+				fileCount: this.filesToProcess.length,
+			})
+		}
 	}
 
 	private async updateStatus() {
@@ -178,6 +186,16 @@ export class StateManager {
 			lineCount: this.linesToProcess.length,
 			fileCount: this.filesToProcess.length,
 		})
+	}
+
+	private async getProcessingViewIfActive(): Promise<
+		ProcessingView | undefined
+	> {
+		const view = this.app.workspace.getActiveViewOfType(ProcessingView)
+
+		if (view) {
+			return view as ProcessingView
+		}
 	}
 
 	private async setupOrGetProcessingView(): Promise<
