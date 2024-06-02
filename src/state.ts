@@ -230,23 +230,20 @@ export class StateManager {
 		}
 	}
 
-	private async removeEmptyLinesFromFile(
-		plugin: FlowPlugin,
-		file: TFile,
-	): Promise<void> {
-		const content = await readFileContent(plugin, file)
+	private async removeEmptyLinesFromFile(file: TFile): Promise<void> {
+		const content = await readFileContent(this.plugin, file)
 		const nonEmptyLines = content
 			.split('\n')
 			.filter((line) => line.trim() !== '')
 			.join('\n')
-		await plugin.app.vault.modify(file, nonEmptyLines)
+		await this.app.vault.modify(file, nonEmptyLines)
 	}
 
 	private async updateInboxFile(processedLine: LineWithFile) {
 		const { file, line } = processedLine
 
 		if (this.inboxFiles) {
-			await this.removeEmptyLinesFromFile(this.plugin, file)
+			await this.removeEmptyLinesFromFile(file)
 
 			const currentContent = await readFileContent(this.plugin, file)
 			const currentLines = currentContent.split('\n')
