@@ -21,7 +21,7 @@ export interface Project {
 export class ProjectView extends ItemView {
 	private component: ProjectComponent
 	plugin: FlowPlugin
-	context: string
+	sphere: string
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf)
@@ -39,7 +39,7 @@ export class ProjectView extends ItemView {
 		this.component = new ProjectComponent({
 			target: this.contentEl,
 			props: {
-				context: this.context,
+				sphere: this.sphere,
 			},
 		})
 	}
@@ -51,7 +51,7 @@ export class ProjectView extends ItemView {
 	}
 
 	async render() {
-		this.setProps({ context: this.context })
+		this.setProps({ sphere: this.sphere })
 		this.listProjectsWithNoNextActions()
 	}
 
@@ -65,7 +65,7 @@ export class ProjectView extends ItemView {
 		const dv = getAPI()
 
 		const projects = dv
-			.pages(`#project/${this.context}`)
+			.pages(`#project/${this.sphere}`)
 			.filter(
 				(p: Project) =>
 					p.status == 'live' && !p.file.path.startsWith('Templates/'),

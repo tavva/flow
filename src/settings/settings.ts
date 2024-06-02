@@ -6,7 +6,7 @@ export interface FlowSettings {
 	projectsFolderPath: string
 	appendTask: string
 
-	contexts: string[]
+	spheres: string[]
 }
 
 export const DEFAULT_SETTINGS: FlowSettings = {
@@ -17,5 +17,5 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 	projectsFolderPath: 'Projects',
 	appendTask: '',
 
-	contexts: ['personal', 'work'],
+	spheres: ['personal', 'work'],
 }

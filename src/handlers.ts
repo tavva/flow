@@ -8,7 +8,7 @@ import {
 
 import { ProjectSelectorModal } from './modals/projectSelectorModal'
 import { NewProjectModal } from './modals/newProjectModal'
-import { ContextSelectorModal } from './modals/contextSelectorModal'
+import { SphereSelectorModal } from './modals/sphereSelectorModal'
 
 import FlowPlugin from './main'
 import { StateManager, Stage, LineWithFile } from './state'
@@ -28,11 +28,11 @@ export class Handlers {
 	}
 
 	handleAddToNextActions = async (text: string) => {
-		new ContextSelectorModal(
+		new SphereSelectorModal(
 			this.app,
-			this.plugin.settings.contexts,
-			async (selectedContexts: string[]) => {
-				await addToNextActions(this.plugin, text, selectedContexts)
+			this.plugin.settings.spheres,
+			async (selectedSpheres: string[]) => {
+				await addToNextActions(this.plugin, text, selectedSpheres)
 				await this.removeProcessedItem()
 			},
 		).open()
@@ -62,17 +62,17 @@ export class Handlers {
 			this.plugin,
 			async (
 				projectName: string,
-				contexts: Set<string>,
+				spheres: Set<string>,
 				priority: number,
 			) => {
-				if (contexts.size !== 1) {
+				if (spheres.size !== 1) {
 					new Notice(
-						'Only one context can be selected for new project',
+						'Only one sphere can be selected for new project',
 					)
 					return
 				}
 
-				const context = contexts.values().next().value
+				const sphere = spheres.values().next().value
 
 				const projectFile = await this.createNewProjectFile(projectName)
 				let content = await this.app.vault.read(projectFile)
@@ -80,7 +80,7 @@ export class Handlers {
 				content = await this.parseTemplate({
 					content: content,
 					priority: priority,
-					context: `project/${context}`,
+					sphere: `project/${sphere}`,
 					description: text,
 				})
 
@@ -120,10 +120,10 @@ export class Handlers {
 	private async parseTemplate(options: {
 		content: string
 		priority: number
-		context: string
+		sphere: string
 		description: string
 	}) {
-		const { content, priority, context, description } = options
+		const { content, priority, sphere, description } = options
 
 		let newContent = content
 
@@ -133,8 +133,8 @@ export class Handlers {
 				replaceWith: priority.toString(),
 			},
 			{
-				regex: /{{\s*context\s*}}/g,
-				replaceWith: context,
+				regex: /{{\s*sphere\s*}}/g,
+				replaceWith: sphere,
 			},
 			{
 				regex: /{{\s*description\s*}}/g,

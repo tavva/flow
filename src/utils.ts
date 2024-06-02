@@ -4,7 +4,7 @@ import FlowPlugin from './main'
 export async function addToNextActions(
 	plugin: FlowPlugin,
 	text: string,
-	contexts: string[],
+	spheres: string[],
 ) {
 	text = text.trim()
 	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
@@ -18,15 +18,13 @@ export async function addToNextActions(
 		)
 	}
 
-	const contextString = contexts
-		.map((context) => `#context/${context}`)
-		.join(' ')
+	const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
 
 	let content = await plugin.app.vault.read(nextActionsFile)
 	content = content + '\n- [ ] ' + text
 
-	if (contextString) {
-		content = content + ' ' + contextString
+	if (sphereString) {
+		content = content + ' ' + sphereString
 	}
 	if (plugin.settings.appendTask) {
 		content = content + ' ' + plugin.settings.appendTask

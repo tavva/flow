@@ -39,7 +39,7 @@ export default class FlowPlugin extends Plugin {
 
 				for (const l of existingLeaves) {
 					const projectView = l.view as ProjectView
-					if (projectView.context === 'personal') {
+					if (projectView.sphere === 'personal') {
 						this.app.workspace.setActiveLeaf(l)
 						return
 					}
@@ -53,7 +53,7 @@ export default class FlowPlugin extends Plugin {
 
 				const view = leaf.view as ProjectView
 				view.plugin = this
-				view.context = 'personal'
+				view.sphere = 'personal'
 				await view.render()
 			},
 		})

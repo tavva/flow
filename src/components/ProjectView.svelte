@@ -5,7 +5,7 @@
 	import type { DataviewApi } from 'obsidian-dataview'
 	import type { Project } from '../views/project'
 
-	export let context: string
+	export let sphere: string
 	export let projects: Project[]
 	export let dv: DataviewApi
 
@@ -34,7 +34,7 @@
 </script>
 
 <div class="flow-project">
-	<h1>{context}</h1>
+	<h1>{sphere}</h1>
 	<div>
 		{#if projects && projects.length > 0}
 			<ul>

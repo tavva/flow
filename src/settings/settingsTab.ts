@@ -105,23 +105,23 @@ export class FlowSettingsTab extends PluginSettingTab {
 			)
 
 		new Setting(containerEl)
-			.setName('Contexts')
-			.setDesc('A comma-separated list of contexts.')
+			.setName('Spheres')
+			.setDesc('A comma-separated list of spheres.')
 			.addText((text) =>
 				text
-					.setPlaceholder('Enter contexts')
-					.setValue(this.plugin.settings.contexts.join(','))
+					.setPlaceholder('Enter spheres')
+					.setValue(this.plugin.settings.spheres.join(','))
 					.onChange(async (value) => {
 						if (!value.trim()) {
 							text.setValue(
-								this.plugin.settings.contexts.join(','),
+								this.plugin.settings.spheres.join(','),
 							)
 							return
 						}
 
-						this.plugin.settings.contexts = value
+						this.plugin.settings.spheres = value
 							.split(',')
-							.map((context) => context.trim())
+							.map((sphere) => sphere.trim())
 						await this.plugin.saveSettings()
 					}),
 			)

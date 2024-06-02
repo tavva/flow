@@ -4,32 +4,32 @@ import FlowPlugin from '../main'
 
 export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
-	private contexts: string[]
-	// TODO: we only allow one context. This is a Set to match the
-	// implementation in the ContextSelectorModal
-	private selectedContexts: Set<string> = new Set()
+	private spheres: string[]
+	// TODO: we only allow one sphere. This is a Set to match the
+	// implementation in the SphereSelectorModal
+	private selectedSpheres: Set<string> = new Set()
 	private onSubmit: (
 		projectName: string,
-		contexts: Set<string>,
+		spheres: Set<string>,
 		priority: number,
 	) => void
 	private projectName: string = ''
 	private priority: number | undefined
-	private contextContainer: HTMLElement
-	private contextButtons: ButtonComponent[] = []
+	private sphereContainer: HTMLElement
+	private sphereButtons: ButtonComponent[] = []
 
 	constructor(
 		plugin: FlowPlugin,
 		onSubmit: (
 			projectName: string,
-			contexts: Set<string>,
+			spheres: Set<string>,
 			priority: number,
 		) => void,
 	) {
 		super(plugin.app)
 		this.plugin = plugin
-		this.contexts = plugin.settings.contexts
-		this.selectedContexts = new Set()
+		this.spheres = plugin.settings.spheres
+		this.selectedSpheres = new Set()
 		this.onSubmit = onSubmit
 	}
 
@@ -46,30 +46,30 @@ export class NewProjectModal extends Modal {
 			}),
 		)
 
-		this.contextContainer = contentEl.createDiv()
-		this.contextContainer.addClass('flow-modal-content')
+		this.sphereContainer = contentEl.createDiv()
+		this.sphereContainer.addClass('flow-modal-content')
 
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')
 
-		this.contexts.forEach((context) => {
-			const button = new ButtonComponent(this.contextContainer)
-			button.setButtonText(context)
+		this.spheres.forEach((sphere) => {
+			const button = new ButtonComponent(this.sphereContainer)
+			button.setButtonText(sphere)
 
 			button.onClick(() => {
 				warningEl.hide()
 
-				this.selectedContexts = new Set()
+				this.selectedSpheres = new Set()
 
-				for (const button of this.contextButtons) {
+				for (const button of this.sphereButtons) {
 					button.buttonEl.removeClass('selected')
 				}
 
-				this.selectedContexts.add(context)
+				this.selectedSpheres.add(sphere)
 				button.setClass('selected')
 			})
 
-			this.contextButtons.push(button)
+			this.sphereButtons.push(button)
 		})
 
 		new Setting(contentEl).setName('Priority').addText((text) =>
@@ -100,8 +100,8 @@ export class NewProjectModal extends Modal {
 						warningEl.show()
 						return
 					}
-					if (this.selectedContexts.size !== 1) {
-						warningEl.setText('Please select one context')
+					if (this.selectedSpheres.size !== 1) {
+						warningEl.setText('Please select one sphere')
 						warningEl.show()
 						return
 					}
@@ -127,7 +127,7 @@ export class NewProjectModal extends Modal {
 
 					this.onSubmit(
 						this.projectName,
-						this.selectedContexts,
+						this.selectedSpheres,
 						this.priority,
 					)
 					this.close()
