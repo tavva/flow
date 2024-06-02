@@ -18,7 +18,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Inbox File Path')
-			.setDesc('Path to the Inbox file')
+			.setDesc('Flow processes all lines in every file in this folder.')
 			.addSearch((cb) => {
 				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox.md')
@@ -31,7 +31,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Inbox Folder Path')
-			.setDesc('Path to the Inbox folder')
+			.setDesc('Flow processes files one by one in this folder.')
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox')
@@ -44,7 +44,10 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Next Actions File Path')
-			.setDesc('Path to the Next Actions file')
+			.setDesc(
+				`This is where Flow will store Next Actions that aren't
+				assigned to a project.`,
+			)
 			.addSearch((cb) => {
 				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Next Actions.md')
@@ -57,7 +60,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('New Project Template File Path')
-			.setDesc('Path to the New Project Template File')
+			.setDesc('Flow will create new projects using this template.')
 			.addSearch((cb) => {
 				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: templates/Project.md')
@@ -70,7 +73,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Projects Folder Path')
-			.setDesc('Path to the Projects Folder')
+			.setDesc('This is where your project files are stored.')
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Projects')
@@ -83,7 +86,10 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Append to task')
-			.setDesc('Text (such as a #tag) to append to tasks')
+			.setDesc(
+				`Flow will append this to all tasks it creates. This is useful
+				if you use the Tasks plugin and have a global task filter set.`,
+			)
 			.addText((text) =>
 				text
 					.setPlaceholder('Enter text to append to tasks')
@@ -96,7 +102,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Contexts')
-			.setDesc('Comma separated list of contexts')
+			.setDesc('A comma-separated list of contexts.')
 			.addText((text) =>
 				text
 					.setPlaceholder('Enter contexts')
