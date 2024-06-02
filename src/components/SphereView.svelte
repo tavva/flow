@@ -57,6 +57,22 @@
 <div class="flow-project">
 	<h1>{sphere}</h1>
 	<div>
+		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
+			<h2>You have projects that need next actions</h2>
+			<ul>
+				{#each projectsNeedingNextActions as project}
+					<li>
+						<a href={project.link}>{project.file.name}</a>
+						<div
+							id={`task-list-${generateUniqueProjectId(project.file.path)}`}
+						></div>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
+	<div>
+		<h2>Projects</h2>
 		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
 			<ul>
 				{#each projectsWithNextActions as project}
