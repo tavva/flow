@@ -3,9 +3,10 @@
 	import { Component } from 'obsidian'
 
 	import type { DataviewApi } from 'obsidian-dataview'
+	import type { Project } from '../views/project'
 
 	export let context: string
-	export let projects: any[]
+	export let projects: Project[]
 	export let dv: DataviewApi
 
 	async function renderTaskList(container: HTMLElement, tasks: any) {

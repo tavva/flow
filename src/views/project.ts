@@ -6,7 +6,7 @@ import FlowPlugin from '../main'
 
 export const PROJECT_VIEW_TYPE = 'project-view'
 
-interface Project {
+export interface Project {
 	file: {
 		name: string
 		path: string
