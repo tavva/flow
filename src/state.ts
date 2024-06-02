@@ -30,7 +30,7 @@ export class StateManager {
 	private currentStage: Stage.File | Stage.Folder | null = null
 	private linesToProcess: LineWithFile[] = []
 	private filesToProcess: TFile[] = []
-	private tp: any // TODO: make this a proper type
+	private tp: any // TODO: make this a proper type, and maybe a better name
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
