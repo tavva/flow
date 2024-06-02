@@ -88,12 +88,8 @@ export default class FlowPlugin extends Plugin {
 			const watcher = fs.watch(
 				folderPathFull,
 				{ recursive: false },
-				async (eventType, filename) => {
+				async (_eventType, filename) => {
 					if (filename) {
-						console.log(`Change detected in folder: ${folder}`)
-						console.log(
-							`File changed: ${filename}, Event type: ${eventType}`,
-						)
 						await this.stateManager.updateCounts()
 					}
 				},
