@@ -5,7 +5,7 @@ import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
-import { ProjectView, PROJECT_VIEW_TYPE } from './views/project'
+import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
@@ -21,7 +21,7 @@ export default class FlowPlugin extends Plugin {
 			(leaf) => new ProcessingView(leaf),
 		)
 
-		this.registerView(PROJECT_VIEW_TYPE, (leaf) => new ProjectView(leaf))
+		this.registerView(SPHERE_VIEW_TYPE, (leaf) => new SphereView(leaf))
 
 		this.stateManager = new StateManager(this)
 		this.addCommand({
@@ -31,15 +31,15 @@ export default class FlowPlugin extends Plugin {
 		})
 
 		this.addCommand({
-			id: 'view-personal-project',
-			name: 'View Personal Project',
+			id: 'view-personal-sphere',
+			name: 'View Personal Sphere',
 			callback: async () => {
 				const existingLeaves =
-					this.app.workspace.getLeavesOfType(PROJECT_VIEW_TYPE)
+					this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
 
 				for (const l of existingLeaves) {
-					const projectView = l.view as ProjectView
-					if (projectView.sphere === 'personal') {
+					const sphereView = l.view as SphereView
+					if (sphereView.sphere === 'personal') {
 						this.app.workspace.setActiveLeaf(l)
 						return
 					}
@@ -47,11 +47,11 @@ export default class FlowPlugin extends Plugin {
 
 				const leaf = this.app.workspace.getLeaf(false)
 				await leaf.setViewState({
-					type: PROJECT_VIEW_TYPE,
+					type: SPHERE_VIEW_TYPE,
 					active: true,
 				})
 
-				const view = leaf.view as ProjectView
+				const view = leaf.view as SphereView
 				view.plugin = this
 				view.sphere = 'personal'
 				await view.render()
@@ -118,7 +118,7 @@ export default class FlowPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
-		this.app.workspace.detachLeavesOfType(PROJECT_VIEW_TYPE)
+		this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE)
 		this.watchers.forEach((watcher) => watcher.close())
 	}
 }

@@ -1,10 +1,10 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 import { getAPI, DataviewApi, STask } from 'obsidian-dataview'
 // @ts-ignore
-import ProjectComponent from '../components/ProjectView.svelte'
+import SphereComponent from '../components/SphereView.svelte'
 import FlowPlugin from '../main'
 
-export const PROJECT_VIEW_TYPE = 'project-view'
+export const SPHERE_VIEW_TYPE = 'sphere-view'
 
 export interface Project {
 	file: {
@@ -18,8 +18,8 @@ export interface Project {
 	link: string
 }
 
-export class ProjectView extends ItemView {
-	private component: ProjectComponent
+export class SphereView extends ItemView {
+	private component: SphereComponent
 	plugin: FlowPlugin
 	sphere: string
 
@@ -28,15 +28,15 @@ export class ProjectView extends ItemView {
 	}
 
 	getViewType() {
-		return PROJECT_VIEW_TYPE
+		return SPHERE_VIEW_TYPE
 	}
 
 	getDisplayText() {
-		return 'Flow project view'
+		return 'Flow sphere view'
 	}
 
 	async onOpen() {
-		this.component = new ProjectComponent({
+		this.component = new SphereComponent({
 			target: this.contentEl,
 			props: {
 				sphere: this.sphere,
