@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { ItemView, ViewStateResult, WorkspaceLeaf } from 'obsidian'
 import { getAPI, DataviewApi, STask } from 'obsidian-dataview'
 // @ts-ignore
 import SphereComponent from '../components/SphereView.svelte'
@@ -18,7 +18,11 @@ export interface Project {
 	link: string
 }
 
-export class SphereView extends ItemView {
+interface SphereViewState {
+	sphere: string
+}
+
+export class SphereView extends ItemView implements SphereViewState {
 	private component: SphereComponent
 	plugin: FlowPlugin
 	sphere: string
@@ -27,6 +31,21 @@ export class SphereView extends ItemView {
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf)
 		this.dv = getAPI()
+		this.sphere = ''
+	}
+
+	async setState(
+		state: SphereViewState,
+		result: ViewStateResult,
+	): Promise<void> {
+		if (state.sphere) this.sphere = state.sphere
+		return super.setState(state, result)
+	}
+
+	getState(): SphereViewState {
+		return {
+			sphere: this.sphere,
+		}
 	}
 
 	getViewType() {
@@ -34,7 +53,9 @@ export class SphereView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'Flow sphere view'
+		let capitalized =
+			this.sphere.charAt(0).toUpperCase() + this.sphere.slice(1)
+		return capitalized + ' dashboard'
 	}
 
 	async onOpen() {

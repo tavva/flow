@@ -49,11 +49,11 @@ export default class FlowPlugin extends Plugin {
 				await leaf.setViewState({
 					type: SPHERE_VIEW_TYPE,
 					active: true,
+					state: { sphere: 'personal' },
 				})
 
 				const view = leaf.view as SphereView
 				view.plugin = this
-				view.sphere = 'personal'
 				await view.render()
 			},
 		})
