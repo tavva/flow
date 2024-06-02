@@ -77,12 +77,12 @@ export class Handlers {
 				const projectFile = await this.createNewProjectFile(projectName)
 				let content = await this.app.vault.read(projectFile)
 
-				content = await this.parseTemplate(
-					content,
-					priority,
-					`project/${context}`,
-					text,
-				)
+				content = await this.parseTemplate({
+					content: content,
+					priority: priority,
+					context: `project/${context}`,
+					description: text,
+				})
 
 				await this.app.vault.modify(projectFile, content)
 
@@ -117,12 +117,16 @@ export class Handlers {
 		}
 	}
 
-	private async parseTemplate(
-		content: string,
-		priority: number,
-		context: string,
-		description: string,
-	) {
+	private async parseTemplate(options: {
+		content: string
+		priority: number
+		context: string
+		description: string
+	}) {
+		const { content, priority, context, description } = options
+
+		let newContent = content
+
 		const replacements = [
 			{
 				regex: /{{\s*priority\s*}}/g,
@@ -139,10 +143,10 @@ export class Handlers {
 		]
 
 		for (const { regex, replaceWith } of replacements) {
-			content = this.replacer(content, regex, replaceWith)
+			newContent = this.replacer(newContent, regex, replaceWith)
 		}
 
-		return content
+		return newContent
 	}
 
 	private async updateInboxFile(processedLine: LineWithFile) {
