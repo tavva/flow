@@ -1,5 +1,5 @@
 export interface FlowSettings {
-	inboxFilePath: string
+	inboxFileFolderPath: string
 	inboxFolderPath: string
 	nextActionsFilePath: string
 	newProjectTemplateFilePath: string
@@ -10,7 +10,7 @@ export interface FlowSettings {
 }
 
 export const DEFAULT_SETTINGS: FlowSettings = {
-	inboxFilePath: 'Flow Inbox.md',
+	inboxFileFolderPath: 'Flow Inbox Files',
 	inboxFolderPath: 'Flow Inbox Folder',
 	nextActionsFilePath: 'Next Actions.md',
 	newProjectTemplateFilePath: 'Templates/Project.md',

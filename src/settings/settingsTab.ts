@@ -17,14 +17,14 @@ export class FlowSettingsTab extends PluginSettingTab {
 		containerEl.empty()
 
 		new Setting(containerEl)
-			.setName('Inbox File Path')
+			.setName('Inbox Files Folder Path')
 			.setDesc('Flow processes all lines in every file in this folder.')
 			.addSearch((cb) => {
-				new FileSuggest(this.plugin, cb.inputEl)
-				cb.setPlaceholder('Example: Inbox.md')
-					.setValue(this.plugin.settings.inboxFilePath)
+				new FolderSuggest(this.plugin, cb.inputEl)
+				cb.setPlaceholder('Example: Inbox Files')
+					.setValue(this.plugin.settings.inboxFilesFolderPath)
 					.onChange(async (value) => {
-						this.plugin.settings.inboxFilePath = value
+						this.plugin.settings.inboxFilesFolderPath = value
 						this.plugin.saveSettings()
 					})
 			})
