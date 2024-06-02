@@ -15,6 +15,7 @@ export interface Project {
 	status: string
 	priority: number
 	nextActions: DataviewApi.TaskResult
+	link: string
 }
 
 export class ProjectView extends ItemView {
@@ -75,6 +76,11 @@ export class ProjectView extends ItemView {
 					(t: STask) =>
 						t.section?.subpath == 'Next actions' && !t.completed,
 				),
+				link:
+					'obsidian://open?vault=' +
+					encodeURIComponent(dv.app.vault.getName()) +
+					'&file=' +
+					encodeURIComponent(p.file.path),
 			}))
 			.filter((p: Project) => p.nextActions.length > 0)
 			.sort((p: Project) => p.priority, 'asc')

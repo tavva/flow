@@ -40,7 +40,7 @@
 			<ul>
 				{#each projects as project, index}
 					<li>
-						{project.file.name}
+						<a href={project.link}>{project.file.name}</a>
 						<div id={'task-list-' + index}></div>
 					</li>
 				{/each}
