@@ -22,9 +22,11 @@ export class SphereView extends ItemView {
 	private component: SphereComponent
 	plugin: FlowPlugin
 	sphere: string
+	dv: DataviewApi
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf)
+		this.dv = getAPI()
 	}
 
 	getViewType() {
@@ -51,8 +53,12 @@ export class SphereView extends ItemView {
 	}
 
 	async render() {
-		this.setProps({ sphere: this.sphere })
-		this.listProjectsWithNoNextActions()
+		const projects = await this.listProjects()
+		this.setProps({
+			dv: this.dv,
+			sphere: this.sphere,
+			projects: projects,
+		})
 	}
 
 	public setProps(props: Partial<typeof this.component.$$.props>) {
@@ -61,10 +67,8 @@ export class SphereView extends ItemView {
 		}
 	}
 
-	private async listProjectsWithNoNextActions() {
-		const dv = getAPI()
-
-		const projects = dv
+	private async listProjects() {
+		return this.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
 				(p: Project) =>
@@ -78,13 +82,10 @@ export class SphereView extends ItemView {
 				),
 				link:
 					'obsidian://open?vault=' +
-					encodeURIComponent(dv.app.vault.getName()) +
+					encodeURIComponent(this.dv.app.vault.getName()) +
 					'&file=' +
 					encodeURIComponent(p.file.path),
 			}))
-			.filter((p: Project) => p.nextActions.length > 0)
 			.sort((p: Project) => p.priority, 'asc')
-
-		this.setProps({ projects: projects, dv: dv })
 	}
 }
