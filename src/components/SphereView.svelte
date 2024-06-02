@@ -63,9 +63,6 @@
 				{#each projectsNeedingNextActions as project}
 					<li>
 						<a href={project.link}>{project.file.name}</a>
-						<div
-							id={`task-list-${generateUniqueProjectId(project.file.path)}`}
-						></div>
 					</li>
 				{/each}
 			</ul>
