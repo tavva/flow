@@ -13,6 +13,8 @@
 	let projectsWithNextActions: Project[] = []
 	let projectsNeedingNextActions: Project[] = []
 
+	export let nonProjectNextActions: DataviewApi.TaskResult = []
+
 	$: {
 		if (sphere)
 			sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
@@ -58,6 +60,19 @@
 			})
 		}
 	}
+
+	$: {
+		if (nonProjectNextActions.length > 0) {
+			tick().then(() => {
+				const container = document.getElementById(
+					'task-list-non-project',
+				)
+				if (container) {
+					renderTaskList(container, nonProjectNextActions)
+				}
+			})
+		}
+	}
 </script>
 
 <div class="flow-project">
@@ -90,5 +105,9 @@
 		{:else}
 			<p>No projects found</p>
 		{/if}
+	</div>
+	<div>
+		<h2>Non-project next actions</h2>
+		<div id="task-list-non-project">No non-project next actions</div>
 	</div>
 </div>
