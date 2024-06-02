@@ -12,7 +12,7 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
 	"strictNullChecks": true,
     "lib": [
       "DOM",
