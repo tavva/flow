@@ -1,14 +1,7 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
-import {
-	readFileContent,
-	addToNextActions,
-	addToProject,
-	getFilesWithTagPrefix,
-} from './utils'
+import { readFileContent } from './utils'
 import FlowPlugin from './main'
-import { ProjectSelectorModal } from './modals/projectSelectorModal'
-import { NewProjectModal } from './modals/newProjectModal'
-import { ContextSelectorModal } from './modals/contextSelectorModal'
+import { Handlers } from './handlers'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing'
 
 export enum Stage {
@@ -16,7 +9,7 @@ export enum Stage {
 	Folder = 'folder',
 }
 
-interface LineWithFile {
+export interface LineWithFile {
 	file: TFile
 	line: string
 }
@@ -24,19 +17,18 @@ interface LineWithFile {
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
-	private inboxFilesFolder: TFolder | null = null
-	private inboxFolder: TFolder | null = null
+	private handlers: Handlers
+	inboxFilesFolder: TFolder | null = null
+	inboxFolder: TFolder | null = null
 	private processingLeaf: WorkspaceLeaf | null = null
-	private currentStage: Stage.File | Stage.Folder | null = null
-	private linesToProcess: LineWithFile[] = []
-	private filesToProcess: TFile[] = []
-	private tp: any // TODO: make this a proper type, and maybe a better name
+	currentStage: Stage.File | Stage.Folder | null = null
+	linesToProcess: LineWithFile[] = []
+	filesToProcess: TFile[] = []
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
 		this.app = plugin.app // shortcut for nicer code
-		// @ts-ignore
-		this.tp = plugin.app.plugins.plugins['templater-obsidian']
+		this.handlers = new Handlers(plugin, this)
 	}
 
 	async startProcessing() {
@@ -105,10 +97,10 @@ export class StateManager {
 			view.setProps({
 				line: this.linesToProcess[0].line,
 				currentStage: this.currentStage,
-				onAddToNextActions: this.handleAddToNextActions.bind(this),
-				onAddToProject: this.handleAddToProject.bind(this),
-				onAddToNewProject: this.handleAddToNewProject.bind(this),
-				onTrash: this.handleTrash.bind(this),
+				onAddToNextActions: this.handlers.handleAddToNextActions,
+				onAddToProject: this.handlers.handleAddToProject,
+				onAddToNewProject: this.handlers.handleAddToNewProject,
+				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
 					this.filesToProcess.length === 0,
@@ -131,10 +123,12 @@ export class StateManager {
 		if (view) {
 			view.setProps({
 				line: content,
-				onAddToNextActions: this.handleAddToNextActions.bind(this),
-				onAddToProject: this.handleAddToProject.bind(this),
-				onAddToNewProject: this.handleAddToNewProject.bind(this),
-				onTrash: this.handleTrash.bind(this),
+				onAddToNextActions:
+					this.handlers.handleAddToNextActions.bind(this),
+				onAddToProject: this.handlers.handleAddToProject.bind(this),
+				onAddToNewProject:
+					this.handlers.handleAddToNewProject.bind(this),
+				onTrash: this.handlers.handleTrash.bind(this),
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
 					this.filesToProcess.length === 0,
@@ -223,178 +217,5 @@ export class StateManager {
 			console.error('ProcessingView not found')
 			return undefined
 		}
-	}
-
-	private async removeProcessedItem() {
-		if (this.currentStage === Stage.File) {
-			const processedLine = this.linesToProcess.shift()
-			if (this.linesToProcess.length === 0) {
-				this.currentStage = null
-			}
-			if (processedLine) {
-				await this.updateInboxFile(processedLine)
-			}
-			this.startProcessing()
-		} else if (this.currentStage === Stage.Folder) {
-			const processedFile = this.filesToProcess.shift()
-			if (this.filesToProcess.length === 0) {
-				this.currentStage = null
-			}
-			if (processedFile) {
-				await this.deleteFolderFile(processedFile)
-			}
-			this.startProcessing()
-		}
-	}
-
-	private async removeEmptyLinesFromFile(file: TFile): Promise<void> {
-		const content = await readFileContent(this.plugin, file)
-		const nonEmptyLines = content
-			.split('\n')
-			.filter((line) => line.trim() !== '')
-			.join('\n')
-		await this.app.vault.modify(file, nonEmptyLines)
-	}
-
-	private async updateInboxFile(processedLine: LineWithFile) {
-		const { file, line } = processedLine
-
-		if (this.inboxFilesFolder) {
-			await this.removeEmptyLinesFromFile(file)
-
-			const currentContent = await readFileContent(this.plugin, file)
-			const currentLines = currentContent.split('\n')
-			const firstLine = currentLines[0]
-			if (firstLine && firstLine.trim() === line.trim()) {
-				const updatedContent = currentLines.slice(1).join('\n')
-				await this.app.vault.modify(file, updatedContent)
-			} else {
-				console.log('processedLine:', processedLine)
-				console.log('currentLines[0]:', currentLines[0])
-				console.error(
-					'Mismatch in the processed line and the current first line',
-				)
-			}
-		}
-	}
-
-	private async deleteFolderFile(file: TFile) {
-		await this.app.vault.delete(file)
-	}
-
-	private async handleAddToNextActions(text: string) {
-		new ContextSelectorModal(
-			this.app,
-			this.plugin.settings.contexts,
-			async (selectedContexts: string[]) => {
-				await addToNextActions(this.plugin, text, selectedContexts)
-				this.removeProcessedItem()
-			},
-		).open()
-	}
-
-	private async handleAddToProject(text: string) {
-		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
-
-		new ProjectSelectorModal(
-			this.app,
-			projectFiles,
-			async (file: TFile) => {
-				await addToProject(this.plugin, file, text)
-				this.removeProcessedItem()
-			},
-		).open()
-	}
-
-	private replacer(str: string, regex: RegExp, replaceWith: string) {
-		return str.replace(regex, function () {
-			return replaceWith
-		})
-	}
-
-	private async handleAddToNewProject(text: string) {
-		new NewProjectModal(
-			this.plugin,
-			async (
-				projectName: string,
-				contexts: Set<string>,
-				priority: number,
-			) => {
-				if (contexts.size !== 1) {
-					new Notice(
-						'Only one context can be selected for new project',
-					)
-					return
-				}
-
-				const context = contexts.values().next().value
-
-				const projectFile = await this.createNewProjectFile(projectName)
-				let content = await this.app.vault.read(projectFile)
-
-				content = await this.parseTemplate(
-					content,
-					priority,
-					`project/${context}`,
-				)
-
-				await this.app.vault.modify(projectFile, content)
-
-				await addToProject(this.plugin, projectFile, text)
-
-				this.removeProcessedItem()
-			},
-		).open()
-	}
-
-	private async parseTemplate(
-		content: string,
-		priority: number,
-		context: string,
-	) {
-		const replacements = [
-			{
-				regex: /{{\s*priority\s*}}/g,
-				replaceWith: priority.toString(),
-			},
-			{
-				regex: /{{\s*context\s*}}/g,
-				replaceWith: context,
-			},
-		]
-
-		for (const { regex, replaceWith } of replacements) {
-			content = this.replacer(content, regex, replaceWith)
-		}
-
-		return content
-	}
-
-	private async createNewProjectFile(projectName: string): Promise<TFile> {
-		const templateFile = this.app.vault.getAbstractFileByPath(
-			this.plugin.settings.newProjectTemplateFilePath,
-		) as TFile
-
-		const open_in_new_window = false
-		const create_new = await this.getTemplaterCreateNewFunction()
-		return create_new(
-			templateFile,
-			projectName,
-			open_in_new_window,
-			this.plugin.settings.projectsFolderPath,
-		)
-	}
-
-	private async getTemplaterCreateNewFunction() {
-		let tp_file =
-			this.tp.templater.functions_generator.internal_functions.modules_array.find(
-				(m: any) => m.name == 'file', // FIXME: any
-			)
-
-		return await tp_file.static_functions.get('create_new')
-	}
-
-	private handleTrash() {
-		this.removeProcessedItem()
 	}
 }
