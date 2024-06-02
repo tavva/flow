@@ -8,9 +8,15 @@
 	export let dv: DataviewApi
 	export let sphere: string
 	export let projects: Project[] = []
+	let sphereCapitalised: string = ''
 
 	let projectsWithNextActions: Project[] = []
 	let projectsNeedingNextActions: Project[] = []
+
+	$: {
+		if (sphere)
+			sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
+	}
 
 	async function renderTaskList(container: HTMLElement, tasks: any) {
 		if (container && tasks) {
@@ -55,7 +61,7 @@
 </script>
 
 <div class="flow-project">
-	<h1>{sphere}</h1>
+	<h1>{sphereCapitalised}</h1>
 	<div>
 		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
 			<h2>You have projects that need next actions</h2>
