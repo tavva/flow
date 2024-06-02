@@ -16,14 +16,19 @@ export enum Stage {
 	Folder = 'folder',
 }
 
+interface LineWithFile {
+	file: TFile
+	line: string
+}
+
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
-	private inboxFile: TFile | null = null
+	private inboxFiles: TFolder | null = null
 	private inboxFolder: TFolder | null = null
 	private processingLeaf: WorkspaceLeaf | null = null
 	private currentStage: Stage.File | Stage.Folder | null = null
-	private linesToProcess: string[] = []
+	private linesToProcess: LineWithFile[] = []
 	private filesToProcess: TFile[] = []
 	private tp: any // TODO: make this a proper type
 
@@ -35,15 +40,16 @@ export class StateManager {
 	}
 
 	async startProcessing() {
-		this.inboxFile = this.app.vault.getAbstractFileByPath(
-			this.plugin.settings.inboxFilePath,
-		) as TFile
+		this.inboxFiles = this.app.vault.getAbstractFileByPath(
+			this.plugin.settings.inboxFilesFolderPath,
+		) as TFolder
 		this.inboxFolder = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFolderPath,
 		) as TFolder
 
-		if (!this.inboxFile) {
-			new Notice('Inbox file not found. Please check your settings.')
+		if (!this.inboxFiles) {
+			new Notice(`Inbox file folder not found. Please check your
+					   settings.`)
 			return
 		}
 
@@ -54,22 +60,22 @@ export class StateManager {
 
 		await this.updateCounts()
 
-		if (await this.isInboxFileEmpty()) {
+		if (await this.areInboxFilesEmpty()) {
 			if (await this.isFolderInboxEmpty()) {
 				new Notice('Both inboxes are empty')
 				await this.completeProcessing()
 			} else {
 				this.currentStage = Stage.Folder
-				await this.processFolder()
+				await this.processInboxFolder()
 			}
 		} else {
 			this.currentStage = Stage.File
-			await this.processInbox()
+			await this.processInboxFiles()
 		}
 	}
 
-	private async isInboxFileEmpty(): Promise<boolean> {
-		if (!this.inboxFile) return true
+	private async areInboxFilesEmpty(): Promise<boolean> {
+		if (!this.inboxFiles) return true
 		return this.linesToProcess.length === 0
 	}
 
@@ -91,7 +97,7 @@ export class StateManager {
 		}
 	}
 
-	private async processInbox() {
+	private async processInboxFiles() {
 		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 
@@ -112,7 +118,7 @@ export class StateManager {
 		}
 	}
 
-	private async processFolder() {
+	private async processInboxFolder() {
 		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
 		let content: string | null = null
@@ -142,10 +148,21 @@ export class StateManager {
 		this.filesToProcess = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
-		const content = await readFileContent(this.plugin, this.inboxFile!)
-		this.linesToProcess = content
-			.split('\n')
-			.filter((line) => line.trim() !== '')
+
+		const inboxFiles = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => file.path.startsWith(this.inboxFiles!.path))
+
+		this.linesToProcess = []
+
+		for (const file of inboxFiles) {
+			const content = await readFileContent(this.plugin, file)
+			const lines = content
+				.split('\n')
+				.filter((line) => line.trim() !== '')
+				.map((line) => ({ file, line }))
+			this.linesToProcess = this.linesToProcess.concat(lines)
+		}
 	}
 
 	private async updateStatus() {
@@ -225,19 +242,18 @@ export class StateManager {
 		await plugin.app.vault.modify(file, nonEmptyLines)
 	}
 
-	private async updateInboxFile(processedLine: string) {
-		if (this.inboxFile) {
-			await this.removeEmptyLinesFromFile(this.plugin, this.inboxFile)
+	private async updateInboxFile(processedLine: LineWithFile) {
+		const { file, line } = processedLine
 
-			const currentContent = await readFileContent(
-				this.plugin,
-				this.inboxFile,
-			)
+		if (this.inboxFiles) {
+			await this.removeEmptyLinesFromFile(this.plugin, file)
+
+			const currentContent = await readFileContent(this.plugin, file)
 			const currentLines = currentContent.split('\n')
 			const firstLine = currentLines[0]
-			if (firstLine && firstLine.trim() === processedLine.trim()) {
+			if (firstLine && firstLine.trim() === line.trim()) {
 				const updatedContent = currentLines.slice(1).join('\n')
-				await this.app.vault.modify(this.inboxFile, updatedContent)
+				await this.app.vault.modify(file, updatedContent)
 			} else {
 				console.log('processedLine:', processedLine)
 				console.log('currentLines[0]:', currentLines[0])
