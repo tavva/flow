@@ -99,7 +99,7 @@ export class StateManager {
 				currentStage: this.currentStage,
 				onAddToNextActions: this.handlers.handleAddToNextActions,
 				onAddToProject: this.handlers.handleAddToProject,
-				onAddToNewProject: this.handlers.handleAddToNewProject,
+				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&

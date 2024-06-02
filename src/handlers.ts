@@ -57,7 +57,7 @@ export class Handlers {
 		})
 	}
 
-	handleAddToNewProject = async (text: string) => {
+	handleNewProject = async (text: string) => {
 		new NewProjectModal(
 			this.plugin,
 			async (
@@ -81,11 +81,10 @@ export class Handlers {
 					content,
 					priority,
 					`project/${context}`,
+					text,
 				)
 
 				await this.app.vault.modify(projectFile, content)
-
-				await addToProject(this.plugin, projectFile, text)
 
 				await this.removeProcessedItem()
 			},
@@ -122,6 +121,7 @@ export class Handlers {
 		content: string,
 		priority: number,
 		context: string,
+		description: string,
 	) {
 		const replacements = [
 			{
@@ -131,6 +131,10 @@ export class Handlers {
 			{
 				regex: /{{\s*context\s*}}/g,
 				replaceWith: context,
+			},
+			{
+				regex: /{{\s*description\s*}}/g,
+				replaceWith: description,
 			},
 		]
 
