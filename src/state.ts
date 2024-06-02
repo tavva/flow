@@ -123,12 +123,10 @@ export class StateManager {
 		if (view) {
 			view.setProps({
 				line: content,
-				onAddToNextActions:
-					this.handlers.handleAddToNextActions.bind(this),
-				onAddToProject: this.handlers.handleAddToProject.bind(this),
-				onAddToNewProject:
-					this.handlers.handleAddToNewProject.bind(this),
-				onTrash: this.handlers.handleTrash.bind(this),
+				onAddToNextActions: this.handlers.handleAddToNextActions,
+				onAddToProject: this.handlers.handleAddToProject,
+				onAddToNewProject: this.handlers.handleNewProject,
+				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
 					this.filesToProcess.length === 0,
