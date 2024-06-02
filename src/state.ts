@@ -24,7 +24,7 @@ interface LineWithFile {
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
-	private inboxFiles: TFolder | null = null
+	private inboxFilesFolder: TFolder | null = null
 	private inboxFolder: TFolder | null = null
 	private processingLeaf: WorkspaceLeaf | null = null
 	private currentStage: Stage.File | Stage.Folder | null = null
@@ -40,14 +40,14 @@ export class StateManager {
 	}
 
 	async startProcessing() {
-		this.inboxFiles = this.app.vault.getAbstractFileByPath(
+		this.inboxFilesFolder = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFilesFolderPath,
 		) as TFolder
 		this.inboxFolder = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFolderPath,
 		) as TFolder
 
-		if (!this.inboxFiles) {
+		if (!this.inboxFilesFolder) {
 			new Notice(`Inbox file folder not found. Please check your
 					   settings.`)
 			return
@@ -75,7 +75,7 @@ export class StateManager {
 	}
 
 	private async areInboxFilesEmpty(): Promise<boolean> {
-		if (!this.inboxFiles) return true
+		if (!this.inboxFilesFolder) return true
 		return this.linesToProcess.length === 0
 	}
 
@@ -103,7 +103,7 @@ export class StateManager {
 
 		if (view) {
 			view.setProps({
-				line: this.linesToProcess[0],
+				line: this.linesToProcess[0].line,
 				currentStage: this.currentStage,
 				onAddToNextActions: this.handleAddToNextActions.bind(this),
 				onAddToProject: this.handleAddToProject.bind(this),
@@ -145,13 +145,9 @@ export class StateManager {
 	}
 
 	private async updateCounts() {
-		this.filesToProcess = this.app.vault
-			.getMarkdownFiles()
-			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
-
 		const inboxFiles = this.app.vault
 			.getMarkdownFiles()
-			.filter((file) => file.path.startsWith(this.inboxFiles!.path))
+			.filter((file) => file.path.startsWith(this.inboxFilesFolder!.path))
 
 		this.linesToProcess = []
 
@@ -163,10 +159,13 @@ export class StateManager {
 				.map((line) => ({ file, line }))
 			this.linesToProcess = this.linesToProcess.concat(lines)
 		}
+		this.filesToProcess = this.app.vault
+			.getMarkdownFiles()
+			.filter((file) => file.path.startsWith(this.inboxFolder!.path))
 	}
 
 	private async updateStatus() {
-		this.updateCounts()
+		await this.updateCounts()
 
 		const view = await this.setupOrGetProcessingView()
 		if (!view) {
@@ -242,7 +241,7 @@ export class StateManager {
 	private async updateInboxFile(processedLine: LineWithFile) {
 		const { file, line } = processedLine
 
-		if (this.inboxFiles) {
+		if (this.inboxFilesFolder) {
 			await this.removeEmptyLinesFromFile(file)
 
 			const currentContent = await readFileContent(this.plugin, file)
