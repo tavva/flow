@@ -57,6 +57,33 @@ export default class FlowPlugin extends Plugin {
 				await view.render()
 			},
 		})
+		this.addCommand({
+			id: 'view-work-sphere',
+			name: 'View Work Sphere',
+			callback: async () => {
+				const existingLeaves =
+					this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+
+				for (const l of existingLeaves) {
+					const sphereView = l.view as SphereView
+					if (sphereView.sphere === 'work') {
+						this.app.workspace.setActiveLeaf(l)
+						return
+					}
+				}
+
+				const leaf = this.app.workspace.getLeaf(false)
+				await leaf.setViewState({
+					type: SPHERE_VIEW_TYPE,
+					active: true,
+					state: { sphere: 'work' },
+				})
+
+				const view = leaf.view as SphereView
+				view.plugin = this
+				await view.render()
+			},
+		})
 
 		this.registerEvent(
 			this.app.workspace.on(
