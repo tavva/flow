@@ -18,7 +18,11 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Inbox Files Folder Path')
-			.setDesc('Flow processes all lines in every file in this folder.')
+			.setDesc(
+				`Flow processes all lines in every file in this folder. We
+				 allow multiple inbox files to help prevent syncing issues when
+				 the inbox can be populated from many different sources.`,
+			)
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox Files')
