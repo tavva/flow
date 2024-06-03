@@ -6,11 +6,13 @@ import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
+import { Metrics } from './metrics'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
 	private watchers: fs.FSWatcher[]
 	settings: FlowSettings
+	metrics: Metrics
 
 	async onload() {
 		await this.loadSettings()
@@ -24,6 +26,8 @@ export default class FlowPlugin extends Plugin {
 		this.registerView(SPHERE_VIEW_TYPE, (leaf) => new SphereView(leaf))
 
 		this.stateManager = new StateManager(this)
+		this.metrics = new Metrics(this)
+
 		this.addCommand({
 			id: 'process-inboxes',
 			name: 'Process Inboxes',
