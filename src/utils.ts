@@ -39,7 +39,10 @@ async function addToProjectSection(
 	projectFile: TFile,
 	line: string,
 	sectionName: string,
+	isTask: boolean = false,
 ) {
+	// TODO: use an options map for the function arguments
+
 	line = line.trim()
 	const fileContent = await plugin.app.vault.read(projectFile)
 
@@ -47,7 +50,7 @@ async function addToProjectSection(
 
 	let newContent = fileContent
 
-	const taskLine = '\n- [ ] ' + line
+	const taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
 
 	if (plugin.settings.appendTask) {
 		taskLine.concat(' ' + plugin.settings.appendTask)
@@ -74,7 +77,13 @@ export async function addToProjectNextActions(
 	projectFile: TFile,
 	line: string,
 ) {
-	await addToProjectSection(plugin, projectFile, line, '## Next actions')
+	await addToProjectSection(
+		plugin,
+		projectFile,
+		line,
+		'## Next actions',
+		true, // isTask
+	)
 }
 
 export async function addToProjectReference(
