@@ -20,7 +20,7 @@ export class Metrics {
 		await this.plugin.saveData(data)
 	}
 
-	public async add(metric: string) {
+	public async count(metric: string) {
 		if (!this.counts[metric]) {
 			this.counts[metric] = 0
 		}
