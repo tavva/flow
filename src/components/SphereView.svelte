@@ -68,6 +68,7 @@
 					'task-list-non-project',
 				)
 				if (container) {
+					container.empty()
 					renderTaskList(container, nonProjectNextActions)
 				}
 			})
