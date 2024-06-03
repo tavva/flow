@@ -1,4 +1,5 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { ItemView, MarkdownView, WorkspaceLeaf, TFile } from 'obsidian'
+
 // @ts-ignore
 import InboxViewComponent from '../components/InboxView.svelte'
 
@@ -6,10 +7,12 @@ export const PROCESSING_VIEW_TYPE = 'processing-view'
 
 export class ProcessingView extends ItemView {
 	private component: InboxViewComponent
+	private markdownView: MarkdownView | null
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf)
 		this.navigation = false
+		this.markdownView = null
 	}
 
 	getViewType() {
@@ -30,6 +33,41 @@ export class ProcessingView extends ItemView {
 				onTrash: () => {},
 			},
 		})
+
+		const noteContainer = this.contentEl.querySelector(
+			'#flow-note-container',
+		)
+		this.markdownView = new MarkdownView(this.leaf)
+		noteContainer?.appendChild(this.markdownView.containerEl)
+	}
+
+	async updateEmbeddedFile(notePath: string | null): Promise<void> {
+		if (!notePath) {
+			this.component.$set({
+				noteContent: '',
+				sourcePath: '',
+			})
+			return
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(notePath)
+		if (file instanceof TFile) {
+			const content = await this.app.vault.read(file)
+			if (this.component) {
+				this.component.$set({
+					noteContent: content,
+					sourcePath: notePath,
+				})
+			}
+		} else {
+			const errorMessage = 'Note not found. Please check the file path.'
+			if (this.component) {
+				this.component.$set({
+					noteContent: errorMessage,
+					sourcePath: '',
+				})
+			}
+		}
 	}
 
 	async onClose() {

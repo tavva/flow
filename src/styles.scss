@@ -19,3 +19,7 @@
 button.flow-modal-done {
 	background-color: var(--interactive-accent);
 }
+
+#flow-note-container {
+	user-select: text;
+}

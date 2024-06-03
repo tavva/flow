@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { App, MarkdownRenderer, Component } from 'obsidian'
 	import { Stage } from '../state'
+
+	export let app: App
 
 	export let lineCount: number
 	export let fileCount: number
@@ -12,6 +15,30 @@
 	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
+
+	export let noteContent: string = ''
+	export let sourcePath: string = ''
+	export let noteContainer: HTMLDivElement
+	export let parentComponent: Component
+
+	$: renderMarkdown(noteContent)
+
+	async function renderMarkdown(content: string) {
+		if (noteContainer) {
+			noteContainer.innerHTML = ''
+			if (!content) {
+				return
+			}
+
+			await MarkdownRenderer.render(
+				app,
+				content,
+				noteContainer,
+				sourcePath,
+				parentComponent,
+			)
+		}
+	}
 
 	let inputText: string = currentStage === Stage.File ? line : ''
 	$: if (currentStage === Stage.File) {
@@ -73,5 +100,6 @@
 			<h3>Currently processing:</h3>
 			<p>{line}</p>
 		</div>
+		<div id="flow-note-container" bind:this={noteContainer}></div>
 	{/if}
 </div>

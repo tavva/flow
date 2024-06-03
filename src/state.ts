@@ -96,6 +96,7 @@ export class StateManager {
 		if (view) {
 			view.setProps({
 				line: this.linesToProcess[0].line,
+				noteContent: '',
 				currentStage: this.currentStage,
 				onAddToNextActions: this.handlers.handleAddToNextActions,
 				onAddToProjectNextActions:
@@ -121,6 +122,7 @@ export class StateManager {
 		if (this.filesToProcess.length > 0) {
 			const file = this.filesToProcess[0]
 			content = await readFileContent(this.plugin, file)
+			view!.updateEmbeddedFile(file.path)
 		}
 
 		// TODO: abstract this out as we're repeating ourselves
