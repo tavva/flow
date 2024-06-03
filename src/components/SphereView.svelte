@@ -54,6 +54,7 @@
 					const projectId = `task-list-${generateUniqueProjectId(project.file.path)}`
 					const container = document.getElementById(projectId)
 					if (container) {
+						container.empty()
 						renderTaskList(container, project.nextActions)
 					}
 				})
