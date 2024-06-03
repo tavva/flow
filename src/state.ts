@@ -98,7 +98,8 @@ export class StateManager {
 				line: this.linesToProcess[0].line,
 				currentStage: this.currentStage,
 				onAddToNextActions: this.handlers.handleAddToNextActions,
-				onAddToProject: this.handlers.handleAddToProject,
+				onAddToProjectNextActions:
+					this.handlers.handleAddToProjectNextActions,
 				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
@@ -124,7 +125,8 @@ export class StateManager {
 			view.setProps({
 				line: content,
 				onAddToNextActions: this.handlers.handleAddToNextActions,
-				onAddToProject: this.handlers.handleAddToProject,
+				onAddToProjectNextActions:
+					this.handlers.handleAddToProjectNextActions,
 				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:

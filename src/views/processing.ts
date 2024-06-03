@@ -26,7 +26,7 @@ export class ProcessingView extends ItemView {
 			props: {
 				line: '',
 				onAddToNextActions: () => {},
-				onAddToProject: () => {},
+				onAddToProjectNextActions: () => {},
 				onTrash: () => {},
 			},
 		})

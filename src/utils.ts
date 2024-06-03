@@ -34,7 +34,7 @@ export async function addToNextActions(
 	await plugin.app.vault.modify(nextActionsFile, content)
 }
 
-export async function addToProject(
+export async function addToProjectNextActions(
 	plugin: FlowPlugin,
 	projectFile: TFile,
 	line: string,

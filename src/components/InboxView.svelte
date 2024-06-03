@@ -7,7 +7,7 @@
 	export let line: string
 	export let currentStage: Stage
 	export let onAddToNextActions: (text: string) => void
-	export let onAddToProject: (text: string) => void
+	export let onAddToProjectNextActions: (text: string) => void
 	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
@@ -23,8 +23,8 @@
 		if (inputText.trim() !== '') onAddToNextActions(inputText)
 	}
 
-	function addToProject() {
-		if (inputText.trim() !== '') onAddToProject(inputText)
+	function addToProjectNextActions() {
+		if (inputText.trim() !== '') onAddToProjectNextActions(inputText)
 	}
 
 	function addToNewProject() {
@@ -55,7 +55,7 @@
 	{:else}
 		<textarea bind:value={inputText}></textarea>
 		<button on:click={addToNextActions}>Add to Next Actions</button>
-		<button on:click={addToProject}>Add to Project</button>
+		<button on:click={addToProjectNextActions}>Add to Project</button>
 		<button on:click={addToNewProject}>Add to New Project</button>
 		<button on:click={trash}>Trash</button>
 		<div>
