@@ -77,6 +77,15 @@ export async function addToProjectNextActions(
 	await addToProjectSection(plugin, projectFile, line, '## Next actions')
 }
 
+export async function addToProjectReference(
+	plugin: FlowPlugin,
+	projectFile: TFile,
+	line: string,
+) {
+	// TODO: make the section name a setting
+	await addToProjectSection(plugin, projectFile, line, '## Notes + resources')
+}
+
 export function readFileContent(
 	plugin: FlowPlugin,
 	file: TFile,
