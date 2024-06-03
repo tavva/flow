@@ -123,6 +123,7 @@ export class Handlers {
 			if (processedLine) {
 				await this.updateInboxFile(processedLine)
 			}
+			this.plugin.metrics.count('line-processed')
 			this.state.startProcessing()
 		} else if (this.state.currentStage === Stage.Folder) {
 			const processedFile = this.state.filesToProcess.shift()
@@ -132,6 +133,7 @@ export class Handlers {
 			if (processedFile) {
 				await this.deleteFolderFile(processedFile)
 			}
+			this.plugin.metrics.count('file-processed')
 			this.state.startProcessing()
 		}
 	}
