@@ -56,7 +56,9 @@
 		<textarea bind:value={inputText}></textarea>
 		<button on:click={addToNextActions}>Add to Next Actions</button>
 		<button on:click={addToProjectNextActions}>Add to Project</button>
-		<button on:click={addToNewProject}>Add to New Project</button>
+		<button on:click={addToNewProject}
+			>Add to New Project (as action)</button
+		>
 		<button on:click={trash}>Trash</button>
 		<div>
 			<h3>Currently processing:</h3>
