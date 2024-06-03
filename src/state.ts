@@ -121,6 +121,7 @@ export class StateManager {
 			content = await readFileContent(this.plugin, file)
 		}
 
+		// TODO: abstract this out as we're repeating ourselves
 		if (view) {
 			view.setProps({
 				line: content,
