@@ -34,15 +34,16 @@ export async function addToNextActions(
 	await plugin.app.vault.modify(nextActionsFile, content)
 }
 
-export async function addToProjectNextActions(
+async function addToProjectSection(
 	plugin: FlowPlugin,
 	projectFile: TFile,
 	line: string,
+	sectionName: string,
 ) {
 	line = line.trim()
 	const fileContent = await plugin.app.vault.read(projectFile)
 
-	const nextActionsIndex = fileContent.indexOf('## Next actions')
+	const nextActionsIndex = fileContent.indexOf(sectionName)
 
 	let newContent = fileContent
 
@@ -55,17 +56,25 @@ export async function addToProjectNextActions(
 	taskLine.concat('\n')
 
 	if (nextActionsIndex !== -1) {
-		const insertionIndex = nextActionsIndex + '## Next actions'.length + 1
+		const insertionIndex = nextActionsIndex + sectionName.length + 1
 		newContent =
 			newContent.slice(0, insertionIndex) +
 			taskLine +
 			newContent.slice(insertionIndex)
 	} else {
 		newContent +=
-			'\n## Next actions' + taskLine + ' ' + plugin.settings.appendTask
+			'\n' + sectionName + taskLine + ' ' + plugin.settings.appendTask
 	}
 
 	await plugin.app.vault.modify(projectFile, newContent)
+}
+
+export async function addToProjectNextActions(
+	plugin: FlowPlugin,
+	projectFile: TFile,
+	line: string,
+) {
+	await addToProjectSection(plugin, projectFile, line, '## Next actions')
 }
 
 export function readFileContent(
