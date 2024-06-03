@@ -2,6 +2,7 @@ import { App, TFile, Notice } from 'obsidian'
 import {
 	addToNextActions,
 	addToProjectNextActions,
+	addToProjectReference,
 	getFilesWithTagPrefix,
 	readFileContent,
 } from './utils'
@@ -46,6 +47,19 @@ export class Handlers {
 			projectFiles,
 			async (file: TFile) => {
 				await addToProjectNextActions(this.plugin, file, text)
+				await this.removeProcessedItem()
+			},
+		).open()
+	}
+
+	handleAddToProjectReference = async (text: string) => {
+		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
+
+		new ProjectSelectorModal(
+			this.app,
+			projectFiles,
+			async (file: TFile) => {
+				await addToProjectReference(this.plugin, file, text)
 				await this.removeProcessedItem()
 			},
 		).open()

@@ -8,6 +8,7 @@
 	export let currentStage: Stage
 	export let onAddToNextActions: (text: string) => void
 	export let onAddToProjectNextActions: (text: string) => void
+	export let onAddToProjectReference: (text: string) => void
 	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
@@ -25,6 +26,9 @@
 
 	function addToProjectNextActions() {
 		if (inputText.trim() !== '') onAddToProjectNextActions(inputText)
+	}
+	function addToProjectReference() {
+		if (inputText.trim() !== '') onAddToProjectReference(inputText)
 	}
 
 	function addToNewProject() {
@@ -55,7 +59,12 @@
 	{:else}
 		<textarea bind:value={inputText}></textarea>
 		<button on:click={addToNextActions}>Add to Next Actions</button>
-		<button on:click={addToProjectNextActions}>Add to Project</button>
+		<button on:click={addToProjectNextActions}
+			>Add to Project (as action)</button
+		>
+		<button on:click={addToProjectReference}
+			>Add to Project (as reference)</button
+		>
 		<button on:click={addToNewProject}
 			>Add to New Project (as action)</button
 		>

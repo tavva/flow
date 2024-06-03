@@ -100,6 +100,8 @@ export class StateManager {
 				onAddToNextActions: this.handlers.handleAddToNextActions,
 				onAddToProjectNextActions:
 					this.handlers.handleAddToProjectNextActions,
+				onAddToProjectReference:
+					this.handlers.handleAddToProjectReference,
 				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
@@ -128,6 +130,8 @@ export class StateManager {
 				onAddToNextActions: this.handlers.handleAddToNextActions,
 				onAddToProjectNextActions:
 					this.handlers.handleAddToProjectNextActions,
+				onAddToProjectReference:
+					this.handlers.handleAddToProjectReference,
 				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
