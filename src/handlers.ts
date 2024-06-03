@@ -35,6 +35,7 @@ export class Handlers {
 			async (selectedSpheres: string[]) => {
 				await addToNextActions(this.plugin, text, selectedSpheres)
 				await this.removeProcessedItem()
+				this.plugin.metrics.count('action-created')
 			},
 		).open()
 	}
@@ -48,6 +49,7 @@ export class Handlers {
 			async (file: TFile) => {
 				await addToProjectNextActions(this.plugin, file, text)
 				await this.removeProcessedItem()
+				this.plugin.metrics.count('project-action-created')
 			},
 		).open()
 	}
@@ -61,6 +63,7 @@ export class Handlers {
 			async (file: TFile) => {
 				await addToProjectReference(this.plugin, file, text)
 				await this.removeProcessedItem()
+				this.plugin.metrics.count('project-reference-created')
 			},
 		).open()
 	}
@@ -101,12 +104,14 @@ export class Handlers {
 				await this.app.vault.modify(projectFile, content)
 
 				await this.removeProcessedItem()
+				this.plugin.metrics.count('new-project-created')
 			},
 		).open()
 	}
 
 	handleTrash = async () => {
 		await this.removeProcessedItem()
+		this.plugin.metrics.count('item-trashed')
 	}
 
 	private async removeProcessedItem() {
