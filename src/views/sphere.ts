@@ -75,7 +75,7 @@ export class SphereView extends ItemView implements SphereViewState {
 
 	async render() {
 		const projects = await this.listProjects()
-		const nonProjectNextActions = this.dv
+		const nonProjectNextActions = await this.dv
 			.page('Next actions')
 			.file.tasks.filter(
 				(t: STask) =>
