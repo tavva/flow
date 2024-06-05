@@ -97,6 +97,7 @@
 			<ul>
 				{#each projectsWithNextActions as project}
 					<li>
+						{project.priority}.
 						<a href={project.link}>{project.file.name}</a>
 						<div
 							id={`task-list-${generateUniqueProjectId(project.file.path)}`}
