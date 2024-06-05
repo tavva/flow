@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { tick } from 'svelte'
 	import { Component } from 'obsidian'
-
 	import type { DataviewApi } from 'obsidian-dataview'
+
 	import type { Project } from '../views/sphere'
+	import { togglePlanningMode, isPlanningMode } from './planning'
 
 	export let dv: DataviewApi
 	export let sphere: string
@@ -79,6 +80,14 @@
 
 <div class="flow-project">
 	<h1>{sphereCapitalised}</h1>
+	<button on:click={togglePlanningMode}>
+		{#if isPlanningMode}
+			Exit Planning Mode
+		{/if}
+		{#if !isPlanningMode}
+			Enter Planning Mode
+		{/if}
+	</button>
 	<div>
 		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
 			<h2>You have projects that need next actions</h2>
