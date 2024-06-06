@@ -1,4 +1,5 @@
 import FlowPlugin from './main'
+import { store } from './store.ts'
 
 export class Metrics {
 	private plugin: FlowPlugin
@@ -14,18 +15,12 @@ export class Metrics {
 		this.counts = data?.counts || {}
 	}
 
-	private async saveCounts() {
-		const data = (await this.plugin.loadData()) || {}
-		data.counts = this.counts
-		await this.plugin.saveData(data)
-	}
-
 	public async count(metric: string) {
 		if (!this.counts[metric]) {
 			this.counts[metric] = 0
 		}
 		this.counts[metric]++
-		await this.saveCounts()
+		await store(this.plugin, this.counts)
 	}
 
 	public get(metric: string): number {

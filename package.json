@@ -13,6 +13,7 @@
 	"license": "MIT",
 	"devDependencies": {
 		"@tsconfig/svelte": "^5.0.4",
+		"@types/lodash": "^4.17.4",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
@@ -43,6 +44,7 @@
 	},
 	"dependencies": {
 		"@popperjs/core": "^2.11.8",
-		"fs": "^0.0.1-security"
+		"fs": "^0.0.1-security",
+		"lodash": "^4.17.21"
 	}
 }
