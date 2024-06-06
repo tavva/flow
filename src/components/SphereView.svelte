@@ -7,7 +7,6 @@
 	import {
 		togglePlanningMode,
 		isPlanningMode,
-		handleTaskClick,
 		addTaskClickListeners,
 	} from './planning'
 
@@ -87,16 +86,6 @@
 				}
 			})
 		}
-	}
-
-	$: {
-		tick().then(() => {
-			if (taskContainer) {
-				console.log('Setting event handler')
-				console.log(taskContainer)
-				taskContainer.addEventListener('click', handleTaskClick)
-			}
-		})
 	}
 </script>
 
