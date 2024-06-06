@@ -14,6 +14,9 @@ function generateUniqueId(projectName: string, taskText: string) {
 }
 
 export function addTaskClickListeners(container: HTMLElement) {
+	// We need to set listeners on the checkboxes and the spans rather than on
+	// the task container because they were intercepting the click event and
+	// not bubbling up
 	const checkboxes = container.querySelectorAll(
 		'.dataview.task-list-item-checkbox',
 	)
