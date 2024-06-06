@@ -4,7 +4,13 @@ import { Writable, writable, get } from 'svelte/store'
 import FlowPlugin from '../main'
 import { store } from '../store'
 
-export const plannedTasks: Writable<STask[]> = writable([])
+export interface Task {
+	id: string
+	title: string
+	project: string
+}
+
+export const plannedTasks: Writable<Task[]> = writable([])
 export const isPlanningMode: Writable<boolean> = writable(false)
 
 export function togglePlanningMode() {
@@ -55,7 +61,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		const taskText = taskTitleElement.textContent.trim()
 		const uniqueId = generateUniqueId(projectName, taskText)
 
-		const task = {
+		const task: Task = {
 			id: uniqueId,
 			title: taskText,
 			project: projectName,
