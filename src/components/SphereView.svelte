@@ -22,9 +22,14 @@
 
 	export let nonProjectNextActions: DataviewApi.TaskResult = []
 
+	$: if (plugin) {
+		console.log('Plugin is available:', plugin)
+	}
+
 	$: {
-		if (sphere)
+		if (sphere) {
 			sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
+		}
 	}
 
 	$: {
