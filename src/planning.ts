@@ -1,7 +1,7 @@
 import { Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
-import { store } from './store'
+import { store, retrieve } from './store'
 
 export interface Task {
 	id: string
@@ -45,7 +45,7 @@ export function addTaskClickListeners(
 }
 
 export function createHandleTaskClick(plugin: FlowPlugin) {
-	return function handleTaskClick(event: any) {
+	return async function handleTaskClick(event: any): Promise<void> {
 		// TODO fix the type
 		const taskElement = event.target.closest('.dataview.task-list-item')
 		if (!taskElement) return
@@ -67,10 +67,15 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		}
 
 		if (get(isPlanningMode)) {
-			plannedTasks.update((tasks) => [...tasks, task])
-			store(plugin, { plannedTasks: get(plannedTasks) })
+			// These have to be called before the first await
 			event.preventDefault()
 			event.stopPropagation()
-		} // else the event will bubble up
+
+			const tasks = await retrieve(plugin, 'plannedTasks')
+			if (!tasks.find((t: Task) => t.id === task.id)) {
+				plannedTasks.update((tasks) => [...tasks, task])
+				store(plugin, { plannedTasks: get(plannedTasks) })
+			}
+		} // if we're not in planning mode the event will bubble up
 	}
 }
