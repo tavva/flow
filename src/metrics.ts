@@ -1,5 +1,5 @@
 import FlowPlugin from './main'
-import { store } from './store.ts'
+import { store } from './store'
 
 export class Metrics {
 	private plugin: FlowPlugin
