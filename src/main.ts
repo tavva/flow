@@ -14,6 +14,31 @@ export default class FlowPlugin extends Plugin {
 	settings: FlowSettings
 	metrics: Metrics
 
+	private async openSphere(sphere: string) {
+		return async () => {
+			const existingLeaves =
+				this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+
+			for (const l of existingLeaves) {
+				const sphereView = l.view as SphereView
+				if (sphereView.sphere === sphere) {
+					this.app.workspace.setActiveLeaf(l)
+					return
+				}
+			}
+
+			const leaf = this.app.workspace.getLeaf(false)
+			await leaf.setViewState({
+				type: SPHERE_VIEW_TYPE,
+				active: true,
+				state: { plugin: this, sphere: sphere },
+			})
+
+			const view = leaf.view as SphereView
+			await view.render()
+		}
+	}
+
 	async onload() {
 		await this.loadSettings()
 		this.addSettingTab(new FlowSettingsTab(this.app, this))
@@ -37,58 +62,13 @@ export default class FlowPlugin extends Plugin {
 		this.addCommand({
 			id: 'view-personal-sphere',
 			name: 'View Personal Sphere',
-			callback: async () => {
-				const existingLeaves =
-					this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
-
-				for (const l of existingLeaves) {
-					const sphereView = l.view as SphereView
-					if (sphereView.sphere === 'personal') {
-						this.app.workspace.setActiveLeaf(l)
-						return
-					}
-				}
-
-				const leaf = this.app.workspace.getLeaf(false)
-				await leaf.setViewState({
-					type: SPHERE_VIEW_TYPE,
-					active: true,
-					state: { plugin: this, sphere: 'personal' },
-				})
-
-				const view = leaf.view as SphereView
-				await view.render()
-			},
+			callback: await this.openSphere('personal'),
 		})
+
 		this.addCommand({
 			id: 'view-work-sphere',
 			name: 'View Work Sphere',
-			callback: async () => {
-				const existingLeaves =
-					this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
-
-				for (const l of existingLeaves) {
-					const sphereView = l.view as SphereView
-					if (sphereView.sphere === 'work') {
-						this.app.workspace.setActiveLeaf(l)
-						return
-					}
-				}
-
-				const leaf = this.app.workspace.getLeaf(false)
-				await leaf.setViewState({
-					type: SPHERE_VIEW_TYPE,
-					active: true,
-					state: {
-						plugin: this,
-						sphere: 'work',
-					},
-				})
-
-				const view = leaf.view as SphereView
-				view.plugin = this
-				await view.render()
-			},
+			callback: await this.openSphere('work'),
 		})
 
 		this.registerEvent(
