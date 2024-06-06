@@ -1,11 +1,12 @@
 import * as fs from 'fs'
 
-import { Plugin, FileSystemAdapter } from 'obsidian'
+import { Plugin, WorkspaceLeaf, FileSystemAdapter } from 'obsidian'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
+import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning'
 import { Metrics } from './metrics'
 
 export default class FlowPlugin extends Plugin {
@@ -47,8 +48,11 @@ export default class FlowPlugin extends Plugin {
 			PROCESSING_VIEW_TYPE,
 			(leaf) => new ProcessingView(leaf),
 		)
-
 		this.registerView(SPHERE_VIEW_TYPE, (leaf) => new SphereView(leaf))
+		this.registerView(
+			PLANNING_VIEW_TYPE,
+			(leaf) => new PlanningView(leaf, this),
+		)
 
 		this.stateManager = new StateManager(this)
 		this.metrics = new Metrics(this)
@@ -69,6 +73,36 @@ export default class FlowPlugin extends Plugin {
 			id: 'view-work-sphere',
 			name: 'View Work Sphere',
 			callback: await this.openSphere('work'),
+		})
+
+		this.addCommand({
+			id: 'start-planning',
+			name: 'Start Planning',
+			callback: async () => {
+				const { workspace } = this.app
+
+				let leaf: WorkspaceLeaf | null = null
+				const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
+
+				if (leaves.length > 0) {
+					leaf = leaves[0]
+				} else {
+					leaf = workspace.getRightLeaf(false)
+					await leaf!.setViewState({
+						type: PLANNING_VIEW_TYPE,
+						active: true,
+					})
+				}
+
+				if (!leaf) {
+					console.error(
+						'Could not find or create a leaf for the planning view',
+					)
+					return
+				}
+
+				workspace.revealLeaf(leaf)
+			},
 		})
 
 		this.registerEvent(

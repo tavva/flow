@@ -8,3 +8,8 @@ export async function store(plugin: FlowPlugin, dataToStore: Object) {
 	console.log(mergedData)
 	await plugin.saveData(mergedData)
 }
+
+export async function retrieve(plugin: FlowPlugin, key: string) {
+	const data = (await plugin.loadData()) || {}
+	return data[key]
+}
