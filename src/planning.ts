@@ -79,3 +79,10 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		} // if we're not in planning mode the event will bubble up
 	}
 }
+
+export async function initializePlannedTasks(plugin: FlowPlugin) {
+	const initialTasks = await retrieve(plugin, 'plannedTasks')
+	if (initialTasks) {
+		plannedTasks.set(initialTasks)
+	}
+}

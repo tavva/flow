@@ -6,6 +6,7 @@ import FlowPlugin from '../main'
 import { retrieve } from '../store'
 
 import PlanningViewComponent from '../components/PlanningView.svelte'
+import { initializePlannedTasks } from '../planning'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
@@ -29,6 +30,8 @@ export class PlanningView extends ItemView {
 	}
 
 	async onOpen() {
+		initializePlannedTasks(this.plugin)
+
 		this.component = new PlanningViewComponent({
 			target: this.contentEl,
 			props: {
