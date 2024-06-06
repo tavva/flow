@@ -31,7 +31,8 @@ export function addTaskClickListeners(container: HTMLElement) {
 	})
 }
 
-export function handleTaskClick(event) {
+export function handleTaskClick(event: any) {
+	// TODO fix the type
 	const taskElement = event.target.closest('.dataview.task-list-item')
 	if (!taskElement) return
 
