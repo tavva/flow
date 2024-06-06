@@ -1,8 +1,7 @@
-import { STask } from 'obsidian-dataview'
 import { Writable, writable, get } from 'svelte/store'
 
-import FlowPlugin from '../main'
-import { store } from '../store'
+import FlowPlugin from './main'
+import { store } from './store'
 
 export interface Task {
 	id: string

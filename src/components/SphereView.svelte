@@ -9,7 +9,7 @@
 		togglePlanningMode,
 		isPlanningMode,
 		addTaskClickListeners,
-	} from './planning'
+	} from '../planning'
 
 	let taskContainer: HTMLElement
 
