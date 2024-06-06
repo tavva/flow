@@ -166,6 +166,7 @@ export default class FlowPlugin extends Plugin {
 	onunload() {
 		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
 		this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE)
+		this.app.workspace.detachLeavesOfType(PLANNING_VIEW_TYPE)
 		this.watchers.forEach((watcher) => watcher.close())
 	}
 }
