@@ -38,7 +38,9 @@ export class SphereView extends ItemView implements SphereViewState {
 		state: SphereViewState,
 		result: ViewStateResult,
 	): Promise<void> {
-		if (state.sphere) this.sphere = state.sphere
+		if (state.sphere) {
+			this.sphere = state.sphere
+		}
 		return super.setState(state, result)
 	}
 
