@@ -3,6 +3,7 @@
 	import { Component } from 'obsidian'
 	import type { DataviewApi } from 'obsidian-dataview'
 
+	import FlowPlugin from '../main'
 	import type { Project } from '../views/sphere'
 	import {
 		togglePlanningMode,
@@ -12,6 +13,7 @@
 
 	let taskContainer: HTMLElement
 
+	export let plugin: FlowPlugin
 	export let dv: DataviewApi
 	export let sphere: string
 	export let projects: Project[] = []
@@ -22,14 +24,8 @@
 
 	export let nonProjectNextActions: DataviewApi.TaskResult = []
 
-	$: if (plugin) {
-		console.log('Plugin is available:', plugin)
-	}
-
-	$: {
-		if (sphere) {
-			sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
-		}
+	$: if (sphere) {
+		sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
 	}
 
 	$: {
@@ -46,7 +42,8 @@
 				console.error('Error rendering task list:', error)
 			}
 		}
-		addTaskClickListeners(container)
+
+		addTaskClickListeners(plugin, container)
 	}
 
 	function generateUniqueProjectId(path: string): string {
@@ -65,7 +62,7 @@
 	}
 
 	$: {
-		if (projectsWithNextActions.length > 0) {
+		if (plugin && projectsWithNextActions.length > 0) {
 			tick().then(() => {
 				projectsWithNextActions.forEach((project) => {
 					const projectId = `task-list-${generateUniqueProjectId(project.file.path)}`
@@ -80,7 +77,7 @@
 	}
 
 	$: {
-		if (nonProjectNextActions.length > 0) {
+		if (plugin && nonProjectNextActions.length > 0) {
 			tick().then(() => {
 				const container = document.getElementById(
 					'task-list-non-project',

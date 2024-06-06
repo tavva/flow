@@ -20,7 +20,7 @@ export class Metrics {
 			this.counts[metric] = 0
 		}
 		this.counts[metric]++
-		await store(this.plugin, this.counts)
+		await store(this.plugin, { counts: this.counts })
 	}
 
 	public get(metric: string): number {

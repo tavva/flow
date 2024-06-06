@@ -53,11 +53,10 @@ export default class FlowPlugin extends Plugin {
 				await leaf.setViewState({
 					type: SPHERE_VIEW_TYPE,
 					active: true,
-					state: { sphere: 'personal' },
+					state: { plugin: this, sphere: 'personal' },
 				})
 
 				const view = leaf.view as SphereView
-				view.plugin = this
 				await view.render()
 			},
 		})
@@ -80,7 +79,10 @@ export default class FlowPlugin extends Plugin {
 				await leaf.setViewState({
 					type: SPHERE_VIEW_TYPE,
 					active: true,
-					state: { sphere: 'work' },
+					state: {
+						plugin: this,
+						sphere: 'work',
+					},
 				})
 
 				const view = leaf.view as SphereView
