@@ -74,7 +74,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			const tasks = await retrieve(plugin, 'plannedTasks')
 			if (!tasks.find((t: Task) => t.id === task.id)) {
 				plannedTasks.update((tasks) => [...tasks, task])
-				store(plugin, { plannedTasks: get(plannedTasks) })
+				await store(plugin, { plannedTasks: get(plannedTasks) })
 			}
 		} // if we're not in planning mode the event will bubble up
 	}
