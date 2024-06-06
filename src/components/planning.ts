@@ -1,14 +1,31 @@
-import { writable } from 'svelte/store'
+import { STask } from 'obsidian-dataview'
+import { Writable, writable, get } from 'svelte/store'
 
-export const planningTasks = writable([])
-export const isPlanningMode = writable(false)
+export const planningTasks: Writable<STask[]> = writable([])
+export const isPlanningMode: Writable<boolean> = writable(false)
 
 export function togglePlanningMode() {
 	isPlanningMode.update((mode) => !mode)
+	console.log(isPlanningMode)
 }
 
-function generateUniqueId(projectName, taskText) {
+function generateUniqueId(projectName: string, taskText: string) {
 	return `${projectName}-${taskText.replace(/\s+/g, '-').toLowerCase()}`
+}
+
+export function addTaskClickListeners(container: HTMLElement) {
+	const checkboxes = container.querySelectorAll(
+		'.dataview.task-list-item-checkbox',
+	)
+	const spans = container.querySelectorAll('.dataview.task-list-item span')
+
+	checkboxes.forEach((checkbox) => {
+		checkbox.addEventListener('click', handleTaskClick)
+	})
+
+	spans.forEach((span) => {
+		span.addEventListener('click', handleTaskClick)
+	})
 }
 
 export function handleTaskClick(event) {
@@ -31,8 +48,9 @@ export function handleTaskClick(event) {
 		project: projectName,
 	}
 
-	if (isPlanningMode) {
+	if (get(isPlanningMode)) {
 		planningTasks.update((tasks) => [...tasks, task])
 		event.preventDefault()
+		event.stopPropagation()
 	} // else the event will bubble up
 }

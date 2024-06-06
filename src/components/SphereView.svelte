@@ -4,7 +4,14 @@
 	import type { DataviewApi } from 'obsidian-dataview'
 
 	import type { Project } from '../views/sphere'
-	import { togglePlanningMode, isPlanningMode } from './planning'
+	import {
+		togglePlanningMode,
+		isPlanningMode,
+		handleTaskClick,
+		addTaskClickListeners,
+	} from './planning'
+
+	let taskContainer: HTMLElement
 
 	export let dv: DataviewApi
 	export let sphere: string
@@ -21,6 +28,10 @@
 			sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
 	}
 
+	$: {
+		isPlanningMode
+	}
+
 	async function renderTaskList(container: HTMLElement, tasks: any) {
 		if (container && tasks) {
 			try {
@@ -31,6 +42,7 @@
 				console.error('Error rendering task list:', error)
 			}
 		}
+		addTaskClickListeners(container)
 	}
 
 	function generateUniqueProjectId(path: string): string {
@@ -76,15 +88,25 @@
 			})
 		}
 	}
+
+	$: {
+		tick().then(() => {
+			if (taskContainer) {
+				console.log('Setting event handler')
+				console.log(taskContainer)
+				taskContainer.addEventListener('click', handleTaskClick)
+			}
+		})
+	}
 </script>
 
 <div class="flow-project">
 	<h1>{sphereCapitalised}</h1>
 	<button on:click={togglePlanningMode}>
-		{#if isPlanningMode}
+		{#if $isPlanningMode}
 			Exit Planning Mode
 		{/if}
-		{#if !isPlanningMode}
+		{#if !$isPlanningMode}
 			Enter Planning Mode
 		{/if}
 	</button>
@@ -100,7 +122,7 @@
 			</ul>
 		{/if}
 	</div>
-	<div>
+	<div id="flow-task-lists" bind:this={taskContainer}>
 		<h2>Projects</h2>
 		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
 			<ul>
