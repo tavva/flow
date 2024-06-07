@@ -9,6 +9,7 @@ import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
 import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning'
 import { Store } from './store'
 import { Metrics } from './metrics'
+import { Tasks } from './tasks'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
@@ -16,6 +17,7 @@ export default class FlowPlugin extends Plugin {
 	settings: FlowSettings
 	store: Store
 	metrics: Metrics
+	tasks: Tasks
 
 	private async openSphere(sphere: string) {
 		return async () => {
@@ -62,6 +64,7 @@ export default class FlowPlugin extends Plugin {
 		this.stateManager = new StateManager(this)
 		this.store = new Store(this)
 		this.metrics = new Metrics(this)
+		this.tasks = new Tasks(this)
 
 		this.addCommand({
 			id: 'process-inboxes',

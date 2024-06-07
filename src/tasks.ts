@@ -1,7 +1,6 @@
-import { Writable, writable, get } from 'svelte/store'
+import { Writable, writable } from 'svelte/store'
 
 import FlowPlugin from './main'
-import { store, retrieve } from './store'
 
 export interface Task {
 	id: string
@@ -9,20 +8,38 @@ export interface Task {
 	project: string
 }
 
-export const plannedTasks: Writable<Task[]> = writable([])
+export class Tasks {
+	plugin: FlowPlugin
+	plannedTasks: Writable<Task[]> = writable([])
 
-export async function addTask(plugin: FlowPlugin, task: Task) {
-	const tasks = await retrieve(plugin, 'plannedTasks')
-	if (!tasks.find((t: Task) => t.id === task.id)) {
-		plannedTasks.update((tasks) => [...tasks, task])
-		await store(plugin, { plannedTasks: get(plannedTasks) })
+	constructor(plugin: FlowPlugin) {
+		this.plugin = plugin
+		this.initializePlannedTasks()
 	}
-	plannedTasks.update((tasks) => [...tasks, task])
-}
 
-export async function initializePlannedTasks(plugin: FlowPlugin) {
-	const initialTasks = await retrieve(plugin, 'plannedTasks')
-	if (initialTasks) {
-		plannedTasks.set(initialTasks)
+	private async initializePlannedTasks() {
+		const initialTasks = await this.plugin.store.retrieve('plannedTasks')
+		console.log('retrieved tasks', initialTasks)
+		if (initialTasks) {
+			this.plannedTasks.set(initialTasks)
+		}
+	}
+
+	async addTask(task: Task) {
+		this.plannedTasks.update((tasks) => {
+			if (!tasks.find((t: Task) => t.id === task.id)) {
+				const updatedTasks = [...tasks, task]
+				this.plugin.store.store({
+					plannedTasks: updatedTasks,
+				})
+				return updatedTasks
+			}
+			return tasks
+		})
+	}
+
+	async clearTasks() {
+		this.plannedTasks.set([])
+		await this.plugin.store.delete('plannedTasks')
 	}
 }
