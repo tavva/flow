@@ -6,7 +6,7 @@ import FlowPlugin from '../main'
 import { retrieve } from '../store'
 
 import PlanningViewComponent from '../components/PlanningView.svelte'
-import { initializePlannedTasks } from '../planning'
+import { initializePlannedTasks } from '../tasks'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 

@@ -1,15 +1,10 @@
 import { Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
-import { store, retrieve } from './store'
 
-export interface Task {
-	id: string
-	title: string
-	project: string
-}
+import { addTask } from './tasks'
+import type { Task } from './tasks'
 
-export const plannedTasks: Writable<Task[]> = writable([])
 export const isPlanningMode: Writable<boolean> = writable(false)
 
 export function togglePlanningMode() {
@@ -71,18 +66,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			event.preventDefault()
 			event.stopPropagation()
 
-			const tasks = await retrieve(plugin, 'plannedTasks')
-			if (!tasks.find((t: Task) => t.id === task.id)) {
-				plannedTasks.update((tasks) => [...tasks, task])
-				await store(plugin, { plannedTasks: get(plannedTasks) })
-			}
+			await addTask(plugin, task)
 		} // if we're not in planning mode the event will bubble up
-	}
-}
-
-export async function initializePlannedTasks(plugin: FlowPlugin) {
-	const initialTasks = await retrieve(plugin, 'plannedTasks')
-	if (initialTasks) {
-		plannedTasks.set(initialTasks)
 	}
 }
