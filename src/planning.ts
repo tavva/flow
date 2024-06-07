@@ -2,7 +2,6 @@ import { Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
 
-import { addTask } from './tasks'
 import type { Task } from './tasks'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
@@ -66,7 +65,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			event.preventDefault()
 			event.stopPropagation()
 
-			await addTask(plugin, task)
+			plugin.tasks.addTask(task)
 		} // if we're not in planning mode the event will bubble up
 	}
 }

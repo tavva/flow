@@ -3,10 +3,8 @@ import * as fs from 'fs'
 import { ItemView, WorkspaceLeaf, FileSystemAdapter } from 'obsidian'
 
 import FlowPlugin from '../main'
-import { retrieve } from '../store'
 
 import PlanningViewComponent from '../components/PlanningView.svelte'
-import { initializePlannedTasks } from '../tasks'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
@@ -30,12 +28,10 @@ export class PlanningView extends ItemView {
 	}
 
 	async onOpen() {
-		initializePlannedTasks(this.plugin)
-
 		this.component = new PlanningViewComponent({
 			target: this.contentEl,
 			props: {
-				tasks: await retrieve(this.plugin, 'plannedTasks'),
+				tasks: await this.plugin.store.retrieve('plannedTasks'),
 			},
 		})
 
@@ -57,7 +53,7 @@ export class PlanningView extends ItemView {
 		this.watcher = fs.watch(fullDataPath, async (_eventType, filename) => {
 			if (filename) {
 				this.setProps({
-					tasks: await retrieve(this.plugin, 'plannedTasks'),
+					tasks: await this.plugin.store.retrieve('plannedTasks'),
 				})
 			}
 		})
