@@ -32,6 +32,7 @@ export class PlanningView extends ItemView {
 			target: this.contentEl,
 			props: {
 				tasks: await this.plugin.store.retrieve('plannedTasks'),
+				plugin: this.plugin,
 			},
 		})
 
