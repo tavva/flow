@@ -11,12 +11,14 @@
 		addTaskClickListeners,
 	} from '../planning'
 
+	// @ts-ignore
 	let taskContainer: HTMLElement
 
 	export let plugin: FlowPlugin
 	export let dv: DataviewApi
 	export let sphere: string
 	export let projects: Project[] = []
+
 	let sphereCapitalised: string = ''
 
 	let projectsWithNextActions: Project[] = []
