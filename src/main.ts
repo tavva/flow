@@ -7,12 +7,14 @@ import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
 import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning'
+import { Store } from './store'
 import { Metrics } from './metrics'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
 	private watchers: fs.FSWatcher[]
 	settings: FlowSettings
+	store: Store
 	metrics: Metrics
 
 	private async openSphere(sphere: string) {
@@ -55,6 +57,7 @@ export default class FlowPlugin extends Plugin {
 		)
 
 		this.stateManager = new StateManager(this)
+		this.store = new Store(this)
 		this.metrics = new Metrics(this)
 
 		this.addCommand({

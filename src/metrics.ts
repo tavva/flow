@@ -1,5 +1,4 @@
 import FlowPlugin from './main'
-import { store } from './store'
 
 export class Metrics {
 	private plugin: FlowPlugin
@@ -20,7 +19,7 @@ export class Metrics {
 			this.counts[metric] = 0
 		}
 		this.counts[metric]++
-		await store(this.plugin, { counts: this.counts })
+		await this.plugin.store.store({ counts: this.counts })
 	}
 
 	public get(metric: string): number {
