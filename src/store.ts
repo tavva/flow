@@ -9,6 +9,13 @@ export class Store {
 		this.plugin = plugin
 	}
 
+	async delete(key: string) {
+		let data = (await this.plugin.loadData()) || {}
+		delete data[key]
+
+		await this.plugin.saveData(data)
+	}
+
 	async store(dataToStore: Object) {
 		let data = (await this.plugin.loadData()) || {}
 		const mergedData = _.merge(data, dataToStore)
