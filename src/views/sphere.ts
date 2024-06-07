@@ -19,30 +19,26 @@ export interface Project {
 }
 
 interface SphereViewState {
-	plugin: FlowPlugin | null
 	sphere: string
 }
 
 export class SphereView extends ItemView implements SphereViewState {
 	private component: SphereComponent
-	plugin: FlowPlugin | null
+	plugin: FlowPlugin
 	sphere: string
 	dv: DataviewApi
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
 		this.dv = getAPI()
 		this.sphere = ''
-		this.plugin = null
+		this.plugin = plugin
 	}
 
 	async setState(
 		state: SphereViewState,
 		result: ViewStateResult,
 	): Promise<void> {
-		if (state.plugin) {
-			this.plugin = state.plugin
-		}
 		if (state.sphere) {
 			this.sphere = state.sphere
 		}
@@ -51,7 +47,6 @@ export class SphereView extends ItemView implements SphereViewState {
 
 	getState(): SphereViewState {
 		return {
-			plugin: this.plugin,
 			sphere: this.sphere,
 		}
 	}
