@@ -109,7 +109,9 @@
 			<ul>
 				{#each projectsNeedingNextActions as project}
 					<li>
-						<a href={project.link}>{project.file.name}</a>
+						<a href={project.link} data-path={project.file.path}
+							>{project.file.name}</a
+						>
 					</li>
 				{/each}
 			</ul>
@@ -122,7 +124,9 @@
 				{#each projectsWithNextActions as project}
 					<li>
 						{project.priority}.
-						<a href={project.link}>{project.file.name}</a>
+						<a href={project.link} data-path={project.file.path}
+							>{project.file.name}</a
+						>
 						<div
 							id={`task-list-${generateUniqueProjectId(project.file.path)}`}
 						></div>

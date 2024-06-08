@@ -5,7 +5,8 @@ import FlowPlugin from './main'
 export interface Task {
 	id: string
 	title: string
-	project: string
+	projectName: string
+	projectPath: string
 }
 
 export class Tasks {

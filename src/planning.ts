@@ -50,14 +50,18 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		const taskListContainer = taskElement.closest('div[id^="task-list-"]')
 		if (!taskListContainer) return
 
-		const projectName = taskListContainer.id.replace('task-list-', '')
+		const projectLink = taskElement.closest('div').parentElement.closest('li').querySelector('a')
+		const projectName = projectLink.textContent;
+		const projectPath = projectLink.getAttribute('data-path');
+
 		const taskText = taskTitleElement.textContent.trim()
 		const uniqueId = generateUniqueId(projectName, taskText)
 
 		const task: Task = {
 			id: uniqueId,
 			title: taskText,
-			project: projectName,
+			projectName: projectName,
+			projectPath: projectPath
 		}
 
 		if (get(isPlanningMode)) {
