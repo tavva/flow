@@ -3,7 +3,7 @@ import { Writable, writable, get } from 'svelte/store'
 import FlowPlugin from './main'
 
 import type { Task } from './tasks'
-import { TaskType } from './tasks'
+import { TaskType, normaliseTaskText } from './tasks'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
 
@@ -67,7 +67,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			taskType = TaskType.NON_PROJECT
 		}
 
-		const taskText = taskTitleElement.textContent.trim()
+		const taskText = normaliseTaskText(taskTitleElement.textContent)
 		const uniqueId = generateUniqueId(taskType, projectName, taskText)
 
 		const task: Task = {

@@ -3,7 +3,7 @@
 	import type { STask } from 'obsidian-dataview'
 	import { Component } from 'obsidian'
 
-	import { TaskType, type Task } from '../tasks'
+	import { TaskType, type Task, normaliseTaskText } from '../tasks'
 	import FlowPlugin from '../main'
 
 	export let plugin: FlowPlugin
@@ -33,11 +33,17 @@
 				if (task.type == TaskType.PROJECT) {
 					taskList = plugin.dv
 						.page(task.projectPath)
-						.file.tasks.filter((t: STask) => t.text === task.title)
+						.file.tasks.filter(
+							(t: STask) =>
+								normaliseTaskText(t.text) === task.title,
+						)
 				} else {
 					taskList = plugin.dv
 						.page(plugin.settings.nextActionsFilePath)
-						.file.tasks.filter((t: STask) => t.text === task.title)
+						.file.tasks.filter(
+							(t: STask) =>
+								normaliseTaskText(t.text) === task.title,
+						)
 				}
 
 				try {

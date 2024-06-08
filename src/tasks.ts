@@ -49,3 +49,8 @@ export class Tasks {
 		await this.plugin.store.delete('plannedTasks')
 	}
 }
+export function normaliseTaskText(input: string): string {
+	const regex =
+		/(?:[\p{Emoji_Presentation}\uFE0F\u20E3]\s*)?\d{4}-\d{2}-\d{2}(?:\s*(?:[\p{Emoji_Presentation}\uFE0F\u20E3]\s*)?\d{4}-\d{2}-\d{2})*$/u
+	return input.replace(regex, '').trim()
+}
