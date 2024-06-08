@@ -2,11 +2,17 @@ import { Writable, writable } from 'svelte/store'
 
 import FlowPlugin from './main'
 
+export enum TaskType {
+	PROJECT = 'project',
+	NON_PROJECT = 'non-project',
+}
+
 export interface Task {
 	id: string
 	title: string
-	projectName: string
-	projectPath: string
+	type: TaskType
+	projectName: string | null
+	projectPath: string | null
 }
 
 export class Tasks {

@@ -3,6 +3,7 @@ import { Writable, writable, get } from 'svelte/store'
 import FlowPlugin from './main'
 
 import type { Task } from './tasks'
+import { TaskType } from './tasks'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
 
@@ -10,8 +11,15 @@ export function togglePlanningMode() {
 	isPlanningMode.update((mode) => !mode)
 }
 
-function generateUniqueId(projectName: string, taskText: string) {
-	return `${projectName}-${taskText.replace(/\s+/g, '-').toLowerCase()}`
+function generateUniqueId(
+	taskType: TaskType,
+	projectName: string | null,
+	taskText: string,
+) {
+	if (!projectName) {
+		projectName = ''
+	}
+	return `${taskType}-${projectName}-${taskText.replace(/\s+/g, '-').toLowerCase()}`
 }
 
 export function addTaskClickListeners(
@@ -33,7 +41,12 @@ export function addTaskClickListeners(
 
 export function createHandleTaskClick(plugin: FlowPlugin) {
 	return async function handleTaskClick(event: any): Promise<void> {
-		// TODO fix the type
+		// TODO fix the function parameter type
+
+		let taskType = TaskType.PROJECT
+		let projectName = null
+		let projectPath = null
+
 		const taskElement = event.target.closest('.dataview.task-list-item')
 		if (!taskElement) return
 
@@ -43,18 +56,26 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		const taskListContainer = taskElement.closest('div[id^="task-list-"]')
 		if (!taskListContainer) return
 
-		const projectLink = taskElement.closest('div').parentElement.closest('li').querySelector('a')
-		const projectName = projectLink.textContent;
-		const projectPath = projectLink.getAttribute('data-path');
+		try {
+			const projectLink = taskElement
+				.closest('div')
+				.parentElement.closest('li')
+				.querySelector('a')
+			projectName = projectLink.textContent
+			projectPath = projectLink.getAttribute('data-path')
+		} catch (error) {
+			taskType = TaskType.NON_PROJECT
+		}
 
 		const taskText = taskTitleElement.textContent.trim()
-		const uniqueId = generateUniqueId(projectName, taskText)
+		const uniqueId = generateUniqueId(taskType, projectName, taskText)
 
 		const task: Task = {
 			id: uniqueId,
 			title: taskText,
+			type: taskType,
 			projectName: projectName,
-			projectPath: projectPath
+			projectPath: projectPath,
 		}
 
 		if (get(isPlanningMode)) {

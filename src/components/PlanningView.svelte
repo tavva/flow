@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte'
 	import type { STask } from 'obsidian-dataview'
 	import { Component } from 'obsidian'
-	import type { Task } from '../tasks'
+	import { TaskType, type Task } from '../tasks'
 	import FlowPlugin from '../main'
 
 	export let plugin: FlowPlugin
@@ -27,9 +27,17 @@
 			taskContainer.empty()
 
 			for (const task of plannedTasks) {
-				const taskList = plugin.dv
-					.page(task.projectPath)
-					.file.tasks.filter((t: STask) => t.text === task.title)
+				let taskList: STask[] = []
+
+				if (task.type == TaskType.PROJECT) {
+					taskList = plugin.dv
+						.page(task.projectPath)
+						.file.tasks.filter((t: STask) => t.text === task.title)
+				} else {
+					taskList = plugin.dv
+						.page(plugin.settings.nextActionsFilePath)
+						.file.tasks.filter((t: STask) => t.text === task.title)
+				}
 
 				try {
 					const component = new Component()
