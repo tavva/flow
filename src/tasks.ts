@@ -19,7 +19,6 @@ export class Tasks {
 
 	private async initializePlannedTasks() {
 		const initialTasks = await this.plugin.store.retrieve('plannedTasks')
-		console.log('retrieved tasks', initialTasks)
 		if (initialTasks) {
 			this.plannedTasks.set(initialTasks)
 		}
