@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte'
 	import { Component } from 'obsidian'
-	import type { DataviewApi } from 'obsidian-dataview'
+	import type { DataviewApi, STask } from 'obsidian-dataview'
 
 	import FlowPlugin from '../main'
 	import type { Project } from '../views/sphere'
@@ -34,7 +34,7 @@
 		isPlanningMode
 	}
 
-	async function renderTaskList(container: HTMLElement, tasks: any) {
+	async function renderTaskList(container: HTMLElement, tasks: STask[]) {
 		if (container && tasks) {
 			try {
 				const component = new Component()
