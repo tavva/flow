@@ -24,14 +24,7 @@ export function addTaskClickListeners(
 
 	const handleTaskClick = createHandleTaskClick(plugin)
 
-	const checkboxes = container.querySelectorAll(
-		'.dataview.task-list-item-checkbox',
-	)
 	const spans = container.querySelectorAll('.dataview.task-list-item span')
-
-	checkboxes.forEach((checkbox) => {
-		checkbox.addEventListener('click', handleTaskClick)
-	})
 
 	spans.forEach((span) => {
 		span.addEventListener('click', handleTaskClick)
