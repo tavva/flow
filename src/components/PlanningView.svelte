@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
+	import type { STask } from 'obsidian-dataview'
+	import { Component } from 'obsidian'
 	import type { Task } from '../tasks'
 	import FlowPlugin from '../main'
 
@@ -10,10 +12,40 @@
 	onMount(() => {
 		const unsubscribe = plugin.tasks.plannedTasks.subscribe((value) => {
 			plannedTasks = value
+			renderTasks()
 		})
 
 		return () => unsubscribe()
 	})
+
+	async function renderTasks() {
+		const taskContainer = document.getElementById(
+			'flow-planning-task-container',
+		)
+
+		if (taskContainer) {
+			taskContainer.empty()
+
+			for (const task of plannedTasks) {
+				const taskList = plugin.dv
+					.page(task.projectPath)
+					.file.tasks.filter((t: STask) => t.text === task.title)
+
+				try {
+					const component = new Component()
+					await plugin.dv.taskList(
+						taskList,
+						false,
+						taskContainer,
+						component,
+					)
+					component.load()
+				} catch (error) {
+					console.error('Error rendering task list:', error)
+				}
+			}
+		}
+	}
 
 	async function onClearTasks() {
 		if (confirm('Are you sure you want to clear all tasks?')) {
@@ -23,11 +55,7 @@
 </script>
 
 <div class="flow-planning-view-container">
-	<ul>
-		{#each plannedTasks as task}
-			<li>{task.title}</li>
-		{/each}
-	</ul>
+	<div id="flow-planning-task-container"></div>
 
 	<button on:click={onClearTasks}>Clear tasks</button>
 </div>
