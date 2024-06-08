@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte'
 	import type { STask } from 'obsidian-dataview'
 	import { Component } from 'obsidian'
+
 	import { TaskType, type Task } from '../tasks'
 	import FlowPlugin from '../main'
 
