@@ -1,6 +1,7 @@
 import * as fs from 'fs'
 
 import { Plugin, WorkspaceLeaf, FileSystemAdapter } from 'obsidian'
+import { getAPI, DataviewApi } from 'obsidian-dataview'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
@@ -14,6 +15,7 @@ import { Tasks } from './tasks'
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
 	private watchers: fs.FSWatcher[]
+	dv: DataviewApi
 	settings: FlowSettings
 	store: Store
 	metrics: Metrics
@@ -61,6 +63,7 @@ export default class FlowPlugin extends Plugin {
 			(leaf) => new PlanningView(leaf, this),
 		)
 
+		this.dv = getAPI()
 		this.stateManager = new StateManager(this)
 		this.store = new Store(this)
 		this.metrics = new Metrics(this)
