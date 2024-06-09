@@ -135,7 +135,7 @@
 
 <div class="flow-project">
 	<h1>{sphereCapitalised}</h1>
-	<button on:click={togglePlanningMode}>
+	<button on:click={togglePlanningMode(plugin)}>
 		{#if $isPlanningMode}
 			Exit Planning Mode
 		{/if}

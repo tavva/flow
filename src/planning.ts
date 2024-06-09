@@ -4,11 +4,15 @@ import FlowPlugin from './main'
 
 import type { Task } from './tasks'
 import { TaskType, normaliseTaskText } from './tasks'
+import { openPlanningView } from './views/planning'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
 
-export function togglePlanningMode() {
+export function togglePlanningMode(plugin: FlowPlugin) {
 	isPlanningMode.update((mode) => !mode)
+	if (get(isPlanningMode)) {
+		openPlanningView(plugin)
+	}
 }
 
 function generateUniqueId(
