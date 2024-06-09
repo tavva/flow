@@ -49,13 +49,42 @@
 		addTaskClickListeners(plugin, container)
 	}
 
-	function addTaskTextToElements(tasks: STask[], container: HTMLElement) {
+	function addTaskTextToElements(
+		taskQueryResult: STask[],
+		container: HTMLElement,
+	) {
 		const elementsInOrder = container.querySelectorAll('li')
-		tasks.forEach((task, index) => {
-			const element = elementsInOrder[index]
+		const rawTasks: Array<STask> = Array.from(taskQueryResult)
+
+		const seen = new Set<number>()
+		const tasks: STask[] = []
+
+		// The task query result doesn't include completed items, but the
+		// children of an uncompleted item do. Therefore, we need to traverse
+		// the tree to get all tasks
+		function traverse(tasksToProcess: STask[]) {
+			for (const task of tasksToProcess) {
+				if (!seen.has(task.line)) {
+					seen.add(task.line)
+					tasks.push(task)
+					if (task.children && task.children.length > 0) {
+						traverse(task.children)
+					}
+				}
+			}
+		}
+
+		traverse(rawTasks)
+
+		let elementIndex: number = 0
+
+		tasks.forEach((task: STask) => {
+			const element = elementsInOrder[elementIndex]
 			if (element) {
 				element.setAttribute('data-task-text', task.text)
 			}
+
+			elementIndex++
 		})
 	}
 
