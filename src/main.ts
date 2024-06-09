@@ -25,31 +25,6 @@ export default class FlowPlugin extends Plugin {
 	metrics: Metrics
 	tasks: Tasks
 
-	private async openSphere(sphere: string) {
-		return async () => {
-			const existingLeaves =
-				this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
-
-			for (const l of existingLeaves) {
-				const sphereView = l.view as SphereView
-				if (sphereView.sphere === sphere) {
-					this.app.workspace.setActiveLeaf(l)
-					return
-				}
-			}
-
-			const leaf = this.app.workspace.getLeaf(false)
-			await leaf.setViewState({
-				type: SPHERE_VIEW_TYPE,
-				active: true,
-				state: { plugin: this, sphere: sphere },
-			})
-
-			const view = leaf.view as SphereView
-			await view.render()
-		}
-	}
-
 	async onload() {
 		await this.loadSettings()
 		this.addSettingTab(new FlowSettingsTab(this.app, this))
@@ -142,6 +117,31 @@ export default class FlowPlugin extends Plugin {
 	async onActiveLeafChange(leaf: any) {
 		if (leaf.view.getViewType() === PROCESSING_VIEW_TYPE) {
 			this.stateManager.startProcessing()
+		}
+	}
+
+	private async openSphere(sphere: string) {
+		return async () => {
+			const existingLeaves =
+				this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+
+			for (const l of existingLeaves) {
+				const sphereView = l.view as SphereView
+				if (sphereView.sphere === sphere) {
+					this.app.workspace.setActiveLeaf(l)
+					return
+				}
+			}
+
+			const leaf = this.app.workspace.getLeaf(false)
+			await leaf.setViewState({
+				type: SPHERE_VIEW_TYPE,
+				active: true,
+				state: { plugin: this, sphere: sphere },
+			})
+
+			const view = leaf.view as SphereView
+			await view.render()
 		}
 	}
 
