@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte'
+	import { tick, onMount } from 'svelte'
 	import { Component } from 'obsidian'
 	import type { DataviewApi, STask } from 'obsidian-dataview'
 
@@ -24,6 +24,8 @@
 	let projectsWithNextActions: Project[] = []
 	let projectsNeedingNextActions: Project[] = []
 
+	let shadowIsPlanningMode: boolean = false
+
 	export let nonProjectNextActions: DataviewApi.TaskResult = []
 
 	$: if (sphere) {
@@ -31,7 +33,30 @@
 	}
 
 	$: {
-		isPlanningMode
+		const leaves = document.querySelectorAll(
+			'div.workspace-leaf-content[data-type="sphere-view"] div.view-content',
+		)
+		if (shadowIsPlanningMode) {
+			leaves.forEach((leaf: Element) => {
+				leaf.addClass('flow-in-planning-mode')
+			})
+		} else {
+			leaves.forEach((leaf: Element) => {
+				leaf.removeClass('flow-in-planning-mode')
+			})
+		}
+	}
+
+	onMount(() => {
+		const unsubscribe = isPlanningMode.subscribe((value) => {
+			shadowIsPlanningMode = value
+		})
+
+		return () => unsubscribe()
+	})
+
+	function handleTogglePlanningMode() {
+		togglePlanningMode(plugin)
 	}
 
 	async function renderTaskList(container: HTMLElement, tasks: STask[]) {
@@ -135,7 +160,7 @@
 
 <div class="flow-project">
 	<h1>{sphereCapitalised}</h1>
-	<button on:click={togglePlanningMode(plugin)}>
+	<button on:click={handleTogglePlanningMode}>
 		{#if $isPlanningMode}
 			Exit Planning Mode
 		{/if}
