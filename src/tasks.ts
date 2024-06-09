@@ -41,6 +41,10 @@ export class Tasks {
 				plannedTasks: updatedTasks,
 			})
 			this.plannedTasks.set(updatedTasks)
+
+			await this.plugin.store.store({
+				'last-task-planned': new Date().toDateString(),
+			})
 		}
 	}
 
