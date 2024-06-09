@@ -59,6 +59,18 @@
 					console.error('Error rendering task list:', error)
 				}
 			}
+
+			const checkboxes = taskContainer.querySelectorAll(
+				'.dataview.task-list-item input[type="checkbox"] ',
+			)
+
+			checkboxes.forEach((checkbox) => {
+				checkbox.addEventListener('click', () => {
+					setTimeout(() => {
+						renderTasks()
+					}, 100)
+				})
+			})
 		}
 	}
 
