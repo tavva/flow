@@ -50,11 +50,10 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		const taskElement = event.target.closest('.dataview.task-list-item')
 		if (!taskElement) return
 
-		const taskTitleElement = taskElement.querySelector('span')
-		if (!taskTitleElement) return
-
 		const taskListContainer = taskElement.closest('div[id^="task-list-"]')
 		if (!taskListContainer) return
+
+		const textContent = taskElement.getAttribute('data-task-text')
 
 		try {
 			const projectLink = taskElement
@@ -67,7 +66,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			taskType = TaskType.NON_PROJECT
 		}
 
-		const taskText = normaliseTaskText(taskTitleElement.textContent)
+		const taskText = normaliseTaskText(textContent)
 		const uniqueId = generateUniqueId(taskType, projectName, taskText)
 
 		const task: Task = {
