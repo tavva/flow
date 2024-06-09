@@ -1,5 +1,5 @@
 import { ItemView, ViewStateResult, WorkspaceLeaf } from 'obsidian'
-import { getAPI, DataviewApi, STask } from 'obsidian-dataview'
+import { DataviewApi, STask } from 'obsidian-dataview'
 // @ts-ignore
 import SphereComponent from '../components/SphereView.svelte'
 import FlowPlugin from '../main'
@@ -30,7 +30,6 @@ export class SphereView extends ItemView implements SphereViewState {
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
-		this.dv = getAPI()
 		this.sphere = ''
 		this.plugin = plugin
 	}
@@ -79,7 +78,7 @@ export class SphereView extends ItemView implements SphereViewState {
 
 	async render() {
 		const projects = await this.listProjects()
-		const nonProjectNextActions = await this.dv
+		const nonProjectNextActions = await this.plugin.dv
 			.page('Next actions')
 			.file.tasks.filter(
 				(t: STask) =>
@@ -87,7 +86,6 @@ export class SphereView extends ItemView implements SphereViewState {
 			)
 
 		this.setProps({
-			dv: this.dv,
 			plugin: this.plugin,
 			sphere: this.sphere,
 			projects: projects,
@@ -102,7 +100,7 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	private async listProjects() {
-		return this.dv
+		return this.plugin.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
 				(p: Project) =>
@@ -116,7 +114,7 @@ export class SphereView extends ItemView implements SphereViewState {
 				),
 				link:
 					'obsidian://open?vault=' +
-					encodeURIComponent(this.dv.app.vault.getName()) +
+					encodeURIComponent(this.plugin.dv.app.vault.getName()) +
 					'&file=' +
 					encodeURIComponent(p.file.path),
 			}))

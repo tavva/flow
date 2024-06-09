@@ -15,7 +15,6 @@
 	let taskContainer: HTMLElement
 
 	export let plugin: FlowPlugin
-	export let dv: DataviewApi
 	export let sphere: string
 	export let projects: Project[] = []
 
@@ -63,7 +62,7 @@
 		if (container && tasks) {
 			try {
 				const component = new Component()
-				await dv.taskList(tasks, false, container, component)
+				await plugin.dv.taskList(tasks, false, container, component)
 				component.load()
 			} catch (error) {
 				console.error('Error rendering task list:', error)
