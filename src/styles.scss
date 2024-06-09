@@ -27,3 +27,13 @@ button.flow-modal-done {
 .flow-sphere-in-planning-mode {
 	filter: sepia(50%);
 }
+
+#flow-planning-task-container {
+	li {
+		display: flex;
+	}
+
+	button {
+		margin-left: 10px;
+	}
+}

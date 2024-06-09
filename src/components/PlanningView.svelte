@@ -100,16 +100,22 @@
 	}
 
 	function addRemoveButton(taskDiv: HTMLDivElement) {
+		const liElement = taskDiv.querySelector('li.task-list-item')
+		if (!liElement) {
+			console.error('Task list item not found')
+			return
+		}
 		const removeButton = document.createElement('button')
 
-		removeButton.innerText = 'Remove'
+		removeButton.innerText = '❌'
 		removeButton.classList.add('flow-remove-button')
 
-		removeButton.addEventListener('click', function () {
+		removeButton.addEventListener('click', function (event) {
+			event.stopPropagation()
 			removeTask(taskDiv)
 		})
 
-		taskDiv.appendChild(removeButton)
+		liElement.appendChild(removeButton)
 	}
 
 	function removeTask(taskDiv: HTMLDivElement) {
