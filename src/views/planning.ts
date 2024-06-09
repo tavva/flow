@@ -8,6 +8,30 @@ import PlanningViewComponent from '../components/PlanningView.svelte'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
+export async function openPlanningView(plugin: FlowPlugin) {
+	const { workspace } = plugin.app
+
+	let leaf: WorkspaceLeaf | null = null
+	const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
+
+	if (leaves.length > 0) {
+		leaf = leaves[0]
+	} else {
+		leaf = workspace.getRightLeaf(false)
+		await leaf!.setViewState({
+			type: PLANNING_VIEW_TYPE,
+			active: true,
+		})
+	}
+
+	if (!leaf) {
+		console.error('Could not find or create a leaf for the planning view')
+		return
+	}
+
+	workspace.revealLeaf(leaf)
+}
+
 export class PlanningView extends ItemView {
 	private component: PlanningViewComponent
 	private watcher: fs.FSWatcher | null

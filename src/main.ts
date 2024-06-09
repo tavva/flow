@@ -1,13 +1,17 @@
 import * as fs from 'fs'
 
-import { Plugin, WorkspaceLeaf, FileSystemAdapter } from 'obsidian'
+import { Plugin, FileSystemAdapter } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
-import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning'
+import {
+	PlanningView,
+	openPlanningView,
+	PLANNING_VIEW_TYPE,
+} from './views/planning'
 import { Store } from './store'
 import { Metrics } from './metrics'
 import { Tasks } from './tasks'
@@ -91,29 +95,7 @@ export default class FlowPlugin extends Plugin {
 			id: 'start-planning',
 			name: 'Start Planning',
 			callback: async () => {
-				const { workspace } = this.app
-
-				let leaf: WorkspaceLeaf | null = null
-				const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
-
-				if (leaves.length > 0) {
-					leaf = leaves[0]
-				} else {
-					leaf = workspace.getRightLeaf(false)
-					await leaf!.setViewState({
-						type: PLANNING_VIEW_TYPE,
-						active: true,
-					})
-				}
-
-				if (!leaf) {
-					console.error(
-						'Could not find or create a leaf for the planning view',
-					)
-					return
-				}
-
-				workspace.revealLeaf(leaf)
+				openPlanningView(this)
 			},
 		})
 
