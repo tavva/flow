@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
 	import type { STask } from 'obsidian-dataview'
-	import { Component } from 'obsidian'
+	import { Component, WorkspaceLeaf } from 'obsidian'
 
-	import { TaskType, type Task, normaliseTaskText } from '../tasks'
 	import FlowPlugin from '../main'
+	import { TaskType, type Task, normaliseTaskText } from '../tasks'
+	import { SPHERE_VIEW_TYPE } from '../views/sphere'
 
 	export let plugin: FlowPlugin
 
@@ -82,10 +83,21 @@
 			checkbox.addEventListener('click', () => {
 				setTimeout(() => {
 					renderTasks()
+					refreshSphereViews()
 				}, 100)
 			})
 		})
 	}
+
+	function refreshSphereViews() {
+		plugin.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
+			if (leaf.view.getViewType() === SPHERE_VIEW_TYPE) {
+				;(leaf.view as any).render()
+				console.log(`Refreshed view of type ${SPHERE_VIEW_TYPE}`)
+			}
+		})
+	}
+
 	async function onClearTasks() {
 		if (confirm('Are you sure you want to clear all tasks?')) {
 			plugin.tasks.clearTasks()
