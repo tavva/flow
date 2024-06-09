@@ -50,9 +50,6 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 		const taskElement = event.target.closest('.dataview.task-list-item')
 		if (!taskElement) return
 
-		const taskListContainer = taskElement.closest('div[id^="task-list-"]')
-		if (!taskListContainer) return
-
 		const textContent = taskElement.getAttribute('data-task-text')
 
 		try {
