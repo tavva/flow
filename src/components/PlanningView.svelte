@@ -40,6 +40,15 @@
 		const taskContainer = document.getElementById(
 			'flow-planning-task-container',
 		)
+		if (!taskContainer) {
+			console.error('Task container not found')
+			return
+		}
+
+		const taskDiv = document.createElement('div')
+		taskDiv.id = `task-${task.id}`
+		taskContainer.appendChild(taskDiv)
+
 		let taskList: STask[] = []
 
 		if (task.type == TaskType.PROJECT) {
@@ -58,8 +67,9 @@
 
 		try {
 			const component = new Component()
-			await plugin.dv.taskList(taskList, false, taskContainer, component)
+			await plugin.dv.taskList(taskList, false, taskDiv, component)
 			component.load()
+			addRemoveButton(taskDiv)
 		} catch (error) {
 			console.error('Error rendering task list:', error)
 		}
@@ -87,6 +97,31 @@
 				}, 100)
 			})
 		})
+	}
+
+	function addRemoveButton(taskDiv: HTMLDivElement) {
+		const removeButton = document.createElement('button')
+
+		removeButton.innerText = 'Remove'
+		removeButton.classList.add('flow-remove-button')
+
+		removeButton.addEventListener('click', function () {
+			removeTask(taskDiv)
+		})
+
+		taskDiv.appendChild(removeButton)
+	}
+
+	function removeTask(taskDiv: HTMLDivElement) {
+		const taskId = taskDiv.id.replace('task-', '')
+		const task = plannedTasks.find((t) => t.id === taskId)
+
+		if (!task) {
+			console.error('Task not found:', taskId)
+			return
+		}
+
+		plugin.tasks.removeTask(task)
 	}
 
 	function refreshSphereViews() {

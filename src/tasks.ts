@@ -1,4 +1,4 @@
-import { Writable, writable } from 'svelte/store'
+import { Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
 
@@ -32,21 +32,33 @@ export class Tasks {
 	}
 
 	async addTask(task: Task) {
-		this.plannedTasks.update((tasks) => {
-			if (!tasks.find((t: Task) => t.id === task.id)) {
-				const updatedTasks = [...tasks, task]
-				this.plugin.store.store({
-					plannedTasks: updatedTasks,
-				})
-				return updatedTasks
-			}
-			return tasks
+		const currentTasks = get(this.plannedTasks)
+
+		if (!currentTasks.find((t: Task) => t.id === task.id)) {
+			const updatedTasks = [...currentTasks, task]
+			await this.plugin.store.delete('plannedTasks')
+			await this.plugin.store.store({
+				plannedTasks: updatedTasks,
+			})
+			this.plannedTasks.set(updatedTasks)
+		}
+	}
+
+	async removeTask(task: Task) {
+		const currentTasks = get(this.plannedTasks)
+		const updatedTasks = currentTasks.filter((t: Task) => t.id !== task.id)
+
+		await this.plugin.store.delete('plannedTasks')
+		await this.plugin.store.store({
+			plannedTasks: updatedTasks,
 		})
+
+		this.plannedTasks.set(updatedTasks)
 	}
 
 	async clearTasks() {
-		this.plannedTasks.set([])
 		await this.plugin.store.delete('plannedTasks')
+		this.plannedTasks.set([])
 	}
 }
 export function normaliseTaskText(input: string): string {
