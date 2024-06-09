@@ -45,7 +45,18 @@
 			}
 		}
 
+		addTaskTextToElements(tasks, container)
 		addTaskClickListeners(plugin, container)
+	}
+
+	function addTaskTextToElements(tasks: STask[], container: HTMLElement) {
+		const elementsInOrder = container.querySelectorAll('li')
+		tasks.forEach((task, index) => {
+			const element = elementsInOrder[index]
+			if (element) {
+				element.setAttribute('data-task-text', task.text)
+			}
+		})
 	}
 
 	function generateUniqueProjectId(path: string): string {
