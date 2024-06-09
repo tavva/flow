@@ -28,52 +28,64 @@
 			taskContainer.empty()
 
 			for (const task of plannedTasks) {
-				let taskList: STask[] = []
-
-				if (task.type == TaskType.PROJECT) {
-					taskList = plugin.dv
-						.page(task.projectPath)
-						.file.tasks.filter(
-							(t: STask) =>
-								normaliseTaskText(t.text) === task.title,
-						)
-				} else {
-					taskList = plugin.dv
-						.page(plugin.settings.nextActionsFilePath)
-						.file.tasks.filter(
-							(t: STask) =>
-								normaliseTaskText(t.text) === task.title,
-						)
-				}
-
-				try {
-					const component = new Component()
-					await plugin.dv.taskList(
-						taskList,
-						false,
-						taskContainer,
-						component,
-					)
-					component.load()
-				} catch (error) {
-					console.error('Error rendering task list:', error)
-				}
+				await renderTask(task)
 			}
 
-			const checkboxes = taskContainer.querySelectorAll(
-				'.dataview.task-list-item input[type="checkbox"] ',
-			)
-
-			checkboxes.forEach((checkbox) => {
-				checkbox.addEventListener('click', () => {
-					setTimeout(() => {
-						renderTasks()
-					}, 100)
-				})
-			})
+			addCheckboxListeners()
 		}
 	}
 
+	async function renderTask(task: Task) {
+		const taskContainer = document.getElementById(
+			'flow-planning-task-container',
+		)
+		let taskList: STask[] = []
+
+		if (task.type == TaskType.PROJECT) {
+			taskList = plugin.dv
+				.page(task.projectPath)
+				.file.tasks.filter(
+					(t: STask) => normaliseTaskText(t.text) === task.title,
+				)
+		} else {
+			taskList = plugin.dv
+				.page(plugin.settings.nextActionsFilePath)
+				.file.tasks.filter(
+					(t: STask) => normaliseTaskText(t.text) === task.title,
+				)
+		}
+
+		try {
+			const component = new Component()
+			await plugin.dv.taskList(taskList, false, taskContainer, component)
+			component.load()
+		} catch (error) {
+			console.error('Error rendering task list:', error)
+		}
+	}
+
+	function addCheckboxListeners() {
+		const taskContainer = document.getElementById(
+			'flow-planning-task-container',
+		)
+
+		if (!taskContainer) {
+			console.error('Task container not found')
+			return
+		}
+
+		const checkboxes = taskContainer.querySelectorAll(
+			'.dataview.task-list-item input[type="checkbox"] ',
+		)
+
+		checkboxes.forEach((checkbox) => {
+			checkbox.addEventListener('click', () => {
+				setTimeout(() => {
+					renderTasks()
+				}, 100)
+			})
+		})
+	}
 	async function onClearTasks() {
 		if (confirm('Are you sure you want to clear all tasks?')) {
 			plugin.tasks.clearTasks()
