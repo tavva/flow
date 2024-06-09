@@ -38,11 +38,11 @@
 		)
 		if (shadowIsPlanningMode) {
 			leaves.forEach((leaf: Element) => {
-				leaf.addClass('flow-in-planning-mode')
+				leaf.addClass('flow-sphere-in-planning-mode')
 			})
 		} else {
 			leaves.forEach((leaf: Element) => {
-				leaf.removeClass('flow-in-planning-mode')
+				leaf.removeClass('flow-sphere-in-planning-mode')
 			})
 		}
 	}
