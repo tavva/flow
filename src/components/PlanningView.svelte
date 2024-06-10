@@ -134,7 +134,6 @@
 		plugin.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
 			if (leaf.view.getViewType() === SPHERE_VIEW_TYPE) {
 				;(leaf.view as any).render()
-				console.log(`Refreshed view of type ${SPHERE_VIEW_TYPE}`)
 			}
 		})
 	}
