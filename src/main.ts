@@ -97,6 +97,7 @@ export default class FlowPlugin extends Plugin {
 
 			eventTypes.forEach((eventType) => {
 				this.registerEvent(
+					// @ts-ignore FIXME: TS doesn't like the event type here
 					this.app.vault.on(eventType, async (file: TFile) => {
 						if (file.path.startsWith(folder.path)) {
 							await this.stateManager.updateCounts()
