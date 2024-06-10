@@ -100,6 +100,6 @@
 			<h3>Currently processing:</h3>
 			<p>{line}</p>
 		</div>
-		<div id="flow-note-container" bind:this={noteContainer}></div>
+		<div class="flow-note-container" bind:this={noteContainer}></div>
 	{/if}
 </div>

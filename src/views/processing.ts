@@ -35,7 +35,7 @@ export class ProcessingView extends ItemView {
 		})
 
 		const noteContainer = this.contentEl.querySelector(
-			'#flow-note-container',
+			'.flow-note-container',
 		)
 		this.markdownView = new MarkdownView(this.leaf)
 		noteContainer?.appendChild(this.markdownView.containerEl)
