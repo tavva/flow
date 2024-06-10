@@ -49,7 +49,7 @@ export class PlanningView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'Planning view'
+		return 'Planned actions'
 	}
 
 	async onOpen() {

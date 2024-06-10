@@ -20,7 +20,7 @@ export class ProcessingView extends ItemView {
 	}
 
 	getDisplayText() {
-		return 'Flow Processing View'
+		return 'Processing Flow inboxes'
 	}
 
 	async onOpen() {

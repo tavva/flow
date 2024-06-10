@@ -57,7 +57,7 @@ export class SphereView extends ItemView implements SphereViewState {
 	getDisplayText() {
 		let capitalized =
 			this.sphere.charAt(0).toUpperCase() + this.sphere.slice(1)
-		return capitalized + ' dashboard'
+		return capitalized + ' sphere dashboard'
 	}
 
 	async onOpen() {
