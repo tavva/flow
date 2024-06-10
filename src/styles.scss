@@ -28,13 +28,23 @@ button.flow-modal-done {
 	filter: sepia(50%);
 }
 
-#flow-planning-task-container {
-	li {
-		display: flex;
+.flow-planning-view-container {
+
+	.flow-planning-view-actions {
+		width: 100%;
+		text-align: center;
 	}
 
-	button {
-		margin-left: 10px;
+	.flow-planning-task-container {
+		font-size: 87%;
+
+		li {
+			display: flex;
+		}
+
+		button {
+			margin-left: 10px;
+		}
 	}
 }
 

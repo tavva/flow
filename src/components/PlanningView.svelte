@@ -21,8 +21,8 @@
 	})
 
 	async function renderTasks() {
-		const taskContainer = document.getElementById(
-			'flow-planning-task-container',
+		const taskContainer = document.querySelector(
+			'.flow-planning-task-container',
 		)
 
 		if (taskContainer) {
@@ -37,8 +37,8 @@
 	}
 
 	async function renderTask(task: Task) {
-		const taskContainer = document.getElementById(
-			'flow-planning-task-container',
+		const taskContainer = document.querySelector(
+			'.flow-planning-task-container',
 		)
 		if (!taskContainer) {
 			console.error('Task container not found')
@@ -76,8 +76,8 @@
 	}
 
 	function addCheckboxListeners() {
-		const taskContainer = document.getElementById(
-			'flow-planning-task-container',
+		const taskContainer = document.querySelector(
+			'.flow-planning-task-container',
 		)
 
 		if (!taskContainer) {
@@ -146,7 +146,9 @@
 </script>
 
 <div class="flow-planning-view-container">
-	<div id="flow-planning-task-container"></div>
+	<div class="flow-planning-task-container"></div>
 
-	<button on:click={onClearTasks}>Clear tasks</button>
+	<div class="flow-planning-view-actions">
+		<button on:click={onClearTasks}>Clear tasks</button>
+	</div>
 </div>
