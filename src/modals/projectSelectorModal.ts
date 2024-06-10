@@ -22,13 +22,7 @@ export class ProjectSelectorModal extends Modal {
 
 		this.projectContainer.empty()
 
-		if (this.searchQuery) {
-			const projectFiles = this.projectFiles
-				.filter((file) =>
-					file.basename.toLowerCase().includes(this.searchQuery),
-				)
-				.sort((a, b) => b.stat.mtime - a.stat.mtime)
-
+		const outputButtons = (projectFiles: TFile[]) => {
 			projectFiles.forEach((file) => {
 				const button = this.projectContainer!.createEl('button', {
 					text: file.basename,
@@ -38,6 +32,16 @@ export class ProjectSelectorModal extends Modal {
 					this.close()
 				}
 			})
+		}
+
+		if (this.searchQuery) {
+			const projectFiles = this.projectFiles
+				.filter((file) =>
+					file.basename.toLowerCase().includes(this.searchQuery),
+				)
+				.sort((a, b) => b.stat.mtime - a.stat.mtime)
+
+			outputButtons(projectFiles)
 		}
 
 		const epoch = new Date()
@@ -51,28 +55,9 @@ export class ProjectSelectorModal extends Modal {
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 
 		this.projectContainer.createEl('p', { text: 'Recent...' })
-
-		recentProjectFiles.forEach((file) => {
-			const button = this.projectContainer!.createEl('button', {
-				text: file.basename,
-			})
-			button.onclick = () => {
-				this.onSelect(file)
-				this.close()
-			}
-		})
-
+		outputButtons(recentProjectFiles)
 		this.projectContainer.createEl('hr')
-
-		otherProjectFiles.forEach((file) => {
-			const button = this.projectContainer!.createEl('button', {
-				text: file.basename,
-			})
-			button.onclick = () => {
-				this.onSelect(file)
-				this.close()
-			}
-		})
+		outputButtons(otherProjectFiles)
 	}
 
 	onOpen() {
