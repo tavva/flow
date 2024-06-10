@@ -1,4 +1,4 @@
-import { ItemView, ViewStateResult, WorkspaceLeaf } from 'obsidian'
+import { ItemView, WorkspaceLeaf, type ViewStateResult } from 'obsidian'
 import { DataviewApi, STask } from 'obsidian-dataview'
 // @ts-ignore
 import SphereComponent from '../components/SphereView.svelte'

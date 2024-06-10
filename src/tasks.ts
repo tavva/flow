@@ -1,4 +1,4 @@
-import { Writable, writable, get } from 'svelte/store'
+import { type Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
 

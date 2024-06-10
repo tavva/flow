@@ -12,7 +12,7 @@ import { NewProjectModal } from './modals/newProjectModal'
 import { SphereSelectorModal } from './modals/sphereSelectorModal'
 
 import FlowPlugin from './main'
-import { StateManager, Stage, LineWithFile } from './state'
+import { StateManager, Stage, type LineWithFile } from './state'
 
 export class Handlers {
 	private app: App
