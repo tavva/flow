@@ -82,7 +82,7 @@ export class SphereView extends ItemView implements SphereViewState {
 			.page('Next actions')
 			.file.tasks.filter(
 				(t: STask) =>
-					!t.completed && t.tags.includes(`#context/${this.sphere}`),
+					!t.completed && t.tags.includes(`#sphere/${this.sphere}`),
 			)
 
 		this.setProps({
