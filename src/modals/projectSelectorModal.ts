@@ -21,12 +21,15 @@ export class ProjectSelectorModal extends Modal {
 		if (this.projectContainer === null) return
 
 		this.projectContainer.empty()
-		this.projectFiles
-			.filter((file) =>
-				file.basename.toLowerCase().includes(this.searchQuery),
-			)
-			.sort((a, b) => b.stat.mtime - a.stat.mtime)
-			.forEach((file) => {
+
+		if (this.searchQuery) {
+			const projectFiles = this.projectFiles
+				.filter((file) =>
+					file.basename.toLowerCase().includes(this.searchQuery),
+				)
+				.sort((a, b) => b.stat.mtime - a.stat.mtime)
+
+			projectFiles.forEach((file) => {
 				const button = this.projectContainer!.createEl('button', {
 					text: file.basename,
 				})
@@ -35,16 +38,54 @@ export class ProjectSelectorModal extends Modal {
 					this.close()
 				}
 			})
+		}
+
+		const epoch = new Date()
+		epoch.setDate(epoch.getDate() - 14)
+
+		const recentProjectFiles = this.projectFiles
+			.filter((file) => file.stat.mtime > epoch.getTime())
+			.sort((a, b) => b.stat.mtime - a.stat.mtime)
+		const otherProjectFiles = this.projectFiles
+			.filter((file) => file.stat.mtime <= epoch.getTime())
+			.sort((a, b) => b.stat.mtime - a.stat.mtime)
+
+		this.projectContainer.createEl('p', { text: 'Recent...' })
+
+		recentProjectFiles.forEach((file) => {
+			const button = this.projectContainer!.createEl('button', {
+				text: file.basename,
+			})
+			button.onclick = () => {
+				this.onSelect(file)
+				this.close()
+			}
+		})
+
+		this.projectContainer.createEl('hr')
+
+		otherProjectFiles.forEach((file) => {
+			const button = this.projectContainer!.createEl('button', {
+				text: file.basename,
+			})
+			button.onclick = () => {
+				this.onSelect(file)
+				this.close()
+			}
+		})
 	}
 
 	onOpen() {
 		const { contentEl } = this
+		contentEl.addClass('flow-project-modal-selector')
+
 		contentEl.createEl('h2', { text: 'Select a Project' })
 
 		const searchInput = contentEl.createEl('input', {
 			type: 'text',
 			placeholder: 'Search projects...',
 		})
+		searchInput.addClass('flow-search')
 		searchInput.oninput = (e: Event) => {
 			this.searchQuery = (
 				e.target as HTMLInputElement
@@ -53,7 +94,7 @@ export class ProjectSelectorModal extends Modal {
 		}
 
 		this.projectContainer = contentEl.createDiv()
-		this.projectContainer.addClass('project-container')
+		this.projectContainer.addClass('flow-project-container')
 
 		this.updateProjectList()
 	}
