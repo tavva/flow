@@ -15,7 +15,7 @@ export class NewProjectModal extends Modal {
 	) => void
 	private projectName: string = ''
 	private priority: number | undefined
-	private sphereContainer: HTMLElement
+	private sphereContainer: HTMLElement | null = null
 	private sphereButtons: ButtonComponent[] = []
 
 	constructor(
@@ -53,7 +53,9 @@ export class NewProjectModal extends Modal {
 		warningEl.addClass('warning')
 
 		this.spheres.forEach((sphere) => {
-			const button = new ButtonComponent(this.sphereContainer)
+			const button = new ButtonComponent(
+				this.sphereContainer as HTMLElement,
+			)
 			button.setButtonText(sphere)
 
 			button.onClick(() => {

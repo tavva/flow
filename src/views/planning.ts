@@ -36,7 +36,7 @@ export async function openPlanningView(plugin: FlowPlugin) {
 }
 
 export class PlanningView extends ItemView {
-	private component: PlanningViewComponent
+	private component!: PlanningViewComponent
 	plugin: FlowPlugin
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {

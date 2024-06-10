@@ -1,7 +1,7 @@
 import { Plugin, TFile } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 import { StateManager } from './state'
-import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
+import { type FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
@@ -15,12 +15,12 @@ import { Metrics } from './metrics'
 import { Tasks } from './tasks'
 
 export default class FlowPlugin extends Plugin {
-	private stateManager: StateManager
+	private stateManager!: StateManager
 	dv: DataviewApi
-	settings: FlowSettings
-	store: Store
-	metrics: Metrics
-	tasks: Tasks
+	settings!: FlowSettings
+	store!: Store
+	metrics!: Metrics
+	tasks!: Tasks
 
 	async onload() {
 		await this.loadSettings()
@@ -74,7 +74,7 @@ export default class FlowPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on(
 				'active-leaf-change',
-				await this.onActiveLeafChange.bind(this),
+				this.onActiveLeafChange.bind(this),
 			),
 		)
 

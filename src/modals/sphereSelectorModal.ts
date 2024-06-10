@@ -3,7 +3,7 @@ import { App, Modal, ButtonComponent } from 'obsidian'
 export class SphereSelectorModal extends Modal {
 	private spheres: string[]
 	private onSubmit: (selected: string[]) => void
-	private sphereContainer: HTMLElement
+	private sphereContainer!: HTMLElement
 	private selectedSpheres: Set<string>
 
 	constructor(

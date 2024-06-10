@@ -6,7 +6,7 @@ import InboxViewComponent from '../components/InboxView.svelte'
 export const PROCESSING_VIEW_TYPE = 'processing-view'
 
 export class ProcessingView extends ItemView {
-	private component: InboxViewComponent
+	private component!: InboxViewComponent
 	private markdownView: MarkdownView | null
 
 	constructor(leaf: WorkspaceLeaf) {

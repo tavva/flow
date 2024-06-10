@@ -4,7 +4,7 @@ export class ProjectSelectorModal extends Modal {
 	private projectFiles: TFile[]
 	private onSelect: (file: TFile) => void
 	private searchQuery: string = ''
-	private projectContainer: HTMLElement
+	private projectContainer: HTMLElement | null = null
 
 	constructor(
 		app: App,
@@ -18,6 +18,8 @@ export class ProjectSelectorModal extends Modal {
 	}
 
 	updateProjectList = () => {
+		if (this.projectContainer === null) return
+
 		this.projectContainer.empty()
 		this.projectFiles
 			.filter((file) =>
@@ -25,7 +27,7 @@ export class ProjectSelectorModal extends Modal {
 			)
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 			.forEach((file) => {
-				const button = this.projectContainer.createEl('button', {
+				const button = this.projectContainer!.createEl('button', {
 					text: file.basename,
 				})
 				button.onclick = () => {

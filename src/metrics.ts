@@ -6,6 +6,7 @@ export class Metrics {
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
+		this.counts = {}
 		this.loadCounts()
 	}
 
