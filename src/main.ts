@@ -1,6 +1,4 @@
-import * as fs from 'fs'
-
-import { Plugin, FileSystemAdapter } from 'obsidian'
+import { Plugin, TFile } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 import { StateManager } from './state'
 import { FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
@@ -18,7 +16,6 @@ import { Tasks } from './tasks'
 
 export default class FlowPlugin extends Plugin {
 	private stateManager: StateManager
-	private watchers: fs.FSWatcher[]
 	dv: DataviewApi
 	settings: FlowSettings
 	store: Store
@@ -85,32 +82,28 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	private async setupWatchers() {
-		this.watchers = []
-
 		const foldersToWatch = [
 			this.settings.inboxFilesFolderPath,
 			this.settings.inboxFolderPath,
 		]
+
+		const eventTypes: Array<string> = ['modify', 'create', 'delete']
 
 		foldersToWatch.forEach((folderPath) => {
 			const folder = this.app.vault.getAbstractFileByPath(folderPath)
 			if (!folder) {
 				return
 			}
-			const folderPathFull = (
-				this.app.vault.adapter as FileSystemAdapter
-			).getFullPath(folder.path)
 
-			const watcher = fs.watch(
-				folderPathFull,
-				{ recursive: false },
-				async (_eventType, filename) => {
-					if (filename) {
-						await this.stateManager.updateCounts()
-					}
-				},
-			)
-			this.watchers.push(watcher)
+			eventTypes.forEach((eventType) => {
+				this.registerEvent(
+					this.app.vault.on(eventType, async (file: TFile) => {
+						if (file.path.startsWith(folder.path)) {
+							await this.stateManager.updateCounts()
+						}
+					}),
+				)
+			})
 		})
 	}
 
@@ -161,6 +154,5 @@ export default class FlowPlugin extends Plugin {
 		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
 		this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE)
 		this.app.workspace.detachLeavesOfType(PLANNING_VIEW_TYPE)
-		this.watchers.forEach((watcher) => watcher.close())
 	}
 }
