@@ -44,7 +44,6 @@
 	},
 	"dependencies": {
 		"@popperjs/core": "^2.11.8",
-		"fs": "^0.0.1-security",
 		"lodash": "^4.17.21"
 	}
 }
