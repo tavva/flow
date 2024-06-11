@@ -36,43 +36,66 @@
 		}
 	}
 
-	async function renderTask(task: Task) {
-		const taskContainer = document.querySelector(
-			'.flow-planning-task-container',
-		)
-		if (!taskContainer) {
-			console.error('Task container not found')
-			return
+	function createRenderTask() {
+		let previousProjectName: string | null = null
+
+		return async function renderTask(task: Task) {
+			const taskContainer = document.querySelector(
+				'.flow-planning-task-container',
+			)
+			if (!taskContainer) {
+				console.error('Task container not found')
+				return
+			}
+
+			const taskDiv = document.createElement('div')
+			taskDiv.id = `task-${task.id}`
+			taskContainer.appendChild(taskDiv)
+
+			let taskList: STask[] = []
+
+			if (task.type == TaskType.PROJECT) {
+				taskList = plugin.dv
+					.page(task.projectPath)
+					.file.tasks.filter(
+						(t: STask) => normaliseTaskText(t.text) === task.title,
+					)
+			} else {
+				taskList = plugin.dv
+					.page(plugin.settings.nextActionsFilePath)
+					.file.tasks.filter(
+						(t: STask) => normaliseTaskText(t.text) === task.title,
+					)
+			}
+
+			try {
+				const component = new Component()
+				await plugin.dv.taskList(taskList, false, taskDiv, component)
+				component.load()
+				addRemoveButton(taskDiv)
+			} catch (error) {
+				console.error('Error rendering task list:', error)
+			}
+
+			console.log(task.projectName, previousProjectName)
+			if (task.projectName !== previousProjectName) {
+				insertProjectName(taskDiv, task)
+				previousProjectName = task.projectName
+			}
 		}
+	}
 
-		const taskDiv = document.createElement('div')
-		taskDiv.id = `task-${task.id}`
-		taskContainer.appendChild(taskDiv)
+	const renderTask = createRenderTask()
 
-		let taskList: STask[] = []
-
-		if (task.type == TaskType.PROJECT) {
-			taskList = plugin.dv
-				.page(task.projectPath)
-				.file.tasks.filter(
-					(t: STask) => normaliseTaskText(t.text) === task.title,
-				)
-		} else {
-			taskList = plugin.dv
-				.page(plugin.settings.nextActionsFilePath)
-				.file.tasks.filter(
-					(t: STask) => normaliseTaskText(t.text) === task.title,
-				)
+	function insertProjectName(taskDiv: HTMLElement, task: Task) {
+		let headerText = 'No project'
+		if (task.projectName !== null) {
+			headerText = task.projectName
 		}
-
-		try {
-			const component = new Component()
-			await plugin.dv.taskList(taskList, false, taskDiv, component)
-			component.load()
-			addRemoveButton(taskDiv)
-		} catch (error) {
-			console.error('Error rendering task list:', error)
-		}
+		const projectNameEle = document.createElement('span')
+		projectNameEle.classList.add('flow-project-name')
+		projectNameEle.innerText = headerText
+		taskDiv.prepend(projectNameEle)
 	}
 
 	function addCheckboxListeners() {

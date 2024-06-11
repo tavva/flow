@@ -45,6 +45,15 @@ button.flow-modal-done {
 		button {
 			margin-left: 10px;
 		}
+
+		ul.contains-task-list {
+			margin-top: 0;
+		}
+
+		.flow-project-name {
+			font-size: 80%;
+			color: var(--text-muted);
+		}
 	}
 }
 
