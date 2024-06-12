@@ -62,6 +62,10 @@ export class PlanningView extends ItemView {
 		})
 	}
 
+	override getIcon(): string {
+		return 'waves'
+	}
+
 	public setProps(props: Partial<typeof this.component.$$.props>) {
 		if (this.component) {
 			this.component.$set(props)
