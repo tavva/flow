@@ -70,6 +70,10 @@ export class SphereView extends ItemView implements SphereViewState {
 		})
 	}
 
+	override getIcon(): string {
+		return 'waves'
+	}
+
 	async onClose() {
 		if (this.component) {
 			this.component.$destroy()
