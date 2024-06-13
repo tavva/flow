@@ -23,6 +23,10 @@ export class ProcessingView extends ItemView {
 		return 'Processing Flow inboxes'
 	}
 
+	override getIcon(): string {
+		return 'waves'
+	}
+
 	async onOpen() {
 		this.component = new ProcessingViewComponent({
 			target: this.contentEl,
