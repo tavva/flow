@@ -60,6 +60,10 @@ export class SphereView extends ItemView implements SphereViewState {
 		return capitalized + ' sphere dashboard'
 	}
 
+	override getIcon(): string {
+		return 'waves'
+	}
+
 	async onOpen() {
 		this.component = new SphereComponent({
 			target: this.contentEl,
@@ -68,10 +72,6 @@ export class SphereView extends ItemView implements SphereViewState {
 				sphere: this.sphere,
 			},
 		})
-	}
-
-	override getIcon(): string {
-		return 'waves'
 	}
 
 	async onClose() {

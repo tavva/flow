@@ -52,6 +52,10 @@ export class PlanningView extends ItemView {
 		return 'Planned actions'
 	}
 
+	override getIcon(): string {
+		return 'waves'
+	}
+
 	async onOpen() {
 		this.component = new PlanningViewComponent({
 			target: this.contentEl,
@@ -60,10 +64,6 @@ export class PlanningView extends ItemView {
 				plugin: this.plugin,
 			},
 		})
-	}
-
-	override getIcon(): string {
-		return 'waves'
 	}
 
 	public setProps(props: Partial<typeof this.component.$$.props>) {
