@@ -1,12 +1,12 @@
 import { ItemView, MarkdownView, WorkspaceLeaf, TFile } from 'obsidian'
 
 // @ts-ignore
-import InboxViewComponent from '../components/InboxView.svelte'
+import ProcessingViewComponent from '../components/ProcessingView.svelte'
 
 export const PROCESSING_VIEW_TYPE = 'processing-view'
 
 export class ProcessingView extends ItemView {
-	private component!: InboxViewComponent
+	private component!: ProcessingViewComponent
 	private markdownView: MarkdownView | null
 
 	constructor(leaf: WorkspaceLeaf) {
@@ -24,7 +24,7 @@ export class ProcessingView extends ItemView {
 	}
 
 	async onOpen() {
-		this.component = new InboxViewComponent({
+		this.component = new ProcessingViewComponent({
 			target: this.contentEl,
 			props: {
 				line: '',
