@@ -9,8 +9,7 @@ import {
 	readFileContent,
 } from './utils'
 
-import { ProjectSelectorModal } from './modals/projectSelectorModal'
-import { PersonSelectorModal } from './modals/personSelectorModal'
+import { FileSelectorModal } from './modals/fileSelectorModal'
 import { NewProjectModal } from './modals/newProjectModal'
 import { SphereSelectorModal } from './modals/sphereSelectorModal'
 
@@ -46,7 +45,7 @@ export class Handlers {
 	handleAddToProjectNextActions = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
 
-		new ProjectSelectorModal(
+		new FileSelectorModal(
 			this.app,
 			projectFiles,
 			async (file: TFile) => {
@@ -54,23 +53,31 @@ export class Handlers {
 				await this.removeProcessedItem()
 				this.plugin.metrics.count('project-action-created')
 			},
+			'Select a project',
+			'Search projects...',
 		).open()
 	}
 
 	handleAddToPersonDiscussNext = async (text: string) => {
 		const personFiles = getFilesWithTagPrefix(this.plugin, 'person')
 
-		new PersonSelectorModal(this.app, personFiles, async (file: TFile) => {
-			await addToPersonDiscussNext(this.plugin, file, text)
-			await this.removeProcessedItem()
-			this.plugin.metrics.count('person-action-created')
-		}).open()
+		new FileSelectorModal(
+			this.app,
+			personFiles,
+			async (file: TFile) => {
+				await addToPersonDiscussNext(this.plugin, file, text)
+				await this.removeProcessedItem()
+				this.plugin.metrics.count('person-action-created')
+			},
+			'Select a person',
+			'Search for a person',
+		).open()
 	}
 
 	handleAddToProjectReference = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
 
-		new ProjectSelectorModal(
+		new FileSelectorModal(
 			this.app,
 			projectFiles,
 			async (file: TFile) => {
@@ -78,17 +85,25 @@ export class Handlers {
 				await this.removeProcessedItem()
 				this.plugin.metrics.count('project-reference-created')
 			},
+			'Select a project',
+			'Search projects...',
 		).open()
 	}
 
 	handleAddToPersonReference = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'person')
 
-		new PersonSelectorModal(this.app, projectFiles, async (file: TFile) => {
-			await addToPersonReference(this.plugin, file, text)
-			await this.removeProcessedItem()
-			this.plugin.metrics.count('person-reference-created')
-		}).open()
+		new FileSelectorModal(
+			this.app,
+			projectFiles,
+			async (file: TFile) => {
+				await addToPersonReference(this.plugin, file, text)
+				await this.removeProcessedItem()
+				this.plugin.metrics.count('person-reference-created')
+			},
+			'Select a person',
+			'Search for a person',
+		)
 	}
 
 	private replacer(str: string, regex: RegExp, replaceWith: string) {

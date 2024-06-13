@@ -1,30 +1,36 @@
 import { App, Modal, TFile } from 'obsidian'
 
-export class ProjectSelectorModal extends Modal {
-	private projectFiles: TFile[]
+export class FileSelectorModal extends Modal {
+	private files: TFile[]
 	private onSelect: (file: TFile) => void
 	private searchQuery: string = ''
-	private projectContainer: HTMLElement | null = null
+	private container: HTMLElement | null = null
+	private heading: string
+	private searchInputPlaceholder: string
 
 	constructor(
 		app: App,
-		projectFiles: TFile[],
+		files: TFile[],
 		onSelect: (file: TFile) => void,
+		heading: string,
+		searchInputPlaceholder: string,
 	) {
 		super(app)
-		this.projectFiles = projectFiles
+		this.files = files
 		this.onSelect = onSelect
-		this.updateProjectList = this.updateProjectList.bind(this)
+		this.updateList = this.updateList.bind(this)
+		this.heading = heading
+		this.searchInputPlaceholder = searchInputPlaceholder
 	}
 
-	updateProjectList = () => {
-		if (this.projectContainer === null) return
+	updateList = () => {
+		if (this.container === null) return
 
-		this.projectContainer.empty()
+		this.container.empty()
 
-		const outputButtons = (projectFiles: TFile[]) => {
-			projectFiles.forEach((file) => {
-				const button = this.projectContainer!.createEl('button', {
+		const outputButtons = (files: TFile[]) => {
+			files.forEach((file) => {
+				const button = this.container!.createEl('button', {
 					text: file.basename,
 				})
 				button.onclick = () => {
@@ -35,53 +41,53 @@ export class ProjectSelectorModal extends Modal {
 		}
 
 		if (this.searchQuery) {
-			const projectFiles = this.projectFiles
+			const files = this.files
 				.filter((file) =>
 					file.basename.toLowerCase().includes(this.searchQuery),
 				)
 				.sort((a, b) => b.stat.mtime - a.stat.mtime)
 
-			outputButtons(projectFiles)
+			outputButtons(files)
 		}
 
 		const epoch = new Date()
 		epoch.setDate(epoch.getDate() - 7)
 
-		const recentProjectFiles = this.projectFiles
+		const recentFiles = this.files
 			.filter((file) => file.stat.mtime > epoch.getTime())
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
-		const otherProjectFiles = this.projectFiles
+		const otherFiles = this.files
 			.filter((file) => file.stat.mtime <= epoch.getTime())
 			.sort((a, b) => b.stat.mtime - a.stat.mtime)
 
-		this.projectContainer.createEl('p', { text: 'Recent...' })
-		outputButtons(recentProjectFiles)
-		this.projectContainer.createEl('hr')
-		outputButtons(otherProjectFiles)
+		this.container.createEl('p', { text: 'Recent...' })
+		outputButtons(recentFiles)
+		this.container.createEl('hr')
+		outputButtons(otherFiles)
 	}
 
 	onOpen() {
 		const { contentEl } = this
-		contentEl.addClass('flow-project-modal-selector')
+		contentEl.addClass('flow-files-modal-selector')
 
-		contentEl.createEl('h2', { text: 'Select a Project' })
+		contentEl.createEl('h2', { text: this.heading })
 
 		const searchInput = contentEl.createEl('input', {
 			type: 'text',
-			placeholder: 'Search projects...',
+			placeholder: this.searchInputPlaceholder,
 		})
 		searchInput.addClass('flow-search')
 		searchInput.oninput = (e: Event) => {
 			this.searchQuery = (
 				e.target as HTMLInputElement
 			).value.toLowerCase()
-			this.updateProjectList()
+			this.updateList()
 		}
 
-		this.projectContainer = contentEl.createDiv()
-		this.projectContainer.addClass('flow-project-container')
+		this.container = contentEl.createDiv()
+		this.container.addClass('flow-files-container')
 
-		this.updateProjectList()
+		this.updateList()
 	}
 
 	onClose() {
