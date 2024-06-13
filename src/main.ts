@@ -5,17 +5,14 @@ import { type FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere'
-import {
-	PlanningView,
-	openPlanningView,
-	PLANNING_VIEW_TYPE,
-} from './views/planning'
+import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning'
+import { registerCommands } from './commands'
 import { Store } from './store'
 import { Metrics } from './metrics'
 import { Tasks } from './tasks'
 
 export default class FlowPlugin extends Plugin {
-	private stateManager!: StateManager
+	stateManager!: StateManager
 	dv: DataviewApi
 	settings!: FlowSettings
 	store!: Store
@@ -45,31 +42,7 @@ export default class FlowPlugin extends Plugin {
 		this.metrics = new Metrics(this)
 		this.tasks = new Tasks(this)
 
-		this.addCommand({
-			id: 'process-inboxes',
-			name: 'Process Inboxes',
-			callback: () => this.stateManager.startProcessing(),
-		})
-
-		this.addCommand({
-			id: 'view-personal-sphere',
-			name: 'View Personal Sphere',
-			callback: await this.openSphere('personal'),
-		})
-
-		this.addCommand({
-			id: 'view-work-sphere',
-			name: 'View Work Sphere',
-			callback: await this.openSphere('work'),
-		})
-
-		this.addCommand({
-			id: 'show-planned-actions',
-			name: 'Show planned actions',
-			callback: async () => {
-				openPlanningView(this)
-			},
-		})
+		registerCommands(this)
 
 		this.registerEvent(
 			this.app.workspace.on(
@@ -114,7 +87,7 @@ export default class FlowPlugin extends Plugin {
 		}
 	}
 
-	private async openSphere(sphere: string) {
+	async openSphere(sphere: string) {
 		return async () => {
 			const existingLeaves =
 				this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
