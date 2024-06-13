@@ -4,6 +4,7 @@
 	import { Component, WorkspaceLeaf } from 'obsidian'
 
 	import FlowPlugin from '../main'
+	import { isPlanningMode, togglePlanningMode } from 'planning'
 	import { TaskType, type Task, normaliseTaskText } from '../tasks'
 	import { SPHERE_VIEW_TYPE } from '../views/sphere'
 
@@ -19,6 +20,10 @@
 
 		return () => unsubscribe()
 	})
+
+	function handleTogglePlanningMode() {
+		togglePlanningMode(plugin)
+	}
 
 	async function renderTasks() {
 		const taskContainer = document.querySelector(
@@ -169,6 +174,14 @@
 </script>
 
 <div class="flow-planning-view-container">
+	<button on:click={handleTogglePlanningMode}>
+		{#if $isPlanningMode}
+			Exit Planning Mode
+		{/if}
+		{#if !$isPlanningMode}
+			Enter Planning Mode
+		{/if}
+	</button>
 	<div class="flow-planning-task-container"></div>
 
 	<div class="flow-planning-view-actions">

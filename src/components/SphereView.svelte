@@ -5,11 +5,7 @@
 
 	import FlowPlugin from '../main'
 	import type { Project } from '../views/sphere'
-	import {
-		togglePlanningMode,
-		isPlanningMode,
-		addTaskClickListeners,
-	} from '../planning'
+	import { isPlanningMode, addTaskClickListeners } from '../planning'
 
 	// @ts-ignore
 	let taskContainer: HTMLElement
@@ -53,10 +49,6 @@
 
 		return () => unsubscribe()
 	})
-
-	function handleTogglePlanningMode() {
-		togglePlanningMode(plugin)
-	}
 
 	async function renderTaskList(container: HTMLElement, tasks: STask[]) {
 		if (container && tasks) {
@@ -159,14 +151,6 @@
 
 <div class="flow-project">
 	<h1>{sphereCapitalised}</h1>
-	<button on:click={handleTogglePlanningMode}>
-		{#if $isPlanningMode}
-			Exit Planning Mode
-		{/if}
-		{#if !$isPlanningMode}
-			Enter Planning Mode
-		{/if}
-	</button>
 	<div>
 		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
 			<h2>You have projects that need next actions</h2>
