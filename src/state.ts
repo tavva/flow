@@ -103,6 +103,10 @@ export class StateManager {
 					this.handlers.handleAddToProjectNextActions,
 				onAddToProjectReference:
 					this.handlers.handleAddToProjectReference,
+				onAddToPersonDiscussNext:
+					this.handlers.handleAddToPersonDiscussNext,
+				onAddToPersonReference:
+					this.handlers.handleAddToPersonReference,
 				onAddToNewProject: this.handlers.handleNewProject,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:

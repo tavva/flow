@@ -90,6 +90,19 @@ export async function addToProjectNextActions(
 		true, // isTask
 	)
 }
+export async function addToPersonDiscussNext(
+	plugin: FlowPlugin,
+	projectFile: TFile,
+	line: string,
+) {
+	await addToFileSection(
+		plugin,
+		projectFile,
+		line,
+		'## Discuss next',
+		true, // isTask
+	)
+}
 
 export async function addToProjectReference(
 	plugin: FlowPlugin,
@@ -98,6 +111,15 @@ export async function addToProjectReference(
 ) {
 	// TODO: make the section name a setting
 	await addToFileSection(plugin, projectFile, line, '## Notes + resources')
+}
+
+export async function addToPersonReference(
+	plugin: FlowPlugin,
+	personFile: TFile,
+	line: string,
+) {
+	// TODO: make the section name a setting
+	await addToFileSection(plugin, personFile, line, '## Reference')
 }
 
 export function readFileContent(

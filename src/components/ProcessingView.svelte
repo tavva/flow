@@ -12,6 +12,8 @@
 	export let onAddToNextActions: (text: string) => void
 	export let onAddToProjectNextActions: (text: string) => void
 	export let onAddToProjectReference: (text: string) => void
+	export let onAddToPersonDiscussNext: (text: string) => void
+	export let onAddToPersonReference: (text: string) => void
 	export let onAddToNewProject: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
@@ -58,6 +60,13 @@
 		if (inputText.trim() !== '') onAddToProjectReference(inputText)
 	}
 
+	function addToPersonDiscussNext() {
+		if (inputText.trim() !== '') onAddToPersonDiscussNext(inputText)
+	}
+	function addToPersonReference() {
+		if (inputText.trim() !== '') onAddToPersonReference(inputText)
+	}
+
 	function addToNewProject() {
 		if (inputText.trim() !== '') onAddToNewProject(inputText)
 	}
@@ -91,6 +100,12 @@
 			>
 			<button on:click={addToNewProject}
 				>Add to New Project (as action)</button
+			>
+			<button on:click={addToPersonDiscussNext}
+				>Add to Person (as action)</button
+			>
+			<button on:click={addToPersonReference}
+				>Add to Person (as reference)</button
 			>
 			<button on:click={trash}>Trash</button>
 		</div>

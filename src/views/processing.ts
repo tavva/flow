@@ -30,6 +30,7 @@ export class ProcessingView extends ItemView {
 				line: '',
 				onAddToNextActions: () => {},
 				onAddToProjectNextActions: () => {},
+				onAddToPersonDiscussNext: () => {},
 				onTrash: () => {},
 			},
 		})
