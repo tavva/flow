@@ -27,7 +27,8 @@
 
 	async function renderMarkdown(content: string) {
 		if (noteContainer) {
-			noteContainer.innerHTML = ''
+			noteContainer.empty()
+
 			if (!content) {
 				return
 			}
