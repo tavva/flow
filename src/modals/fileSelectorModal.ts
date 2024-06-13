@@ -3,7 +3,7 @@ import { App, Modal, TFile } from 'obsidian'
 export class FileSelectorModal extends Modal {
 	private files: TFile[]
 	private onSelect: (file: TFile) => void
-	private searchQuery: string = ''
+	private searchTerm: string = ''
 	private container: HTMLElement | null = null
 	private heading: string
 	private searchInputPlaceholder: string
@@ -40,10 +40,10 @@ export class FileSelectorModal extends Modal {
 			})
 		}
 
-		if (this.searchQuery) {
+		if (this.searchTerm) {
 			const files = this.files
 				.filter((file) =>
-					file.basename.toLowerCase().includes(this.searchQuery),
+					file.basename.toLowerCase().includes(this.searchTerm),
 				)
 				.sort((a, b) => b.stat.mtime - a.stat.mtime)
 
@@ -78,9 +78,7 @@ export class FileSelectorModal extends Modal {
 		})
 		searchInput.addClass('flow-search')
 		searchInput.oninput = (e: Event) => {
-			this.searchQuery = (
-				e.target as HTMLInputElement
-			).value.toLowerCase()
+			this.searchTerm = (e.target as HTMLInputElement).value.toLowerCase()
 			this.updateList()
 		}
 
