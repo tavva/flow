@@ -174,17 +174,22 @@
 </script>
 
 <div class="flow-planning-view-container">
-	<button on:click={handleTogglePlanningMode}>
-		{#if $isPlanningMode}
-			Exit Planning Mode
-		{/if}
-		{#if !$isPlanningMode}
-			Enter Planning Mode
-		{/if}
-	</button>
+	<div class="flow-planning-view-actions">
+		<button on:click={handleTogglePlanningMode}>
+			{#if $isPlanningMode}
+				Exit Planning Mode
+			{/if}
+			{#if !$isPlanningMode}
+				Enter Planning Mode
+			{/if}
+		</button>
+	</div>
+
 	<div class="flow-planning-task-container"></div>
 
 	<div class="flow-planning-view-actions">
-		<button on:click={onClearTasks}>Clear tasks</button>
+		{#if plannedTasks.length > 0}
+			<button on:click={onClearTasks}>Clear tasks</button>
+		{/if}
 	</div>
 </div>
