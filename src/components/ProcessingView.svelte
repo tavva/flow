@@ -69,11 +69,7 @@
 
 {#if !isProcessingComplete}
 	<div class="flow-status">
-		<h2>Flow status</h2>
-		<p>Stage: {currentStage}</p>
-		<h3>Inbox counts</h3>
-		<p>Lines to process: {lineCount}</p>
-		<p>Files to process: {fileCount}</p>
+		<p>Remaining: Lines: {lineCount} | Files: {fileCount}</p>
 	</div>
 {/if}
 
@@ -85,17 +81,19 @@
 		</div>
 	{:else}
 		<textarea bind:value={inputText}></textarea>
-		<button on:click={addToNextActions}>Add to Next Actions</button>
-		<button on:click={addToProjectNextActions}
-			>Add to Project (as action)</button
-		>
-		<button on:click={addToProjectReference}
-			>Add to Project (as reference)</button
-		>
-		<button on:click={addToNewProject}
-			>Add to New Project (as action)</button
-		>
-		<button on:click={trash}>Trash</button>
+		<div class="flow-processing-actions">
+			<button on:click={addToNextActions}>Add to Next Actions</button>
+			<button on:click={addToProjectNextActions}
+				>Add to Project (as action)</button
+			>
+			<button on:click={addToProjectReference}
+				>Add to Project (as reference)</button
+			>
+			<button on:click={addToNewProject}
+				>Add to New Project (as action)</button
+			>
+			<button on:click={trash}>Trash</button>
+		</div>
 		<div>
 			<h3>Currently processing:</h3>
 			<p>{line}</p>
