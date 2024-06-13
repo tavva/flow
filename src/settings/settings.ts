@@ -4,6 +4,8 @@ export interface FlowSettings {
 	nextActionsFilePath: string
 	newProjectTemplateFilePath: string
 	projectsFolderPath: string
+	newPersonTemplateFilePath: string
+	peopleFolderPath: string
 	appendTask: string
 
 	spheres: string[]
@@ -15,6 +17,8 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 	nextActionsFilePath: 'Next Actions.md',
 	newProjectTemplateFilePath: 'Templates/Project.md',
 	projectsFolderPath: 'Projects',
+	newPersonTemplateFilePath: 'Templates/Person.md',
+	peopleFolderPath: 'People',
 	appendTask: '',
 
 	spheres: ['personal', 'work'],

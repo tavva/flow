@@ -89,6 +89,32 @@ export class FlowSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
+			.setName('New Person Template File Path')
+			.setDesc('Flow will create new person files using this template.')
+			.addSearch((cb) => {
+				new FileSuggest(this.plugin, cb.inputEl)
+				cb.setPlaceholder('Example: templates/Person.md')
+					.setValue(this.plugin.settings.newPersonTemplateFilePath)
+					.onChange(async (value) => {
+						this.plugin.settings.newPersonTemplateFilePath = value
+						await this.plugin.saveSettings()
+					})
+			})
+
+		new Setting(containerEl)
+			.setName('People Folder Path')
+			.setDesc('This is where your people files are stored.')
+			.addSearch((cb) => {
+				new FolderSuggest(this.plugin, cb.inputEl)
+				cb.setPlaceholder('Example: People')
+					.setValue(this.plugin.settings.peopleFolderPath)
+					.onChange(async (value) => {
+						this.plugin.settings.peopleFolderPath = value
+						this.plugin.saveSettings()
+					})
+			})
+
+		new Setting(containerEl)
 			.setName('Append to task')
 			.setDesc(
 				`Flow will append this to all tasks it creates. This is useful
