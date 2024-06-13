@@ -86,7 +86,7 @@
 <div class="flow-processing">
 	{#if isProcessingComplete}
 		<div>
-			<h3>Processing Complete</h3>
+			<h3>Processing complete</h3>
 			<p>All items have been processed.</p>
 		</div>
 	{:else}
