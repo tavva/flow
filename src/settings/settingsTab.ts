@@ -6,8 +6,8 @@ import { FileSuggest } from './suggesters/FileSuggester'
 export class FlowSettingsTab extends PluginSettingTab {
 	plugin: FlowPlugin
 
-	constructor(app: App, plugin: FlowPlugin) {
-		super(app, plugin)
+	constructor(plugin: FlowPlugin) {
+		super(plugin.app, plugin)
 		this.plugin = plugin
 	}
 

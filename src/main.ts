@@ -21,7 +21,7 @@ export default class FlowPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings()
-		this.addSettingTab(new FlowSettingsTab(this.app, this))
+		this.addSettingTab(new FlowSettingsTab(this))
 
 		this.registerViews()
 
