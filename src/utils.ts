@@ -1,6 +1,11 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 import FlowPlugin from './main'
 
+// TODO:
+// We can make all of this a bit more generic, by adding an action or reference
+// info to any section of any file, rather than specifying person or project,
+// etc.
+
 export async function addToNextActions(
 	plugin: FlowPlugin,
 	text: string,
