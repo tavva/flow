@@ -23,18 +23,7 @@ export default class FlowPlugin extends Plugin {
 		await this.loadSettings()
 		this.addSettingTab(new FlowSettingsTab(this.app, this))
 
-		this.registerView(
-			PROCESSING_VIEW_TYPE,
-			(leaf) => new ProcessingView(leaf),
-		)
-		this.registerView(
-			SPHERE_VIEW_TYPE,
-			(leaf) => new SphereView(leaf, this),
-		)
-		this.registerView(
-			PLANNING_VIEW_TYPE,
-			(leaf) => new PlanningView(leaf, this),
-		)
+		this.registerViews()
 
 		this.dv = getAPI()
 		this.stateManager = new StateManager(this)
@@ -52,6 +41,21 @@ export default class FlowPlugin extends Plugin {
 		)
 
 		this.setupWatchers()
+	}
+
+	private registerViews() {
+		this.registerView(
+			PROCESSING_VIEW_TYPE,
+			(leaf) => new ProcessingView(leaf),
+		)
+		this.registerView(
+			SPHERE_VIEW_TYPE,
+			(leaf) => new SphereView(leaf, this),
+		)
+		this.registerView(
+			PLANNING_VIEW_TYPE,
+			(leaf) => new PlanningView(leaf, this),
+		)
 	}
 
 	private async setupWatchers() {
