@@ -45,7 +45,7 @@ export class ProjectSelectorModal extends Modal {
 		}
 
 		const epoch = new Date()
-		epoch.setDate(epoch.getDate() - 14)
+		epoch.setDate(epoch.getDate() - 7)
 
 		const recentProjectFiles = this.projectFiles
 			.filter((file) => file.stat.mtime > epoch.getTime())
