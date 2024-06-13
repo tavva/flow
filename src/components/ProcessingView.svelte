@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { App, MarkdownRenderer, Component } from 'obsidian'
+	import FlowPlugin from 'main'
+	import { MarkdownRenderer, Component } from 'obsidian'
 	import { Stage } from '../state'
 
-	export let app: App
+	export let plugin: FlowPlugin
 
 	export let lineCount: number
 	export let fileCount: number
@@ -34,7 +35,7 @@
 			}
 
 			await MarkdownRenderer.render(
-				app,
+				plugin.app,
 				content,
 				noteContainer,
 				sourcePath,

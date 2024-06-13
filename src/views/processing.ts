@@ -2,15 +2,18 @@ import { ItemView, MarkdownView, WorkspaceLeaf, TFile } from 'obsidian'
 
 // @ts-ignore
 import ProcessingViewComponent from '../components/ProcessingView.svelte'
+import type FlowPlugin from 'main'
 
 export const PROCESSING_VIEW_TYPE = 'processing-view'
 
 export class ProcessingView extends ItemView {
+	private plugin: FlowPlugin
 	private component!: ProcessingViewComponent
 	private markdownView: MarkdownView | null
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
+		this.plugin = plugin
 		this.navigation = false
 		this.markdownView = null
 	}
@@ -55,9 +58,9 @@ export class ProcessingView extends ItemView {
 			return
 		}
 
-		const file = this.app.vault.getAbstractFileByPath(notePath)
+		const file = this.plugin.app.vault.getAbstractFileByPath(notePath)
 		if (file instanceof TFile) {
-			const content = await this.app.vault.read(file)
+			const content = await this.plugin.app.vault.read(file)
 			if (this.component) {
 				this.component.$set({
 					noteContent: content,
