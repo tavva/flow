@@ -34,7 +34,7 @@ export async function addToNextActions(
 	await plugin.app.vault.modify(nextActionsFile, content)
 }
 
-async function addToProjectSection(
+async function addToFileSection(
 	plugin: FlowPlugin,
 	projectFile: TFile,
 	line: string,
@@ -77,7 +77,7 @@ export async function addToProjectNextActions(
 	projectFile: TFile,
 	line: string,
 ) {
-	await addToProjectSection(
+	await addToFileSection(
 		plugin,
 		projectFile,
 		line,
@@ -92,7 +92,7 @@ export async function addToProjectReference(
 	line: string,
 ) {
 	// TODO: make the section name a setting
-	await addToProjectSection(plugin, projectFile, line, '## Notes + resources')
+	await addToFileSection(plugin, projectFile, line, '## Notes + resources')
 }
 
 export function readFileContent(
