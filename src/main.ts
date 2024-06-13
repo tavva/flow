@@ -152,6 +152,8 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	onunload() {
+		// FIXME: we shouldn't do this, users will expect things to be in the
+		// same place if we update the plugin
 		this.app.workspace.detachLeavesOfType(PROCESSING_VIEW_TYPE)
 		this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE)
 		this.app.workspace.detachLeavesOfType(PLANNING_VIEW_TYPE)
