@@ -59,8 +59,8 @@ export class FlowSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Line at a time')
 			.setDesc(
-				`Flow processes all lines in every file in this folder. We
-				 allow multiple inbox files to help prevent syncing issues when
+				`Flow processes all lines in every note in this folder. We
+				 allow multiple inbox notes to help prevent syncing issues when
 				 the inbox can be populated from many different sources.`,
 			)
 			.addSearch((cb) => {
@@ -74,8 +74,8 @@ export class FlowSettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName('File at a time')
-			.setDesc('Flow processes entire files one by one in this folder.')
+			.setName('Note at a time')
+			.setDesc('Flow processes entire notes one by one in this folder.')
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Inbox')
@@ -86,7 +86,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 					})
 			})
 
-		new Setting(containerEl).setName('Your files').setHeading()
+		new Setting(containerEl).setName('Your notes').setHeading()
 
 		new Setting(containerEl)
 			.setName('Next actions')
@@ -119,7 +119,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Projects folder')
-			.setDesc('This is where your project files are stored.')
+			.setDesc('This is where your project notes are stored.')
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: Projects')
@@ -132,7 +132,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('New person template')
-			.setDesc('Flow will create new person files using this template.')
+			.setDesc('Flow will create new person notes using this template.')
 			.addSearch((cb) => {
 				new FileSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: templates/Person.md')
@@ -145,7 +145,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('People folder')
-			.setDesc('This is where your people files are stored.')
+			.setDesc('This is where your people notes are stored.')
 			.addSearch((cb) => {
 				new FolderSuggest(this.plugin, cb.inputEl)
 				cb.setPlaceholder('Example: People')
