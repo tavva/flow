@@ -20,27 +20,29 @@ export default class FlowPlugin extends Plugin {
 	tasks!: Tasks
 
 	async onload() {
-		await this.loadSettings()
-		this.addSettingTab(new FlowSettingsTab(this))
+		this.app.workspace.onLayoutReady(async () => {
+			await this.loadSettings()
+			this.addSettingTab(new FlowSettingsTab(this))
 
-		this.registerViews()
+			this.registerViews()
 
-		this.dv = getAPI()
-		this.stateManager = new StateManager(this)
-		this.store = new Store(this)
-		this.metrics = new Metrics(this)
-		this.tasks = new Tasks(this)
+			this.dv = getAPI()
+			this.stateManager = new StateManager(this)
+			this.store = new Store(this)
+			this.metrics = new Metrics(this)
+			this.tasks = new Tasks(this)
 
-		registerCommands(this)
+			registerCommands(this)
 
-		this.registerEvent(
-			this.app.workspace.on(
-				'active-leaf-change',
-				this.onActiveLeafChange.bind(this),
-			),
-		)
+			this.registerEvent(
+				this.app.workspace.on(
+					'active-leaf-change',
+					this.onActiveLeafChange.bind(this),
+				),
+			)
 
-		this.setupWatchers()
+			this.setupWatchers()
+		})
 	}
 
 	private registerViews() {

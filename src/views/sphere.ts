@@ -66,15 +66,12 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	async onOpen() {
-		this.app.workspace.onLayoutReady(() => {
-			this.component = new SphereComponent({
-				target: this.contentEl,
-				props: {
-					plugin: this.plugin,
-					sphere: this.sphere,
-				},
-			})
-			this.render()
+		this.component = new SphereComponent({
+			target: this.contentEl,
+			props: {
+				plugin: this.plugin,
+				sphere: this.sphere,
+			},
 		})
 	}
 
