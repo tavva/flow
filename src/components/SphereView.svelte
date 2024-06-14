@@ -7,9 +7,6 @@
 	import type { Project } from '../views/sphere'
 	import { isPlanningMode, addTaskClickListeners } from '../planning'
 
-	// @ts-ignore
-	let taskContainer: HTMLElement
-
 	export let plugin: FlowPlugin
 	export let sphere: string
 	export let projects: Project[] = []
@@ -165,7 +162,7 @@
 			</ul>
 		{/if}
 	</div>
-	<div id="flow-task-lists" bind:this={taskContainer}>
+	<div id="flow-task-lists">
 		<h2>Projects</h2>
 		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
 			<ul>
