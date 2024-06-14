@@ -17,13 +17,13 @@ export async function registerCommands(plugin: FlowPlugin) {
 	plugin.addCommand({
 		id: 'view-personal-sphere',
 		name: 'View Personal Sphere',
-		callback: await plugin.openSphere('personal'),
+		callback: () => plugin.openSphere('personal'),
 	})
 
 	plugin.addCommand({
 		id: 'view-work-sphere',
 		name: 'View Work Sphere',
-		callback: await plugin.openSphere('work'),
+		callback: () => plugin.openSphere('work'),
 	})
 
 	plugin.addCommand({
