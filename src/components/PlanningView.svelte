@@ -88,7 +88,6 @@
 				console.error('Error rendering task list:', error)
 			}
 
-			console.log(task.projectName, previousProjectName)
 			if (task.projectName !== previousProjectName) {
 				insertProjectName(taskDiv, task)
 				previousProjectName = task.projectName
