@@ -46,7 +46,7 @@ export default class FlowPlugin extends Plugin {
 	private registerViews() {
 		this.registerView(
 			PROCESSING_VIEW_TYPE,
-			(leaf) => new ProcessingView(leaf),
+			(leaf) => new ProcessingView(leaf, this),
 		)
 		this.registerView(
 			SPHERE_VIEW_TYPE,

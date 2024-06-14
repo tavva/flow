@@ -34,6 +34,7 @@ export class ProcessingView extends ItemView {
 		this.component = new ProcessingViewComponent({
 			target: this.contentEl,
 			props: {
+				plugin: this.plugin,
 				line: '',
 				onAddToNextActions: () => {},
 				onAddToProjectNextActions: () => {},

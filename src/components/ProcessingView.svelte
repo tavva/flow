@@ -2,6 +2,7 @@
 	import FlowPlugin from 'main'
 	import { MarkdownRenderer, Component } from 'obsidian'
 	import { Stage } from '../state'
+	import { openPlanningView } from '../views/planning'
 
 	export let plugin: FlowPlugin
 
@@ -73,6 +74,10 @@
 		if (inputText.trim() !== '') onAddToNewProject(inputText)
 	}
 
+	async function startPlanning() {
+		await openPlanningView(plugin)
+	}
+
 	function trash() {
 		onTrash()
 	}
@@ -89,6 +94,7 @@
 		<div>
 			<h3>Processing complete</h3>
 			<p>All items have been processed.</p>
+			<button on:click={startPlanning}>Plan your day?</button>
 		</div>
 	{:else}
 		<textarea bind:value={inputText}></textarea>
