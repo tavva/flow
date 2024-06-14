@@ -40,6 +40,7 @@ export class SphereView extends ItemView implements SphereViewState {
 	): Promise<void> {
 		if (state.sphere) {
 			this.sphere = state.sphere
+			this.render()
 		}
 		return super.setState(state, result)
 	}
