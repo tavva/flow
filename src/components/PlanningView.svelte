@@ -180,7 +180,7 @@
 
 <div class="flow-planning-view-container">
 	<div class="flow-planning-view-sphere-list">
-		<span class="flow-planning-view-sphere-header"> Spheres: </span>
+		<span class="flow-planning-view-sphere-header">Spheres:</span>
 		{#each plugin.settings.spheres as sphere}
 			<div class="flow-planning-view-sphere">
 				<button on:click={() => plugin.openSphere(sphere)}
