@@ -66,12 +66,15 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	async onOpen() {
-		this.component = new SphereComponent({
-			target: this.contentEl,
-			props: {
-				plugin: this.plugin,
-				sphere: this.sphere,
-			},
+		this.app.workspace.onLayoutReady(() => {
+			this.component = new SphereComponent({
+				target: this.contentEl,
+				props: {
+					plugin: this.plugin,
+					sphere: this.sphere,
+				},
+			})
+			this.render()
 		})
 	}
 
@@ -105,7 +108,7 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	private async listProjects() {
-		return this.plugin.dv
+		return await this.plugin.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
 				(p: Project) =>
