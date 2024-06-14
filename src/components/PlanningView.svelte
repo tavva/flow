@@ -33,6 +33,12 @@
 		if (taskContainer) {
 			taskContainer.empty()
 
+			if (plannedTasks.length === 0) {
+				const messageEle = document.createElement('p')
+				messageEle.innerText = "You haven't planned any tasks yet"
+				taskContainer.appendChild(messageEle)
+			}
+
 			for (const task of plannedTasks) {
 				await renderTask(task)
 			}
@@ -174,6 +180,15 @@
 </script>
 
 <div class="flow-planning-view-container">
+	<div class="flow-planning-view-sphere-list">
+		{#each plugin.settings.spheres as sphere}
+			<div class="flow-planning-view-sphere">
+				<button on:click={() => plugin.openSphere(sphere)}
+					>{sphere}</button
+				>
+			</div>
+		{/each}
+	</div>
 	<div class="flow-planning-view-actions">
 		<button on:click={handleTogglePlanningMode}>
 			{#if $isPlanningMode}
