@@ -35,7 +35,7 @@
 
 			if (plannedTasks.length === 0) {
 				const messageEle = document.createElement('p')
-				messageEle.innerText = "You haven't planned any tasks yet"
+				messageEle.innerText = 'You have no planned actions'
 				taskContainer.appendChild(messageEle)
 			}
 
