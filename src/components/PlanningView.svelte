@@ -181,6 +181,7 @@
 
 <div class="flow-planning-view-container">
 	<div class="flow-planning-view-sphere-list">
+		<span class="flow-planning-view-sphere-header"> Spheres: </span>
 		{#each plugin.settings.spheres as sphere}
 			<div class="flow-planning-view-sphere">
 				<button on:click={() => plugin.openSphere(sphere)}
@@ -189,6 +190,7 @@
 			</div>
 		{/each}
 	</div>
+	<hr />
 	<div class="flow-planning-view-actions">
 		<button on:click={handleTogglePlanningMode}>
 			{#if $isPlanningMode}
