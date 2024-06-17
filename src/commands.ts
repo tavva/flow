@@ -13,6 +13,7 @@ export async function registerCommands(plugin: FlowPlugin) {
 		callback: () => plugin.stateManager.startProcessing(),
 	})
 
+	// TODO: Don't hardcode spheres
 	plugin.addCommand({
 		id: 'view-personal-sphere',
 		name: 'View Personal Sphere',
