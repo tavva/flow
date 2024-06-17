@@ -49,7 +49,7 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	private checkDependencies(): boolean {
-		const dependencyList = ['tasks']
+		const dependencyList = ['obsidian-tasks-plugin']
 
 		for (const dependency of dependencyList) {
 			// @ts-ignore -- plugins is on the App class, not sure why this
