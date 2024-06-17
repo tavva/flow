@@ -1,4 +1,5 @@
 import { App, TFile, Notice } from 'obsidian'
+
 import {
 	addToNextActions,
 	addToProjectNextActions,
@@ -9,11 +10,12 @@ import {
 	readFileContent,
 } from './utils'
 
+import FlowPlugin from './main'
+
 import { FileSelectorModal } from './modals/fileSelectorModal'
 import { NewProjectModal } from './modals/newProjectModal'
 import { SphereSelectorModal } from './modals/sphereSelectorModal'
 
-import FlowPlugin from './main'
 import { StateManager, Stage, type LineWithFile } from './state'
 
 export class Handlers {

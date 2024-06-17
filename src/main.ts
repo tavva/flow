@@ -1,5 +1,6 @@
 import { Plugin, TFile, Notice } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
+
 import { StateManager } from './state'
 import { type FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
 import { FlowSettingsTab } from './settings/settingsTab'

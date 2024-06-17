@@ -1,4 +1,5 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
+
 import { readFileContent } from './utils'
 import FlowPlugin from './main'
 import { Handlers } from './handlers'

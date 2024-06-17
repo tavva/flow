@@ -1,4 +1,5 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
+
 import FlowPlugin from './main'
 
 // TODO:
