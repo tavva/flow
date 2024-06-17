@@ -111,9 +111,6 @@ export default class FlowPlugin extends Plugin {
 			active: true,
 			state: { plugin: this, sphere: sphere },
 		})
-
-		const view = leaf.view as SphereView
-		await view.render()
 	}
 
 	async loadSettings() {
