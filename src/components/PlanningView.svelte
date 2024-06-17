@@ -30,21 +30,24 @@
 			'.flow-planning-task-container',
 		)
 
-		if (taskContainer) {
-			taskContainer.empty()
-
-			if (plannedTasks.length === 0) {
-				const messageEle = document.createElement('p')
-				messageEle.innerText = 'You have no planned actions'
-				taskContainer.appendChild(messageEle)
-			}
-
-			for (const task of plannedTasks) {
-				await renderTask(task)
-			}
-
-			addCheckboxListeners()
+		if (!taskContainer) {
+			console.error('Task container not found')
+			return
 		}
+
+		taskContainer.empty()
+
+		if (plannedTasks.length === 0) {
+			const messageEle = document.createElement('p')
+			messageEle.innerText = 'You have no planned actions'
+			taskContainer.appendChild(messageEle)
+		}
+
+		for (const task of plannedTasks) {
+			await renderTask(task)
+		}
+
+		addCheckboxListeners()
 	}
 
 	function createRenderTask() {
