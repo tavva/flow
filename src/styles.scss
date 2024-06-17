@@ -64,6 +64,15 @@ button.flow-modal-done {
 			font-size: 80%;
 			color: var(--text-muted);
 		}
+
+		.flow-task-not-found {
+			font-size: 80%;
+
+			.flow-task-title {
+				font-weight: bold;
+				font-style: italic;
+			}
+		}
 	}
 
 	.flow-planning-view-sphere-list {

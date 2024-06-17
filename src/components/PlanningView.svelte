@@ -98,15 +98,16 @@
 				}
 			} else {
 				const div = taskDiv.createEl('div')
-				const p = div.createEl('p')
+				const p = div.createEl('p', { cls: 'flow-task-not-found' })
 				p.createEl('span', {
-					text: 'Task ',
+					text: 'Task "',
 				})
-				p.createEl('i', {
+				p.createEl('span', {
 					text: task.title,
+					cls: 'flow-task-title',
 				})
 				p.createEl('span', {
-					text: ` not found. If you delete, move, or edit a task that
+					text: `" not found. If you delete, move, or edit a task that
 					you've planned, you'll need to re-plan it.`,
 				})
 			}
