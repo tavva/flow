@@ -5,8 +5,6 @@ import FlowPlugin from '../main'
 export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
 	private spheres: string[]
-	// TODO: we only allow one sphere. This is a Set to match the
-	// implementation in the SphereSelectorModal
 	private selectedSpheres: Set<string> = new Set()
 	private onSubmit: (
 		projectName: string,
@@ -61,14 +59,13 @@ export class NewProjectModal extends Modal {
 			button.onClick(() => {
 				warningEl.hide()
 
-				this.selectedSpheres = new Set()
-
-				for (const button of this.sphereButtons) {
+				if (this.selectedSpheres.has(sphere)) {
+					this.selectedSpheres.delete(sphere)
 					button.buttonEl.removeClass('selected')
+				} else {
+					this.selectedSpheres.add(sphere)
+					button.setClass('selected')
 				}
-
-				this.selectedSpheres.add(sphere)
-				button.setClass('selected')
 			})
 
 			this.sphereButtons.push(button)
@@ -102,8 +99,8 @@ export class NewProjectModal extends Modal {
 						warningEl.show()
 						return
 					}
-					if (this.selectedSpheres.size !== 1) {
-						warningEl.setText('Please select one sphere')
+					if (this.selectedSpheres.size === 0) {
+						warningEl.setText('Please select at least one sphere')
 						warningEl.show()
 						return
 					}

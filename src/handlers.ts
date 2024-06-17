@@ -122,22 +122,17 @@ export class Handlers {
 				spheres: Set<string>,
 				priority: number,
 			) => {
-				if (spheres.size !== 1) {
-					new Notice(
-						'Only one sphere can be selected for new project',
-					)
-					return
-				}
-
-				const sphere = spheres.values().next().value
-
 				const projectFile = await this.createNewProjectFile(projectName)
 				let content = await this.app.vault.read(projectFile)
+
+				const sphereText = Array.from(spheres)
+					.map((s) => `project/${s}`)
+					.join(' ')
 
 				content = await this.parseTemplate({
 					content: content,
 					priority: priority,
-					sphere: `project/${sphere}`,
+					sphere: sphereText,
 					description: text,
 				})
 
