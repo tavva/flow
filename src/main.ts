@@ -82,6 +82,11 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	private async setupWatchers() {
+		await this.setupCountWatcher()
+		await this.setupTaskWatcher()
+	}
+
+	private async setupCountWatcher() {
 		const foldersToWatch = [
 			this.settings.inboxFilesFolderPath,
 			this.settings.inboxFolderPath,
@@ -106,6 +111,44 @@ export default class FlowPlugin extends Plugin {
 				)
 			})
 		})
+	}
+
+	private async setupTaskWatcher() {
+		const cache = this.app.metadataCache
+
+		const isFileToWatch = (file: TFile): boolean => {
+			const fileCache = cache.getFileCache(file)
+			if (fileCache !== null) {
+				if (
+					fileCache.frontmatter?.tags?.filter((t: string) =>
+						t.startsWith('project/'),
+					)
+				) {
+					return true
+				}
+			}
+
+			if (file.path === this.settings.nextActionsFilePath) {
+				return true
+			}
+			return false
+		}
+
+		this.registerEvent(
+			// @ts-ignore FIXME: TS doesn't like the event type here
+			this.app.vault.on('modify', async (file: TFile) => {
+				if (isFileToWatch(file)) {
+					const sphereLeaves =
+						this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+					for (const l of sphereLeaves) {
+						const sphereView = l.view as SphereView
+						setTimeout(function () {
+							sphereView.render()
+						}, 1000)
+					}
+				}
+			}),
+		)
 	}
 
 	async onActiveLeafChange(leaf: any) {
