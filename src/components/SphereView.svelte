@@ -135,7 +135,7 @@
 		if (plugin && nonProjectNextActions.length > 0) {
 			tick().then(() => {
 				const container = document.getElementById(
-					'task-list-non-project',
+					`task-list-non-project-${sphere}`,
 				)
 				if (container) {
 					container.empty()
@@ -184,6 +184,8 @@
 	</div>
 	<div>
 		<h2>Non-project next actions</h2>
-		<div id="task-list-non-project">No non-project next actions</div>
+		<div id="task-list-non-project-{sphere}">
+			No non-project next actions found
+		</div>
 	</div>
 </div>
