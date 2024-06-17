@@ -1,4 +1,4 @@
-import { Plugin, TFile } from 'obsidian'
+import { Plugin, TFile, Notice } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 import { StateManager } from './state'
 import { type FlowSettings, DEFAULT_SETTINGS } from './settings/settings'
@@ -21,6 +21,9 @@ export default class FlowPlugin extends Plugin {
 
 	async onload() {
 		this.app.workspace.onLayoutReady(async () => {
+			if (!this.checkDependencies()) {
+				return
+			}
 			await this.loadSettings()
 			this.addSettingTab(new FlowSettingsTab(this))
 
@@ -43,6 +46,23 @@ export default class FlowPlugin extends Plugin {
 
 			this.setupWatchers()
 		})
+	}
+
+	private checkDependencies(): boolean {
+		const dependencyList = ['tasks']
+
+		for (const dependency of dependencyList) {
+			// @ts-ignore -- plugins is on the App class, not sure why this
+			// isn't picked up
+			if (!this.app.plugins.plugins[dependency]) {
+				new Notice(
+					`Flow requires the ${dependency} plugin to be installed and enabled.`,
+				)
+				return false
+			}
+		}
+
+		return true
 	}
 
 	private registerViews() {
@@ -125,5 +145,7 @@ export default class FlowPlugin extends Plugin {
 		await this.saveData(this.settings)
 	}
 
-	onunload() {}
+	onunload() {
+		// Don't do things in here unless we're sure they loaded
+	}
 }
