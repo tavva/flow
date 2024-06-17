@@ -116,10 +116,13 @@
 		}
 	}
 
-	$: {
-		if (plugin && projectsWithNextActions.length > 0) {
+	$: updateProjectTaskLists(projectsWithNextActions)
+	$: updateNonProjectTaskList(nonProjectNextActions)
+
+	function updateProjectTaskLists(projects: Project[]) {
+		if (plugin && projects.length > 0) {
 			tick().then(() => {
-				projectsWithNextActions.forEach((project) => {
+				projects.forEach((project) => {
 					const projectId = `task-list-${generateUniqueProjectId(project.file.path)}`
 					const container = document.getElementById(projectId)
 					if (container) {
@@ -131,15 +134,15 @@
 		}
 	}
 
-	$: {
-		if (plugin && nonProjectNextActions.length > 0) {
+	function updateNonProjectTaskList(tasks: DataviewApi.TaskResult) {
+		if (plugin && tasks.length > 0) {
 			tick().then(() => {
 				const container = document.getElementById(
 					`task-list-non-project-${sphere}`,
 				)
 				if (container) {
 					container.empty()
-					renderTaskList(container, nonProjectNextActions)
+					renderTaskList(container, tasks)
 				}
 			})
 		}
