@@ -82,13 +82,33 @@
 					)
 			}
 
-			try {
-				const component = new Component()
-				await plugin.dv.taskList(taskList, false, taskDiv, component)
-				component.load()
-				addRemoveButton(taskDiv)
-			} catch (error) {
-				console.error('Error rendering task list:', error)
+			if (taskList.length > 0) {
+				try {
+					const component = new Component()
+					await plugin.dv.taskList(
+						taskList,
+						false,
+						taskDiv,
+						component,
+					)
+					component.load()
+					addRemoveButton(taskDiv)
+				} catch (error) {
+					console.error('Error rendering task list:', error)
+				}
+			} else {
+				const div = taskDiv.createEl('div')
+				const p = div.createEl('p')
+				p.createEl('span', {
+					text: 'Task ',
+				})
+				p.createEl('i', {
+					text: task.title,
+				})
+				p.createEl('span', {
+					text: ` not found. If you delete, move, or edit a task that
+					you've planned, you'll need to re-plan it.`,
+				})
 			}
 
 			if (task.projectName !== previousProjectName) {
