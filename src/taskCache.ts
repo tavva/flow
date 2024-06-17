@@ -25,8 +25,7 @@ export class TaskCache {
 		const newCache = await this.getTasks()
 		if (newCache.length < this.tasks.length) {
 			new Notice(
-				`A planned task has been edited or removed. Note that it will
-				no longer show up in your Planned Tasks list.`,
+				'A planned task has been edited or removed. Note that it will no longer show up in your Planned Tasks list.',
 			)
 			this.tasks = newCache
 		}
