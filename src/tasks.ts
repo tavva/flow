@@ -2,6 +2,8 @@ import { type Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from './main'
 
+import { TaskCache } from './taskCache'
+
 export enum TaskType {
 	PROJECT = 'project',
 	NON_PROJECT = 'non-project',
@@ -18,6 +20,7 @@ export interface Task {
 export class Tasks {
 	plugin: FlowPlugin
 	plannedTasks: Writable<Task[]> = writable([])
+	taskCache!: TaskCache
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
@@ -29,6 +32,7 @@ export class Tasks {
 		if (initialTasks) {
 			this.plannedTasks.set(initialTasks)
 		}
+		this.taskCache = new TaskCache(this.plugin)
 	}
 
 	async addTask(task: Task) {
