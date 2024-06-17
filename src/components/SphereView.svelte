@@ -123,7 +123,7 @@
 		if (plugin && projects.length > 0) {
 			tick().then(() => {
 				projects.forEach((project) => {
-					const projectId = `task-list-${generateUniqueProjectId(project.file.path)}`
+					const projectId = `task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`
 					const container = document.getElementById(projectId)
 					if (container) {
 						container.empty()
@@ -176,7 +176,7 @@
 							>{project.file.name}</a
 						>
 						<div
-							id={`task-list-${generateUniqueProjectId(project.file.path)}`}
+							id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
 						></div>
 					</li>
 				{/each}
