@@ -12,11 +12,6 @@ export async function registerCommands(plugin: FlowPlugin) {
 		name: 'Process Inboxes',
 		callback: () => plugin.stateManager.startProcessing(),
 	})
-	plugin.addCommand({
-		id: 'process-inboxes',
-		name: 'Process Inboxes',
-		callback: () => plugin.stateManager.startProcessing(),
-	})
 
 	plugin.addCommand({
 		id: 'view-personal-sphere',
