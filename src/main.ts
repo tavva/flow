@@ -51,7 +51,11 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	private checkDependencies(): boolean {
-		const dependencyList = ['obsidian-tasks-plugin', 'dataview']
+		const dependencyList = [
+			'obsidian-tasks-plugin',
+			'dataview',
+			'templater-obsidian',
+		]
 
 		for (const dependency of dependencyList) {
 			if (!getPlugin(dependency, this)) {
