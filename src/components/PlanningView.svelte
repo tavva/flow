@@ -63,6 +63,7 @@
 			}
 
 			const taskDiv = document.createElement('div')
+			taskDiv.classList.add('flow-planning-task')
 			taskDiv.id = `task-${task.id}`
 			taskContainer.appendChild(taskDiv)
 
@@ -92,7 +93,6 @@
 						component,
 					)
 					component.load()
-					addRemoveButton(taskDiv)
 				} catch (error) {
 					console.error('Error rendering task list:', error)
 				}
@@ -112,6 +112,8 @@
 				})
 			}
 
+			addRemoveButton(taskDiv)
+
 			if (task.projectName !== previousProjectName) {
 				insertProjectName(taskDiv, task)
 				previousProjectName = task.projectName
@@ -126,10 +128,11 @@
 		if (task.projectName !== null) {
 			headerText = task.projectName
 		}
-		const projectNameEle = document.createElement('span')
+		const projectNameEle = taskDiv.createEl('span', {
+			text: headerText,
+		})
 		projectNameEle.classList.add('flow-project-name')
-		projectNameEle.innerText = headerText
-		taskDiv.prepend(projectNameEle)
+		taskDiv.parentNode?.insertBefore(projectNameEle, taskDiv)
 	}
 
 	function addCheckboxListeners() {
@@ -157,11 +160,6 @@
 	}
 
 	function addRemoveButton(taskDiv: HTMLDivElement) {
-		const liElement = taskDiv.querySelector('li.task-list-item')
-		if (!liElement) {
-			console.error('Task list item not found')
-			return
-		}
 		const removeButton = document.createElement('button')
 
 		removeButton.innerText = '❌'
@@ -172,7 +170,7 @@
 			removeTask(taskDiv)
 		})
 
-		liElement.appendChild(removeButton)
+		taskDiv.appendChild(removeButton)
 	}
 
 	function removeTask(taskDiv: HTMLDivElement) {

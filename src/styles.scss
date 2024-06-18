@@ -48,19 +48,18 @@ button.flow-modal-done {
 	.flow-planning-task-container {
 		font-size: 87%;
 
-		li {
-			display: flex;
-		}
-
 		button {
 			margin-left: 10px;
+			flex: none;
 		}
 
 		ul.contains-task-list {
 			margin-top: 0;
+			flex-grow: 1;
 		}
 
 		.flow-project-name {
+			flex: none;
 			font-size: 80%;
 			color: var(--text-muted);
 		}
@@ -72,6 +71,12 @@ button.flow-modal-done {
 				font-weight: bold;
 				font-style: italic;
 			}
+		}
+
+		.flow-planning-task {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
 		}
 	}
 
@@ -92,7 +97,6 @@ button.flow-modal-done {
 			height: 15px;
 			margin: 0 5px 5px 0;
 		}
-
 	}
 }
 
