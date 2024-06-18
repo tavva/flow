@@ -104,13 +104,13 @@ Each day you plan afresh, reviewing your next actions and choosing what you want
 
 TODO: Write this
 
--   Run the command: Process Inboxes
+-   Run the command: Start processing
 
 #### Planning your day
 
 TODO: Write this
 
--   Run the command: Process Inboxesbsidian-api
+-   Run the command: Open planning view
 
 #### Notes
 
