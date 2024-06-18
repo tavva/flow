@@ -1,7 +1,9 @@
-import { App, PluginSettingTab, Setting } from 'obsidian'
+import { App, PluginSettingTab, Setting, debounce } from 'obsidian'
 import FlowPlugin from '../main'
 import { FolderSuggest } from './suggesters/FolderSuggester'
 import { FileSuggest } from './suggesters/FileSuggester'
+
+import { resetSphereCommands } from '../commands'
 
 export class FlowSettingsTab extends PluginSettingTab {
 	plugin: FlowPlugin
@@ -39,19 +41,23 @@ export class FlowSettingsTab extends PluginSettingTab {
 				text
 					.setPlaceholder('Enter spheres')
 					.setValue(this.plugin.settings.spheres.join(','))
-					.onChange(async (value) => {
-						if (!value.trim()) {
-							text.setValue(
-								this.plugin.settings.spheres.join(','),
-							)
-							return
-						}
+					.onChange(
+						debounce(async (value) => {
+							if (!value.trim()) {
+								text.setValue(
+									this.plugin.settings.spheres.join(','),
+								)
+								return
+							}
 
-						this.plugin.settings.spheres = value
-							.split(',')
-							.map((sphere) => sphere.trim())
-						await this.plugin.saveSettings()
-					}),
+							this.plugin.settings.spheres = value
+								.split(',')
+								.map((sphere) => sphere.trim())
+
+							await this.plugin.saveSettings()
+							await resetSphereCommands(this.plugin)
+						}, 5000),
+					),
 			)
 
 		new Setting(containerEl).setName('Inbox folders').setHeading()

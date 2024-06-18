@@ -24,17 +24,23 @@ export async function registerCommands(plugin: FlowPlugin) {
 	resetSphereCommands(plugin)
 }
 
-export async function resetSphereCommands(plugin: FlowPlugin) {
+function getSphereCommands(plugin: FlowPlugin): string[] {
 	const commands: { [key: string]: any } = Object.keys(
 		// @ts-ignore
 		plugin.app.commands['commands'],
 	)
 
-	const sphereCommands: string[] = commands.filter(
+	return commands.filter(
 		(c: string) => c.startsWith('flow:view-') && c.endsWith('-sphere'),
 	)
+}
+
+export async function resetSphereCommands(plugin: FlowPlugin) {
+	const sphereCommands = getSphereCommands(plugin)
+
 	for (const command of sphereCommands) {
-		delete commands[command]
+		// @ts-ignore
+		delete plugin.app.commands['commands'][command]
 	}
 
 	for (let sphere of plugin.settings.spheres) {
