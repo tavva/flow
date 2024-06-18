@@ -1,96 +1,113 @@
-# Obsidian Sample Plugin
+# Flow
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+## What is Flow?
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+Flow is a life planning system using the concepts and processes from David Allen's Getting Things Done (GTD).
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+It's based on the principle that your mind is for having ideas, not holding them.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+We waste time keeping track of the things we have to do in life. From the basics such as 'buy more cat food' to the multi-month project at work – all of these responsibilities we have to store in our heads use up space and cycles that we should use for the things we want to do in that moment.
 
-## First time developing plugins?
+Flow will help you put every one of these projects, tasks, and ideas into Obsidian – in a format that works for you – so you can have a mind like water and focus fully on the task in hand.
 
-Quick starting guide for new plugin devs:
+Getting into the flow state when working on something is a wonderful experience. All too often we're distracted by something popping up in our head that we may have forgotten about. Flow helps you get those things out of your head and into the Flow system immediately, allowing you to maintain your focus – your Flow state.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+> “_Paper is to write things down that we need to remember. Our brains are used to think_.” ― Albert Einstein.
 
-## Releasing new releases
+## How does it work?
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+First, let's explain a core principle of Flow.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+> Flow should not dictate how you store your information in Obsidian.
 
-## Adding your plugin to the community plugin list
+Yes, it's an Obsidian plugin. We're all-in on Obsidian, and are proud to use it as the foundation for Flow. So you have to use Obsidian to get the most out of it.
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+People use Obsidian in different ways, and we don't want to dictate how you should use it. Flow is designed to work with how you organise your vault. We are opinionated about a few things but we try not to impact the incredible flexibility that Obsidian offers.
 
-## How to use
+### Why Flow helps keep your mind like water
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+Flow helps you take of the thoughts and ideas that pop up in your head at any moment, as well as the requests and actions that appear in our email, in our letterbox, on our phones, through chatting to friends and colleagues – any time we have something we need to think about or do later it can go into Flow. This prevents us from storing these things in our head allowing us to think freely about what we're doing at any one time.
 
-## Manually installing the plugin
+## Flow concepts
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+Let's go through the concepts of Flow. If you're familiar with Getting Things Done, then you'll recognise a lot of this. That's by design – we're huge fans of the GTD methodology.
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
+-   Inboxes and Drops
+-   Sources
+-   Spheres
+-   Projects and Actions
+-   People
+-   Processing and Planning
 
-## Funding URL
+### Inboxes and Drops
 
-You can include funding URLs where people who use your plugin can financially support it.
+All the 'stuff' that comes to us we capture in an 'inbox'. We call each bit of stuff, e.g. each individual thought or request, a 'drop'.
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+In Flow we have two inboxes. The first is a folder containing files, each file containing a single drop. The second is a folder containing files, each file containing lines which represent a single drop.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
+This is the entry point for all of our 'stuff'. We can put anything in here. It doesn't have to be detailed or too considered. Later on we process these drops so they never go missing or get forgotten.
 
-If you have multiple URLs, you can also do:
+### Sources
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+Getting drops into Flow is as simple as writing a note or line in one of your inboxes.
 
-## API Documentation
+This works, but can take some time to open Obsidian, open the note and then write out the drop.
 
-See https://github.com/obsidianmd/obsidian-api
+Sources are a key part of getting drops into Flow with minimal friction. Your goal is to be distracted from your thinking as little as possible – the more work you have to do to record your drop in your inbox, the more likely you are to drop what's in your head.
+
+Sources aren't included in Flow by default as by their nature they sit outside of Obsidian and the plugin. However, we provide some ideas and instructions to create sources that fit into your life and workflows. We'd love to hear how you've created sources so we can share them with other Flow users.
+
+### Projects and Actions
+
+You may already have a to-do list, or you may keep everything in your head. For a lot of people, it's a mixture of both! Flow introduces the concepts of Projects, People, and Actions to help you keep things organised in a way that captures everything and doesn't overwhelm you.
+
+A project is anything that consists of more than one action. It's common to put actions like '- buy a new kettle' on your to-do list. However, you can't look at that and immediately buy a kettle. You may want to first research the latest in kettle technology, or speak to your partner about what was wrong with the old kettle before making a decision on what you need.
+
+So buying a kettle becomes a Project in Flow, and the Action is 'speak to Kai to find out what type of kettle we want'.
+
+This prevents us from looking at our to-do list and seeing big projects that we don't know how to start, and therefore procrastinate over... instead we always consider what the next action is (or next actions are!) to move the project forward. When it comes to actually doing things it's much easier for us to get going.
+
+This is a powerful feature of Flow that we took from Getting Things Done and it makes a huge difference to how you view what's on your plate.
+
+### People
+
+People are treated in the same way as Projects in Flow. You can have 'next actions' for a person which we call 'Discuss next'. You can send Drops to People in the same way you do for a Project.
+
+### Spheres
+
+Spheres allow you to separate different parts of your life. For example, you can have a work sphere and a personal sphere. Spheres help separate projects and tasks when you are in a certain mode.
+
+Note that having multiple spheres are optional, and a lot of processes don't care for spheres except when categorising a project or an action. You need at least one sphere.
+
+### Processing + Planning (needs wordsmithing)
+
+Flow shines in the processes it enables to capture your thoughts and ideas into one place, and then how you decide what it is you want to do at any given point in time.
+
+#### Processing your inboxes
+
+Processing your inbox is made simple with Flow. It helps you reframe your Drops into clear next actions instead of nebulous, unapproachable items.
+
+It takes a bit of thought at this point, but the beauty of creating clear next actions means you're able to move these projects forward.
+
+#### Planning your day
+
+Each day you plan afresh, reviewing your next actions and choosing what you want to do that day. This does two things:
+
+-   It helps avoids busy work
+    -   It forces you to choose the things that you need to move forward. As they're next actions, they're all achievable, and you don't skip the important big projects because it's easier to get satisfaction
+-   It prevents items from sitting on a to-do list forever, the rollover to-do list containing things you know you'll never start working on
+    -   The paradox of them becoming invisible to you, but causing you pain every time you skip over them
+
+## How to use Flow
+
+### Processing inboxes
+
+TODO: Write this
+
+-   Run the command: Process Inboxes
+
+#### Planning your day
+
+TODO: Write this
+
+-   Run the command: Process Inboxesbsidian-api
