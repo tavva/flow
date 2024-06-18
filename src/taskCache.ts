@@ -11,7 +11,7 @@ export class TaskCache {
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
-		this.cacheTasks()
+		this.cachePlannedTasks()
 
 		this.plugin.registerEvent(
 			// @ts-ignore
@@ -22,7 +22,7 @@ export class TaskCache {
 	}
 
 	private async checkCache() {
-		const newCache = await this.getTasks()
+		const newCache = await this.getPlannedTasks()
 		if (newCache.length < this.tasks.length) {
 			new Notice(
 				'A planned task has been edited or removed. Note that it will no longer show up in your Planned Tasks list.',
@@ -31,11 +31,16 @@ export class TaskCache {
 		}
 	}
 
-	private async getTasks() {
-		const plannedTasks = get(this.plugin.tasks.plannedTasks)
+	private getCachedTasks() {
 		const cachedTasks =
 			// @ts-ignore
 			this.plugin.app.plugins.plugins['obsidian-tasks-plugin'].cache.tasks
+		return cachedTasks
+	}
+
+	private async getPlannedTasks() {
+		const plannedTasks = get(this.plugin.tasks.plannedTasks)
+		const cachedTasks = this.getCachedTasks()
 
 		return plannedTasks.filter((plannedTask: Task) =>
 			cachedTasks.some(
@@ -46,7 +51,7 @@ export class TaskCache {
 		)
 	}
 
-	private async cacheTasks() {
-		this.tasks = await this.getTasks()
+	private async cachePlannedTasks() {
+		this.tasks = await this.getPlannedTasks()
 	}
 }
