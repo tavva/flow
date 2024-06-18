@@ -1,4 +1,4 @@
-import { App, TFile, Notice } from 'obsidian'
+import { App, TFile } from 'obsidian'
 
 import {
 	addToNextActions,
@@ -8,6 +8,7 @@ import {
 	addToPersonReference,
 	getFilesWithTagPrefix,
 	readFileContent,
+	getPlugin,
 } from './utils'
 
 import FlowPlugin from './main'
@@ -28,8 +29,7 @@ export class Handlers {
 		this.plugin = plugin
 		this.app = plugin.app
 		this.state = stateManager
-		// @ts-ignore
-		this.tp = plugin.app.plugins.plugins['templater-obsidian']
+		this.tp = getPlugin('templater-obsidian', plugin)
 	}
 
 	handleAddToNextActions = async (text: string) => {

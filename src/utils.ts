@@ -144,8 +144,7 @@ export function getFilesWithTagPrefix(
 	return files.filter((file) => {
 		if (
 			file.path.startsWith(
-				// @ts-ignore
-				plugin.app.plugins.plugins['templater-obsidian'].settings
+				getPlugin('templater-obsidian', plugin).settings
 					.template_folder,
 			)
 		) {
@@ -219,4 +218,9 @@ export async function getProjectFilePath(
 	} else {
 		return ''
 	}
+}
+
+export function getPlugin(pluginName: string, plugin: FlowPlugin) {
+	// @ts-ignore
+	return plugin.app.plugins.plugins[pluginName]
 }

@@ -4,6 +4,7 @@ import { get } from 'svelte/store'
 
 import FlowPlugin from './main'
 import { type Task } from './tasks'
+import { getPlugin } from 'utils'
 
 export class TaskCache {
 	plugin: FlowPlugin
@@ -14,10 +15,10 @@ export class TaskCache {
 		this.cachePlannedTasks()
 
 		this.plugin.registerEvent(
-			// @ts-ignore
-			this.plugin.app.plugins.plugins[
-				'obsidian-tasks-plugin'
-			].cache.events.onCacheUpdate(this.checkCache.bind(this)),
+			getPlugin(
+				'obsidian-tasks-plugin',
+				plugin,
+			).cache.events.onCacheUpdate(this.checkCache.bind(this)),
 		)
 	}
 
@@ -32,9 +33,8 @@ export class TaskCache {
 	}
 
 	private getCachedTasks() {
-		const cachedTasks =
-			// @ts-ignore
-			this.plugin.app.plugins.plugins['obsidian-tasks-plugin'].cache.tasks
+		const cachedTasks = getPlugin('obsidian-tasks-plugin', this.plugin)
+			.cache.tasks
 		return cachedTasks
 	}
 

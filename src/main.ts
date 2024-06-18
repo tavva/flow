@@ -11,6 +11,7 @@ import { registerCommands } from './commands'
 import { Store } from './store'
 import { Metrics } from './metrics'
 import { Tasks } from './tasks'
+import { getPlugin } from 'utils'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
@@ -53,9 +54,7 @@ export default class FlowPlugin extends Plugin {
 		const dependencyList = ['obsidian-tasks-plugin', 'dataview']
 
 		for (const dependency of dependencyList) {
-			// @ts-ignore -- plugins is on the App class, not sure why this
-			// isn't picked up
-			if (!this.app.plugins.plugins[dependency]) {
+			if (!getPlugin(dependency, this)) {
 				new Notice(
 					`Flow requires the ${dependency} plugin to be installed and enabled.`,
 				)
