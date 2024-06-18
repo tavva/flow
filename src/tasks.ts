@@ -69,6 +69,7 @@ export class Tasks {
 		this.plannedTasks.set([])
 	}
 }
+
 export function normaliseTaskText(input: string): string {
 	const regex =
 		/(?:[\p{Emoji_Presentation}\uFE0F\u20E3]\s*)?\d{4}-\d{2}-\d{2}(?:\s*(?:[\p{Emoji_Presentation}\uFE0F\u20E3]\s*)?\d{4}-\d{2}-\d{2})*$/u
