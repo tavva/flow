@@ -111,3 +111,7 @@ TODO: Write this
 TODO: Write this
 
 -   Run the command: Process Inboxesbsidian-api
+
+#### Notes
+
+-   If you rename a task that you've already added to your planned list, you'll see a warning. Currently there's no easy way to link tasks so we rely on the task text to match the task in the planned list to do this. If you rename a task, this link will be broken. That's okay, but it won't show if you refresh the planned list, and you won't be able to mark it as done from the planned list.
