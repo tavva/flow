@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting, debounce } from 'obsidian'
+import { PluginSettingTab, Setting, debounce } from 'obsidian'
 import FlowPlugin from '../main'
 import { FolderSuggest } from './suggesters/FolderSuggester'
 import { FileSuggest } from './suggesters/FileSuggester'
