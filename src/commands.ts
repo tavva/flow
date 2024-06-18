@@ -8,14 +8,14 @@ export async function registerCommands(plugin: FlowPlugin) {
 	// function in its own file
 
 	plugin.addCommand({
-		id: 'process-inboxes',
-		name: 'Process Inboxes',
+		id: 'start-processing',
+		name: 'Start processing',
 		callback: () => plugin.stateManager.startProcessing(),
 	})
 
 	plugin.addCommand({
-		id: 'show-planned-actions',
-		name: 'Show planned actions',
+		id: 'open-planning-view',
+		name: 'Open planning view',
 		callback: async () => {
 			openPlanningView(plugin)
 		},
