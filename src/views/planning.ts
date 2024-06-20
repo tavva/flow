@@ -1,8 +1,8 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 
-import FlowPlugin from '../main'
+import FlowPlugin from 'main'
 
-import PlanningViewComponent from '../components/PlanningView.svelte'
+import PlanningViewComponent from 'components/PlanningView.svelte'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 

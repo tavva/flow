@@ -2,8 +2,8 @@ import { Notice } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 import { get } from 'svelte/store'
 
-import FlowPlugin from './main'
-import { type Task } from './tasks'
+import FlowPlugin from 'main'
+import { type Task } from 'tasks'
 import { getPlugin } from 'utils'
 
 export class TaskCache {

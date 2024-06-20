@@ -9,15 +9,15 @@ import {
 	getFilesWithTagPrefix,
 	readFileContent,
 	getPlugin,
-} from './utils'
+} from 'utils'
 
-import FlowPlugin from './main'
+import FlowPlugin from 'main'
 
-import { FileSelectorModal } from './modals/fileSelectorModal'
-import { NewProjectModal } from './modals/newProjectModal'
-import { SphereSelectorModal } from './modals/sphereSelectorModal'
+import { FileSelectorModal } from 'modals/fileSelectorModal'
+import { NewProjectModal } from 'modals/newProjectModal'
+import { SphereSelectorModal } from 'modals/sphereSelectorModal'
 
-import { StateManager, Stage, type LineWithFile } from './state'
+import { StateManager, Stage, type LineWithFile } from 'state'
 
 export class Handlers {
 	private app: App

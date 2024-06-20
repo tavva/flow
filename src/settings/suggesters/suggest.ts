@@ -1,8 +1,9 @@
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
 
-import FlowPlugin from '../../main'
 import { type ISuggestOwner, Scope } from 'obsidian'
 import { createPopper, type Instance as PopperInstance } from '@popperjs/core'
+
+import FlowPlugin from 'main'
 
 const wrapAround = (value: number, size: number): number => {
 	return ((value % size) + size) % size

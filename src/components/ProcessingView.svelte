@@ -1,8 +1,9 @@
 <script lang="ts">
-	import FlowPlugin from 'main'
 	import { MarkdownRenderer, Component } from 'obsidian'
-	import { Stage } from '../state'
-	import { openPlanningView } from '../views/planning'
+
+	import FlowPlugin from 'main'
+	import { Stage } from 'state'
+	import { openPlanningView } from 'views/planning'
 
 	export let plugin: FlowPlugin
 

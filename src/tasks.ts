@@ -1,8 +1,8 @@
 import { type Writable, writable, get } from 'svelte/store'
 
-import FlowPlugin from './main'
+import FlowPlugin from 'main'
 
-import { TaskCache } from './taskCache'
+import { TaskCache } from 'taskCache'
 
 export enum TaskType {
 	PROJECT = 'project',
@@ -62,6 +62,7 @@ export class Tasks {
 		})
 
 		this.plannedTasks.set(updatedTasks)
+		console.log('removed a task', this.plannedTasks)
 	}
 
 	async clearTasks() {

@@ -1,6 +1,6 @@
 import FlowPlugin from 'main'
 
-import { openPlanningView } from './views/planning'
+import { openPlanningView } from 'views/planning'
 
 export async function registerCommands(plugin: FlowPlugin) {
 	// FIXME: Be consistent in how we extract these, we have registerViews and

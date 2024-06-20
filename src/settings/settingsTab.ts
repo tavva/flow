@@ -1,7 +1,7 @@
 import { PluginSettingTab, Setting, debounce } from 'obsidian'
-import FlowPlugin from '../main'
-import { FolderSuggest } from './suggesters/FolderSuggester'
-import { FileSuggest } from './suggesters/FileSuggester'
+import FlowPlugin from 'main'
+import { FolderSuggest } from 'settings/suggesters/FolderSuggester'
+import { FileSuggest } from 'settings/suggesters/FileSuggester'
 
 import { resetSphereCommands } from '../commands'
 

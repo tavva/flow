@@ -3,10 +3,10 @@
 	import type { STask } from 'obsidian-dataview'
 	import { Component, WorkspaceLeaf } from 'obsidian'
 
-	import FlowPlugin from '../main'
+	import FlowPlugin from 'main'
 	import { isPlanningMode, togglePlanningMode } from 'planning'
-	import { TaskType, type Task, normaliseTaskText } from '../tasks'
-	import { SPHERE_VIEW_TYPE } from '../views/sphere'
+	import { TaskType, type Task, normaliseTaskText } from 'tasks'
+	import { SPHERE_VIEW_TYPE } from 'views/sphere'
 
 	export let plugin: FlowPlugin
 
