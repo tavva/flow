@@ -12,6 +12,7 @@ import { Store } from 'store'
 import { Metrics } from 'metrics'
 import { Tasks } from 'tasks'
 import { getPlugin } from 'utils'
+import { createEditorMenu } from 'editorMenu'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
@@ -45,6 +46,10 @@ export default class FlowPlugin extends Plugin {
 					this.onActiveLeafChange.bind(this),
 				),
 			)
+
+			this.app.workspace.on('editor-menu', (menu, editor) => {
+				createEditorMenu(menu, editor, this)
+			})
 
 			this.setupWatchers()
 		})
