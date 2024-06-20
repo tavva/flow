@@ -123,6 +123,8 @@ export class SphereView extends ItemView implements SphereViewState {
 					'&file=' +
 					encodeURIComponent(p.file.path),
 			}))
+			// This sorts by priority, then by file name
+			.sort((p: Project) => p.file.name, 'asc')
 			.sort((p: Project) => p.priority, 'asc')
 	}
 }
