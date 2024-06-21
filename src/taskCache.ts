@@ -46,8 +46,8 @@ export class TaskCache {
 		return plannedTasks.filter((task: Task) =>
 			cachedTasks.some(
 				(t: STask) =>
-					task.projectPath == t.taskLocation.path &&
-					task.title == t.description,
+					t.taskLocation.path == task.projectPath &&
+					t.description == task.title,
 			),
 		)
 	}
