@@ -42,11 +42,11 @@ export class TaskCache {
 		const plannedTasks = get(this.plugin.tasks.plannedTasks)
 		const cachedTasks = this.getCachedTasks()
 
-		return plannedTasks.filter((plannedTask: Task) =>
+		return plannedTasks.filter((task: Task) =>
 			cachedTasks.some(
-				(task: STask) =>
-					plannedTask.projectPath == task.taskLocation.path &&
-					plannedTask.title == task.description,
+				(t: STask) =>
+					task.projectPath == t.taskLocation.path &&
+					task.title == t.description,
 			),
 		)
 	}
