@@ -100,23 +100,33 @@
 	{:else}
 		<textarea bind:value={inputText}></textarea>
 		<div class="flow-processing-actions">
-			<button on:click={addToNextActions}>Add to Next Actions</button>
-			<button on:click={addToProjectNextActions}
-				>Add to Project (as action)</button
-			>
-			<button on:click={addToProjectReference}
-				>Add to Project (as reference)</button
-			>
-			<button on:click={addToNewProject}
-				>Add to New Project (as action)</button
-			>
-			<button on:click={addToPersonDiscussNext}
-				>Add to Person (as action)</button
-			>
-			<button on:click={addToPersonReference}
-				>Add to Person (as reference)</button
-			>
-			<button on:click={trash}>Trash</button>
+			<div>
+				<button on:click={addToNextActions}>Add as a next action</button
+				>
+			</div>
+			<div>
+				<span>Project:</span>
+				<button on:click={addToNewProject}
+					>Create new and add next action</button
+				>
+				<button on:click={addToProjectNextActions}
+					>Add as next action</button
+				>
+				<button on:click={addToProjectReference}
+					>Add as reference</button
+				>
+			</div>
+			<div>
+				<span>Person:</span>
+				<button on:click={addToPersonDiscussNext}
+					>Add as next action</button
+				>
+				<button on:click={addToPersonReference}>Add as reference</button
+				>
+			</div>
+			<div>
+				<button on:click={trash}>Trash</button>
+			</div>
 		</div>
 		<div>
 			<h3>Currently processing:</h3>
