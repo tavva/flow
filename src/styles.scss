@@ -46,7 +46,12 @@ button.flow-modal-done {
 	.flow-planning-view-actions {
 		width: 100%;
 		text-align: center;
-		margin-bottom: 10px;
+		margin-top: 10px;
+		margin-bottom: 30px;
+
+		button {
+			margin-top: 10px;
+		}
 	}
 
 	.flow-planning-task-container {
