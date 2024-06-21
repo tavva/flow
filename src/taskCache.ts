@@ -52,6 +52,16 @@ export class TaskCache {
 		)
 	}
 
+	async isTaskCompleted(task: Task) {
+		const cachedTasks = this.getCachedTasks()
+		return cachedTasks.some(
+			(t: STask) =>
+				t.taskLocation.path == task.projectPath &&
+				t.description == task.title &&
+				t.isDone,
+		)
+	}
+
 	private async cachePlannedTasks() {
 		this.tasks = await this.getPlannedTasks()
 	}

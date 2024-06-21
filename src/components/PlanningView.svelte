@@ -198,6 +198,11 @@
 			plugin.tasks.clearTasks()
 		}
 	}
+	async function onClearCompletedTasks() {
+		if (confirm('Are you sure you want to clear completed tasks?')) {
+			plugin.tasks.clearCompletedTasks()
+		}
+	}
 </script>
 
 <div class="flow-planning-view-container">
@@ -228,6 +233,9 @@
 	<div class="flow-planning-view-actions">
 		{#if plannedTasks.length > 0}
 			<button on:click={onClearTasks}>Clear all planned actions</button>
+			<button on:click={onClearCompletedTasks}
+				>Clear completed actions</button
+			>
 		{/if}
 	</div>
 </div>

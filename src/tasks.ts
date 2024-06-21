@@ -69,6 +69,14 @@ export class Tasks {
 		await this.plugin.store.delete('plannedTasks')
 		this.plannedTasks.set([])
 	}
+
+	async clearCompletedTasks() {
+		for (const task of get(this.plannedTasks)) {
+			if (await this.taskCache.isTaskCompleted(task)) {
+				await this.removeTask(task)
+			}
+		}
+	}
 }
 
 export function normaliseTaskText(input: string): string {
