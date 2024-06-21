@@ -18,6 +18,7 @@ export class TaskCache {
 			getPlugin(
 				'obsidian-tasks-plugin',
 				plugin,
+				// @ts-ignore
 			).cache.events.onCacheUpdate(this.checkCache.bind(this)),
 		)
 	}
@@ -33,8 +34,8 @@ export class TaskCache {
 	}
 
 	private getCachedTasks() {
-		const cachedTasks = getPlugin('obsidian-tasks-plugin', this.plugin)
-			.cache.tasks
+		const cachedTasks = // @ts-ignore
+			getPlugin('obsidian-tasks-plugin', this.plugin).cache.tasks
 		return cachedTasks
 	}
 
