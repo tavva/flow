@@ -186,15 +186,18 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	async loadSettings() {
+		const loadedData = await this.loadData()
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData(),
+			loadedData.settings || {},
 		)
 	}
 
 	async saveSettings() {
-		await this.saveData(this.settings)
+		const currentData = await this.loadData()
+		currentData.settings = this.settings
+		await this.saveData(currentData)
 	}
 
 	onunload() {
