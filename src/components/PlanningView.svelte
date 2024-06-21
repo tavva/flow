@@ -215,10 +215,10 @@
 	<div class="flow-planning-view-actions">
 		<button on:click={handleTogglePlanningMode}>
 			{#if $isPlanningMode}
-				Exit Planning Mode
+				Exit planning mode
 			{/if}
 			{#if !$isPlanningMode}
-				Enter Planning Mode
+				Enter planning mode
 			{/if}
 		</button>
 	</div>
@@ -227,7 +227,7 @@
 
 	<div class="flow-planning-view-actions">
 		{#if plannedTasks.length > 0}
-			<button on:click={onClearTasks}>Clear tasks</button>
+			<button on:click={onClearTasks}>Clear all planned actions</button>
 		{/if}
 	</div>
 </div>
