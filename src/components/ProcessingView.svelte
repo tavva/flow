@@ -138,7 +138,7 @@
 				</div>
 			</div>
 			<div class="flow-action-group">
-				<span class="flow-action-group-title">Other actions</span>
+				<span class="flow-action-group-title">Other</span>
 				<div class="flow-button-container">
 					<button class="flow-person" on:click={addToNewProject}
 						><span class="flow-icon flow-icon-person"></span>
