@@ -142,7 +142,7 @@
 				<div class="flow-button-container">
 					<button class="flow-person" on:click={addToNewProject}
 						><span class="flow-icon flow-icon-person"></span>
-						New project and add action</button
+						New project</button
 					>
 					<button class="flow-trash" on:click={trash}
 						><span class="flow-icon flow-icon-trash"
