@@ -100,33 +100,59 @@
 	{:else}
 		<textarea bind:value={inputText}></textarea>
 		<div class="flow-processing-actions">
-			<div>
-				<button on:click={addToNextActions}>Add as a next action</button
-				>
+			<div class="flow-action-group">
+				<span class="flow-action-group-title">Next action</span>
+				<div class="flow-button-container">
+					<button
+						class="flow-next-action-general"
+						on:click={addToNextActions}
+						><span class="flow-icon flow-icon-next-action-general"
+						></span>General</button
+					>
+					<button
+						class="flow-project"
+						on:click={addToProjectNextActions}
+						><span class="flow-icon flow-icon-project"
+						></span>Project</button
+					>
+					<button
+						class="flow-person"
+						on:click={addToPersonDiscussNext}
+						><span class="flow-icon flow-icon-person"></span>Person
+					</button>
+				</div>
 			</div>
-			<div>
-				<span>Project:</span>
-				<button on:click={addToNewProject}
-					>Create new and add next action</button
-				>
-				<button on:click={addToProjectNextActions}
-					>Add as next action</button
-				>
-				<button on:click={addToProjectReference}
-					>Add as reference</button
-				>
+			<div class="flow-action-group">
+				<span class="flow-action-group-title">Reference</span>
+				<div class="flow-button-container">
+					<button
+						class="flow-project"
+						on:click={addToProjectReference}
+						><span class="flow-icon flow-icon-project"
+						></span>Project</button
+					>
+					<button class="flow-person" on:click={addToPersonReference}
+						><span class="flow-icon flow-icon-person"></span>
+						Person</button
+					>
+				</div>
 			</div>
-			<div>
-				<span>Person:</span>
-				<button on:click={addToPersonDiscussNext}
-					>Add as next action</button
-				>
-				<button on:click={addToPersonReference}>Add as reference</button
-				>
+			<div class="flow-action-group">
+				<span class="flow-action-group-title">Other actions</span>
+				<div class="flow-button-container">
+					<button class="flow-person" on:click={addToNewProject}
+						><span class="flow-icon flow-icon-person"></span>
+						New project and add action</button
+					>
+					<button class="flow-trash" on:click={trash}
+						><span class="flow-icon flow-icon-trash"
+						></span>Delete</button
+					>
+				</div>
 			</div>
+		</div>
 		{#if lineCount > 0}
 			<div>
-				<button on:click={trash}>Trash</button>
 				<h3>Currently processing:</h3>
 				<p>{line}</p>
 			</div>
