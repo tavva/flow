@@ -2,26 +2,22 @@ import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
 import FlowPlugin from 'main'
 
-export async function addToNextActions(
+async function addLineToFile(
 	plugin: FlowPlugin,
 	text: string,
+	filePath: string,
 	spheres: string[],
 ) {
 	text = text.trim()
-	let nextActionsFile = plugin.app.vault.getAbstractFileByPath(
-		plugin.settings.nextActionsFilePath,
-	) as TFile
+	let file = plugin.app.vault.getAbstractFileByPath(filePath) as TFile
 
-	if (!nextActionsFile) {
-		nextActionsFile = await plugin.app.vault.create(
-			plugin.settings.nextActionsFilePath,
-			'',
-		)
+	if (!file) {
+		file = await plugin.app.vault.create(filePath, '')
 	}
 
 	const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
 
-	let content = await plugin.app.vault.read(nextActionsFile)
+	let content = await plugin.app.vault.read(file)
 	content = content + '\n- [ ] ' + text
 
 	if (sphereString) {
@@ -32,7 +28,20 @@ export async function addToNextActions(
 	}
 	content.concat('\n')
 
-	await plugin.app.vault.modify(nextActionsFile, content)
+	await plugin.app.vault.modify(file, content)
+}
+
+export async function addToNextActions(
+	plugin: FlowPlugin,
+	text: string,
+	spheres: string[],
+) {
+	await addLineToFile(
+		plugin,
+		text,
+		plugin.settings.nextActionsFilePath,
+		spheres,
+	)
 }
 
 async function addToFileSection(
