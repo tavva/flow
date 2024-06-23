@@ -6,6 +6,15 @@
 	}
 
 	.flow-processing-actions {
+		button:hover {
+			opacity: 0.9;
+			transform: translateY(-1px);
+		}
+
+		button:active {
+			transform: translateY(1px);
+		}
+
 		margin-top: 20px;
 		display: flex;
 		flex-direction: column;
