@@ -44,6 +44,14 @@ export async function addToNextActions(
 	)
 }
 
+export async function addToTickler(
+	plugin: FlowPlugin,
+	text: string,
+	spheres: string[],
+) {
+	await addLineToFile(plugin, text, plugin.settings.tickerFilePath, spheres)
+}
+
 async function addToFileSection(
 	plugin: FlowPlugin,
 	projectFile: TFile,
