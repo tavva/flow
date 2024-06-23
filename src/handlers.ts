@@ -2,6 +2,7 @@ import { App, TFile } from 'obsidian'
 
 import {
 	addToNextActions,
+	addToTickler,
 	addToProjectNextActions,
 	addToProjectReference,
 	addToPersonDiscussNext,
@@ -106,6 +107,18 @@ export class Handlers {
 			'Select a person',
 			'Search for a person',
 		)
+	}
+
+	handleAddToTickler = async (text: string) => {
+		new SphereSelectorModal(
+			this.app,
+			this.plugin.settings.spheres,
+			async (selectedSpheres: string[]) => {
+				await addToTickler(this.plugin, text, selectedSpheres)
+				await this.removeProcessedItem()
+				this.plugin.metrics.count('add-to-tickler')
+			},
+		).open()
 	}
 
 	private replacer(str: string, regex: RegExp, replaceWith: string) {
