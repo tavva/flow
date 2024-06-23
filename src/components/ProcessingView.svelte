@@ -124,14 +124,13 @@
 				<button on:click={addToPersonReference}>Add as reference</button
 				>
 			</div>
+		{#if lineCount > 0}
 			<div>
 				<button on:click={trash}>Trash</button>
+				<h3>Currently processing:</h3>
+				<p>{line}</p>
 			</div>
-		</div>
-		<div>
-			<h3>Currently processing:</h3>
-			<p>{line}</p>
-		</div>
-		<div class="flow-note-container" bind:this={noteContainer}></div>
+			<div class="flow-note-container" bind:this={noteContainer}></div>
+		{/if}
 	{/if}
 </div>
