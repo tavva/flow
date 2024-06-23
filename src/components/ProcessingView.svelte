@@ -18,6 +18,7 @@
 	export let onAddToPersonDiscussNext: (text: string) => void
 	export let onAddToPersonReference: (text: string) => void
 	export let onAddToNewProject: (text: string) => void
+	export let onAddToSomeday: (text: string) => void
 	export let onTrash: () => void
 	export let isProcessingComplete: false
 
@@ -73,6 +74,9 @@
 
 	function addToNewProject() {
 		if (inputText.trim() !== '') onAddToNewProject(inputText)
+	}
+	function addToSomeday() {
+		if (inputText.trim() !== '') onAddToSomeday(inputText)
 	}
 
 	async function startPlanning() {
@@ -143,6 +147,10 @@
 					<button class="flow-person" on:click={addToNewProject}
 						><span class="flow-icon flow-icon-person"></span>
 						New project</button
+					>
+					<button class="flow-someday" on:click={addToSomeday}
+						><span class="flow-icon flow-icon-someday"
+						></span>Someday</button
 					>
 					<button class="flow-trash" on:click={trash}
 						><span class="flow-icon flow-icon-trash"

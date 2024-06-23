@@ -109,6 +109,7 @@ export class StateManager {
 				onAddToPersonReference:
 					this.handlers.handleAddToPersonReference,
 				onAddToNewProject: this.handlers.handleNewProject,
+				onAddToSomeday: this.handlers.handleAddToSomeday,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&
@@ -140,6 +141,7 @@ export class StateManager {
 				onAddToProjectReference:
 					this.handlers.handleAddToProjectReference,
 				onAddToNewProject: this.handlers.handleNewProject,
+				onAddToSomeday: this.handlers.handleAddToSomeday,
 				onTrash: this.handlers.handleTrash,
 				isProcessingComplete:
 					this.linesToProcess.length === 0 &&

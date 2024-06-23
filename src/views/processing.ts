@@ -39,6 +39,7 @@ export class ProcessingView extends ItemView {
 				onAddToNextActions: () => {},
 				onAddToProjectNextActions: () => {},
 				onAddToPersonDiscussNext: () => {},
+				onAddToSomeday: () => {},
 				onTrash: () => {},
 			},
 		})
