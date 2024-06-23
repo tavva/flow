@@ -6,6 +6,7 @@ export interface FlowSettings {
 	projectsFolderPath: string
 	newPersonTemplateFilePath: string
 	peopleFolderPath: string
+	somedayFilePath: string
 	appendTask: string
 
 	spheres: string[]
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 	projectsFolderPath: 'Projects',
 	newPersonTemplateFilePath: 'Templates/Person.md',
 	peopleFolderPath: 'People',
+	somedayFilePath: 'Someday.md',
 	appendTask: '',
 
 	spheres: ['personal', 'work'],

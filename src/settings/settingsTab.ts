@@ -161,5 +161,20 @@ export class FlowSettingsTab extends PluginSettingTab {
 						this.plugin.saveSettings()
 					})
 			})
+
+		new Setting(containerEl)
+			.setName('Someday/Maybe')
+			.setDesc(
+				'Flow will add your someday/maybe drops using this template.',
+			)
+			.addSearch((cb) => {
+				new FileSuggest(this.plugin, cb.inputEl)
+				cb.setPlaceholder('Example: Someday.md')
+					.setValue(this.plugin.settings.somedayFilePath)
+					.onChange(async (value) => {
+						this.plugin.settings.somedayFilePath = value
+						await this.plugin.saveSettings()
+					})
+			})
 	}
 }
