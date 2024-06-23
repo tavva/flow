@@ -44,12 +44,12 @@ export async function addToNextActions(
 	)
 }
 
-export async function addToTickler(
+export async function addToSomeday(
 	plugin: FlowPlugin,
 	text: string,
 	spheres: string[],
 ) {
-	await addLineToFile(plugin, text, plugin.settings.tickerFilePath, spheres)
+	await addLineToFile(plugin, text, plugin.settings.somedayFilePath, spheres)
 }
 
 async function addToFileSection(

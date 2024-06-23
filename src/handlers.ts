@@ -2,7 +2,7 @@ import { App, TFile } from 'obsidian'
 
 import {
 	addToNextActions,
-	addToTickler,
+	addToSomeday,
 	addToProjectNextActions,
 	addToProjectReference,
 	addToPersonDiscussNext,
@@ -109,14 +109,14 @@ export class Handlers {
 		)
 	}
 
-	handleAddToTickler = async (text: string) => {
+	handleAddToSomeday = async (text: string) => {
 		new SphereSelectorModal(
 			this.app,
 			this.plugin.settings.spheres,
 			async (selectedSpheres: string[]) => {
-				await addToTickler(this.plugin, text, selectedSpheres)
+				await addToSomeday(this.plugin, text, selectedSpheres)
 				await this.removeProcessedItem()
-				this.plugin.metrics.count('add-to-tickler')
+				this.plugin.metrics.count('add-to-someday')
 			},
 		).open()
 	}
