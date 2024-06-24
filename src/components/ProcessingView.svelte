@@ -159,11 +159,13 @@
 				</div>
 			</div>
 		</div>
-		{#if lineCount > 0}
+		{#if lineCount > 0 || fileCount > 0}
 			<div>
 				<h3>Currently processing:</h3>
 				<p>{line}</p>
 			</div>
+		{/if}
+		{#if fileCount > 0}
 			<div class="flow-note-container" bind:this={noteContainer}></div>
 		{/if}
 	{/if}
