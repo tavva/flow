@@ -1,6 +1,7 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
 import FlowPlugin from 'main'
+import type { TemplaterPlugin } from 'typings/templater'
 
 async function addLineToFile(
 	plugin: FlowPlugin,
@@ -159,12 +160,11 @@ export function getFilesWithTagPrefix(
 	const files = vault.getFiles()
 
 	return files.filter((file) => {
-		if (
-			file.path.startsWith(
-				getPlugin('templater-obsidian', plugin).settings
-					.template_folder,
-			)
-		) {
+		const templaterPlugin = getPlugin(
+			'templater-obsidian',
+			plugin,
+		) as TemplaterPlugin
+		if (file.path.startsWith(templaterPlugin.settings.template_folder)) {
 			return false
 		}
 

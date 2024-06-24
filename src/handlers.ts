@@ -1,4 +1,5 @@
 import { App, TFile } from 'obsidian'
+import type { TemplaterPlugin, Module } from 'typings/templater'
 
 import {
 	addToNextActions,
@@ -24,13 +25,16 @@ export class Handlers {
 	private app: App
 	private plugin: FlowPlugin
 	private state: StateManager
-	private tp: any // TODO: make this a proper type, and maybe a better name
+	private templaterPlugin: TemplaterPlugin
 
 	constructor(plugin: FlowPlugin, stateManager: StateManager) {
 		this.plugin = plugin
 		this.app = plugin.app
 		this.state = stateManager
-		this.tp = getPlugin('templater-obsidian', plugin)
+		this.templaterPlugin = getPlugin(
+			'templater-obsidian',
+			plugin,
+		) as TemplaterPlugin
 	}
 
 	handleAddToNextActions = async (text: string) => {
@@ -270,12 +274,18 @@ export class Handlers {
 		await this.app.vault.modify(file, nonEmptyLines)
 	}
 
-	private async getTemplaterCreateNewFunction() {
+	private async getTemplaterCreateNewFunction(): Promise<Function> {
 		let tp_file =
-			this.tp.templater.functions_generator.internal_functions.modules_array.find(
-				(m: any) => m.name == 'file', // FIXME: any
+			this.templaterPlugin.templater.functions_generator.internal_functions.modules_array.find(
+				(m: Module) => m.name == 'file',
 			)
 
-		return await tp_file.static_functions.get('create_new')
+		if (tp_file === undefined) {
+			console.error(
+				"We can't get the templater function. Is it installed correctly?",
+			)
+		}
+
+		return await tp_file!.static_functions.get('create_new')
 	}
 }
