@@ -9,13 +9,11 @@ export const PROCESSING_VIEW_TYPE = 'processing-view'
 export class ProcessingView extends ItemView {
 	private plugin: FlowPlugin
 	private component!: ProcessingViewComponent
-	private markdownView: MarkdownView | null
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
 		this.plugin = plugin
 		this.navigation = false
-		this.markdownView = null
 	}
 
 	getViewType() {
@@ -43,12 +41,6 @@ export class ProcessingView extends ItemView {
 				onTrash: () => {},
 			},
 		})
-
-		const noteContainer = this.contentEl.querySelector(
-			'.flow-note-container',
-		)
-		this.markdownView = new MarkdownView(this.leaf)
-		noteContainer?.appendChild(this.markdownView.containerEl)
 	}
 
 	async updateEmbeddedFile(notePath: string | null): Promise<void> {
