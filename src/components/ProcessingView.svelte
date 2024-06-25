@@ -81,6 +81,7 @@
 
 	async function startPlanning() {
 		await openPlanningView(plugin)
+		plugin.stateManager.stopProcessing()
 	}
 
 	function trash() {

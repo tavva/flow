@@ -67,6 +67,15 @@ export class StateManager {
 		}
 	}
 
+	async stopProcessing() {
+		const existingLeaves =
+			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
+
+		for (const leaf of existingLeaves) {
+			leaf.detach()
+		}
+	}
+
 	private async areInboxFilesEmpty(): Promise<boolean> {
 		if (!this.inboxFilesFolder) return true
 		return this.linesToProcess.length === 0
