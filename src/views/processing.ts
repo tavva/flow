@@ -1,4 +1,4 @@
-import { ItemView, MarkdownView, WorkspaceLeaf, TFile } from 'obsidian'
+import { ItemView, WorkspaceLeaf, TFile } from 'obsidian'
 
 // @ts-ignore
 import ProcessingViewComponent from '../components/ProcessingView.svelte'
