@@ -200,6 +200,10 @@ export default class FlowPlugin extends Plugin {
 		await this.saveData(currentData)
 	}
 
+	onExternalSettingsChange() {
+		this.loadSettings()
+	}
+
 	onunload() {
 		// Don't do things in here unless we're sure they loaded
 	}
