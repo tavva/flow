@@ -56,7 +56,8 @@ export class TaskCache {
 		const cachedTasks = this.getCachedTasks()
 		return cachedTasks.some(
 			(t: STask) =>
-				t.taskLocation.path == task.projectPath &&
+				(task.projectPath === null ||
+					t.taskLocation.path == task.projectPath) &&
 				t.description == task.title &&
 				t.isDone,
 		)
