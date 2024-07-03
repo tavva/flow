@@ -3,11 +3,12 @@
 	"version": "0.0.1",
 	"description": "Flow, inspired by David Allen's Getting Things Done (GTD), is a way of managing everything in your life so you focus on what's important.",
 	"main": "main.js",
+	"type": "module",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"test": "jest"
+		"test": "NODE_OPTIONS='$NODE_OPTIONS --experimental-vm-modules' npx jest"
 	},
 	"keywords": [],
 	"author": "",
