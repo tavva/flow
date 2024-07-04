@@ -28,7 +28,7 @@
 
 		try {
 			const component = new Component()
-			plugin.dv.taskList(tasks, false, container, component)
+			plugin.dv.taskList(tasks, true, container, component)
 			component.load()
 		} catch (error) {
 			console.error('Error rendering task list:', error)
