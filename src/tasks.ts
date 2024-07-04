@@ -2,7 +2,6 @@ import { TFile } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 
 import FlowPlugin from 'main'
-import { getPlugin } from 'utils'
 
 export enum TaskType {
 	PROJECT = 'project',
