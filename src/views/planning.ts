@@ -6,16 +6,7 @@ import PlanningViewComponent from 'components/PlanningView.svelte'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
-async function clearStalePlannedTasks(plugin: FlowPlugin): Promise<void> {
-	const lastTaskPlanned = await plugin.store.retrieve('last-task-planned')
-	if (lastTaskPlanned && lastTaskPlanned !== new Date().toDateString()) {
-		await plugin.tasks.clearTasks()
-	}
-}
-
 export async function openPlanningView(plugin: FlowPlugin) {
-	clearStalePlannedTasks(plugin)
-
 	const { workspace } = plugin.app
 
 	let leaf: WorkspaceLeaf | null = null
