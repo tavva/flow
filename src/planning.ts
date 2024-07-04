@@ -2,8 +2,7 @@ import { type Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from 'main'
 
-import type { Task } from 'tasks'
-import { TaskType, normaliseTaskText } from 'tasks'
+import { TaskType } from 'tasks'
 import { openPlanningView } from 'views/planning'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
@@ -13,17 +12,6 @@ export function togglePlanningMode(plugin: FlowPlugin) {
 	if (get(isPlanningMode)) {
 		openPlanningView(plugin)
 	}
-}
-
-function generateUniqueId(
-	taskType: TaskType,
-	projectName: string | null,
-	taskText: string,
-) {
-	if (!projectName) {
-		projectName = ''
-	}
-	return `${taskType}-${projectName}-${taskText.replace(/\s+/g, '-').toLowerCase()}`
 }
 
 export function addTaskClickListeners(
@@ -47,43 +35,34 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 	return async function handleTaskClick(event: any): Promise<void> {
 		// TODO fix the function parameter type
 
-		let taskType = TaskType.PROJECT
-		let projectName = null
-		let projectPath = null
-
 		const taskElement = event.target.closest('.dataview.task-list-item')
 		if (!taskElement) return
 
 		const textContent = taskElement.getAttribute('data-task-text')
+
+		let path = null
 
 		try {
 			const projectLink = taskElement
 				.closest('div')
 				.parentElement.closest('li')
 				.querySelector('a')
-			projectName = projectLink.textContent
-			projectPath = projectLink.getAttribute('data-path')
+			path = projectLink.getAttribute('data-path')
 		} catch (error) {
-			taskType = TaskType.NON_PROJECT
+			path = plugin.settings.nextActionsFilePath
 		}
 
-		const taskText = normaliseTaskText(textContent)
-		const uniqueId = generateUniqueId(taskType, projectName, taskText)
-
-		const task: Task = {
-			id: uniqueId,
-			title: taskText,
-			type: taskType,
-			projectName: projectName,
-			projectPath: projectPath,
-		}
+		console.log('textContent:', textContent)
+		console.log('path:', path)
+		const task = plugin.tasks.getTask(textContent, path)
+		console.log('task:', task)
 
 		if (get(isPlanningMode)) {
 			// These have to be called before the first await
 			event.preventDefault()
 			event.stopPropagation()
 
-			plugin.tasks.addTask(task)
+			plugin.tasks.markTaskAsPlannedNextAction(task)
 		} // if we're not in planning mode the event will bubble up
 	}
 }

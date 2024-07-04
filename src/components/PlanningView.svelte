@@ -1,162 +1,42 @@
 <script lang="ts">
-	import { onMount } from 'svelte'
 	import type { STask } from 'obsidian-dataview'
 	import { Component, WorkspaceLeaf } from 'obsidian'
+	import { onMount } from 'svelte'
 
 	import FlowPlugin from 'main'
 	import { isPlanningMode, togglePlanningMode } from 'planning'
-	import { TaskType, type Task, normaliseTaskText } from 'tasks'
 	import { SPHERE_VIEW_TYPE } from 'views/sphere'
 
 	export let plugin: FlowPlugin
-
-	let plannedTasks: Task[] = []
+	export let plannedTasks: STask[] = []
 
 	onMount(() => {
-		const unsubscribe = plugin.tasks.plannedTasks.subscribe((value) => {
-			plannedTasks = value
-			renderTasks()
-		})
-
-		return () => unsubscribe()
+		renderTasks(plannedTasks)
 	})
+
+	$: renderTasks(plannedTasks)
+
+	function renderTasks(tasks: STask[]) {
+		const container = document.querySelector(
+			'.flow-planning-task-container',
+		)
+
+		if (!container) {
+			console.error('Container not found')
+			return
+		}
+
+		try {
+			const component = new Component()
+			plugin.dv.taskList(tasks, false, container, component)
+			component.load()
+		} catch (error) {
+			console.error('Error rendering task list:', error)
+		}
+	}
 
 	function handleTogglePlanningMode() {
 		togglePlanningMode(plugin)
-	}
-
-	async function renderTasks() {
-		const taskContainer = document.querySelector(
-			'.flow-planning-task-container',
-		)
-
-		if (!taskContainer) {
-			console.error('Task container not found')
-			return
-		}
-
-		taskContainer.empty()
-
-		if (plannedTasks.length === 0) {
-			const messageEle = document.createElement('p')
-			messageEle.innerText = 'You have no planned actions'
-			taskContainer.appendChild(messageEle)
-		}
-
-		for (const task of plannedTasks) {
-			await renderTask(task)
-		}
-
-		addCheckboxListeners()
-	}
-
-	function createRenderTask() {
-		let previousProjectName: string | null = null
-
-		return async function renderTask(task: Task) {
-			const taskContainer = document.querySelector(
-				'.flow-planning-task-container',
-			)
-			if (!taskContainer) {
-				console.error('Task container not found')
-				return
-			}
-
-			const taskDiv = document.createElement('div')
-			taskDiv.classList.add('flow-planning-task')
-			taskDiv.id = `task-${task.id}`
-			taskContainer.appendChild(taskDiv)
-
-			let taskList: STask[] = []
-
-			if (task.type == TaskType.PROJECT) {
-				taskList = plugin.dv
-					.page(task.projectPath)
-					.file.tasks.filter(
-						(t: STask) => normaliseTaskText(t.text) === task.title,
-					)
-			} else {
-				taskList = plugin.dv
-					.page(plugin.settings.nextActionsFilePath)
-					.file.tasks.filter(
-						(t: STask) => normaliseTaskText(t.text) === task.title,
-					)
-			}
-
-			if (taskList.length > 0) {
-				try {
-					const component = new Component()
-					await plugin.dv.taskList(
-						taskList,
-						false,
-						taskDiv,
-						component,
-					)
-					component.load()
-				} catch (error) {
-					console.error('Error rendering task list:', error)
-				}
-			} else {
-				const div = taskDiv.createEl('div')
-				const p = div.createEl('p', { cls: 'flow-task-not-found' })
-				p.createEl('span', {
-					text: 'Task "',
-				})
-				p.createEl('span', {
-					text: task.title,
-					cls: 'flow-task-title',
-				})
-				p.createEl('span', {
-					text: `" not found. If you delete, move, or edit a task that
-					you've planned, you'll need to re-plan it.`,
-				})
-			}
-
-			addRemoveButton(taskDiv)
-
-			if (task.projectName !== previousProjectName) {
-				insertProjectName(taskDiv, task)
-				previousProjectName = task.projectName
-			}
-		}
-	}
-
-	const renderTask = createRenderTask()
-
-	function insertProjectName(taskDiv: HTMLElement, task: Task) {
-		let headerText = 'No project'
-		if (task.projectName !== null) {
-			headerText = task.projectName
-		}
-		const projectNameEle = taskDiv.createEl('span', {
-			text: headerText,
-		})
-		projectNameEle.classList.add('flow-project-name')
-		taskDiv.parentNode?.insertBefore(projectNameEle, taskDiv)
-	}
-
-	function addCheckboxListeners() {
-		const taskContainer = document.querySelector(
-			'.flow-planning-task-container',
-		)
-
-		if (!taskContainer) {
-			console.error('Task container not found')
-			return
-		}
-
-		const checkboxes = taskContainer.querySelectorAll(
-			'.dataview.task-list-item input[type="checkbox"] ',
-		)
-
-		checkboxes.forEach((checkbox) => {
-			checkbox.addEventListener('click', () => {
-				setTimeout(() => {
-					renderTasks()
-					refreshSphereViews()
-				}, 100)
-			})
-		})
 	}
 
 	function addRemoveButton(taskDiv: HTMLDivElement) {
@@ -182,7 +62,7 @@
 			return
 		}
 
-		plugin.tasks.removeTask(task)
+		plugin.tasks.unmarkTaskAsPlannedNextAction(task)
 	}
 
 	function refreshSphereViews() {
@@ -195,12 +75,12 @@
 
 	async function onClearTasks() {
 		if (confirm('Are you sure you want to clear all tasks?')) {
-			plugin.tasks.clearTasks()
+			plugin.tasks.unmarkAllTasksAsPlannedNextAction()
 		}
 	}
 	async function onClearCompletedTasks() {
 		if (confirm('Are you sure you want to clear completed tasks?')) {
-			plugin.tasks.clearCompletedTasks()
+			plugin.tasks.unmarkAllCompletedTasksAsPlannedNextAction()
 		}
 	}
 </script>

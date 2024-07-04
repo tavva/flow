@@ -1,79 +1,87 @@
-import { type Writable, writable, get } from 'svelte/store'
+import { TFile } from 'obsidian'
+import { STask } from 'obsidian-dataview'
 
 import FlowPlugin from 'main'
-
-import { TaskCache } from 'taskCache'
+import { getPlugin } from 'utils'
 
 export enum TaskType {
 	PROJECT = 'project',
 	NON_PROJECT = 'non-project',
 }
 
-export interface Task {
-	id: string
-	title: string
-	type: TaskType
-	projectName: string | null
-	projectPath: string | null
-}
-
 export class Tasks {
 	plugin: FlowPlugin
-	plannedTasks: Writable<Task[]> = writable([])
-	taskCache!: TaskCache
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
-		this.initializePlannedTasks()
 	}
 
-	private async initializePlannedTasks() {
-		const initialTasks = await this.plugin.store.retrieve('plannedTasks')
-		if (initialTasks) {
-			this.plannedTasks.set(initialTasks)
+	getTask(description: string, path: string) {
+		return this.plugin.dv
+			.pages()
+			.file.tasks.where(
+				(t: STask) => t.text == description && t.path == path,
+			)[0]
+	}
+
+	getPlannedTasks() {
+		return this.plugin.dv
+			.pages('#flow-planned')
+			.file.tasks.where((t: STask) => t.text.includes('#flow-planned'))
+	}
+
+	protected async replaceLineInFile(
+		path: string,
+		lineNumber: number,
+		newLine: string,
+	): Promise<void> {
+		const file = this.plugin.app.vault.getAbstractFileByPath(path)
+		if (!(file instanceof TFile)) {
+			throw new Error(`File not found: ${path}`)
 		}
-		this.taskCache = new TaskCache(this.plugin)
+
+		const fileContent = await this.plugin.app.vault.read(file)
+		const lines = fileContent.split('\n')
+
+		if (lineNumber < 1 || lineNumber > lines.length) {
+			throw new Error(`Line number ${lineNumber} is out of range`)
+		}
+
+		lines[lineNumber] = newLine
+		const newContent = lines.join('\n')
+
+		await this.plugin.app.vault.modify(file, newContent)
 	}
 
-	async addTask(task: Task) {
-		const currentTasks = get(this.plannedTasks)
+	async markTaskAsPlannedNextAction(task: STask) {
+		if (task.tags.includes('#flow-planned')) {
+			return
+		}
+		const text = task.text.trim() + ' #flow-planned'
+		const line = task.symbol + ' [' + task.status + '] ' + text
 
-		if (!currentTasks.find((t: Task) => t.id === task.id)) {
-			const updatedTasks = [...currentTasks, task]
-			await this.plugin.store.delete('plannedTasks')
-			await this.plugin.store.store({
-				plannedTasks: updatedTasks,
-			})
-			this.plannedTasks.set(updatedTasks)
+		await this.replaceLineInFile(task.path, task.line, line)
+	}
 
-			await this.plugin.store.store({
-				'last-task-planned': new Date().toDateString(),
-			})
+	async unmarkTaskAsPlannedNextAction(task: STask) {
+		const text = task.text.replace(/\s*#flow-planned/, '')
+		const line = task.symbol + ' [' + task.status + '] ' + text
+
+		await this.replaceLineInFile(task.path, task.line, line)
+	}
+
+	async unmarkAllTasksAsPlannedNextAction() {
+		const tasks = this.getPlannedTasks()
+		for (const task of tasks) {
+			await this.unmarkTaskAsPlannedNextAction(task)
 		}
 	}
 
-	async removeTask(task: Task) {
-		const currentTasks = get(this.plannedTasks)
-		const updatedTasks = currentTasks.filter((t: Task) => t.id !== task.id)
-
-		await this.plugin.store.delete('plannedTasks')
-		await this.plugin.store.store({
-			plannedTasks: updatedTasks,
-		})
-
-		this.plannedTasks.set(updatedTasks)
-		console.log('removed a task', this.plannedTasks)
-	}
-
-	async clearTasks() {
-		await this.plugin.store.delete('plannedTasks')
-		this.plannedTasks.set([])
-	}
-
-	async clearCompletedTasks() {
-		for (const task of get(this.plannedTasks)) {
-			if (await this.taskCache.isTaskCompleted(task)) {
-				await this.removeTask(task)
+	async unmarkAllCompletedTasksAsPlannedNextAction() {
+		const tasks = this.getPlannedTasks()
+		for (const task of tasks) {
+			if (task.completed) {
+				await this.unmarkTaskAsPlannedNextAction(task)
 			}
 		}
 	}
