@@ -33,13 +33,27 @@
 		} catch (error) {
 			console.error('Error rendering task list:', error)
 		}
+
+		container.querySelectorAll('.task-list-item').forEach((li) => {
+			addRemoveButton(li as HTMLLIElement)
+		})
 	}
 
 	function handleTogglePlanningMode() {
 		togglePlanningMode(plugin)
 	}
 
-	function addRemoveButton(taskDiv: HTMLDivElement) {
+	function addRemoveButton(li: HTMLLIElement) {
+		const parent = li.parentElement
+		if (!parent) {
+			console.error('Parent not found')
+			return
+		}
+
+		var taskDiv = document.createElement('div')
+		parent.replaceChild(taskDiv, li)
+		taskDiv.appendChild(li)
+
 		const removeButton = document.createElement('button')
 
 		removeButton.innerText = '❌'
