@@ -3,11 +3,6 @@ import { STask } from 'obsidian-dataview'
 
 import FlowPlugin from 'main'
 
-export enum TaskType {
-	PROJECT = 'project',
-	NON_PROJECT = 'non-project',
-}
-
 export class Tasks {
 	plugin: FlowPlugin
 

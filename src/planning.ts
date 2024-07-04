@@ -2,7 +2,6 @@ import { type Writable, writable, get } from 'svelte/store'
 
 import FlowPlugin from 'main'
 
-import { TaskType } from 'tasks'
 import { openPlanningView } from 'views/planning'
 
 export const isPlanningMode: Writable<boolean> = writable(false)
