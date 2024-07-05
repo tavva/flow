@@ -70,13 +70,31 @@
 	}
 
 	function removeTask(taskDiv: HTMLDivElement) {
-		const taskId = taskDiv.id.replace('task-', '')
-		const task = plannedTasks.find((t) => t.id === taskId)
+		const taskListItem = taskDiv.querySelector(
+			'.dataview.task-list-item',
+		) as HTMLLIElement
 
-		if (!task) {
-			console.error('Task not found:', taskId)
+		const taskName = taskListItem.innerText.trim()
+
+		let path = ''
+		const resultGroup = taskDiv.closest('.dataview.result-group')
+		if (resultGroup) {
+			const titleElement = resultGroup.previousElementSibling
+			if (titleElement) {
+				const linkElement =
+					titleElement.querySelector('a.internal-link')
+				if (linkElement) {
+					path = linkElement.getAttribute('data-href') || ''
+				}
+			}
+		}
+
+		if (!path) {
+			console.error('Parent filepath not found')
 			return
 		}
+
+		const task = plugin.tasks.getTask(taskName, path)
 
 		plugin.tasks.unmarkTaskAsPlannedNextAction(task)
 	}
