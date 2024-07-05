@@ -1,0 +1,78 @@
+.flow-planning-view-container {
+	hr {
+		margin: 0 0 10px 0;
+	}
+
+	.flow-planning-view-actions {
+		width: 100%;
+		text-align: center;
+		margin-top: 10px;
+		margin-bottom: 30px;
+
+		button {
+			margin-top: 10px;
+		}
+	}
+
+	.flow-planning-task-container {
+		font-size: 87%;
+
+		button {
+			margin-left: 10px;
+			flex: none;
+			border-radius: 50%;
+			color: var(--text-muted);
+			font-size: 90%;
+		}
+
+		ul.contains-task-list {
+			margin-top: 0;
+			flex-grow: 1;
+			padding-left: 20px;
+
+			li {
+				list-style-type: none;
+			}
+		}
+
+		.flow-project-name {
+			flex: none;
+			font-size: 80%;
+			color: var(--text-muted);
+		}
+
+		.flow-task-not-found {
+			font-size: 80%;
+
+			.flow-task-title {
+				font-weight: bold;
+				font-style: italic;
+			}
+		}
+
+		.flow-planning-task {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+	}
+
+	.flow-planning-view-sphere-list {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		font-size: 12px;
+		line-height: 12px;
+		vertical-align: middle;
+
+		.flow-planning-view-sphere-header {
+			color: var(--text-muted);
+			margin: 0 4px 0 0;
+		}
+
+		button {
+			height: 15px;
+			margin: 0 5px 5px 0;
+		}
+	}
+}
