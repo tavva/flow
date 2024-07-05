@@ -140,6 +140,10 @@ button.flow-modal-done {
 			margin-top: 0;
 			flex-grow: 1;
 			padding-left: 20px;
+
+			li {
+				list-style-type: none;
+			}
 		}
 
 		.flow-project-name {

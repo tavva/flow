@@ -51,6 +51,8 @@
 		}
 
 		var taskDiv = document.createElement('div')
+		taskDiv.addClass('flow-planning-task')
+
 		parent.replaceChild(taskDiv, li)
 		taskDiv.appendChild(li)
 
