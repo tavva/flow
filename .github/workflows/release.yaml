@@ -1,4 +1,4 @@
-name: Release Obsidian plugin
+name: Release Flow, an Obsidian plugin
 
 on:
     push:
