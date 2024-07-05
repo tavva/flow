@@ -26,6 +26,8 @@
 			return
 		}
 
+		container.empty()
+
 		try {
 			const component = new Component()
 			plugin.dv.taskList(tasks, true, container, component)
