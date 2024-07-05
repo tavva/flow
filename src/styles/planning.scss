@@ -11,6 +11,29 @@
 
 		button {
 			margin-top: 10px;
+			width: 80%;
+
+			&.is-planning-mode {
+				background-color: rgba(var(--color-red-rgb), 0.2);
+				color: white;
+			}
+
+			&.is-not-planning-mode {
+				background-color: rgba(var(--color-green-rgb), 0.2);
+				color: white;
+			}
+
+			&.clear-all-planned-actions {
+				background-color: rgba(var(--color-red-rgb), 0.8);
+				color: white;
+				width: 40%;
+			}
+
+			&.clear-completed-actions {
+				background-color: rgba(var(--color-blue-rgb), 0.8);
+				color: white;
+				width: 40%;
+			}
 		}
 	}
 

@@ -136,25 +136,33 @@
 		{/each}
 	</div>
 	<hr />
+
 	<div class="flow-planning-view-actions">
-		<button on:click={handleTogglePlanningMode}>
-			{#if $isPlanningMode}
+		{#if $isPlanningMode}
+			<button
+				on:click={handleTogglePlanningMode}
+				class="is-planning-mode"
+			>
 				Exit planning mode
-			{/if}
-			{#if !$isPlanningMode}
+			</button>
+		{:else}
+			<button
+				on:click={handleTogglePlanningMode}
+				class="is-not-planning-mode"
+			>
 				Enter planning mode
-			{/if}
-		</button>
-	</div>
-
-	<div class="flow-planning-task-container"></div>
-
-	<div class="flow-planning-view-actions">
+			</button>
+		{/if}
 		{#if plannedTasks.length > 0}
-			<button on:click={onClearTasks}>Clear all planned actions</button>
-			<button on:click={onClearCompletedTasks}
-				>Clear completed actions</button
+			<button
+				on:click={onClearCompletedTasks}
+				class="clear-completed-actions">Clear completed</button
+			>
+			<button on:click={onClearTasks} class="clear-all-planned-actions"
+				>Clear all</button
 			>
 		{/if}
 	</div>
+
+	<div class="flow-planning-task-container"></div>
 </div>
