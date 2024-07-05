@@ -104,14 +104,12 @@
 		}
 
 		const task = plugin.tasks.getTask(taskName, path)
-		if (!task) {
-			console.error('Task not found')
-			return
+
+		if (task) {
+			plugin.tasks.unmarkTaskAsPlannedNextAction(task)
 		}
 
-		plugin.tasks.unmarkTaskAsPlannedNextAction(task)
-		const index = plannedTasks.indexOf(task)
-		plannedTasks = plannedTasks.filter((_, i) => i !== index)
+		plannedTasks = plugin.tasks.getPlannedTasks()
 	}
 
 	async function onClearTasks() {
