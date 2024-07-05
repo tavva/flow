@@ -40,6 +40,21 @@
 	.flow-planning-task-container {
 		font-size: 87%;
 
+		.dataview.small-text {
+			display: none;
+		}
+
+		h4 {
+			margin-bottom: 5px;
+
+			a {
+				text-decoration: none;
+				color: var(--text-muted);
+				cursor: default;
+			}
+		}
+
+
 		button {
 			margin-left: 10px;
 			flex: none;
