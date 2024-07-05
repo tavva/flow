@@ -105,6 +105,10 @@
 		}
 
 		const task = plugin.tasks.getTask(taskName, path)
+		if (!task) {
+			console.error('Task not found')
+			return
+		}
 
 		plugin.tasks.unmarkTaskAsPlannedNextAction(task)
 	}
