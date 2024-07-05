@@ -51,10 +51,7 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 			path = plugin.settings.nextActionsFilePath
 		}
 
-		console.log('textContent:', textContent)
-		console.log('path:', path)
 		const task = plugin.tasks.getTask(textContent, path)
-		console.log('task:', task)
 
 		if (get(isPlanningMode)) {
 			// These have to be called before the first await
