@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian'
+import { ItemView, WorkspaceLeaf, type EventRef } from 'obsidian'
 
 import FlowPlugin from 'main'
 
@@ -33,6 +33,7 @@ export async function openPlanningView(plugin: FlowPlugin) {
 export class PlanningView extends ItemView {
 	private component!: PlanningViewComponent
 	plugin: FlowPlugin
+	private eventListenerRef: EventRef | null = null
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
@@ -59,6 +60,15 @@ export class PlanningView extends ItemView {
 				plannedTasks: this.plugin.tasks.getPlannedTasks(),
 			},
 		})
+
+		this.eventListenerRef = this.plugin.events.on(
+			'planned-tasks-updated',
+			() => {
+				this.setProps({
+					plannedTasks: this.plugin.tasks.getPlannedTasks(),
+				})
+			},
+		)
 	}
 
 	public setProps(props: Partial<typeof this.component.$$.props>) {
@@ -67,5 +77,10 @@ export class PlanningView extends ItemView {
 		}
 	}
 
-	async onClose() {}
+	async onClose() {
+		if (this.eventListenerRef !== null) {
+			this.plugin.events.offref(this.eventListenerRef)
+			this.eventListenerRef = null
+		}
+	}
 }
