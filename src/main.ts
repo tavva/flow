@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice } from 'obsidian'
+import { Plugin, TFile, Notice, Events } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from 'state'
@@ -21,6 +21,7 @@ export default class FlowPlugin extends Plugin {
 	store!: Store
 	metrics!: Metrics
 	tasks!: Tasks
+	events = new Events()
 
 	async onload() {
 		this.app.workspace.onLayoutReady(async () => {
