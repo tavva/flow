@@ -1,11 +1,10 @@
 <script lang="ts">
 	import type { STask } from 'obsidian-dataview'
-	import { Component, WorkspaceLeaf } from 'obsidian'
+	import { Component } from 'obsidian'
 	import { onMount } from 'svelte'
 
 	import FlowPlugin from 'main'
 	import { isPlanningMode, togglePlanningMode } from 'planning'
-	import { SPHERE_VIEW_TYPE } from 'views/sphere'
 
 	export let plugin: FlowPlugin
 	export let plannedTasks: STask[] = []
