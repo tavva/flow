@@ -115,14 +115,6 @@
 		plannedTasks = plannedTasks.filter((_, i) => i !== index)
 	}
 
-	function refreshSphereViews() {
-		plugin.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-			if (leaf.view.getViewType() === SPHERE_VIEW_TYPE) {
-				;(leaf.view as any).render()
-			}
-		})
-	}
-
 	async function onClearTasks() {
 		if (confirm('Are you sure you want to clear all tasks?')) {
 			plugin.tasks.unmarkAllTasksAsPlannedNextAction()
