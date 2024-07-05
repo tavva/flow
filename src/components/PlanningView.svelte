@@ -111,6 +111,11 @@
 		}
 
 		plugin.tasks.unmarkTaskAsPlannedNextAction(task)
+		const index = plannedTasks.indexOf(task)
+		console.log('index', index)
+		if (index > -1) {
+			plannedTasks.splice(index, 1)
+		}
 	}
 
 	function refreshSphereViews() {
