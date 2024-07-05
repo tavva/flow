@@ -74,7 +74,15 @@
 			'.dataview.task-list-item',
 		) as HTMLLIElement
 
-		const taskName = taskListItem.innerText.trim()
+		const taskItem = taskDiv.querySelector('.dataview.task-list-item')
+		if (!taskItem) {
+			console.error('Task item not found')
+			return
+		}
+
+		const clonedTaskItem = taskItem.cloneNode(true) as HTMLElement
+		clonedTaskItem.querySelectorAll('ul').forEach((ul) => ul.remove())
+		const taskName = clonedTaskItem.textContent?.trim() || ''
 
 		let path = ''
 		const resultGroup = taskDiv.closest('.dataview.result-group')
