@@ -55,6 +55,10 @@ export class Tasks {
 		const line = task.symbol + ' [' + task.status + '] ' + text
 
 		await this.replaceLineInFile(task.path, task.line, line)
+
+		setTimeout(() => {
+			this.plugin.events.trigger('planned-tasks-updated')
+		}, 1000)
 	}
 
 	async unmarkTaskAsPlannedNextAction(task: STask) {
@@ -62,6 +66,10 @@ export class Tasks {
 		const line = task.symbol + ' [' + task.status + '] ' + text
 
 		await this.replaceLineInFile(task.path, task.line, line)
+
+		setTimeout(() => {
+			this.plugin.events.trigger('planned-tasks-updated')
+		}, 1000)
 	}
 
 	async unmarkAllTasksAsPlannedNextAction() {
