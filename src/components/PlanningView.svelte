@@ -27,6 +27,20 @@
 
 		container.empty()
 
+		if (tasks.length === 0) {
+			const noActionsDiv = container.createEl('div', {
+				cls: 'flow-planning-no-actions',
+			})
+
+			noActionsDiv.createEl('h3', {
+				text: 'No actions planned yet',
+			})
+			noActionsDiv.createEl('p', {
+				text: 'Enter planning mode and open your spheres to plan your next actions',
+			})
+			return
+		}
+
 		try {
 			const component = new Component()
 			plugin.dv.taskList(tasks, true, container, component)
