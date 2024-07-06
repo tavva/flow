@@ -48,9 +48,11 @@ export default class FlowPlugin extends Plugin {
 				),
 			)
 
-			this.app.workspace.on('editor-menu', (menu, editor) => {
-				createEditorMenu(menu, editor, this)
-			})
+			this.registerEvent(
+				this.app.workspace.on('editor-menu', (menu, editor) => {
+					createEditorMenu(menu, editor, this)
+				}),
+			)
 
 			this.setupWatchers()
 		})
