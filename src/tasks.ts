@@ -51,7 +51,7 @@ export class Tasks {
 		if (task.tags.includes('#flow-planned')) {
 			return
 		}
-		const text = task.text.trim() + ' #flow-planned'
+		const text = task.text.trimEnd() + ' #flow-planned'
 		const line = task.symbol + ' [' + task.status + '] ' + text
 
 		await this.replaceLineInFile(task.path, task.line, line)
