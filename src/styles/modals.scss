@@ -1,11 +1,24 @@
 .flow-modal-content {
-	margin-bottom: 15px;
-
 	button {
-		margin-right: 10px;
+		margin-left: 10px;
 
 		&.selected {
 			background-color: var(--interactive-accent);
+		}
+	}
+}
+
+.flow-project-modal {
+
+	input,
+	textarea {
+		width: 100%;
+	}
+
+	.description {
+
+		textarea {
+			height: 3lh;
 		}
 	}
 }

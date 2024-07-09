@@ -37,6 +37,7 @@ export class NewProjectModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this
+		contentEl.addClass('flow-project-modal')
 
 		contentEl.createEl('h2', {
 			text: 'Create a new project',
@@ -48,8 +49,6 @@ export class NewProjectModal extends Modal {
 			}),
 		)
 
-		const sphereContainer = contentEl.createDiv()
-		sphereContainer.addClass('flow-modal-content')
 		new Setting(contentEl)
 			.setName('Description')
 			.setClass('flow-modal-project-description')
@@ -61,6 +60,10 @@ export class NewProjectModal extends Modal {
 
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')
+		const sphereEl = new Setting(contentEl).setName('Spheres')
+		const sphereContainer = sphereEl.settingEl.createDiv()
+
+		sphereContainer.addClass('flow-modal-content')
 
 		this.availableSpheres.forEach((sphere) => {
 			const button = new ButtonComponent(sphereContainer as HTMLElement)
