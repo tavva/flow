@@ -31,29 +31,15 @@ export default class FlowPlugin extends Plugin {
 			await this.loadSettings()
 			this.addSettingTab(new FlowSettingsTab(this))
 
-			this.registerViews()
-
 			this.dv = getAPI()
 			this.stateManager = new StateManager(this)
 			this.store = new Store(this)
 			this.metrics = new Metrics(this)
 			this.tasks = new Tasks(this)
 
+			this.registerViews()
 			registerCommands(this)
-
-			this.registerEvent(
-				this.app.workspace.on(
-					'active-leaf-change',
-					this.onActiveLeafChange.bind(this),
-				),
-			)
-
-			this.registerEvent(
-				this.app.workspace.on('editor-menu', (menu, editor) => {
-					createEditorMenu(menu, editor, this)
-				}),
-			)
-
+			this.registerEvents()
 			this.setupWatchers()
 		})
 	}
@@ -89,6 +75,20 @@ export default class FlowPlugin extends Plugin {
 		this.registerView(
 			PLANNING_VIEW_TYPE,
 			(leaf) => new PlanningView(leaf, this),
+		)
+	}
+	private registerEvents() {
+		this.registerEvent(
+			this.app.workspace.on(
+				'active-leaf-change',
+				this.onActiveLeafChange.bind(this),
+			),
+		)
+
+		this.registerEvent(
+			this.app.workspace.on('editor-menu', (menu, editor) => {
+				createEditorMenu(menu, editor, this)
+			}),
 		)
 	}
 
