@@ -4,14 +4,14 @@ import FlowPlugin from 'main'
 
 export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
-	private availableSpheres: string[]
-	private selectedSpheres: Set<string> = new Set()
 	private onSubmit: (
 		projectName: string,
 		spheres: Set<string>,
 		priority: number,
 	) => void
 	private projectName: string = ''
+	private availableSpheres: string[]
+	private selectedSpheres: Set<string> = new Set()
 	private priority: number | undefined
 	private sphereContainer: HTMLElement | null = null
 
