@@ -1,5 +1,4 @@
 import { App, TFile } from 'obsidian'
-import type { TemplaterPlugin, Module } from 'typings/templater'
 
 import {
 	addToNextActions,
@@ -10,7 +9,7 @@ import {
 	addToPersonReference,
 	getFilesWithTagPrefix,
 	readFileContent,
-	getPlugin,
+	createNewProjectFile,
 } from 'utils'
 
 import FlowPlugin from 'main'
@@ -25,16 +24,11 @@ export class Handlers {
 	private app: App
 	private plugin: FlowPlugin
 	private state: StateManager
-	private templaterPlugin: TemplaterPlugin
 
 	constructor(plugin: FlowPlugin, stateManager: StateManager) {
 		this.plugin = plugin
 		this.app = plugin.app
 		this.state = stateManager
-		this.templaterPlugin = getPlugin(
-			'templater-obsidian',
-			plugin,
-		) as TemplaterPlugin
 	}
 
 	handleAddToNextActions = async (text: string) => {
@@ -141,7 +135,10 @@ export class Handlers {
 				spheres: Set<string>,
 				priority: number,
 			) => {
-				const projectFile = await this.createNewProjectFile(projectName)
+				const projectFile = await createNewProjectFile(
+					this.plugin,
+					projectName,
+				)
 				let content = await this.app.vault.read(projectFile)
 
 				const sphereText = Array.from(spheres)
@@ -252,21 +249,6 @@ export class Handlers {
 		await this.app.vault.delete(file)
 	}
 
-	async createNewProjectFile(projectName: string): Promise<TFile> {
-		const templateFile = this.app.vault.getAbstractFileByPath(
-			this.plugin.settings.newProjectTemplateFilePath,
-		) as TFile
-
-		const open_in_new_window = false
-		const create_new = await this.getTemplaterCreateNewFunction()
-		return create_new(
-			templateFile,
-			projectName,
-			open_in_new_window,
-			this.plugin.settings.projectsFolderPath,
-		)
-	}
-
 	private async removeEmptyLinesFromFile(file: TFile): Promise<void> {
 		const content = await readFileContent(this.plugin, file)
 		const nonEmptyLines = content
@@ -274,20 +256,5 @@ export class Handlers {
 			.filter((line) => line.trim() !== '')
 			.join('\n')
 		await this.app.vault.modify(file, nonEmptyLines)
-	}
-
-	private async getTemplaterCreateNewFunction(): Promise<Function> {
-		let tp_file =
-			this.templaterPlugin.templater.functions_generator.internal_functions.modules_array.find(
-				(m: Module) => m.name == 'file',
-			)
-
-		if (tp_file === undefined) {
-			console.error(
-				"We can't get the templater function. Is it installed correctly?",
-			)
-		}
-
-		return await tp_file!.static_functions.get('create_new')
 	}
 }

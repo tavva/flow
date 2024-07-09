@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
 import FlowPlugin from 'main'
-import type { TemplaterPlugin } from 'typings/templater'
+import type { TemplaterPlugin, Module } from 'typings/templater'
 
 async function addLineToFile(
 	plugin: FlowPlugin,
@@ -235,6 +235,45 @@ export async function getProjectFilePath(
 	} else {
 		return ''
 	}
+}
+
+export async function createNewProjectFile(
+	plugin: FlowPlugin,
+	projectName: string,
+): Promise<TFile> {
+	const templateFile = plugin.app.vault.getAbstractFileByPath(
+		plugin.settings.newProjectTemplateFilePath,
+	) as TFile
+
+	const open_in_new_window = false
+	const create_new = await getTemplaterCreateNewFunction(plugin)
+	return create_new(
+		templateFile,
+		projectName,
+		open_in_new_window,
+		plugin.settings.projectsFolderPath,
+	)
+}
+
+async function getTemplaterCreateNewFunction(
+	plugin: FlowPlugin,
+): Promise<Function> {
+	const templaterPlugin = getPlugin(
+		'templater-obsidian',
+		plugin,
+	) as TemplaterPlugin
+	let tp_file =
+		templaterPlugin.templater.functions_generator.internal_functions.modules_array.find(
+			(m: Module) => m.name == 'file',
+		)
+
+	if (tp_file === undefined) {
+		console.error(
+			"We can't get the templater function. Is it installed correctly?",
+		)
+	}
+
+	return await tp_file!.static_functions.get('create_new')
 }
 
 export function getPlugin(pluginName: string, plugin: FlowPlugin) {
