@@ -85,11 +85,10 @@
 	}
 
 	function removeTask(taskDiv: HTMLDivElement) {
-		const taskListItem = taskDiv.querySelector(
+		const taskItem = taskDiv.querySelector(
 			'.dataview.task-list-item',
 		) as HTMLLIElement
 
-		const taskItem = taskDiv.querySelector('.dataview.task-list-item')
 		if (!taskItem) {
 			console.error('Task item not found')
 			return
