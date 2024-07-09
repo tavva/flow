@@ -79,7 +79,7 @@ export class Tasks {
 		}
 	}
 
-	async unmarkAllCompletedTasksAsPlannedNextAction() {
+	async unmarkAllDoneTasksAsPlannedNextAction() {
 		const tasks = this.getPlannedTasks()
 		for (const task of tasks) {
 			if (task.completed) {

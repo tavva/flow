@@ -141,9 +141,9 @@
 			plugin.tasks.unmarkAllTasksAsPlannedNextAction()
 		}
 	}
-	async function onClearCompletedTasks() {
-		if (confirm('Are you sure you want to clear completed tasks?')) {
-			plugin.tasks.unmarkAllCompletedTasksAsPlannedNextAction()
+	async function onClearDoneTasks() {
+		if (confirm('Are you sure you want to clear done tasks?')) {
+			plugin.tasks.unmarkAllDoneTasksAsPlannedNextAction()
 		}
 	}
 </script>
@@ -178,9 +178,8 @@
 			</button>
 		{/if}
 		{#if plannedTasks.length > 0}
-			<button
-				on:click={onClearCompletedTasks}
-				class="clear-completed-actions">Clear completed</button
+			<button on:click={onClearDoneTasks} class="clear-done-actions"
+				>Clear done</button
 			>
 			<button on:click={onClearTasks} class="clear-all-planned-actions"
 				>Clear all</button
