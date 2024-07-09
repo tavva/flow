@@ -58,8 +58,6 @@ export class NewProjectModal extends Modal {
 				}),
 			)
 
-		const warningEl = contentEl.createDiv()
-		warningEl.addClass('warning')
 		const sphereEl = new Setting(contentEl).setName('Spheres')
 		const sphereContainer = sphereEl.settingEl.createDiv()
 
@@ -99,6 +97,9 @@ export class NewProjectModal extends Modal {
 				}, 500),
 			),
 		)
+
+		const warningEl = contentEl.createDiv()
+		warningEl.addClass('warning')
 
 		new Setting(contentEl).addButton((btn) =>
 			btn
