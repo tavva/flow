@@ -95,6 +95,15 @@
 		}
 
 		const clonedTaskItem = taskItem.cloneNode(true) as HTMLElement
+
+		// We do this as Tasks renders the emoji as an <img> tag, but we need
+		// it to match the task text
+		clonedTaskItem.querySelectorAll('img').forEach((img) => {
+			const altText = img.alt
+			const textNode = document.createTextNode(altText)
+			img.replaceWith(textNode)
+		})
+
 		clonedTaskItem.querySelectorAll('ul').forEach((ul) => ul.remove())
 		const taskName = clonedTaskItem.textContent?.trim() || ''
 
