@@ -3,6 +3,7 @@ import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 import FlowPlugin from 'main'
 import type { TemplaterPlugin, Module } from 'typings/templater'
 
+// TODO: Move the add* functions out to their own utils file
 async function addLineToFile(
 	plugin: FlowPlugin,
 	text: string,
