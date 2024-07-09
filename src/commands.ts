@@ -1,6 +1,8 @@
 import FlowPlugin from 'main'
+import { NewProjectModal } from 'modals/newProjectModal'
 
 import { openPlanningView } from 'views/planning'
+import { createNewProjectFile, parseProjectTemplate } from 'utils'
 
 export async function registerCommands(plugin: FlowPlugin) {
 	// FIXME: Be consistent in how we extract these, we have registerViews and
@@ -18,6 +20,44 @@ export async function registerCommands(plugin: FlowPlugin) {
 		name: 'Open planning view',
 		callback: async () => {
 			openPlanningView(plugin)
+		},
+	})
+
+	plugin.addCommand({
+		id: 'new-project-modal',
+		name: 'Create new project',
+		callback: async () => {
+			new NewProjectModal(
+				plugin,
+				'',
+				async (
+					projectName: string,
+					description: string,
+					spheres: Set<string>,
+					priority: number,
+				) => {
+					const projectFile = await createNewProjectFile(
+						plugin,
+						projectName,
+					)
+					let content = await plugin.app.vault.read(projectFile)
+
+					const sphereText = Array.from(spheres)
+						.map((s) => `project/${s}`)
+						.join(' ')
+
+					content = await parseProjectTemplate({
+						content: content,
+						priority: priority,
+						sphere: sphereText,
+						description: description,
+					})
+
+					await plugin.app.vault.modify(projectFile, content)
+
+					plugin.metrics.count('new-project-created-from-command')
+				},
+			).open()
 		},
 	})
 
