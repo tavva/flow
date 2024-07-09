@@ -4,7 +4,7 @@ import FlowPlugin from 'main'
 
 export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
-	private spheres: string[]
+	private availableSpheres: string[]
 	private selectedSpheres: Set<string> = new Set()
 	private onSubmit: (
 		projectName: string,
@@ -25,7 +25,7 @@ export class NewProjectModal extends Modal {
 	) {
 		super(plugin.app)
 		this.plugin = plugin
-		this.spheres = plugin.settings.spheres
+		this.availableSpheres = plugin.settings.spheres
 		this.selectedSpheres = new Set()
 		this.onSubmit = onSubmit
 	}
@@ -49,7 +49,7 @@ export class NewProjectModal extends Modal {
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')
 
-		this.spheres.forEach((sphere) => {
+		this.availableSpheres.forEach((sphere) => {
 			const button = new ButtonComponent(
 				this.sphereContainer as HTMLElement,
 			)
