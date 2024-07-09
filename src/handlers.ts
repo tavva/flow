@@ -134,8 +134,10 @@ export class Handlers {
 	handleNewProject = async (text: string) => {
 		new NewProjectModal(
 			this.plugin,
+			text,
 			async (
 				projectName: string,
+				description: string,
 				spheres: Set<string>,
 				priority: number,
 			) => {
@@ -150,7 +152,7 @@ export class Handlers {
 					content: content,
 					priority: priority,
 					sphere: sphereText,
-					description: text,
+					description: description,
 				})
 
 				await this.app.vault.modify(projectFile, content)

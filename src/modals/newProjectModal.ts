@@ -6,25 +6,30 @@ export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
 	private onSubmit: (
 		projectName: string,
+		description: string,
 		spheres: Set<string>,
 		priority: number,
 	) => void
 
 	private projectName: string = ''
+	private description: string = ''
 	private availableSpheres: string[]
 	private selectedSpheres: Set<string> = new Set()
 	private priority: number | undefined
 
 	constructor(
 		plugin: FlowPlugin,
+		description: string,
 		onSubmit: (
 			projectName: string,
+			description: string,
 			spheres: Set<string>,
 			priority: number,
 		) => void,
 	) {
 		super(plugin.app)
 		this.plugin = plugin
+		this.description = description
 		this.availableSpheres = plugin.settings.spheres
 		this.selectedSpheres = new Set()
 		this.onSubmit = onSubmit
@@ -45,6 +50,14 @@ export class NewProjectModal extends Modal {
 
 		const sphereContainer = contentEl.createDiv()
 		sphereContainer.addClass('flow-modal-content')
+		new Setting(contentEl)
+			.setName('Description')
+			.setClass('flow-modal-project-description')
+			.addTextArea((text) =>
+				text.setValue(this.description).onChange((value) => {
+					this.description = value
+				}),
+			)
 
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')
@@ -121,6 +134,7 @@ export class NewProjectModal extends Modal {
 
 					this.onSubmit(
 						this.projectName,
+						this.description,
 						this.selectedSpheres,
 						this.priority,
 					)
