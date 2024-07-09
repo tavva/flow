@@ -39,7 +39,7 @@ export class NewProjectModal extends Modal {
 		const { contentEl } = this
 
 		contentEl.createEl('h2', {
-			text: 'Create a new project and add next action',
+			text: 'Create a new project',
 		})
 
 		new Setting(contentEl).setName('Project name').addText((text) =>
