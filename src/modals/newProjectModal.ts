@@ -9,11 +9,11 @@ export class NewProjectModal extends Modal {
 		spheres: Set<string>,
 		priority: number,
 	) => void
+
 	private projectName: string = ''
 	private availableSpheres: string[]
 	private selectedSpheres: Set<string> = new Set()
 	private priority: number | undefined
-	private sphereContainer: HTMLElement | null = null
 
 	constructor(
 		plugin: FlowPlugin,
@@ -43,16 +43,14 @@ export class NewProjectModal extends Modal {
 			}),
 		)
 
-		this.sphereContainer = contentEl.createDiv()
-		this.sphereContainer.addClass('flow-modal-content')
+		const sphereContainer = contentEl.createDiv()
+		sphereContainer.addClass('flow-modal-content')
 
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')
 
 		this.availableSpheres.forEach((sphere) => {
-			const button = new ButtonComponent(
-				this.sphereContainer as HTMLElement,
-			)
+			const button = new ButtonComponent(sphereContainer as HTMLElement)
 			button.setButtonText(sphere)
 
 			button.onClick(() => {
