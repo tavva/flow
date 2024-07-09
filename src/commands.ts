@@ -5,10 +5,6 @@ import { openPlanningView } from 'views/planning'
 import { createNewProjectFile, parseProjectTemplate } from 'utils'
 
 export async function registerCommands(plugin: FlowPlugin) {
-	// FIXME: Be consistent in how we extract these, we have registerViews and
-	// registerCommands where one is a method on the plugin and the other is a
-	// function in its own file
-
 	plugin.addCommand({
 		id: 'start-processing',
 		name: 'Start processing',
