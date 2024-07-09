@@ -120,6 +120,8 @@
 
 		if (task) {
 			plugin.tasks.unmarkTaskAsPlannedNextAction(task)
+		} else {
+			console.error('Task not found')
 		}
 
 		plannedTasks = plugin.tasks.getPlannedTasks()
