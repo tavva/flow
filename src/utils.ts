@@ -276,6 +276,44 @@ async function getTemplaterCreateNewFunction(
 	return await tp_file!.static_functions.get('create_new')
 }
 
+export async function parseProjectTemplate(options: {
+	content: string
+	priority: number
+	sphere: string
+	description: string
+}) {
+	const { content, priority, sphere, description } = options
+
+	let newContent = content
+
+	const replacements = [
+		{
+			regex: /{{\s*priority\s*}}/g,
+			replaceWith: priority.toString(),
+		},
+		{
+			regex: /{{\s*sphere\s*}}/g,
+			replaceWith: sphere,
+		},
+		{
+			regex: /{{\s*description\s*}}/g,
+			replaceWith: description,
+		},
+	]
+
+	function replacer(str: string, regex: RegExp, replaceWith: string) {
+		return str.replace(regex, function () {
+			return replaceWith
+		})
+	}
+
+	for (const { regex, replaceWith } of replacements) {
+		newContent = replacer(newContent, regex, replaceWith)
+	}
+
+	return newContent
+}
+
 export function getPlugin(pluginName: string, plugin: FlowPlugin) {
 	// @ts-ignore
 	return plugin.app.plugins.plugins[pluginName]

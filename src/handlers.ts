@@ -10,6 +10,7 @@ import {
 	getFilesWithTagPrefix,
 	readFileContent,
 	createNewProjectFile,
+	parseProjectTemplate,
 } from 'utils'
 
 import FlowPlugin from 'main'
@@ -119,12 +120,6 @@ export class Handlers {
 		).open()
 	}
 
-	private replacer(str: string, regex: RegExp, replaceWith: string) {
-		return str.replace(regex, function () {
-			return replaceWith
-		})
-	}
-
 	handleNewProject = async (text: string) => {
 		new NewProjectModal(
 			this.plugin,
@@ -145,7 +140,7 @@ export class Handlers {
 					.map((s) => `project/${s}`)
 					.join(' ')
 
-				content = await this.parseTemplate({
+				content = await parseProjectTemplate({
 					content: content,
 					priority: priority,
 					sphere: sphereText,
@@ -189,38 +184,6 @@ export class Handlers {
 			this.plugin.metrics.count('file-processed')
 			this.state.startProcessing()
 		}
-	}
-
-	private async parseTemplate(options: {
-		content: string
-		priority: number
-		sphere: string
-		description: string
-	}) {
-		const { content, priority, sphere, description } = options
-
-		let newContent = content
-
-		const replacements = [
-			{
-				regex: /{{\s*priority\s*}}/g,
-				replaceWith: priority.toString(),
-			},
-			{
-				regex: /{{\s*sphere\s*}}/g,
-				replaceWith: sphere,
-			},
-			{
-				regex: /{{\s*description\s*}}/g,
-				replaceWith: description,
-			},
-		]
-
-		for (const { regex, replaceWith } of replacements) {
-			newContent = this.replacer(newContent, regex, replaceWith)
-		}
-
-		return newContent
 	}
 
 	private async updateInboxFile(processedLine: LineWithFile) {
