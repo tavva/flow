@@ -149,8 +149,6 @@ export class Handlers {
 
 				await this.app.vault.modify(projectFile, content)
 
-				await addToProjectNextActions(this.plugin, projectFile, text)
-
 				await this.removeProcessedItem()
 				this.plugin.metrics.count('new-project-created')
 			},
