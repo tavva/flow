@@ -14,7 +14,6 @@ export class NewProjectModal extends Modal {
 	private projectName: string = ''
 	private priority: number | undefined
 	private sphereContainer: HTMLElement | null = null
-	private sphereButtons: ButtonComponent[] = []
 
 	constructor(
 		plugin: FlowPlugin,
@@ -67,8 +66,6 @@ export class NewProjectModal extends Modal {
 					button.setClass('selected')
 				}
 			})
-
-			this.sphereButtons.push(button)
 		})
 
 		new Setting(contentEl).setName('Priority').addText((text) =>
