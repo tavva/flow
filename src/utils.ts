@@ -160,11 +160,12 @@ export function getFilesWithTagPrefix(
 	const vault = plugin.app.vault
 	const files = vault.getFiles()
 
+	const templaterPlugin = getPlugin(
+		'templater-obsidian',
+		plugin,
+	) as TemplaterPlugin
+
 	return files.filter((file) => {
-		const templaterPlugin = getPlugin(
-			'templater-obsidian',
-			plugin,
-		) as TemplaterPlugin
 		if (file.path.startsWith(templaterPlugin.settings.template_folder)) {
 			return false
 		}
