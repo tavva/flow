@@ -7,6 +7,7 @@ import { FlowSettingsTab } from 'settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from 'views/sphere'
 import { PlanningView, PLANNING_VIEW_TYPE } from 'views/planning'
+import { SetupView, SETUP_VIEW_TYPE } from 'views/setup'
 import { registerCommands } from 'commands'
 import { Store } from 'store'
 import { Metrics } from 'metrics'
@@ -84,6 +85,7 @@ export default class FlowPlugin extends Plugin {
 			PLANNING_VIEW_TYPE,
 			(leaf) => new PlanningView(leaf, this),
 		)
+		this.registerView(SETUP_VIEW_TYPE, (leaf) => new SetupView(leaf, this))
 	}
 	private registerEvents() {
 		this.registerEvent(
