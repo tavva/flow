@@ -26,6 +26,8 @@ export default class FlowPlugin extends Plugin {
 
 	async onload() {
 		this.app.workspace.onLayoutReady(async () => {
+			this.registerViews()
+
 			if (!this.checkDependencies()) {
 				return
 			}
@@ -38,7 +40,6 @@ export default class FlowPlugin extends Plugin {
 			this.metrics = new Metrics(this)
 			this.tasks = new Tasks(this)
 
-			this.registerViews()
 			registerCommands(this)
 			this.registerEvents()
 			this.setupWatchers()
