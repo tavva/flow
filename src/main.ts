@@ -193,7 +193,7 @@ export default class FlowPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			loadedData.settings || {},
+			loadedData?.settings || {},
 		)
 	}
 
