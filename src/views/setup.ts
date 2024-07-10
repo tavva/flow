@@ -18,4 +18,8 @@ export class SetupView extends ItemView {
 	getDisplayText() {
 		return 'Flow setup'
 	}
+
+	override getIcon(): string {
+		return 'waves'
+	}
 }
