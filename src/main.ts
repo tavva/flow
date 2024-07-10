@@ -18,6 +18,7 @@ import { Metrics } from 'metrics'
 import { Tasks } from 'tasks'
 import { getPlugin } from 'utils'
 import { createEditorMenu } from 'editorMenu'
+import { checkDependencies } from 'dependencies'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
@@ -32,7 +33,7 @@ export default class FlowPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(async () => {
 			this.registerViews()
 
-			if (!this.checkDependencies()) {
+			if (!checkDependencies(this)) {
 				this.startSetupFlow()
 				return
 			}
@@ -78,33 +79,6 @@ export default class FlowPlugin extends Plugin {
 		}
 
 		workspace.revealLeaf(leaf)
-	}
-
-	private checkDependencies(): boolean {
-		const dependencyList = [
-			['obsidian-tasks-plugin', 'Tasks'],
-			['dataview', 'Dataview'],
-			['templater-obsidian', 'Templater'],
-		]
-
-		const unmetDependencies = []
-
-		for (const [dependency, dependencyName] of dependencyList) {
-			if (!getPlugin(dependency, this)) {
-				unmetDependencies.push([dependency, dependencyName])
-			}
-		}
-
-		if (unmetDependencies.length > 0) {
-			const dependencyList = unmetDependencies.map((d) => d[0]).join(', ')
-			const dependencyNameList = unmetDependencies.map((d) => d[1]).join(', ')
-			new Notice(
-				`Flow requires the following plugins to be installed and enabled: ${dependencyNameList} (${dependencyList}).`,
-			)
-			return false
-		}
-
-		return true
 	}
 
 	private registerViews() {
