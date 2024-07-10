@@ -1,8 +1,12 @@
-import { Plugin, TFile, Notice, Events } from 'obsidian'
+import { Plugin, TFile, Notice, Events, WorkspaceLeaf } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from 'state'
-import { type FlowSettings, DEFAULT_SETTINGS } from 'settings/settings'
+import {
+	type FlowSettings,
+	DEFAULT_SETTINGS,
+	checkMissingSettings,
+} from 'settings/settings'
 import { FlowSettingsTab } from 'settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing'
 import { SphereView, SPHERE_VIEW_TYPE } from 'views/sphere'
@@ -29,9 +33,17 @@ export default class FlowPlugin extends Plugin {
 			this.registerViews()
 
 			if (!this.checkDependencies()) {
+				this.startSetupFlow()
 				return
 			}
+
 			await this.loadSettings()
+
+			if (checkMissingSettings(this.settings).length > 0) {
+				this.startSetupFlow()
+				return
+			}
+
 			this.addSettingTab(new FlowSettingsTab(this))
 
 			this.dv = getAPI()
@@ -44,6 +56,28 @@ export default class FlowPlugin extends Plugin {
 			this.registerEvents()
 			this.setupWatchers()
 		})
+	}
+
+	private startSetupFlow() {
+		const { workspace } = this.app
+
+		let leaf: WorkspaceLeaf | null = null
+		const leaves = workspace.getLeavesOfType(SETUP_VIEW_TYPE)
+
+		if (leaves.length > 0) {
+			leaf = leaves[0]
+		} else {
+			leaf = workspace.getRightLeaf(false)
+			if (!leaf) {
+				console.error(
+					'Could not find or create a leaf for the setup view',
+				)
+				return
+			}
+			leaf.setViewState({ type: SETUP_VIEW_TYPE, active: true })
+		}
+
+		workspace.revealLeaf(leaf)
 	}
 
 	private checkDependencies(): boolean {

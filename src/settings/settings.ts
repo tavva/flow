@@ -25,3 +25,18 @@ export const DEFAULT_SETTINGS: FlowSettings = {
 
 	spheres: ['personal', 'work'],
 }
+
+const requiredSettings: (keyof FlowSettings)[] = [
+	'inboxFilesFolderPath',
+	'inboxFolderPath',
+	'nextActionsFilePath',
+	'newProjectTemplateFilePath',
+	'projectsFolderPath',
+	'newPersonTemplateFilePath',
+	'peopleFolderPath',
+	'somedayFilePath',
+]
+
+export function checkMissingSettings(obj: Partial<FlowSettings>): string[] {
+	return requiredSettings.filter((key) => !(key in obj))
+}
