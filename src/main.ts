@@ -3,7 +3,7 @@ import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from 'state'
 import {
-	type FlowSettings,
+	type FlowSettingsType,
 	DEFAULT_SETTINGS,
 	checkMissingSettings,
 } from 'settings/settings'
@@ -22,7 +22,7 @@ import { checkDependencies } from 'dependencies'
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
 	dv: DataviewApi
-	settings!: FlowSettings
+	settings!: FlowSettingsType
 	store!: Store
 	metrics!: Metrics
 	tasks!: Tasks

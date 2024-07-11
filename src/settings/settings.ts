@@ -1,42 +1,44 @@
-export interface FlowSettings {
-	inboxFilesFolderPath: string
-	inboxFolderPath: string
-	nextActionsFilePath: string
-	newProjectTemplateFilePath: string
-	projectsFolderPath: string
-	newPersonTemplateFilePath: string
-	peopleFolderPath: string
-	somedayFilePath: string
-	appendTask: string
+import type FlowPlugin from 'main'
 
-	spheres: string[]
+import { settingsDefinitions } from './definitions'
+
+export type FlowSettingsType = {
+	[K in keyof typeof settingsDefinitions]: (typeof settingsDefinitions)[K]['defaultValue']
 }
 
-export const DEFAULT_SETTINGS: FlowSettings = {
-	inboxFilesFolderPath: 'Flow Inbox Files',
-	inboxFolderPath: 'Flow Inbox Folder',
-	nextActionsFilePath: 'Next Actions.md',
-	newProjectTemplateFilePath: 'Templates/Project.md',
-	projectsFolderPath: 'Projects',
-	newPersonTemplateFilePath: 'Templates/Person.md',
-	peopleFolderPath: 'People',
-	somedayFilePath: 'Someday.md',
-	appendTask: '',
+export const generateFlowSettings = () => {
+	const FlowSettings: Partial<FlowSettingsType> = {}
+	const RequiredSettings: (keyof FlowSettingsType)[] = []
 
-	spheres: ['personal', 'work'],
+	for (const key in settingsDefinitions) {
+		if (settingsDefinitions.hasOwnProperty(key)) {
+			const settingKey = key as keyof FlowSettingsType
+			FlowSettings[settingKey] = settingsDefinitions[settingKey]
+				.defaultValue as any
+			RequiredSettings.push(settingKey)
+		}
+	}
+
+	return {
+		FlowSettings: FlowSettings as FlowSettingsType,
+		RequiredSettings,
+	}
 }
 
-const requiredSettings: (keyof FlowSettings)[] = [
-	'inboxFilesFolderPath',
-	'inboxFolderPath',
-	'nextActionsFilePath',
-	'newProjectTemplateFilePath',
-	'projectsFolderPath',
-	'newPersonTemplateFilePath',
-	'peopleFolderPath',
-	'somedayFilePath',
-]
+export const { FlowSettings, RequiredSettings } = generateFlowSettings()
+export const DEFAULT_SETTINGS: FlowSettingsType = FlowSettings
 
-export function checkMissingSettings(obj: Partial<FlowSettings>): string[] {
-	return requiredSettings.filter((key) => !(key in obj))
+export async function getMissingSettings(
+	plugin: FlowPlugin,
+): Promise<string[]> {
+	await plugin.loadSettings()
+	return RequiredSettings.filter(
+		(key) => !(plugin.settings && key in plugin.settings),
+	)
+}
+
+export async function hasMissingSettings(plugin: FlowPlugin): Promise<boolean> {
+	const missingSettings = await getMissingSettings(plugin)
+	console.log('You are missing settings', missingSettings)
+	return missingSettings.length > 0
 }
