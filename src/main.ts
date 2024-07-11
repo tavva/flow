@@ -5,7 +5,7 @@ import { StateManager } from 'state'
 import {
 	type FlowSettingsType,
 	DEFAULT_SETTINGS,
-	checkMissingSettings,
+	hasMissingSettings,
 } from 'settings/settings'
 import { FlowSettingsTab } from 'settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing'
@@ -39,7 +39,7 @@ export default class FlowPlugin extends Plugin {
 
 			await this.loadSettings()
 
-			if (checkMissingSettings(this.settings).length > 0) {
+			if (await hasMissingSettings(this)) {
 				this.startSetupFlow()
 				return
 			}
@@ -208,6 +208,7 @@ export default class FlowPlugin extends Plugin {
 
 	async loadSettings() {
 		const loadedData = await this.loadData()
+
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
