@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice, Events, WorkspaceLeaf } from 'obsidian'
+import { Plugin, TFile, Events, WorkspaceLeaf } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from 'state'
@@ -16,7 +16,6 @@ import { registerCommands } from 'commands'
 import { Store } from 'store'
 import { Metrics } from 'metrics'
 import { Tasks } from 'tasks'
-import { getPlugin } from 'utils'
 import { createEditorMenu } from 'editorMenu'
 import { checkDependencies } from 'dependencies'
 
