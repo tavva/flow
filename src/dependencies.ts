@@ -1,9 +1,7 @@
-import { Notice } from 'obsidian'
-
 import type FlowPlugin from 'main'
 import { getPlugin } from 'utils'
 
-export function checkDependencies(plugin: FlowPlugin): boolean {
+export function getMissingDependencies(plugin: FlowPlugin): string[][] {
 	const dependencyList = [
 		['obsidian-tasks-plugin', 'Tasks'],
 		['dataview', 'Dataview'],
@@ -18,12 +16,14 @@ export function checkDependencies(plugin: FlowPlugin): boolean {
 		}
 	}
 
+	return unmetDependencies
+}
+
+export function checkDependencies(plugin: FlowPlugin): boolean {
+	const unmetDependencies = getMissingDependencies(plugin)
+
+	return unmetDependencies.length === 0
 	if (unmetDependencies.length > 0) {
-		const dependencyList = unmetDependencies.map((d) => d[0]).join(', ')
-		const dependencyNameList = unmetDependencies.map((d) => d[1]).join(', ')
-		new Notice(
-			`Flow requires the following plugins to be installed and enabled: ${dependencyNameList} (${dependencyList}).`,
-		)
 		return false
 	}
 
