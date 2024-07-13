@@ -2,20 +2,26 @@
 	import type FlowPlugin from 'main'
 
 	import { getMissingDependencies } from 'dependencies'
+	import { getInvalidSettings } from 'settings/settings'
 
 	export let plugin: FlowPlugin
 
-	$: settingsMessage = ''
+	let settingsData: string[] | null = null
+	let dependenciesData: string[][] | null = null
 
-	$: missingDependencies = getMissingDependencies(plugin)
+	async function updateDependencies() {
+		dependenciesData = await getMissingDependencies(plugin)
+		dependenciesData = dependenciesData
+	}
 
-	$: dependenciesMessage =
-		missingDependencies.length === 0
-			? 'All dependencies are installed.'
-			: 'You need to install and enable some dependencies.'
+	async function updateSettings() {
+		settingsData = await getInvalidSettings(plugin)
+		settingsData = settingsData
+	}
 
 	setInterval(() => {
-		missingDependencies = getMissingDependencies(plugin)
+		updateDependencies()
+		updateSettings()
 	}, 1000)
 </script>
 
@@ -25,14 +31,35 @@
 
 	<div class="flow-checks">
 		<h3>Dependencies</h3>
-		<p class="dependencies">{dependenciesMessage}</p>
-		<ul>
-			{#each missingDependencies as [dependency, dependencyName]}
-				<li>{dependencyName} ({dependency})</li>
-			{/each}
-		</ul>
+		<p class="dependencies">
+			{#if dependenciesData}
+				{#if dependenciesData.length === 0}
+					<p>All dependencies are installed!</p>
+				{:else}
+					<ul>
+						{#each dependenciesData as [pluginName, plugin]}
+							<li>{pluginName} ({plugin})</li>
+						{/each}
+					</ul>
+				{/if}
+			{/if}
+		</p>
 
 		<h3>Settings</h3>
-		<p class="settings">{settingsMessage}</p>
+		<p class="settings">
+			{#if settingsData}
+				{#key settingsData}
+					{#if settingsData.length === 0}
+						<p>All settings are set up correctly.</p>
+					{:else}
+						<ul>
+							{#each settingsData as info}
+								<li>{info}</li>
+							{/each}
+						</ul>
+					{/if}
+				{/key}
+			{/if}
+		</p>
 	</div>
 </div>

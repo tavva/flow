@@ -1,6 +1,7 @@
 import type FlowPlugin from 'main'
 
 import { settingsDefinitions } from './definitions'
+import type { SettingDefinition, SettingsDefinitions } from './definitions'
 
 export type FlowSettingsType = {
 	[K in keyof typeof settingsDefinitions]: (typeof settingsDefinitions)[K]['defaultValue']
@@ -8,37 +9,45 @@ export type FlowSettingsType = {
 
 export const generateFlowSettings = () => {
 	const FlowSettings: Partial<FlowSettingsType> = {}
-	const RequiredSettings: (keyof FlowSettingsType)[] = []
 
 	for (const key in settingsDefinitions) {
 		if (settingsDefinitions.hasOwnProperty(key)) {
 			const settingKey = key as keyof FlowSettingsType
 			FlowSettings[settingKey] = settingsDefinitions[settingKey]
 				.defaultValue as any
-			RequiredSettings.push(settingKey)
 		}
 	}
 
-	return {
-		FlowSettings: FlowSettings as FlowSettingsType,
-		RequiredSettings,
-	}
+	return FlowSettings
 }
 
-export const { FlowSettings, RequiredSettings } = generateFlowSettings()
-export const DEFAULT_SETTINGS: FlowSettingsType = FlowSettings
+export const FlowSettings = generateFlowSettings()
+export const DEFAULT_SETTINGS: Partial<FlowSettingsType> = FlowSettings
 
-export async function getMissingSettings(
+type FilteredSettings = {
+	[K in keyof SettingsDefinitions]?: SettingsDefinitions[K]
+}
+
+export async function getInvalidSettings(
 	plugin: FlowPlugin,
 ): Promise<string[]> {
 	await plugin.loadSettings()
-	return RequiredSettings.filter(
-		(key) => !(plugin.settings && key in plugin.settings),
-	)
+
+	const invalidSettings: string[] = []
+	;(
+		Object.keys(settingsDefinitions) as Array<keyof SettingsDefinitions>
+	).forEach((key) => {
+		const setting = settingsDefinitions[key]
+		const checkResult = setting.check(plugin.settings[key], plugin)
+		if (checkResult !== true) {
+			invalidSettings.push(checkResult as string)
+		}
+	})
+
+	return invalidSettings
 }
 
-export async function hasMissingSettings(plugin: FlowPlugin): Promise<boolean> {
-	const missingSettings = await getMissingSettings(plugin)
-	console.log('You are missing settings', missingSettings)
-	return missingSettings.length > 0
+export async function hasInvalidSettings(plugin: FlowPlugin): Promise<boolean> {
+	const invalidSettings = await getInvalidSettings(plugin)
+	return invalidSettings.length > 0
 }

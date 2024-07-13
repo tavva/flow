@@ -5,20 +5,22 @@ import { FileSuggest } from 'settings/suggesters/FileSuggester'
 import { FolderSuggest } from 'settings/suggesters/FolderSuggester'
 import { resetSphereCommands } from 'commands'
 
-interface SettingDefinition<T> {
+export interface SettingDefinition<T> {
 	defaultValue: T
-	validate: (value: T) => boolean
-	check?: (value: T, plugin: FlowPlugin) => boolean
+	check: (value: T, plugin: FlowPlugin) => boolean | string
 	render: (containerEl: HTMLElement, plugin: FlowPlugin) => void
 }
 
 export const rawSettingsDefinitions = {
 	inboxFilesFolderPath: {
 		defaultValue: '/default/path/inboxFiles',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFolderByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFolderByPath(value) !== null) {
+				return true
+			} else {
+				return "Your inbox folder doesn't exist. You need at least one inbox folder to use Flow."
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Line at a time')
@@ -36,12 +38,16 @@ export const rawSettingsDefinitions = {
 				})
 		},
 	},
+
 	inboxFolderPath: {
 		defaultValue: '/default/path/inbox',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFolderByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFolderByPath(value) !== null) {
+				return true
+			} else {
+				return "Your inbox files folder doesn't exist. You need to set your inbox files folder to use Flow."
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Note at a time')
@@ -61,10 +67,13 @@ export const rawSettingsDefinitions = {
 	},
 	nextActionsFilePath: {
 		defaultValue: '/default/path/nextActions',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFileByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFileByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no next actions file. You need to set a next actions file to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Next actions')
@@ -85,10 +94,13 @@ export const rawSettingsDefinitions = {
 	},
 	newProjectTemplateFilePath: {
 		defaultValue: '/default/path/newProjectTemplate',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFileByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFileByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no project template set. You need to set a project template to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('New project template')
@@ -106,10 +118,13 @@ export const rawSettingsDefinitions = {
 	},
 	projectsFolderPath: {
 		defaultValue: '/default/path/projects',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFolderByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFolderByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no projects folder set. You need to set a projects folder to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Projects folder')
@@ -127,10 +142,13 @@ export const rawSettingsDefinitions = {
 	},
 	newPersonTemplateFilePath: {
 		defaultValue: '/default/path/newPersonTemplate',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFileByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFileByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no person template set. You need to set a person template to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('New person template')
@@ -150,10 +168,13 @@ export const rawSettingsDefinitions = {
 	},
 	peopleFolderPath: {
 		defaultValue: '/default/path/people',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFolderByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFolderByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no people folder set. You need to set a people folder to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('People folder')
@@ -171,10 +192,13 @@ export const rawSettingsDefinitions = {
 	},
 	somedayFilePath: {
 		defaultValue: '/default/path/someday',
-		validate: (value: string) =>
-			typeof value === 'string' && value.length > 0,
-		check: (value: string, plugin: FlowPlugin) =>
-			plugin.app.vault.getFileByPath(value) !== null,
+		check: (value: string, plugin: FlowPlugin) => {
+			if (plugin.app.vault.getFileByPath(value) !== null) {
+				return true
+			} else {
+				return 'You have no someday/maybe file. You need to set a someday/maybe file to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Someday/Maybe')
@@ -194,7 +218,7 @@ export const rawSettingsDefinitions = {
 	},
 	appendTagToTask: {
 		defaultValue: '',
-		validate: (value: string) => typeof value === 'string',
+		check: (_value: string, _plugin: FlowPlugin) => true,
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Append to task')
@@ -213,9 +237,13 @@ export const rawSettingsDefinitions = {
 	},
 	spheres: {
 		defaultValue: [] as string[],
-		validate: (value: string[]) =>
-			Array.isArray(value) &&
-			value.every((item) => typeof item === 'string'),
+		check: (value: string[], _plugin: FlowPlugin) => {
+			if (value.length > 0) {
+				return true
+			} else {
+				return 'You need to set at least one sphere to use Flow.'
+			}
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Spheres')
@@ -246,7 +274,7 @@ export const rawSettingsDefinitions = {
 	},
 }
 
-type SettingsDefinitions = {
+export type SettingsDefinitions = {
 	[K in keyof typeof rawSettingsDefinitions]: SettingDefinition<any>
 }
 

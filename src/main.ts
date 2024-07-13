@@ -5,7 +5,7 @@ import { StateManager } from 'state'
 import {
 	type FlowSettingsType,
 	DEFAULT_SETTINGS,
-	hasMissingSettings,
+	hasInvalidSettings,
 } from 'settings/settings'
 import { FlowSettingsTab } from 'settings/settingsTab'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing'
@@ -32,19 +32,18 @@ export default class FlowPlugin extends Plugin {
 		this.app.workspace.onLayoutReady(async () => {
 			this.registerViews()
 
+			await this.loadSettings()
+			this.addSettingTab(new FlowSettingsTab(this))
+
 			if (!checkDependencies(this)) {
 				this.startSetupFlow()
 				return
 			}
 
-			await this.loadSettings()
-
-			if (await hasMissingSettings(this)) {
+			if (await hasInvalidSettings(this)) {
 				this.startSetupFlow()
 				return
 			}
-
-			this.addSettingTab(new FlowSettingsTab(this))
 
 			this.dv = getAPI()
 			this.stateManager = new StateManager(this)
