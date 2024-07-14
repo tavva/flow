@@ -25,8 +25,8 @@ async function addLineToFile(
 	if (sphereString) {
 		content = content + ' ' + sphereString
 	}
-	if (plugin.settings.appendTask) {
-		content = content + ' ' + plugin.settings.appendTask
+	if (plugin.settings.appendTagToTask) {
+		content = content + ' ' + plugin.settings.appendTagToTask
 	}
 	content.concat('\n')
 
@@ -72,8 +72,8 @@ async function addToFileSection(
 
 	const taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
 
-	if (plugin.settings.appendTask) {
-		taskLine.concat(' ' + plugin.settings.appendTask)
+	if (plugin.settings.appendTagToTask) {
+		taskLine.concat(' ' + plugin.settings.appendTagToTask)
 	}
 
 	taskLine.concat('\n')
@@ -86,7 +86,11 @@ async function addToFileSection(
 			newContent.slice(insertionIndex)
 	} else {
 		newContent +=
-			'\n' + sectionName + taskLine + ' ' + plugin.settings.appendTask
+			'\n' +
+			sectionName +
+			taskLine +
+			' ' +
+			plugin.settings.appendTagToTask
 	}
 
 	await plugin.app.vault.modify(projectFile, newContent)
