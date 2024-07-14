@@ -23,6 +23,7 @@ export class SphereSelectorModal extends Modal {
 
 		this.sphereContainer = contentEl.createDiv()
 		this.sphereContainer.addClass('flow-modal-content')
+		this.sphereContainer.addClass('flow-modal-sphere-selector')
 
 		const warningEl = contentEl.createDiv()
 		warningEl.addClass('warning')

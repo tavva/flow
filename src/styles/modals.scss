@@ -1,11 +1,17 @@
 .flow-modal-content {
 	button {
-		margin-left: 10px;
-
 		&.selected {
 			background-color: var(--interactive-accent);
 		}
 	}
+}
+
+.flow-modal-sphere-selector {
+	button {
+		margin: 0 8px 10px 0;
+	}
+
+	margin-bottom: 10px;
 }
 
 .flow-project-modal {
