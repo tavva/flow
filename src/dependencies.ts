@@ -21,13 +21,8 @@ export async function getMissingDependencies(
 	return unmetDependencies
 }
 
-export async function checkDependencies(plugin: FlowPlugin): boolean {
+export async function checkDependencies(plugin: FlowPlugin): Promise<boolean> {
 	const unmetDependencies = await getMissingDependencies(plugin)
 
 	return unmetDependencies.length === 0
-	if (unmetDependencies.length > 0) {
-		return false
-	}
-
-	return true
 }
