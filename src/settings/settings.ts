@@ -30,17 +30,17 @@ type FilteredSettings = {
 
 export async function getInvalidSettings(
 	plugin: FlowPlugin,
-): Promise<string[]> {
+): Promise<[string, SettingDefinition<any>][]> {
 	await plugin.loadSettings()
 
-	const invalidSettings: string[] = []
+	const invalidSettings: [string, SettingDefinition<any>][] = []
 	;(
 		Object.keys(settingsDefinitions) as Array<keyof SettingsDefinitions>
 	).forEach((key) => {
 		const setting = settingsDefinitions[key]
 		const checkResult = setting.check(plugin.settings[key], plugin)
 		if (checkResult !== true) {
-			invalidSettings.push(checkResult as string)
+			invalidSettings.push([checkResult as string, setting])
 		}
 	})
 

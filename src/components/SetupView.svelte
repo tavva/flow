@@ -3,10 +3,11 @@
 
 	import { getMissingDependencies } from 'dependencies'
 	import { getInvalidSettings } from 'settings/settings'
+	import type { SettingDefinition } from 'settings/definitions'
 
 	export let plugin: FlowPlugin
 
-	let settingsData: string[] | null = null
+	let settingsData: [string, SettingDefinition<any>][] | null = null
 	let dependenciesData: string[][] | null = null
 
 	async function updateDependencies() {
@@ -53,7 +54,7 @@
 						<p>All settings are set up correctly.</p>
 					{:else}
 						<ul>
-							{#each settingsData as info}
+							{#each settingsData as [info, _setting]}
 								<li>{info}</li>
 							{/each}
 						</ul>
