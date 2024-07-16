@@ -117,7 +117,6 @@ export const rawSettingsDefinitions = {
 		},
 		create: async (plugin: FlowPlugin) => {
 			const filePath = plugin.settings.newProjectTemplateFilePath
-			console.log('creating project template', filePath)
 			const fileExists = await plugin.app.vault.adapter.exists(filePath)
 			if (fileExists) {
 				console.error(
