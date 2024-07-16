@@ -2,7 +2,10 @@
 	import type FlowPlugin from 'main'
 
 	import { getMissingDependencies } from 'dependencies'
-	import { getInvalidSettings } from 'settings/settings'
+	import {
+		createFilesFromSettings,
+		getInvalidSettings,
+	} from 'settings/settings'
 	import type { SettingDefinition } from 'settings/definitions'
 
 	export let plugin: FlowPlugin
@@ -24,6 +27,10 @@
 		updateDependencies()
 		updateSettings()
 	}, 1000)
+
+	function handleCreateFilesFromSettings() {
+		createFilesFromSettings(plugin)
+	}
 </script>
 
 <div>
@@ -58,6 +65,10 @@
 								<li>{info}</li>
 							{/each}
 						</ul>
+						<button on:click={handleCreateFilesFromSettings}
+							>Automatically create files and folders from
+							settings</button
+						>
 					{/if}
 				{/key}
 			{/if}

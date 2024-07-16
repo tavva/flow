@@ -51,3 +51,12 @@ export async function hasInvalidSettings(plugin: FlowPlugin): Promise<boolean> {
 	const invalidSettings = await getInvalidSettings(plugin)
 	return invalidSettings.length > 0
 }
+
+export async function createFilesFromSettings(plugin: FlowPlugin) {
+	const invalidSettings = await getInvalidSettings(plugin)
+	for (const [_message, setting] of invalidSettings) {
+		if (setting.create) {
+			setting.create(plugin)
+		}
+	}
+}
