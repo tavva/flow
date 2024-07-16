@@ -236,7 +236,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	spheres: {
-		defaultValue: [] as string[],
+		defaultValue: ['personal', 'work'],
 		check: (value: string[], _plugin: FlowPlugin) => {
 			if (value.length > 0) {
 				return true
