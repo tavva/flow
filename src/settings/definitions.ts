@@ -18,7 +18,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
 			} else {
-				return "Your inbox folder doesn't exist."
+				return `Your inbox folder (${value}) doesn't exist.`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -45,7 +45,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
 			} else {
-				return "Your inbox files folder doesn't exist."
+				return `Your inbox files folder (${value}) doesn't exist.`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -71,7 +71,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no next actions file.'
+				return `You have no next actions file (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -98,7 +98,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no project template set.'
+				return `You have no project template (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -122,7 +122,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no projects folder set.'
+				return `You have no projects folder (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -146,7 +146,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no person template set.'
+				return `You have no person template (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -172,7 +172,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no people folder set.'
+				return `You have no people folder (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
@@ -196,7 +196,7 @@ export const rawSettingsDefinitions = {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
 			} else {
-				return 'You have no someday/maybe file.'
+				return `You have no someday/maybe file (${value}).`
 			}
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
