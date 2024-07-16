@@ -30,6 +30,14 @@ export default class FlowPlugin extends Plugin {
 
 	async onload() {
 		this.app.workspace.onLayoutReady(async () => {
+			// All views can only be registered with our dependencies loaded.
+			// However, this one is required even if our dependencies aren't
+			// available, so we register it separately.
+			this.registerView(
+				SETUP_VIEW_TYPE,
+				(leaf) => new SetupView(leaf, this),
+			)
+
 			await this.loadSettings()
 			this.addSettingTab(new FlowSettingsTab(this))
 
@@ -92,7 +100,6 @@ export default class FlowPlugin extends Plugin {
 			PLANNING_VIEW_TYPE,
 			(leaf) => new PlanningView(leaf, this),
 		)
-		this.registerView(SETUP_VIEW_TYPE, (leaf) => new SetupView(leaf, this))
 	}
 	private registerEvents() {
 		this.registerEvent(
