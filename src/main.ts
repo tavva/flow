@@ -30,8 +30,6 @@ export default class FlowPlugin extends Plugin {
 
 	async onload() {
 		this.app.workspace.onLayoutReady(async () => {
-			this.registerViews()
-
 			await this.loadSettings()
 			this.addSettingTab(new FlowSettingsTab(this))
 
@@ -50,6 +48,8 @@ export default class FlowPlugin extends Plugin {
 			this.store = new Store(this)
 			this.metrics = new Metrics(this)
 			this.tasks = new Tasks(this)
+
+			this.registerViews()
 
 			registerCommands(this)
 			this.registerEvents()
