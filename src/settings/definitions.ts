@@ -5,9 +5,14 @@ import { FileSuggest } from 'settings/suggesters/FileSuggester'
 import { FolderSuggest } from 'settings/suggesters/FolderSuggester'
 import { resetSphereCommands } from 'commands'
 
+import { projectTemplateContents } from 'templates/Project'
+import { personTemplateContents } from 'templates/Person'
+import { createFoldersAndFile, ensureFolderExists } from 'utils'
+
 export interface SettingDefinition<T> {
 	defaultValue: T
 	check: (value: T, plugin: FlowPlugin) => boolean | string
+	create?: (plugin: FlowPlugin) => void
 	render: (containerEl: HTMLElement, plugin: FlowPlugin) => void
 }
 
@@ -20,6 +25,9 @@ export const rawSettingsDefinitions = {
 			} else {
 				return `Your inbox folder (${value}) doesn't exist.`
 			}
+		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.createFolder(plugin.settings.inboxFilesFolderPath)
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
@@ -48,6 +56,9 @@ export const rawSettingsDefinitions = {
 				return `Your inbox files folder (${value}) doesn't exist.`
 			}
 		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.createFolder(plugin.settings.inboxFolderPath)
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Note at a time')
@@ -73,6 +84,9 @@ export const rawSettingsDefinitions = {
 			} else {
 				return `You have no next actions file (${value}).`
 			}
+		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.create(plugin.settings.nextActionsFilePath, '')
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
@@ -101,6 +115,23 @@ export const rawSettingsDefinitions = {
 				return `You have no project template (${value}).`
 			}
 		},
+		create: async (plugin: FlowPlugin) => {
+			const filePath = plugin.settings.newProjectTemplateFilePath
+			console.log('creating project template', filePath)
+			const fileExists = await plugin.app.vault.adapter.exists(filePath)
+			if (fileExists) {
+				console.error(
+					'Not creating new project template, file already exists.',
+				)
+				return
+			}
+
+			await createFoldersAndFile(
+				filePath,
+				projectTemplateContents,
+				plugin,
+			)
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('New project template')
@@ -125,6 +156,9 @@ export const rawSettingsDefinitions = {
 				return `You have no projects folder (${value}).`
 			}
 		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.createFolder(plugin.settings.projectsFolderPath)
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Projects folder')
@@ -148,6 +182,18 @@ export const rawSettingsDefinitions = {
 			} else {
 				return `You have no person template (${value}).`
 			}
+		},
+		create: async (plugin: FlowPlugin) => {
+			const filePath = plugin.settings.newPersonTemplateFilePath
+			const fileExists = await plugin.app.vault.adapter.exists(filePath)
+			if (fileExists) {
+				console.error(
+					'Not creating new person template, file already exists.',
+				)
+				return
+			}
+
+			await createFoldersAndFile(filePath, personTemplateContents, plugin)
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
@@ -175,6 +221,9 @@ export const rawSettingsDefinitions = {
 				return `You have no people folder (${value}).`
 			}
 		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.createFolder(plugin.settings.peopleFolderPath)
+		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('People folder')
@@ -198,6 +247,9 @@ export const rawSettingsDefinitions = {
 			} else {
 				return `You have no someday/maybe file (${value}).`
 			}
+		},
+		create: (plugin: FlowPlugin) => {
+			plugin.app.vault.create(plugin.settings.somedayFilePath, '')
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
