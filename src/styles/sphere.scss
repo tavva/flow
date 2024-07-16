@@ -1,3 +1,10 @@
 .flow-sphere-in-planning-mode {
 	filter: sepia(80%);
+
+	h1 {
+		&:after {
+			content: " (📝 Planning Mode)";
+			color: var(--color-red);
+		}
+	}
 }
