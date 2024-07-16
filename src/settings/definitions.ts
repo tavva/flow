@@ -13,7 +13,7 @@ export interface SettingDefinition<T> {
 
 export const rawSettingsDefinitions = {
 	inboxFilesFolderPath: {
-		defaultValue: '/default/path/inboxFiles',
+		defaultValue: 'Flow Inbox Files',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
@@ -40,7 +40,7 @@ export const rawSettingsDefinitions = {
 	},
 
 	inboxFolderPath: {
-		defaultValue: '/default/path/inbox',
+		defaultValue: 'Flow Inbox Folder',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
@@ -66,7 +66,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	nextActionsFilePath: {
-		defaultValue: '/default/path/nextActions',
+		defaultValue: 'Next actions.md',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
@@ -93,7 +93,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	newProjectTemplateFilePath: {
-		defaultValue: '/default/path/newProjectTemplate',
+		defaultValue: 'Templates/Project.md',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
@@ -117,7 +117,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	projectsFolderPath: {
-		defaultValue: '/default/path/projects',
+		defaultValue: 'Projects',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
@@ -141,7 +141,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	newPersonTemplateFilePath: {
-		defaultValue: '/default/path/newPersonTemplate',
+		defaultValue: 'Templates/Person.md',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
@@ -167,7 +167,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	peopleFolderPath: {
-		defaultValue: '/default/path/people',
+		defaultValue: 'People',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFolderByPath(value) !== null) {
 				return true
@@ -191,7 +191,7 @@ export const rawSettingsDefinitions = {
 		},
 	},
 	somedayFilePath: {
-		defaultValue: '/default/path/someday',
+		defaultValue: 'Someday.md',
 		check: (value: string, plugin: FlowPlugin) => {
 			if (plugin.app.vault.getFileByPath(value) !== null) {
 				return true
