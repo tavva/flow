@@ -324,3 +324,29 @@ export function getPlugin(pluginName: string, plugin: FlowPlugin) {
 	// @ts-ignore
 	return plugin.app.plugins.plugins[pluginName]
 }
+
+export const ensureFolderExists = async (
+	folderPath: string,
+	plugin: FlowPlugin,
+) => {
+	const folderExists = await plugin.app.vault.adapter.exists(folderPath)
+	if (!folderExists) {
+		const parentFolder = folderPath.split('/').slice(0, -1).join('/')
+		if (parentFolder && parentFolder !== folderPath) {
+			await ensureFolderExists(parentFolder, plugin)
+		}
+		await plugin.app.vault.createFolder(folderPath)
+	}
+}
+
+export const createFoldersAndFile = async (
+	filePath: string,
+	contents: string,
+	plugin: FlowPlugin,
+) => {
+	const fileDir = filePath.substring(0, filePath.lastIndexOf('/'))
+	if (fileDir) {
+		await ensureFolderExists(fileDir, plugin)
+	}
+	plugin.app.vault.create(filePath, contents)
+}
