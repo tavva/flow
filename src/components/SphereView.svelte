@@ -183,25 +183,27 @@
 		{/if}
 	</div>
 	<div id="flow-task-lists">
-		<h2>Projects</h2>
+		<div class="flow-header-flex">
+			<h2>Projects</h2>
 
-		{#if projectsWithNextActions.length > 5}
-			<div id="priority-range">
-				<label for="priority-cutoff"
-					>Show projects of this priority and below</label
-				>
-				<input
-					bind:value={priorityCutoff}
-					type="range"
-					min="1"
-					max="10"
-					step="1"
-				/>
-				<span id="priority-cutoff"
-					>{priorityCutoff === 10 ? 'all' : priorityCutoff}</span
-				>
-			</div>
-		{/if}
+			{#if projectsWithNextActions.length > 5}
+				<div id="priority-range">
+					<label for="priority-cutoff"
+						>Show projects of this priority and below</label
+					>
+					<input
+						bind:value={priorityCutoff}
+						type="range"
+						min="1"
+						max="10"
+						step="1"
+					/>
+					<span id="priority-cutoff"
+						>{priorityCutoff === 10 ? 'all' : priorityCutoff}</span
+					>
+				</div>
+			{/if}
+		</div>
 
 		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
 			<ul>
