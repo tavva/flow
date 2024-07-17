@@ -1,6 +1,8 @@
 import type FlowPlugin from 'main'
 import type { Editor, Menu, MenuItem, TFile } from 'obsidian'
 
+import { openPlanningView } from 'views/planning'
+
 async function getOrCreateInboxFile(plugin: FlowPlugin): Promise<TFile> {
 	const inboxPath = plugin.settings.inboxFilesFolderPath
 	const inboxFileFolder = plugin.app.vault.getAbstractFileByPath(inboxPath)
@@ -44,6 +46,13 @@ export function createEditorMenu(
 			subMenuItem.setTitle('Start processing')
 			subMenuItem.onClick(async () => {
 				plugin.stateManager.startProcessing()
+			})
+		})
+
+		subMenu.addItem((subMenuItem) => {
+			subMenuItem.setTitle('Start planning')
+			subMenuItem.onClick(async () => {
+				openPlanningView(plugin)
 			})
 		})
 	})
