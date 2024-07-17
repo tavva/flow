@@ -15,7 +15,7 @@
 
 		setInterval(() => {
 			const latestPlannedTasks = plugin.tasks.getPlannedTasks()
-			if (!_.isEqual(plannedTasks, latestPlannedTasks)) {
+			if (!_.isEqual(plannedTasks.values, latestPlannedTasks.values)) {
 				plannedTasks = latestPlannedTasks
 			}
 		}, 1000)
