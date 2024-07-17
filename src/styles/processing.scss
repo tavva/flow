@@ -6,6 +6,11 @@
 	}
 
 	.flow-processing-actions {
+		margin-top: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 15px;
+
 		button:hover {
 			opacity: 0.9;
 			transform: translateY(-1px);
@@ -14,11 +19,6 @@
 		button:active {
 			transform: translateY(1px);
 		}
-
-		margin-top: 20px;
-		display: flex;
-		flex-direction: column;
-		gap: 15px;
 
 		.flow-action-group {
 			display: flex;
