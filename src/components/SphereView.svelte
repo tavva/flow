@@ -14,9 +14,12 @@
 	let sphereCapitalised: string = ''
 
 	let projectsWithNextActions: Project[] = []
+	let projectsWithNextActionsBelowPriorityCutoff: Project[] = []
 	let projectsNeedingNextActions: Project[] = []
 
 	let shadowIsPlanningMode: boolean = false
+
+	let priorityCutoff: number = 3
 
 	export let nonProjectNextActions: DataviewApi.TaskResult = []
 
@@ -116,7 +119,21 @@
 		}
 	}
 
-	$: updateProjectTaskLists(projectsWithNextActions)
+	$: {
+		if (projectsWithNextActions.length > 0) {
+			if (priorityCutoff === 10) {
+				projectsWithNextActionsBelowPriorityCutoff =
+					projectsWithNextActions
+			} else {
+				projectsWithNextActionsBelowPriorityCutoff =
+					projectsWithNextActions.filter(
+						(project) => project.priority <= priorityCutoff,
+					)
+			}
+		}
+	}
+
+	$: updateProjectTaskLists(projectsWithNextActionsBelowPriorityCutoff)
 	$: updateNonProjectTaskList(nonProjectNextActions)
 
 	function updateProjectTaskLists(projects: Project[]) {
@@ -167,18 +184,39 @@
 	</div>
 	<div id="flow-task-lists">
 		<h2>Projects</h2>
+
+		{#if projectsWithNextActions.length > 5}
+			<div id="priority-range">
+				<label for="priority-cutoff"
+					>Show projects of this priority and below</label
+				>
+				<input
+					bind:value={priorityCutoff}
+					type="range"
+					min="1"
+					max="10"
+					step="1"
+				/>
+				<span id="priority-cutoff"
+					>{priorityCutoff === 10 ? 'all' : priorityCutoff}</span
+				>
+			</div>
+		{/if}
+
 		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
 			<ul>
 				{#each projectsWithNextActions as project}
-					<li>
-						{project.priority}.
-						<a href={project.link} data-path={project.file.path}
-							>{project.file.name}</a
-						>
-						<div
-							id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
-						></div>
-					</li>
+					{#if project.priority <= priorityCutoff}
+						<li>
+							{project.priority}.
+							<a href={project.link} data-path={project.file.path}
+								>{project.file.name}</a
+							>
+							<div
+								id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
+							></div>
+						</li>
+					{/if}
 				{/each}
 			</ul>
 		{:else}
