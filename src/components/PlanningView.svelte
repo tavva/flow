@@ -11,6 +11,10 @@
 
 	onMount(() => {
 		renderTasks(plannedTasks)
+
+		setInterval(() => {
+			plannedTasks = plugin.tasks.getPlannedTasks()
+		}, 1000)
 	})
 
 	$: renderTasks(plannedTasks)
