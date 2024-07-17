@@ -39,5 +39,12 @@ export function createEditorMenu(
 				plugin.app.vault.append(inboxFile, currentLine + '\n')
 			})
 		})
+
+		subMenu.addItem((subMenuItem) => {
+			subMenuItem.setTitle('Start processing')
+			subMenuItem.onClick(async () => {
+				plugin.stateManager.startProcessing()
+			})
+		})
 	})
 }
