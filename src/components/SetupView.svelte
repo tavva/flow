@@ -46,7 +46,12 @@
 				{:else}
 					<ul>
 						{#each dependenciesData as [pluginName, plugin]}
-							<li>{pluginName} ({plugin})</li>
+							<li>
+								<a
+									href="https://obsidian.md/plugins?id={plugin}"
+									>{pluginName}</a
+								>
+							</li>
 						{/each}
 					</ul>
 				{/if}
