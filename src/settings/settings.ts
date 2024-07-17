@@ -24,10 +24,6 @@ export const generateFlowSettings = () => {
 export const FlowSettings = generateFlowSettings()
 export const DEFAULT_SETTINGS: Partial<FlowSettingsType> = FlowSettings
 
-type FilteredSettings = {
-	[K in keyof SettingsDefinitions]?: SettingsDefinitions[K]
-}
-
 export async function getInvalidSettings(
 	plugin: FlowPlugin,
 ): Promise<[string, SettingDefinition<any>][]> {
