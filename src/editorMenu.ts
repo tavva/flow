@@ -1,5 +1,11 @@
 import type FlowPlugin from 'main'
-import type { Editor, Menu, MenuItem, TFile } from 'obsidian'
+import {
+	Notice,
+	type Editor,
+	type Menu,
+	type MenuItem,
+	type TFile,
+} from 'obsidian'
 
 import { openPlanningView } from 'views/planning'
 
@@ -39,6 +45,8 @@ export function createEditorMenu(
 
 				const inboxFile = await getOrCreateInboxFile(plugin)
 				plugin.app.vault.append(inboxFile, currentLine + '\n')
+
+				new Notice('Line has been sent back to the inbox successfully.')
 			})
 		})
 
