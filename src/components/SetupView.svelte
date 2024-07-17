@@ -7,6 +7,7 @@
 		getInvalidSettings,
 	} from 'settings/settings'
 	import type { SettingDefinition } from 'settings/definitions'
+	import { SETUP_VIEW_TYPE } from 'views/setup'
 
 	export let plugin: FlowPlugin
 
@@ -30,6 +31,16 @@
 
 	function handleCreateFilesFromSettings() {
 		createFilesFromSettings(plugin)
+	}
+
+	async function handleRestartFlow() {
+		// @ts-ignore
+		await plugin.app.plugins.disablePlugin('flow')
+		// @ts-ignore
+		await plugin.app.plugins.enablePlugin('flow')
+
+		const { workspace } = plugin.app
+		workspace.detachLeavesOfType(SETUP_VIEW_TYPE)
 	}
 </script>
 
@@ -80,8 +91,9 @@
 		</p>
 
 		{#if dependenciesData?.length === 0 && settingsData?.length === 0}
-			<strong
-				>You're all set! Restart Obsidian to start using Flow.</strong
+			<strong>You're all set!</strong>
+			<button on:click={handleRestartFlow}
+				>Restart Flow to start using it</button
 			>
 		{/if}
 	</div>
