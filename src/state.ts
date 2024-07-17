@@ -32,7 +32,7 @@ export class StateManager {
 		this.handlers = new Handlers(plugin, this)
 	}
 
-	async startProcessing() {
+	readSettingsPaths() {
 		this.inboxFilesFolder = this.app.vault.getAbstractFileByPath(
 			this.plugin.settings.inboxFilesFolderPath,
 		) as TFolder
@@ -50,7 +50,10 @@ export class StateManager {
 			new Notice('Inbox folder not found. Please check your settings.')
 			return
 		}
+	}
 
+	async startProcessing() {
+		this.readSettingsPaths()
 		await this.updateCounts()
 
 		if (await this.areInboxFilesEmpty()) {
@@ -162,6 +165,7 @@ export class StateManager {
 	}
 
 	async updateCounts() {
+		this.readSettingsPaths()
 		const inboxFiles = this.app.vault
 			.getMarkdownFiles()
 			.filter((file) => file.path.startsWith(this.inboxFilesFolder!.path))
