@@ -91,10 +91,13 @@
 		</p>
 
 		{#if dependenciesData?.length === 0 && settingsData?.length === 0}
-			<strong>You're all set!</strong>
-			<button on:click={handleRestartFlow}
-				>Restart Flow to start using it</button
-			>
+			<hr />
+			<div class="flow-setup-complete">
+				<p><strong>You're all set!</strong></p>
+				<button on:click={handleRestartFlow}
+					>Restart Flow to start using it</button
+				>
+			</div>
 		{/if}
 	</div>
 </div>
