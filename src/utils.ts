@@ -170,6 +170,13 @@ export function getFilesWithTagPrefix(
 	) as TemplaterPlugin
 
 	return files.filter((file) => {
+		if (
+			file.path === plugin.settings.newPersonTemplateFilePath ||
+			file.path === plugin.settings.newProjectTemplateFilePath
+		) {
+			return false
+		}
+
 		if (file.path.startsWith(templaterPlugin.settings.template_folder)) {
 			return false
 		}
