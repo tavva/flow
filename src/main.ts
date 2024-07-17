@@ -41,7 +41,8 @@ export default class FlowPlugin extends Plugin {
 			await this.loadSettings()
 			this.addSettingTab(new FlowSettingsTab(this))
 
-			if (!checkDependencies(this)) {
+			const allDependenciesMet = await checkDependencies(this)
+			if (!allDependenciesMet) {
 				this.startSetupFlow()
 				return
 			}
