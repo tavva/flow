@@ -78,5 +78,11 @@
 				{/key}
 			{/if}
 		</p>
+
+		{#if dependenciesData?.length === 0 && settingsData?.length === 0}
+			<strong
+				>You're all set! Restart Obsidian to start using Flow.</strong
+			>
+		{/if}
 	</div>
 </div>
