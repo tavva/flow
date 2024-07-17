@@ -188,9 +188,7 @@
 
 			{#if projectsWithNextActions.length > 5}
 				<div id="priority-range">
-					<label for="priority-cutoff"
-						>Show projects of this priority and below</label
-					>
+					<label for="priority-cutoff">Priority cutoff</label>
 					<input
 						bind:value={priorityCutoff}
 						type="range"
