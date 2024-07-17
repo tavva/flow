@@ -3,7 +3,13 @@
 	align-items: baseline;
 
 	div {
+		font-size: 80%;
 		margin-left: 20px;
 		color: var(--text-muted);
+
+		&::before {
+			content: '|';
+			margin-right: 5px;
+		}
 	}
 }
