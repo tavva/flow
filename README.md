@@ -12,6 +12,8 @@ Flow will help you put every one of these projects, tasks, and ideas into Obsidi
 
 Getting into the flow state when working on something is a wonderful experience. All too often we're distracted by something popping up in our head that we may have forgotten about. Flow helps you get those things out of your head and into the Flow system immediately, allowing you to maintain your focus – your Flow state.
 
+Flow also helps you plan your day, ensuring you're working on the things that are important to you, and not just the things that feel urgent.
+
 > “_Paper is to write things down that we need to remember. Our brains are used to think_.” ― Albert Einstein.
 
 ## How does it work?
