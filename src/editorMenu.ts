@@ -31,7 +31,7 @@ export function createEditorMenu(
 		const subMenu = menuItem.setSubmenu()
 
 		subMenu.addItem((subMenuItem) => {
-			subMenuItem.setTitle('Send back to inbox')
+			subMenuItem.setTitle('Send this line back to the inbox')
 			subMenuItem.onClick(async () => {
 				const currentLine = editor.getLine(editor.getCursor().line)
 
