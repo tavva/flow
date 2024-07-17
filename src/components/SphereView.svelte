@@ -15,6 +15,7 @@
 
 	let projectsWithNextActions: Project[] = []
 	let projectsWithNextActionsBelowPriorityCutoff: Project[] = []
+	let projectsWithNextActionsAbovePriorityCutoff: Project[] = []
 	let projectsNeedingNextActions: Project[] = []
 
 	let shadowIsPlanningMode: boolean = false
@@ -124,10 +125,15 @@
 			if (priorityCutoff === 10) {
 				projectsWithNextActionsBelowPriorityCutoff =
 					projectsWithNextActions
+				projectsWithNextActionsAbovePriorityCutoff = []
 			} else {
 				projectsWithNextActionsBelowPriorityCutoff =
 					projectsWithNextActions.filter(
 						(project) => project.priority <= priorityCutoff,
+					)
+				projectsWithNextActionsAbovePriorityCutoff =
+					projectsWithNextActions.filter(
+						(project) => project.priority > priorityCutoff,
 					)
 			}
 		}
@@ -218,6 +224,12 @@
 						</li>
 					{/if}
 				{/each}
+				{#if projectsWithNextActionsAbovePriorityCutoff.length > 0}
+					<p>
+						{projectsWithNextActionsAbovePriorityCutoff.length}
+						more projects above priority cutoff {priorityCutoff}
+					</p>
+				{/if}
 			</ul>
 		{:else}
 			<p>No projects found</p>
