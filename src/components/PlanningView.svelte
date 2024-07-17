@@ -5,6 +5,7 @@
 
 	import FlowPlugin from 'main'
 	import { isPlanningMode, togglePlanningMode } from 'planning'
+	import _ from 'lodash'
 
 	export let plugin: FlowPlugin
 	export let plannedTasks: STask[] = []
@@ -13,7 +14,10 @@
 		renderTasks(plannedTasks)
 
 		setInterval(() => {
-			plannedTasks = plugin.tasks.getPlannedTasks()
+			const latestPlannedTasks = plugin.tasks.getPlannedTasks()
+			if (!_.isEqual(plannedTasks, latestPlannedTasks)) {
+				plannedTasks = latestPlannedTasks
+			}
 		}, 1000)
 	})
 
