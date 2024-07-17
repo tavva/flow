@@ -16,6 +16,21 @@ Flow also helps you plan your day, ensuring you're working on the things that ar
 
 > “_Paper is to write things down that we need to remember. Our brains are used to think_.” ― Albert Einstein.
 
+## Is Flow for me?
+
+Flow is for you if you:
+
+-   Have a lot of things to do and are struggling to keep track of them
+-   Often forget things you need to do
+-   Can't focus on something important because other things are popping up in your head
+-   Often feel overwhelmed at all the open loops you have in your life
+-   Feel unorganised and want to get on top of things
+-   Struggle to get into a flow state
+-   Want to feel in control
+-   Wear multiple hats, work, family, personal projects, etc.
+-   Have tried other systems and they haven't worked for you
+-   Are neurodiverse and have trouble focusing or struggle with executive function
+
 ## How does it work?
 
 First, let's explain a core principle of Flow.
