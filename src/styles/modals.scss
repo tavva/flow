@@ -1,3 +1,14 @@
+.flow-modal {
+	button {
+		margin: 0 8px 10px 0;
+	}
+
+	.warning {
+		margin-bottom: 10px;
+		color: var(--text-warning);
+	}
+}
+
 .flow-modal-content {
 	button {
 		&.selected {
@@ -8,10 +19,6 @@
 
 .flow-modal-sphere-selector {
 	margin-bottom: 10px;
-
-	button {
-		margin: 0 8px 10px 0;
-	}
 }
 
 .flow-project-modal {

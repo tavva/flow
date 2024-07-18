@@ -19,6 +19,7 @@ export class SphereSelectorModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this
+		contentEl.addClass('flow-modal')
 		contentEl.createEl('h2', { text: 'Select one or more spheres' })
 
 		this.sphereContainer = contentEl.createDiv()
