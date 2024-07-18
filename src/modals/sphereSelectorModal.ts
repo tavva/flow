@@ -58,6 +58,14 @@ export class SphereSelectorModal extends Modal {
 			this.onSubmit(Array.from(this.selectedSpheres))
 			this.close()
 		})
+
+		const cancelButton = new ButtonComponent(contentEl)
+		cancelButton.setButtonText('Cancel')
+		cancelButton.setCta()
+
+		cancelButton.onClick(() => {
+			this.close()
+		})
 	}
 
 	onClose() {
