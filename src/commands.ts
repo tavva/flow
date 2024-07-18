@@ -1,8 +1,13 @@
 import FlowPlugin from 'main'
 import { NewProjectModal } from 'modals/newProjectModal'
+import { AddToInboxModal } from 'modals/addToInboxModal'
 
 import { openPlanningView } from 'views/planning'
-import { createNewProjectFile, parseProjectTemplate } from 'utils'
+import {
+	createNewProjectFile,
+	parseProjectTemplate,
+	getOrCreateInboxFile,
+} from 'utils'
 
 export async function registerCommands(plugin: FlowPlugin) {
 	plugin.addCommand({
@@ -54,6 +59,17 @@ export async function registerCommands(plugin: FlowPlugin) {
 					plugin.metrics.count('new-project-created-from-command')
 				},
 			).open()
+		},
+	})
+
+	plugin.addCommand({
+		id: 'add-to-inbox',
+		name: 'Add to inbox',
+		callback: async () => {
+			new AddToInboxModal(plugin, async (content: string) => {
+				const inboxFile = await getOrCreateInboxFile(plugin)
+				plugin.app.vault.append(inboxFile, content + '\n')
+			}).open()
 		},
 	})
 

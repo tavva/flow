@@ -5,6 +5,7 @@
 
 	.warning {
 		margin-bottom: 10px;
+		margin-top: 10px;
 		color: var(--text-warning);
 	}
 }
@@ -48,5 +49,15 @@ button.flow-modal-done {
 	.flow-search {
 		width: 100%;
 		margin-bottom: 20px;
+	}
+}
+
+.flow-add-to-inbox-modal {
+	input {
+		width: 100%;
+	}
+
+	button {
+		margin: 20px 0 0 0;
 	}
 }

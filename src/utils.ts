@@ -357,3 +357,22 @@ export const createFoldersAndFile = async (
 	}
 	plugin.app.vault.create(filePath, contents)
 }
+
+export async function getOrCreateInboxFile(plugin: FlowPlugin): Promise<TFile> {
+	const inboxPath = plugin.settings.inboxFilesFolderPath
+	const inboxFileFolder = plugin.app.vault.getAbstractFileByPath(inboxPath)
+	if (!inboxFileFolder) {
+		throw new Error('Inbox folder not found')
+	}
+
+	const inboxFilePath = inboxFileFolder.path + '/Flow generated inbox.md'
+	let inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
+
+	if (!inboxFile) {
+		await plugin.app.vault.create(inboxFilePath, '')
+	}
+
+	inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
+
+	return inboxFile as TFile
+}
