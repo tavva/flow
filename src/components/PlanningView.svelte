@@ -1,11 +1,12 @@
 <script lang="ts">
+	import _ from 'lodash'
+
 	import type { STask } from 'obsidian-dataview'
 	import { Component } from 'obsidian'
 	import { onMount } from 'svelte'
 
 	import FlowPlugin from 'main'
 	import { isPlanningMode, togglePlanningMode } from 'planning'
-	import _ from 'lodash'
 
 	export let plugin: FlowPlugin
 	export let plannedTasks: STask[] = []
