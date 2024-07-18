@@ -73,6 +73,11 @@ export async function registerCommands(plugin: FlowPlugin) {
 		},
 	})
 
+	plugin.addRibbonIcon('file-input', 'Add to inbox', () => {
+		// @ts-ignore
+		plugin.app.commands.executeCommandById('flow:add-to-inbox')
+	})
+
 	resetSphereCommands(plugin)
 }
 
