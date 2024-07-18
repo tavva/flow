@@ -227,7 +227,8 @@
 				{#if projectsWithNextActionsAbovePriorityCutoff.length > 0}
 					<p>
 						{projectsWithNextActionsAbovePriorityCutoff.length}
-						more projects above priority cutoff {priorityCutoff}
+						more project{#if projectsWithNextActionsAbovePriorityCutoff.length > 1}s{/if}
+						above priority cutoff {priorityCutoff}
 					</p>
 				{/if}
 			</ul>
