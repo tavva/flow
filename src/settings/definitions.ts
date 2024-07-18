@@ -7,7 +7,7 @@ import { resetSphereCommands } from 'commands'
 
 import { projectTemplateContents } from 'templates/Project'
 import { personTemplateContents } from 'templates/Person'
-import { createFoldersAndFile, ensureFolderExists } from 'utils'
+import { createFoldersAndFile } from 'utils'
 
 export interface SettingDefinition<T> {
 	defaultValue: T
