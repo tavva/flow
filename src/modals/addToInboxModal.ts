@@ -36,6 +36,14 @@ export class AddToInboxModal extends Modal {
 			this.onSubmit(input.value)
 			this.close()
 		})
+
+		const cancelButton = new ButtonComponent(contentEl)
+		cancelButton.setButtonText('Cancel')
+		cancelButton.setCta()
+
+		cancelButton.onClick(() => {
+			this.close()
+		})
 	}
 
 	onClose() {
