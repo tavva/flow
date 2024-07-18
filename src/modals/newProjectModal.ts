@@ -37,6 +37,7 @@ export class NewProjectModal extends Modal {
 
 	onOpen() {
 		const { contentEl } = this
+		contentEl.addClass('flow-modal')
 		contentEl.addClass('flow-project-modal')
 
 		contentEl.createEl('h2', {
