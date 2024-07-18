@@ -117,7 +117,19 @@ Each day you plan afresh, reviewing your next actions and choosing what you want
 
 ## How to use Flow
 
-### Processing inboxes
+### Capture
+
+In GTD, the first step is to capture everything that has your attention. This is the same in Flow.
+
+When it's stored in your head, it'll get your attention. Capture it in Flow.
+
+To do this, you need to add the item to one of your inboxes. You can do this manually, by creating a note and adding the item to it.
+
+Or you can use the built in command 'Add to inbox' to add the item to your inbox. You can find a button to do this in the ribbon on the left (in a default setup) as well.
+
+Remember that as Obsidian notes are simply text files, you can use any method to get your thought into your Flow inbox. This could be an Alfred workflow, a Siri Shortcut, a bookmarklet, an Android Tasker widget, Funnel on iOS, or one of many other ways.
+
+### Process
 
 TODO: Write this
 
