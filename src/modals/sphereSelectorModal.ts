@@ -5,6 +5,7 @@ export class SphereSelectorModal extends Modal {
 	private onSubmit: (selected: string[]) => void
 	private sphereContainer!: HTMLElement
 	private selectedSpheres: Set<string>
+	private warningEl!: HTMLElement | null
 
 	constructor(
 		app: App,
@@ -26,15 +27,21 @@ export class SphereSelectorModal extends Modal {
 		this.sphereContainer.addClass('flow-modal-content')
 		this.sphereContainer.addClass('flow-modal-sphere-selector')
 
-		const warningEl = contentEl.createDiv()
-		warningEl.addClass('warning')
+		this.warningEl = contentEl.createDiv()
+		this.warningEl.addClass('warning')
 
+		this.addSpheres()
+		this.addDoneButton()
+		this.addCancelButton()
+	}
+
+	addSpheres() {
 		this.spheres.forEach((sphere) => {
 			const button = new ButtonComponent(this.sphereContainer)
 			button.setButtonText(sphere)
 
 			button.onClick(() => {
-				warningEl.hide()
+				this.warningEl?.hide()
 
 				if (this.selectedSpheres.has(sphere)) {
 					this.selectedSpheres.delete(sphere)
@@ -45,6 +52,10 @@ export class SphereSelectorModal extends Modal {
 				}
 			})
 		})
+	}
+
+	addDoneButton() {
+		const { contentEl } = this
 
 		const doneButton = new ButtonComponent(contentEl)
 		doneButton.setButtonText('Done')
@@ -52,13 +63,17 @@ export class SphereSelectorModal extends Modal {
 
 		doneButton.onClick(() => {
 			if (this.selectedSpheres.size === 0) {
-				warningEl.setText('Please select at least one sphere')
-				warningEl.show()
+				this.warningEl?.setText('Please select at least one sphere')
+				this.warningEl?.show()
 				return
 			}
 			this.onSubmit(Array.from(this.selectedSpheres))
 			this.close()
 		})
+	}
+
+	addCancelButton() {
+		const { contentEl } = this
 
 		const cancelButton = new ButtonComponent(contentEl)
 		cancelButton.setButtonText('Cancel')
