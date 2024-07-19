@@ -129,6 +129,30 @@ Or you can use the built in command 'Add to inbox' to add the item to your inbox
 
 Remember that as Obsidian notes are simply text files, you can use any method to get your thought into your Flow inbox. This could be an Alfred workflow, a Siri Shortcut, a bookmarklet, an Android Tasker widget, Funnel on iOS, or one of many other ways.
 
+#### Sources: different ways to quickly capture your open loops from your computer and mobile
+
+We've heard lots of different techniques for capturing thoughts and ideas into Obsidian quickly and with minimal friction. While we don't have any recommendations ourselves, we'd love to hear how you've set up your sources so we can share them with other Flow users.
+
+##### Mac
+
+-   https://actions.work/actions-for-obsidian
+-   https://www.raycast.com/KevinBatdorf/obsidian
+
+##### Windows
+
+-
+
+##### iOS
+
+-   https://actions.work/actions-for-obsidian
+-   https://apps.apple.com/us/app/funnel-quick-capture/id6466168248
+-   https://www.icloud.com/shortcuts/9a6af22443414858bb6adade86a30f85
+
+##### Android
+
+-   https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
+-   https://play.google.com/store/apps/details?id=net.gsantner.markor
+
 ### Process
 
 TODO: Write this
