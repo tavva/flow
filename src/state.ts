@@ -102,6 +102,24 @@ export class StateManager {
 		}
 	}
 
+	private commonViewProps() {
+		return {
+			onAddToNextActions: this.handlers.handleAddToNextActions,
+			onAddToProjectNextActions:
+				this.handlers.handleAddToProjectNextActions,
+			onAddToProjectReference: this.handlers.handleAddToProjectReference,
+			onAddToPersonDiscussNext:
+				this.handlers.handleAddToPersonDiscussNext,
+			onAddToPersonReference: this.handlers.handleAddToPersonReference,
+			onAddToNewProject: this.handlers.handleNewProject,
+			onAddToSomeday: this.handlers.handleAddToSomeday,
+			onTrash: this.handlers.handleTrash,
+			isProcessingComplete:
+				this.linesToProcess.length === 0 &&
+				this.filesToProcess.length === 0,
+		}
+	}
+
 	private async processInboxFiles() {
 		await this.updateStatus()
 		const view = await this.setupOrGetProcessingView()
@@ -111,21 +129,7 @@ export class StateManager {
 				line: this.linesToProcess[0].line,
 				noteContent: '',
 				currentStage: this.currentStage,
-				onAddToNextActions: this.handlers.handleAddToNextActions,
-				onAddToProjectNextActions:
-					this.handlers.handleAddToProjectNextActions,
-				onAddToProjectReference:
-					this.handlers.handleAddToProjectReference,
-				onAddToPersonDiscussNext:
-					this.handlers.handleAddToPersonDiscussNext,
-				onAddToPersonReference:
-					this.handlers.handleAddToPersonReference,
-				onAddToNewProject: this.handlers.handleNewProject,
-				onAddToSomeday: this.handlers.handleAddToSomeday,
-				onTrash: this.handlers.handleTrash,
-				isProcessingComplete:
-					this.linesToProcess.length === 0 &&
-					this.filesToProcess.length === 0,
+				...this.commonViewProps(),
 			})
 		} else {
 			console.error('ProcessingView not found')
@@ -143,21 +147,10 @@ export class StateManager {
 			view!.updateEmbeddedFile(file.path)
 		}
 
-		// TODO: abstract this out as we're repeating ourselves
 		if (view) {
 			view.setProps({
 				line: content,
-				onAddToNextActions: this.handlers.handleAddToNextActions,
-				onAddToProjectNextActions:
-					this.handlers.handleAddToProjectNextActions,
-				onAddToProjectReference:
-					this.handlers.handleAddToProjectReference,
-				onAddToNewProject: this.handlers.handleNewProject,
-				onAddToSomeday: this.handlers.handleAddToSomeday,
-				onTrash: this.handlers.handleTrash,
-				isProcessingComplete:
-					this.linesToProcess.length === 0 &&
-					this.filesToProcess.length === 0,
+				...this.commonViewProps(),
 			})
 		} else {
 			console.error('ProcessingView not found')
