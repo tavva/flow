@@ -18,6 +18,7 @@ import { Metrics } from 'metrics'
 import { Tasks } from 'tasks'
 import { createEditorMenu } from 'editorMenu'
 import { checkDependencies } from 'dependencies'
+import { Handlers } from 'handlers'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
@@ -26,6 +27,7 @@ export default class FlowPlugin extends Plugin {
 	store!: Store
 	metrics!: Metrics
 	tasks!: Tasks
+	handlers!: Handlers
 	events = new Events()
 
 	async onload() {
@@ -57,6 +59,7 @@ export default class FlowPlugin extends Plugin {
 			this.store = new Store(this)
 			this.metrics = new Metrics(this)
 			this.tasks = new Tasks(this)
+			this.handlers = new Handlers(this)
 
 			this.registerViews()
 

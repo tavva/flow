@@ -19,20 +19,18 @@ import { FileSelectorModal } from 'modals/fileSelectorModal'
 import { NewProjectModal } from 'modals/newProjectModal'
 import { SphereSelectorModal } from 'modals/sphereSelectorModal'
 
-import { StateManager, Stage, type LineWithFile } from 'processing'
+import { Stage, type LineWithFile } from 'processing'
 
 export class Handlers {
 	private app: App
 	private plugin: FlowPlugin
-	private state: StateManager
 
-	constructor(plugin: FlowPlugin, stateManager: StateManager) {
+	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
 		this.app = plugin.app
-		this.state = stateManager
 	}
 
-	handleAddToNextActions = async (text: string) => {
+	addToNextActions = async (text: string) => {
 		new SphereSelectorModal(
 			this.app,
 			this.plugin.settings.spheres,
@@ -44,7 +42,7 @@ export class Handlers {
 		).open()
 	}
 
-	handleAddToProjectNextActions = async (text: string) => {
+	addToProjectNextActions = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
 
 		new FileSelectorModal(
@@ -60,7 +58,7 @@ export class Handlers {
 		).open()
 	}
 
-	handleAddToPersonDiscussNext = async (text: string) => {
+	addToPersonDiscussNext = async (text: string) => {
 		const personFiles = getFilesWithTagPrefix(this.plugin, 'person')
 
 		new FileSelectorModal(
@@ -76,7 +74,7 @@ export class Handlers {
 		).open()
 	}
 
-	handleAddToProjectReference = async (text: string) => {
+	addToProjectReference = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
 
 		new FileSelectorModal(
@@ -92,7 +90,7 @@ export class Handlers {
 		).open()
 	}
 
-	handleAddToPersonReference = async (text: string) => {
+	addToPersonReference = async (text: string) => {
 		const projectFiles = getFilesWithTagPrefix(this.plugin, 'person')
 
 		new FileSelectorModal(
@@ -108,7 +106,7 @@ export class Handlers {
 		)
 	}
 
-	handleAddToSomeday = async (text: string) => {
+	addToSomeday = async (text: string) => {
 		new SphereSelectorModal(
 			this.app,
 			this.plugin.settings.spheres,
@@ -120,7 +118,7 @@ export class Handlers {
 		).open()
 	}
 
-	handleNewProject = async (text: string) => {
+	newProject = async (text: string) => {
 		new NewProjectModal(
 			this.plugin,
 			text,
@@ -155,39 +153,41 @@ export class Handlers {
 		).open()
 	}
 
-	handleTrash = async () => {
+	trash = async () => {
 		await this.removeProcessedItem()
 		this.plugin.metrics.count('item-trashed')
 	}
 
 	private async removeProcessedItem() {
-		if (this.state.currentStage === Stage.File) {
-			const processedLine = this.state.linesToProcess.shift()
-			if (this.state.linesToProcess.length === 0) {
-				this.state.currentStage = null
+		if (this.plugin.stateManager.currentStage === Stage.File) {
+			const processedLine =
+				this.plugin.stateManager.linesToProcess.shift()
+			if (this.plugin.stateManager.linesToProcess.length === 0) {
+				this.plugin.stateManager.currentStage = null
 			}
 			if (processedLine) {
 				await this.updateInboxFile(processedLine)
 			}
 			this.plugin.metrics.count('line-processed')
-			this.state.startProcessing()
-		} else if (this.state.currentStage === Stage.Folder) {
-			const processedFile = this.state.filesToProcess.shift()
-			if (this.state.filesToProcess.length === 0) {
-				this.state.currentStage = null
+			this.plugin.stateManager.startProcessing()
+		} else if (this.plugin.stateManager.currentStage === Stage.Folder) {
+			const processedFile =
+				this.plugin.stateManager.filesToProcess.shift()
+			if (this.plugin.stateManager.filesToProcess.length === 0) {
+				this.plugin.stateManager.currentStage = null
 			}
 			if (processedFile) {
 				await this.deleteFolderFile(processedFile)
 			}
 			this.plugin.metrics.count('file-processed')
-			this.state.startProcessing()
+			this.plugin.stateManager.startProcessing()
 		}
 	}
 
 	private async updateInboxFile(processedLine: LineWithFile) {
 		const { file, line } = processedLine
 
-		if (this.state.inboxFilesFolder) {
+		if (this.plugin.stateManager.inboxFilesFolder) {
 			await this.removeEmptyLinesFromFile(file)
 
 			const currentContent = await readFileContent(this.plugin, file)

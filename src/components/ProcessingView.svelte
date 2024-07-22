@@ -12,14 +12,6 @@
 
 	export let line: string
 	export let currentStage: Stage
-	export let onAddToNextActions: (text: string) => void
-	export let onAddToProjectNextActions: (text: string) => void
-	export let onAddToProjectReference: (text: string) => void
-	export let onAddToPersonDiscussNext: (text: string) => void
-	export let onAddToPersonReference: (text: string) => void
-	export let onAddToNewProject: (text: string) => void
-	export let onAddToSomeday: (text: string) => void
-	export let onTrash: () => void
 	export let isProcessingComplete: false
 
 	export let noteContent: string = ''
@@ -55,37 +47,37 @@
 	}
 
 	function addToNextActions() {
-		if (inputText.trim() !== '') onAddToNextActions(inputText)
+		if (inputText.trim() !== '') plugin.handlers.addToNextActions(inputText)
 	}
 
 	function addToProjectNextActions() {
-		if (inputText.trim() !== '') onAddToProjectNextActions(inputText)
+		if (inputText.trim() !== '')
+			plugin.handlers.addToProjectNextActions(inputText)
 	}
 	function addToProjectReference() {
-		if (inputText.trim() !== '') onAddToProjectReference(inputText)
+		if (inputText.trim() !== '')
+			plugin.handlers.addToProjectReference(inputText)
 	}
 
 	function addToPersonDiscussNext() {
-		if (inputText.trim() !== '') onAddToPersonDiscussNext(inputText)
+		if (inputText.trim() !== '')
+			plugin.handlers.addToPersonDiscussNext(inputText)
 	}
 	function addToPersonReference() {
-		if (inputText.trim() !== '') onAddToPersonReference(inputText)
+		if (inputText.trim() !== '')
+			plugin.handlers.addToPersonReference(inputText)
 	}
 
-	function addToNewProject() {
-		if (inputText.trim() !== '') onAddToNewProject(inputText)
+	function newProject() {
+		if (inputText.trim() !== '') plugin.handlers.newProject(inputText)
 	}
 	function addToSomeday() {
-		if (inputText.trim() !== '') onAddToSomeday(inputText)
+		if (inputText.trim() !== '') plugin.handlers.addToSomeday(inputText)
 	}
 
 	async function startPlanning() {
 		await openPlanningView(plugin)
 		plugin.stateManager.stopProcessing()
-	}
-
-	function trash() {
-		onTrash()
 	}
 </script>
 
@@ -145,7 +137,7 @@
 			<div class="flow-action-group">
 				<span class="flow-action-group-title">Other</span>
 				<div class="flow-button-container">
-					<button class="flow-person" on:click={addToNewProject}
+					<button class="flow-person" on:click={newProject}
 						><span class="flow-icon flow-icon-person"></span>
 						New project</button
 					>
@@ -153,7 +145,7 @@
 						><span class="flow-icon flow-icon-someday"
 						></span>Someday</button
 					>
-					<button class="flow-trash" on:click={trash}
+					<button class="flow-trash" on:click={plugin.handlers.trash}
 						><span class="flow-icon flow-icon-trash"
 						></span>Delete</button
 					>

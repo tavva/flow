@@ -2,7 +2,6 @@ import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 
 import { readFileContent } from 'utils'
 import FlowPlugin from 'main'
-import { Handlers } from 'handlers'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from 'views/processing'
 
 export enum Stage {
@@ -18,7 +17,6 @@ export interface LineWithFile {
 export class StateManager {
 	private app: App
 	private plugin: FlowPlugin
-	private handlers: Handlers
 	inboxFilesFolder: TFolder | null = null
 	inboxFolder: TFolder | null = null
 	private processingLeaf: WorkspaceLeaf | null = null
@@ -29,7 +27,6 @@ export class StateManager {
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
 		this.app = plugin.app // shortcut for nicer code
-		this.handlers = new Handlers(plugin, this)
 	}
 
 	readSettingsPaths() {
@@ -104,16 +101,6 @@ export class StateManager {
 
 	private commonViewProps() {
 		return {
-			onAddToNextActions: this.handlers.handleAddToNextActions,
-			onAddToProjectNextActions:
-				this.handlers.handleAddToProjectNextActions,
-			onAddToProjectReference: this.handlers.handleAddToProjectReference,
-			onAddToPersonDiscussNext:
-				this.handlers.handleAddToPersonDiscussNext,
-			onAddToPersonReference: this.handlers.handleAddToPersonReference,
-			onAddToNewProject: this.handlers.handleNewProject,
-			onAddToSomeday: this.handlers.handleAddToSomeday,
-			onTrash: this.handlers.handleTrash,
 			isProcessingComplete:
 				this.linesToProcess.length === 0 &&
 				this.filesToProcess.length === 0,
