@@ -152,6 +152,7 @@ We've heard lots of different techniques for capturing thoughts and ideas into O
 
 -   https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
 -   https://play.google.com/store/apps/details?id=net.gsantner.markor
+-   https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
 
 ### Process
 
