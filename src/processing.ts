@@ -184,8 +184,6 @@ export class StateManager {
 
 		view.setProps({
 			currentStage: this.currentStage,
-			lineCount: this.linesToProcess.length,
-			fileCount: this.filesToProcess.length,
 		})
 	}
 
