@@ -1,7 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile } from 'obsidian'
 
-// @ts-ignore
-import ProcessingViewComponent from '../components/ProcessingView.svelte'
+import ProcessingViewComponent from 'components/ProcessingView.svelte'
 import type FlowPlugin from 'main'
 
 export const PROCESSING_VIEW_TYPE = 'processing-view'
