@@ -19,7 +19,7 @@ import { FileSelectorModal } from 'modals/fileSelectorModal'
 import { NewProjectModal } from 'modals/newProjectModal'
 import { SphereSelectorModal } from 'modals/sphereSelectorModal'
 
-import { StateManager, Stage, type LineWithFile } from 'state'
+import { StateManager, Stage, type LineWithFile } from 'processing'
 
 export class Handlers {
 	private app: App

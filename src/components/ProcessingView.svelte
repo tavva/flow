@@ -2,7 +2,7 @@
 	import { MarkdownRenderer, Component } from 'obsidian'
 
 	import FlowPlugin from 'main'
-	import { Stage } from 'state'
+	import { Stage } from 'processing'
 	import { openPlanningView } from 'views/planning'
 
 	export let plugin: FlowPlugin

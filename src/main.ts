@@ -1,7 +1,7 @@
 import { Plugin, TFile, Events, WorkspaceLeaf } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
-import { StateManager } from 'state'
+import { StateManager } from 'processing'
 import {
 	type FlowSettingsType,
 	DEFAULT_SETTINGS,
