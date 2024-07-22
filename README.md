@@ -133,6 +133,11 @@ Remember that as Obsidian notes are simply text files, you can use any method to
 
 We've heard lots of different techniques for capturing thoughts and ideas into Obsidian quickly and with minimal friction. While we don't have any recommendations ourselves, we'd love to hear how you've set up your sources so we can share them with other Flow users.
 
+Two great articles on 'Quick Capture' which include lots of methods for capturing thoughts and ideas quickly:
+
+-   https://obsidian.rocks/obsidian-quick-capture/
+-   https://obsidian.rocks/obsidian-mobile-quick-capture/
+
 ##### Mac
 
 -   https://actions.work/actions-for-obsidian
