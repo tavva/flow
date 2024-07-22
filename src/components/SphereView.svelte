@@ -170,6 +170,10 @@
 			})
 		}
 	}
+
+	function showAllProjects() {
+		priorityCutoff = 10
+	}
 </script>
 
 <div class="flow-project">
@@ -229,6 +233,9 @@
 						{projectsWithNextActionsAbovePriorityCutoff.length}
 						more project{#if projectsWithNextActionsAbovePriorityCutoff.length > 1}s{/if}
 						above priority cutoff {priorityCutoff}
+						<button on:click={showAllProjects}
+							>Show all projects</button
+						>
 					</p>
 				{/if}
 			</ul>
