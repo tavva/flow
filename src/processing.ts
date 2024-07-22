@@ -23,6 +23,7 @@ export class StateManager {
 	currentStage: Stage.File | Stage.Folder | null = null
 	linesToProcess: LineWithFile[] = []
 	filesToProcess: TFile[] = []
+	private startProcessingLock: boolean = false
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
@@ -50,6 +51,10 @@ export class StateManager {
 	}
 
 	async startProcessing() {
+		if (this.startProcessingLock) {
+			return
+		}
+		this.startProcessingLock = true
 		this.readSettingsPaths()
 		await this.updateCounts()
 
@@ -65,6 +70,8 @@ export class StateManager {
 			this.currentStage = Stage.File
 			await this.processInboxFiles()
 		}
+
+		this.startProcessingLock = false
 	}
 
 	async stopProcessing() {
