@@ -1,7 +1,7 @@
 {
 	"id": "flow",
 	"name": "Flow",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"minAppVersion": "0.15.0",
 	"description": "Flow, inspired by David Allen's Getting Things Done (GTD), is a way of managing everything in your life so you focus on what's important.",
 	"author": "Ben Phillips",
