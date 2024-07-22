@@ -13,7 +13,9 @@ export async function registerCommands(plugin: FlowPlugin) {
 	plugin.addCommand({
 		id: 'start-processing',
 		name: 'Start processing',
-		callback: () => plugin.stateManager.startProcessing(),
+		callback: () => {
+			plugin.stateManager.setupOrGetProcessingView()
+		},
 	})
 
 	plugin.addCommand({

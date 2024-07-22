@@ -199,9 +199,7 @@ export class StateManager {
 		}
 	}
 
-	private async setupOrGetProcessingView(): Promise<
-		ProcessingView | undefined
-	> {
+	async setupOrGetProcessingView(): Promise<ProcessingView | undefined> {
 		const existingLeaves =
 			this.app.workspace.getLeavesOfType(PROCESSING_VIEW_TYPE)
 

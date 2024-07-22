@@ -40,6 +40,7 @@ export class ProcessingView extends ItemView {
 				onTrash: () => {},
 			},
 		})
+		this.plugin.stateManager.startProcessing()
 	}
 
 	async updateEmbeddedFile(notePath: string | null): Promise<void> {
