@@ -1,8 +1,8 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 
-import { readFileContent } from 'utils'
-import FlowPlugin from 'main'
-import { PROCESSING_VIEW_TYPE, ProcessingView } from 'views/processing'
+import { readFileContent } from 'utils.js'
+import FlowPlugin from 'main.js'
+import { PROCESSING_VIEW_TYPE, ProcessingView } from 'views/processing.js'
 
 export enum Stage {
 	File = 'file',

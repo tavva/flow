@@ -1,4 +1,3 @@
-import type FlowPlugin from 'main'
 import {
 	Notice,
 	type Editor,
@@ -7,8 +6,10 @@ import {
 	type TFile,
 } from 'obsidian'
 
-import { getOrCreateInboxFile } from 'utils'
-import { openPlanningView } from 'views/planning'
+import type FlowPlugin from 'main.js'
+
+import { getOrCreateInboxFile } from 'utils.js'
+import { openPlanningView } from 'views/planning.js'
 
 export function createEditorMenu(
 	menu: Menu,

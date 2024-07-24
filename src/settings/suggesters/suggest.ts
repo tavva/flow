@@ -3,7 +3,7 @@
 import { type ISuggestOwner, Scope } from 'obsidian'
 import { createPopper, type Instance as PopperInstance } from '@popperjs/core'
 
-import FlowPlugin from 'main'
+import FlowPlugin from 'main.js'
 
 const wrapAround = (value: number, size: number): number => {
 	return ((value % size) + size) % size

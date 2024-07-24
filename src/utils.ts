@@ -1,7 +1,7 @@
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
-import FlowPlugin from 'main'
-import type { TemplaterPlugin, Module } from 'typings/templater'
+import FlowPlugin from 'main.js'
+import type { TemplaterPlugin, Module } from 'typings/templater.js'
 
 // TODO: Move the add* functions out to their own utils file
 async function addLineToFile(

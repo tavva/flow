@@ -1,7 +1,7 @@
-import type FlowPlugin from 'main'
+import type FlowPlugin from 'main.js'
 
-import { settingsDefinitions } from './definitions'
-import type { SettingDefinition, SettingsDefinitions } from './definitions'
+import { settingsDefinitions } from './definitions.js'
+import type { SettingDefinition, SettingsDefinitions } from './definitions.js'
 
 export type FlowSettingsType = {
 	[K in keyof typeof settingsDefinitions]: (typeof settingsDefinitions)[K]['defaultValue']

@@ -1,9 +1,10 @@
 // Credits go to Liam's Periodic Notes Plugin: https://github.com/liamcain/obsidian-periodic-notes
 
-import FlowPlugin from 'main'
 import { TAbstractFile, TFile } from 'obsidian'
-import { TextInputSuggest } from 'settings/suggesters/suggest'
-import { getTFilesFromFolder } from 'utils'
+
+import FlowPlugin from 'main.js'
+import { TextInputSuggest } from 'settings/suggesters/suggest.js'
+import { getTFilesFromFolder } from 'utils.js'
 
 export class FileSuggest extends TextInputSuggest<TFile> {
 	constructor(

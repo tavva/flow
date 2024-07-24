@@ -1,5 +1,6 @@
-import type FlowPlugin from 'main'
 import { Modal, ButtonComponent } from 'obsidian'
+
+import type FlowPlugin from 'main.js'
 
 export class AddToInboxModal extends Modal {
 	private onSubmit: (content: string) => void

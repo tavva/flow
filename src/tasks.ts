@@ -1,7 +1,7 @@
 import { TFile } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 
-import FlowPlugin from 'main'
+import FlowPlugin from 'main.js'
 
 export class Tasks {
 	plugin: FlowPlugin

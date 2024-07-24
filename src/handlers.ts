@@ -1,5 +1,7 @@
 import { App, TFile } from 'obsidian'
 
+import FlowPlugin from 'main.js'
+
 import {
 	addToNextActions,
 	addToSomeday,
@@ -11,15 +13,12 @@ import {
 	readFileContent,
 	createNewProjectFile,
 	parseProjectTemplate,
-} from 'utils'
+} from 'utils.js'
+import { FileSelectorModal } from 'modals/fileSelectorModal.js'
+import { NewProjectModal } from 'modals/newProjectModal.js'
+import { SphereSelectorModal } from 'modals/sphereSelectorModal.js'
 
-import FlowPlugin from 'main'
-
-import { FileSelectorModal } from 'modals/fileSelectorModal'
-import { NewProjectModal } from 'modals/newProjectModal'
-import { SphereSelectorModal } from 'modals/sphereSelectorModal'
-
-import { Stage, type LineWithFile } from 'processing'
+import { Stage, type LineWithFile } from 'processing.js'
 
 export class Handlers {
 	private app: App

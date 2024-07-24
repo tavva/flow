@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, type EventRef } from 'obsidian'
 
-import FlowPlugin from 'main'
+import FlowPlugin from 'main.js'
 
 import PlanningViewComponent from 'components/PlanningView.svelte'
 

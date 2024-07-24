@@ -1,6 +1,8 @@
 import { Modal, Setting, ButtonComponent, debounce } from 'obsidian'
-import { getProjectFilePath } from 'utils'
-import FlowPlugin from 'main'
+
+import FlowPlugin from 'main.js'
+
+import { getProjectFilePath } from 'utils.js'
 
 export class NewProjectModal extends Modal {
 	private plugin: FlowPlugin
