@@ -10,7 +10,7 @@
     "target": "es6",
     "allowJs": false,
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "importHelpers": true,
     "isolatedModules": false,
 	"strictNullChecks": true,
