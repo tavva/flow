@@ -4,7 +4,7 @@
     "baseUrl": "src",
 	"rootDir": "src",
 	"outDir": ".",
-    "module": "esnext",
+    "module": "nodenext",
     "target": "es6",
     "allowJs": false,
     "noImplicitAny": true,
