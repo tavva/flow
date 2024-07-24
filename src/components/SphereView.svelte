@@ -62,8 +62,12 @@
 			}
 		}
 
-		addTaskTextToElements(tasks, container)
-		addTaskClickListeners(plugin, container)
+		setTimeout(() => {
+			// Wait for the taskList to hydrate before running our modifications
+			addTaskTextToElements(tasks, container)
+			addPlannedAttributeToTasks(container)
+			addTaskClickListeners(plugin, container)
+		}, 10)
 	}
 
 	function addTaskTextToElements(
@@ -103,6 +107,23 @@
 
 			elementIndex++
 		})
+	}
+
+	function addPlannedAttributeToTasks(container: HTMLElement) {
+		container
+			.querySelectorAll('.task-list-item')
+			.forEach((taskListItem) => {
+				const links = taskListItem.querySelectorAll('a')
+
+				console.log('taskListItem', taskListItem)
+				console.log('links', links)
+
+				links.forEach(function (link) {
+					if (link.getAttribute('href') === '#flow-planned') {
+						taskListItem.addClass('planned-item')
+					}
+				})
+			})
 	}
 
 	function generateUniqueProjectId(path: string): string {

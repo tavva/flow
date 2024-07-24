@@ -7,4 +7,9 @@
 			color: var(--color-red);
 		}
 	}
+
+	.planned-item {
+		font-style: italic;
+		color: var(--text-muted);
+	}
 }
