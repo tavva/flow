@@ -8,7 +8,7 @@
     "inlineSources": true,
     "module": "esnext",
     "target": "es6",
-    "allowJs": true,
+    "allowJs": false,
     "noImplicitAny": true,
     "moduleResolution": "node",
     "importHelpers": true,
