@@ -115,9 +115,6 @@
 			.forEach((taskListItem) => {
 				const links = taskListItem.querySelectorAll('a')
 
-				console.log('taskListItem', taskListItem)
-				console.log('links', links)
-
 				links.forEach(function (link) {
 					if (link.getAttribute('href') === '#flow-planned') {
 						taskListItem.addClass('planned-item')
