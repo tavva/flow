@@ -3,9 +3,9 @@
 	import { Component } from 'obsidian'
 	import type { DataviewApi, STask } from 'obsidian-dataview'
 
-	import FlowPlugin from 'main'
-	import type { Project } from 'views/sphere'
-	import { isPlanningMode, addTaskClickListeners } from 'planning'
+	import FlowPlugin from 'main.js'
+	import type { Project } from 'views/sphere.js'
+	import { isPlanningMode, addTaskClickListeners } from 'planning.js'
 
 	export let plugin: FlowPlugin
 	export let sphere: string

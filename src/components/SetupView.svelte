@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type FlowPlugin from 'main'
+	import type FlowPlugin from 'main.js'
 
-	import { getMissingDependencies } from 'dependencies'
+	import { getMissingDependencies } from 'dependencies.js'
 	import {
 		createFilesFromSettings,
 		getInvalidSettings,
-	} from 'settings/settings'
-	import type { SettingDefinition } from 'settings/definitions'
-	import { SETUP_VIEW_TYPE } from 'views/setup'
+	} from 'settings/settings.js'
+	import type { SettingDefinition } from 'settings/definitions.js'
+	import { SETUP_VIEW_TYPE } from 'views/setup.js'
 
 	export let plugin: FlowPlugin
 

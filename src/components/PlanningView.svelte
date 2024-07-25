@@ -5,8 +5,8 @@
 	import { Component } from 'obsidian'
 	import { onMount } from 'svelte'
 
-	import FlowPlugin from 'main'
-	import { isPlanningMode, togglePlanningMode } from 'planning'
+	import FlowPlugin from 'main.js'
+	import { isPlanningMode, togglePlanningMode } from 'planning.js'
 
 	export let plugin: FlowPlugin
 	export let plannedTasks: STask[] = []
