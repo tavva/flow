@@ -111,8 +111,10 @@ export class SphereView extends ItemView implements SphereViewState {
 					'&file=' +
 					encodeURIComponent(p.file.path),
 			}))
-			// This sorts by priority, then by file name
+			// This sorts by priority, then by projects that are tagged with
+			// #waiting-for, then by file name
 			.sort((p: SMarkdownPage) => p.file.name, 'asc')
+			.sort((p: SMarkdownPage) => p.tags.includes('waiting-for'), 'asc')
 			.sort((p: SMarkdownPage) => p.priority, 'asc')
 	}
 }
