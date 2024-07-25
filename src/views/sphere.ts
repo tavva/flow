@@ -6,18 +6,6 @@ import FlowPlugin from 'main.js'
 
 export const SPHERE_VIEW_TYPE = 'sphere-view'
 
-export interface Project {
-	file: {
-		name: string
-		path: string
-		tasks: DataviewApi.TaskResult
-	}
-	status: string
-	priority: number
-	nextActions: DataviewApi.TaskResult
-	link: string
-}
-
 interface SphereViewState {
 	sphere: string
 }
@@ -108,10 +96,10 @@ export class SphereView extends ItemView implements SphereViewState {
 		return await this.plugin.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
-				(p: Project) =>
+				(p: SMarkdownPage) =>
 					p.status == 'live' && !p.file.path.startsWith('Templates/'),
 			)
-			.map((p: Project) => ({
+			.map((p: SMarkdownPage) => ({
 				...p,
 				nextActions: p.file.tasks.filter(
 					(t: STask) =>
@@ -124,7 +112,7 @@ export class SphereView extends ItemView implements SphereViewState {
 					encodeURIComponent(p.file.path),
 			}))
 			// This sorts by priority, then by file name
-			.sort((p: Project) => p.file.name, 'asc')
-			.sort((p: Project) => p.priority, 'asc')
+			.sort((p: SMarkdownPage) => p.file.name, 'asc')
+			.sort((p: SMarkdownPage) => p.priority, 'asc')
 	}
 }
