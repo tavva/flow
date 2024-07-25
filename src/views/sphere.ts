@@ -121,7 +121,7 @@ export class SphereView extends ItemView implements SphereViewState {
 				hasActionables: p.nextActions.some((t: STask) => {
 					return (
 						t.status != 'w' &&
-						(t.due == undefined || t.due > oneDayAhead)
+						(t.due == undefined || t.due <= oneDayAhead)
 					)
 				}),
 			}))
