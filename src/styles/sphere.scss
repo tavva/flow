@@ -13,3 +13,11 @@
 		color: var(--text-muted);
 	}
 }
+
+.flow-waiting-for {
+	color: var(--text-faint);
+
+	a {
+		color: var(--text-faint);
+	}
+}
