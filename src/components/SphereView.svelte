@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { tick, onMount } from 'svelte'
 	import { Component } from 'obsidian'
-	import type { DataviewApi, STask } from 'obsidian-dataview'
+	import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 
 	import FlowPlugin from 'main.js'
 	import type { Project } from 'views/sphere.js'
@@ -9,14 +9,14 @@
 
 	export let plugin: FlowPlugin
 	export let sphere: string
-	export let projects: Project[] = []
+	export let projects: SMarkdownPage[] = []
 
 	let sphereCapitalised: string = ''
 
-	let projectsWithNextActions: Project[] = []
-	let projectsWithNextActionsBelowPriorityCutoff: Project[] = []
-	let projectsWithNextActionsAbovePriorityCutoff: Project[] = []
-	let projectsNeedingNextActions: Project[] = []
+	let projectsWithNextActions: SMarkdownPage[] = []
+	let projectsWithNextActionsBelowPriorityCutoff: SMarkdownPage[] = []
+	let projectsWithNextActionsAbovePriorityCutoff: SMarkdownPage[] = []
+	let projectsNeedingNextActions: SMarkdownPage[] = []
 
 	let shadowIsPlanningMode: boolean = false
 

@@ -1,5 +1,5 @@
 import { ItemView, WorkspaceLeaf, type ViewStateResult } from 'obsidian'
-import { DataviewApi, STask } from 'obsidian-dataview'
+import { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 // @ts-ignore
 import SphereComponent from 'components/SphereView.svelte'
 import FlowPlugin from 'main.js'
@@ -104,7 +104,7 @@ export class SphereView extends ItemView implements SphereViewState {
 		}
 	}
 
-	private async listProjects() {
+	private async listProjects(): Promise<SMarkdownPage[]> {
 		return await this.plugin.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
