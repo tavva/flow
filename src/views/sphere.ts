@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 import { ItemView, WorkspaceLeaf, type ViewStateResult } from 'obsidian'
 import { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 // @ts-ignore
@@ -93,6 +95,9 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	private async listProjects(): Promise<SMarkdownPage[]> {
+		const now = DateTime.now()
+		const oneDayAhead = now.plus({ days: 1 })
+
 		return await this.plugin.dv
 			.pages(`#project/${this.sphere}`)
 			.filter(
@@ -111,10 +116,19 @@ export class SphereView extends ItemView implements SphereViewState {
 					'&file=' +
 					encodeURIComponent(p.file.path),
 			}))
-			// This sorts by priority, then by projects that are tagged with
-			// #waiting-for, then by file name
+			.map((p: SMarkdownPage) => ({
+				...p,
+				hasActionables: p.nextActions.some((t: STask) => {
+					return (
+						t.status != 'w' &&
+						(t.due == undefined || t.due > oneDayAhead)
+					)
+				}),
+			}))
+			// This sorts by priority, then by projects that have actionables,
+			// then by file name
 			.sort((p: SMarkdownPage) => p.file.name, 'asc')
-			.sort((p: SMarkdownPage) => p.tags.includes('waiting-for'), 'asc')
+			.sort((p: SMarkdownPage) => p.hasActionables, 'desc')
 			.sort((p: SMarkdownPage) => p.priority, 'asc')
 	}
 }

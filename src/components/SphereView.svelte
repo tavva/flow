@@ -236,9 +236,8 @@
 				{#each projectsWithNextActions as project}
 					{#if project.priority <= priorityCutoff}
 						<li
-							class:flow-waiting-for={project.tags.includes(
-								'waiting-for',
-							)}
+							class:flow-no-actionables={project.hasActionables ===
+								false}
 						>
 							{project.priority}.
 							<a href={project.link} data-path={project.file.path}
