@@ -13,3 +13,9 @@
 		}
 	}
 }
+
+li[data-task="w"] {
+	input[type="checkbox"]:after {
+		background-color: var(--checkbox-waiting-color);
+	}
+}
