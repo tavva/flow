@@ -12,6 +12,10 @@ import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing.js'
 import { SphereView, SPHERE_VIEW_TYPE } from 'views/sphere.js'
 import { PlanningView, PLANNING_VIEW_TYPE } from 'views/planning.js'
 import { SetupView, SETUP_VIEW_TYPE } from 'views/setup.js'
+import {
+	WeeklyReviewView,
+	WEEKLY_REVIEW_VIEW_TYPE,
+} from 'views/weeklyReview.js'
 import { registerCommands } from 'commands.js'
 import { Store } from 'store.js'
 import { Metrics } from 'metrics.js'
@@ -103,6 +107,10 @@ export default class FlowPlugin extends Plugin {
 		this.registerView(
 			PLANNING_VIEW_TYPE,
 			(leaf) => new PlanningView(leaf, this),
+		)
+		this.registerView(
+			WEEKLY_REVIEW_VIEW_TYPE,
+			(leaf) => new WeeklyReviewView(leaf, this),
 		)
 	}
 	private registerEvents() {
