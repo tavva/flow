@@ -29,10 +29,10 @@ export async function registerCommands(plugin: FlowPlugin) {
 	})
 
 	plugin.addCommand({
-		id: 'open-weekly-review',
-		name: 'Open weekly review',
+		id: 'open-work-weekly-review',
+		name: 'Open work weekly review',
 		callback: async () => {
-			openWeeklyReviewView(plugin)
+			openWeeklyReviewView(plugin, 'work')
 		},
 	})
 

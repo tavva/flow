@@ -3,7 +3,8 @@
 
 	import { WEEKLY_REVIEW_VIEW_TYPE } from 'views/weeklyReview.js'
 
-	// export let plugin: FlowPlugin
+	export let plugin: FlowPlugin
+	export let sphere: string
 
 	async function getTotalUnprocessedInboxCount() {
 		return 3
