@@ -16,7 +16,6 @@ export class SphereView extends ItemView implements SphereViewState {
 	private component!: SphereComponent
 	plugin: FlowPlugin
 	sphere: string
-	dv: DataviewApi
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
 		super(leaf)
