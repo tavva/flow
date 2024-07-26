@@ -3,6 +3,7 @@ import { NewProjectModal } from 'modals/newProjectModal.js'
 import { AddToInboxModal } from 'modals/addToInboxModal.js'
 
 import { openPlanningView } from 'views/planning.js'
+import { openWeeklyReviewView } from 'views/weeklyReview.js'
 import {
 	createNewProjectFile,
 	parseProjectTemplate,
@@ -24,6 +25,14 @@ export async function registerCommands(plugin: FlowPlugin) {
 		name: 'Open planning view',
 		callback: async () => {
 			openPlanningView(plugin)
+		},
+	})
+
+	plugin.addCommand({
+		id: 'open-weekly-review',
+		name: 'Open weekly review',
+		callback: async () => {
+			openWeeklyReviewView(plugin)
 		},
 	})
 
