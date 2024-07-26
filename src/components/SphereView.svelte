@@ -4,7 +4,6 @@
 	import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 
 	import FlowPlugin from 'main.js'
-	import type { Project } from 'views/sphere.js'
 	import { isPlanningMode, addTaskClickListeners } from 'planning.js'
 
 	export let plugin: FlowPlugin
@@ -160,7 +159,7 @@
 	$: updateProjectTaskLists(projectsWithNextActionsBelowPriorityCutoff)
 	$: updateNonProjectTaskList(nonProjectNextActions)
 
-	function updateProjectTaskLists(projects: Project[]) {
+	function updateProjectTaskLists(projects: SMarkdownPage[]) {
 		if (plugin && projects.length > 0) {
 			tick().then(() => {
 				projects.forEach((project) => {
