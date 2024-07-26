@@ -1,7 +1,10 @@
+import { DateTime } from 'luxon'
+
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
 import FlowPlugin from 'main.js'
 import type { TemplaterPlugin, Module } from 'typings/templater.js'
+import { SMarkdownPage, STask } from 'obsidian-dataview'
 
 // TODO: Move the add* functions out to their own utils file
 async function addLineToFile(
@@ -375,4 +378,45 @@ export async function getOrCreateInboxFile(plugin: FlowPlugin): Promise<TFile> {
 	inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
 
 	return inboxFile as TFile
+}
+
+export async function listProjects(
+	plugin: FlowPlugin,
+	sphere: string,
+): Promise<SMarkdownPage[]> {
+	const now = DateTime.now()
+	const oneDayAhead = now.plus({ days: 1 })
+
+	return await plugin.dv
+		.pages(`#project/${sphere}`)
+		.filter(
+			(p: SMarkdownPage) =>
+				p.status == 'live' && !p.file.path.startsWith('Templates/'),
+		)
+		.map((p: SMarkdownPage) => ({
+			...p,
+			nextActions: p.file.tasks.filter(
+				(t: STask) =>
+					t.section?.subpath == 'Next actions' && !t.completed,
+			),
+			link:
+				'obsidian://open?vault=' +
+				encodeURIComponent(plugin.dv.app.vault.getName()) +
+				'&file=' +
+				encodeURIComponent(p.file.path),
+		}))
+		.map((p: SMarkdownPage) => ({
+			...p,
+			hasActionables: p.nextActions.some((t: STask) => {
+				return (
+					t.status != 'w' &&
+					(t.due == undefined || t.due <= oneDayAhead)
+				)
+			}),
+		}))
+		// This sorts by priority, then by projects that have actionables,
+		// then by file name
+		.sort((p: SMarkdownPage) => p.file.name, 'asc')
+		.sort((p: SMarkdownPage) => p.hasActionables, 'desc')
+		.sort((p: SMarkdownPage) => p.priority, 'asc')
 }

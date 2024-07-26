@@ -1,10 +1,9 @@
-import { DateTime } from 'luxon'
-
 import { ItemView, WorkspaceLeaf, type ViewStateResult } from 'obsidian'
-import { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
-// @ts-ignore
-import SphereComponent from 'components/SphereView.svelte'
+import { STask } from 'obsidian-dataview'
+
 import FlowPlugin from 'main.js'
+import SphereComponent from 'components/SphereView.svelte'
+import { listProjects } from 'utils.js'
 
 export const SPHERE_VIEW_TYPE = 'sphere-view'
 
@@ -71,7 +70,7 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	async render() {
-		const projects = await this.listProjects()
+		const projects = listProjects(this.plugin, this.sphere)
 		const nonProjectNextActions = await this.plugin.dv
 			.page('Next actions')
 			.file.tasks.filter(
@@ -91,43 +90,5 @@ export class SphereView extends ItemView implements SphereViewState {
 		if (this.component) {
 			this.component.$set(props)
 		}
-	}
-
-	private async listProjects(): Promise<SMarkdownPage[]> {
-		const now = DateTime.now()
-		const oneDayAhead = now.plus({ days: 1 })
-
-		return await this.plugin.dv
-			.pages(`#project/${this.sphere}`)
-			.filter(
-				(p: SMarkdownPage) =>
-					p.status == 'live' && !p.file.path.startsWith('Templates/'),
-			)
-			.map((p: SMarkdownPage) => ({
-				...p,
-				nextActions: p.file.tasks.filter(
-					(t: STask) =>
-						t.section?.subpath == 'Next actions' && !t.completed,
-				),
-				link:
-					'obsidian://open?vault=' +
-					encodeURIComponent(this.plugin.dv.app.vault.getName()) +
-					'&file=' +
-					encodeURIComponent(p.file.path),
-			}))
-			.map((p: SMarkdownPage) => ({
-				...p,
-				hasActionables: p.nextActions.some((t: STask) => {
-					return (
-						t.status != 'w' &&
-						(t.due == undefined || t.due <= oneDayAhead)
-					)
-				}),
-			}))
-			// This sorts by priority, then by projects that have actionables,
-			// then by file name
-			.sort((p: SMarkdownPage) => p.file.name, 'asc')
-			.sort((p: SMarkdownPage) => p.hasActionables, 'desc')
-			.sort((p: SMarkdownPage) => p.priority, 'asc')
 	}
 }
