@@ -83,7 +83,11 @@
 
 {#if !isProcessingComplete}
 	<div class="flow-status">
-		<p>Remaining: Lines: {lineCount} | Files: {fileCount}</p>
+		{#if lineCount !== undefined && fileCount !== undefined}
+			<p>Remaining: Lines: {lineCount} | Files: {fileCount}</p>
+		{:else}
+			<p>Loading...</p>
+		{/if}
 	</div>
 {/if}
 
