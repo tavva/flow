@@ -240,13 +240,11 @@ export default class FlowPlugin extends Plugin {
 		await this.saveData(currentData)
 	}
 
-	onExternalSettingsChange() {
-		this.loadSettings()
-		// TODO: check if we need to reload the planning view (or anything else)
-		// here
-		// Maybe close the spheres too...? Make sure we don't throw the baby
-		// out with the bathwater as (I think) this will fire whenever we save
-		// a plannedTask...
+	async onExternalSettingsChange() {
+		// @ts-ignore
+		await this.app.plugins.disablePlugin('flow')
+		// @ts-ignore
+		await this.app.plugins.enablePlugin('flow')
 	}
 
 	onunload() {
