@@ -6,6 +6,15 @@ import PlanningViewComponent from 'components/PlanningView.svelte'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
+export async function closePlanningView(plugin: FlowPlugin) {
+	const { workspace } = plugin.app
+
+	const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
+	for (const leaf of leaves) {
+		leaf.detach()
+	}
+}
+
 export async function openPlanningView(plugin: FlowPlugin) {
 	const { workspace } = plugin.app
 
@@ -64,6 +73,7 @@ export class PlanningView extends ItemView {
 		this.eventListenerRef = this.plugin.events.on(
 			'planned-tasks-updated',
 			() => {
+				this.plugin.store.store({ 'last-task-planned': Date.now() })
 				this.setProps({
 					plannedTasks: this.plugin.tasks.getPlannedTasks(),
 				})
