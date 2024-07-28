@@ -4,6 +4,8 @@
 
 Flow is a life planning system using the concepts and processes from David Allen's Getting Things Done (GTD).
 
+> “_Paper is to write things down that we need to remember. Our brains are used to think_.” ― Albert Einstein.
+
 It's based on the principle that your mind is for having ideas, not holding them.
 
 We waste time keeping track of the things we have to do in life. From the basics such as 'buy more cat food' to the multi-month project at work – all of these responsibilities we have to store in our heads use up space and cycles that we should use for the things we want to do in that moment.
@@ -13,8 +15,6 @@ Flow will help you put every one of these projects, tasks, and ideas into Obsidi
 Getting into the flow state when working on something is a wonderful experience. All too often we're distracted by something popping up in our head that we may have forgotten about. Flow helps you get those things out of your head and into the Flow system immediately, allowing you to maintain your focus – your Flow state.
 
 Flow also helps you plan your day, ensuring you're working on the things that are important to you, and not just the things that feel urgent.
-
-> “_Paper is to write things down that we need to remember. Our brains are used to think_.” ― Albert Einstein.
 
 ## Is Flow for me?
 
