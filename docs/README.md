@@ -105,3 +105,15 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 
 -   Weekly review
 -   Better documentation
+
+## Source
+
+Note that this plugin is currently closed source. We will open source it in the future.
+
+## Thanks
+
+In Flow, we rely on some other plugins:
+
+-   [Dataview](https://github.com/blacksmithgu/obsidian-dataview/tree/master), allowing querying of your vault in many different ways.
+-   [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks), for management of tasks in Obsidian.
+-   [Templater](https://github.com/SilentVoid13/Templater), which defines a template language allowing easy content insertion into notes.
