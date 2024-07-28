@@ -100,3 +100,8 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 -   Open the sphere you want to plan from (there are buttons to do this easily in the planning view)
 -   Enter planning mode
 -   Select a task in the sphere view to add it to your planned actions list
+
+## Current development focus
+
+-   Weekly review
+-   Better documentation
