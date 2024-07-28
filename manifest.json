@@ -3,7 +3,7 @@
 	"name": "Flow",
 	"version": "0.4.0",
 	"minAppVersion": "0.15.0",
-	"description": "Implements key processes in David Allen's Getting Things Done (GTD) methodology and helps you manage everything in your life so you can focus on what's important. (Closed source)",
+	"description": "Implements key processes in David Allen's Getting Things Done (GTD) methodology",
 	"author": "Ben Phillips",
 	"authorUrl": "https://ben-phillips.net",
 	"isDesktopOnly": false
