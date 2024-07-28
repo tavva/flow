@@ -108,7 +108,7 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 
 ## Source
 
-Note that this plugin is currently closed source and the source code has a proprietary license. We will open source it in the future.
+This plugin is currently closed source and the source code has a proprietary license. We will open source it in the future.
 
 ## Thanks
 
