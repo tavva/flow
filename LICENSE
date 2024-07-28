@@ -16,7 +16,7 @@ Dependencies
 
 This software relies on the following AGPL-3.0 licensed software, which is not included in the distribution:
 
-- [Templater](https://github.com/SilentVoid13/Templater)
+- Templater: (https://github.com/SilentVoid13/Templater)
 
 To use this software, you must separately install the required AGPL-3.0 software. Please refer to their respective licenses and terms of use.
 
