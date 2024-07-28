@@ -112,7 +112,7 @@ Note that this plugin is currently closed source. We will open source it in the 
 
 ## Thanks
 
-We rely on some other plugins:
+We rely on some other plugins for Flow to work. These are amazing plugins that we're so grateful to the developers for creating. Without both their functionality and their inspiration, Flow wouldn't be possible.
 
 -   [Dataview](https://github.com/blacksmithgu/obsidian-dataview/tree/master), allowing querying of your vault in many different ways.
 -   [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks), for management of tasks in Obsidian.
