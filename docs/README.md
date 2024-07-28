@@ -94,7 +94,7 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 -   Run the command: Start processing
 -   Go through each item in your inbox and decide what to do with it
 
-#### Planning your day
+### Plan your day
 
 -   Run the command: Open planning view
 -   Open the sphere you want to plan from (there are buttons to do this easily in the planning view)
