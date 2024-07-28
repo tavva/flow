@@ -1,4 +1,4 @@
-import { Setting, debounce } from 'obsidian'
+import { Setting, debounce, normalizePath } from 'obsidian'
 
 import type FlowPlugin from 'main.js'
 import { FileSuggest } from 'settings/suggesters/FileSuggester.js'
@@ -40,7 +40,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: Inbox')
 						.setValue(plugin.settings.inboxFilesFolderPath)
 						.onChange(async (value) => {
-							plugin.settings.inboxFilesFolderPath = value
+							plugin.settings.inboxFilesFolderPath =
+								normalizePath(value)
 							plugin.saveSettings()
 						})
 				})
@@ -70,7 +71,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: Inbox')
 						.setValue(plugin.settings.inboxFolderPath)
 						.onChange(async (value) => {
-							plugin.settings.inboxFolderPath = value
+							plugin.settings.inboxFolderPath =
+								normalizePath(value)
 							plugin.saveSettings()
 						})
 				})
@@ -100,7 +102,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: Next Actions.md')
 						.setValue(plugin.settings.nextActionsFilePath)
 						.onChange(async (value) => {
-							plugin.settings.nextActionsFilePath = value
+							plugin.settings.nextActionsFilePath =
+								normalizePath(value)
 							await plugin.saveSettings()
 						})
 				})
@@ -140,7 +143,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: templates/Project.md')
 						.setValue(plugin.settings.newProjectTemplateFilePath)
 						.onChange(async (value) => {
-							plugin.settings.newProjectTemplateFilePath = value
+							plugin.settings.newProjectTemplateFilePath =
+								normalizePath(value)
 							await plugin.saveSettings()
 						})
 				})
@@ -167,7 +171,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: Projects')
 						.setValue(plugin.settings.projectsFolderPath)
 						.onChange(async (value) => {
-							plugin.settings.projectsFolderPath = value
+							plugin.settings.projectsFolderPath =
+								normalizePath(value)
 							plugin.saveSettings()
 						})
 				})
@@ -205,7 +210,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: templates/Person.md')
 						.setValue(plugin.settings.newPersonTemplateFilePath)
 						.onChange(async (value) => {
-							plugin.settings.newPersonTemplateFilePath = value
+							plugin.settings.newPersonTemplateFilePath =
+								normalizePath(value)
 							await plugin.saveSettings()
 						})
 				})
@@ -232,7 +238,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: People')
 						.setValue(plugin.settings.peopleFolderPath)
 						.onChange(async (value) => {
-							plugin.settings.peopleFolderPath = value
+							plugin.settings.peopleFolderPath =
+								normalizePath(value)
 							plugin.saveSettings()
 						})
 				})
@@ -261,7 +268,8 @@ export const rawSettingsDefinitions = {
 					cb.setPlaceholder('Example: Someday.md')
 						.setValue(plugin.settings.somedayFilePath)
 						.onChange(async (value) => {
-							plugin.settings.somedayFilePath = value
+							plugin.settings.somedayFilePath =
+								normalizePath(value)
 							await plugin.saveSettings()
 						})
 				})
