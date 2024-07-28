@@ -46,6 +46,7 @@ export class WeeklyReviewView
 	sphere: string
 
 	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
+		console.log('in constructor with plugin', plugin)
 		super(leaf)
 		this.sphere = ''
 		this.plugin = plugin
@@ -87,6 +88,7 @@ export class WeeklyReviewView
 	}
 
 	async onOpen() {
+		console.log('in onOpen', this.plugin)
 		this.component = new WeeklyReviewComponent({
 			target: this.contentEl,
 			props: {

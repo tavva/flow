@@ -1,17 +1,55 @@
 <script lang="ts">
+	import { onMount } from 'svelte'
+
 	import type FlowPlugin from 'main.js'
+	import { listProjects } from 'utils.js'
 
-	import { WEEKLY_REVIEW_VIEW_TYPE } from 'views/weeklyReview.js'
+	// TODO: why is plugin not being passed through as a prop
+	export let plugin: FlowPlugin
+	export let sphere: string
 
-	// export let plugin: FlowPlugin
-	// export let sphere: string
+	onMount(() => {
+		setInterval(async () => {
+			totalUnprocessedInboxCount = await getTotalUnprocessedInboxCount()
+			projectsWithNoNextActions = await getProjectsWithNoNextActions()
+			projectsWithTooManyNextActions =
+				await getProjectsWithTooManyNextActions()
+			waitingForActionsWithNoChaseDate =
+				await getWaitingForActionsWithNoChaseDate()
+			projectsThatHaventBeenModifiedInAWhile =
+				await getProjectsThatHaventBeenModifiedInAWhile()
+		}, 1000)
+	})
+
+	let totalUnprocessedInboxCount: number
+	let projectsWithNoNextActions: string[]
+	let projectsWithTooManyNextActions: {
+		name: string
+		nextActions: string[]
+	}[]
+	let waitingForActionsWithNoChaseDate: {
+		projectName: string
+		count: number
+	}[]
+	let projectsThatHaventBeenModifiedInAWhile: {
+		name: string
+		daysSinceLastModified: number
+	}[]
 
 	async function getTotalUnprocessedInboxCount() {
-		return 3
+		plugin.stateManager.updateCounts()
+		return (
+			plugin.stateManager.linesToProcess.length +
+			plugin.stateManager.filesToProcess.length
+		)
 	}
 
 	async function getProjectsWithNoNextActions() {
-		return ['Project 1', 'Project 2']
+		console.log('plugin', this.plugin)
+		const projects = await listProjects(this.plugin, this.sphere)
+		return projects
+			.filter((project) => project.hasActionables === false)
+			.map((project) => project.name)
 	}
 
 	async function getProjectsWithTooManyNextActions() {
@@ -77,29 +115,31 @@
 </script>
 
 <div>
-	<h1>Your weekly review</h1>
+	<h1>Your weekly review for {sphere}</h1>
 
 	<h2>Your inboxes</h2>
-	{#await getTotalUnprocessedInboxCount()}
+	{#if totalUnprocessedInboxCount === undefined}
 		<p>Loading...</p>
-	{:then count}
-		<p>You have {count} unprocessed drops in your inboxes</p>
-	{:catch error}
-		<p>Failed to load unprocessed drops: {error.message}</p>
-	{/await}
+	{:else if totalUnprocessedInboxCount === 0}
+		<p>All your inboxes are empty, good job</p>
+	{:else}
+		<p>
+			You have {totalUnprocessedInboxCount} unprocessed drops in your inboxes
+		</p>
+	{/if}
 
 	<h2>Projects with no next actions</h2>
-	{#await getProjectsWithNoNextActions()}
+	{#if projectsWithNoNextActions === undefined}
 		<p>Loading...</p>
-	{:then projects}
+	{:else if projectsWithNoNextActions.length > 0}
 		<ul>
-			{#each projects as project}
+			{#each projectsWithNoNextActions as project}
 				<li>{project} has nothing actionable. (Why is this bad?)</li>
 			{/each}
 		</ul>
-	{:catch error}
-		<p>Failed to load projects with no next actions: {error.message}</p>
-	{/await}
+	{:else}
+		<p>All your projects have next actions, good job</p>
+	{/if}
 
 	<h2>Projects with too many next actions</h2>
 	{#await getProjectsWithTooManyNextActions()}
