@@ -100,6 +100,9 @@
 		</div>
 	{:else}
 		<textarea bind:value={inputText}></textarea>
+		<p class="flow-2-minute-advice">
+			Can you do this in less than 2 minutes? If so, do it now!
+		</p>
 		<div class="flow-processing-actions">
 			<div class="flow-action-group">
 				<span class="flow-action-group-title">Next action</span>
