@@ -133,6 +133,10 @@ export default class FlowPlugin extends Plugin {
 	}
 
 	private onLayoutChange(): void {
+		if (!this.settings.hijackNewTab) {
+			return
+		}
+
 		const leaf = this.app.workspace.getMostRecentLeaf()
 		if (leaf?.getViewState().type === 'empty') {
 			leaf.setViewState({

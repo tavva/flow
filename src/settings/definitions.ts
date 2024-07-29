@@ -331,6 +331,27 @@ export const rawSettingsDefinitions = {
 				)
 		},
 	},
+	hijackNewTab: {
+		defaultValue: false,
+		check: (_value: boolean, _plugin: FlowPlugin) => {
+			return true
+		},
+		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
+			new Setting(containerEl)
+				.setName('Replace new tab')
+				.setDesc(
+					'Flow can replace your new tab with Flow-specific guidance',
+				)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(plugin.settings.hijackNewTab)
+						.onChange(async (value) => {
+							plugin.settings.hijackNewTab = value
+							await plugin.saveSettings()
+						})
+				})
+		},
+	},
 }
 
 export type SettingsDefinitions = {
