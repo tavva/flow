@@ -12,6 +12,7 @@ import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing.js'
 import { SphereView, SPHERE_VIEW_TYPE } from 'views/sphere.js'
 import { PlanningView, PLANNING_VIEW_TYPE } from 'views/planning.js'
 import { SetupView, SETUP_VIEW_TYPE } from 'views/setup.js'
+import { NewTabView, NEW_TAB_VIEW_TYPE } from 'views/new-tab.js'
 import { registerCommands } from 'commands.js'
 import { Store } from 'store.js'
 import { Metrics } from 'metrics.js'
@@ -104,6 +105,10 @@ export default class FlowPlugin extends Plugin {
 			PLANNING_VIEW_TYPE,
 			(leaf) => new PlanningView(leaf, this),
 		)
+		this.registerView(
+			NEW_TAB_VIEW_TYPE,
+			(leaf) => new NewTabView(leaf, this),
+		)
 	}
 	private registerEvents() {
 		this.registerEvent(
@@ -118,6 +123,22 @@ export default class FlowPlugin extends Plugin {
 				createEditorMenu(menu, editor, this)
 			}),
 		)
+
+		this.registerEvent(
+			this.app.workspace.on(
+				'layout-change',
+				this.onLayoutChange.bind(this),
+			),
+		)
+	}
+
+	private onLayoutChange(): void {
+		const leaf = this.app.workspace.getMostRecentLeaf()
+		if (leaf?.getViewState().type === 'empty') {
+			leaf.setViewState({
+				type: NEW_TAB_VIEW_TYPE,
+			})
+		}
 	}
 
 	private async setupWatchers() {
