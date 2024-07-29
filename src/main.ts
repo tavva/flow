@@ -20,6 +20,7 @@ import { Tasks } from 'tasks.js'
 import { createEditorMenu } from 'editorMenu.js'
 import { checkDependencies } from 'dependencies.js'
 import { Handlers } from 'handlers.js'
+import { checkBranch } from 'utils.js'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
@@ -32,6 +33,8 @@ export default class FlowPlugin extends Plugin {
 	events = new Events()
 
 	async onload() {
+		checkBranch(this)
+
 		this.app.workspace.onLayoutReady(async () => {
 			// All views can only be registered with our dependencies loaded.
 			// However, this one is required even if our dependencies aren't

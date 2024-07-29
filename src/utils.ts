@@ -420,3 +420,28 @@ export async function listProjects(
 		.sort((p: SMarkdownPage) => p.hasActionables, 'desc')
 		.sort((p: SMarkdownPage) => p.priority, 'asc')
 }
+
+export async function checkBranch(plugin: FlowPlugin) {
+	if (process.env.FLOW_ENVIRONMENT == 'development') {
+		setInterval(() => {
+			var path = require('path')
+
+			const gitHead = path.join(
+				// @ts-ignore
+				this.app.vault.adapter.getBasePath(),
+				this.app.vault.configDir,
+				'/plugins/flow/.git/HEAD',
+			)
+
+			require('fs')
+				.promises.readFile(gitHead, 'utf8')
+				.then((data: string) => {
+					const branch = data.split('/').pop()?.trim()
+					document.body.classList.toggle(
+						'flow-dev-branch',
+						branch?.trim() !== 'main',
+					)
+				})
+		}, 1000)
+	}
+}
