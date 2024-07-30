@@ -424,9 +424,7 @@ export async function listProjects(
 export async function checkBranch() {
 	if (process.env.FLOW_ENVIRONMENT == 'development') {
 		setInterval(() => {
-			var path = require('path')
-
-			const gitHead = path.join(
+			const gitHead = require('path').join(
 				// @ts-ignore
 				this.app.vault.adapter.getBasePath(),
 				this.app.vault.configDir,
