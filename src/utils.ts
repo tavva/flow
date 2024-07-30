@@ -421,7 +421,7 @@ export async function listProjects(
 		.sort((p: SMarkdownPage) => p.priority, 'asc')
 }
 
-export async function checkBranch(plugin: FlowPlugin) {
+export async function checkBranch() {
 	if (process.env.FLOW_ENVIRONMENT == 'development') {
 		setInterval(() => {
 			var path = require('path')

@@ -33,7 +33,7 @@ export default class FlowPlugin extends Plugin {
 	events = new Events()
 
 	async onload() {
-		checkBranch(this)
+		checkBranch()
 
 		this.app.workspace.onLayoutReady(async () => {
 			// All views can only be registered with our dependencies loaded.
