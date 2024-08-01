@@ -50,7 +50,6 @@
 		]
 	},
 	"dependencies": {
-		"@popperjs/core": "^2.11.8",
 		"lodash": "^4.17.21",
 		"luxon": "^3.4.4"
 	}
