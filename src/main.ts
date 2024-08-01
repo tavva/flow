@@ -185,14 +185,16 @@ export default class FlowPlugin extends Plugin {
 
 		const isFileToWatch = (file: TFile): boolean => {
 			const fileCache = cache.getFileCache(file)
-			if (fileCache !== null) {
-				if (
-					fileCache.frontmatter?.tags?.filter((t: string) =>
-						t.startsWith('project/'),
-					)
-				) {
-					return true
-				}
+			if (fileCache === null) {
+				return false
+			}
+
+			if (
+				fileCache.frontmatter?.tags?.filter((t: string) => {
+					t.startsWith('project/')
+				})
+			) {
+				return true
 			}
 
 			if (file.path === this.settings.nextActionsFilePath) {
