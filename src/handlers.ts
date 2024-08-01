@@ -10,7 +10,6 @@ import {
 	addToPersonDiscussNext,
 	addToPersonReference,
 	getFilesWithTagPrefix,
-	readFileContent,
 	createNewProjectFile,
 	parseProjectTemplate,
 } from 'utils.js'

@@ -1,6 +1,5 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 
-import { readFileContent } from 'utils.js'
 import FlowPlugin from 'main.js'
 import { PROCESSING_VIEW_TYPE, ProcessingView } from 'views/processing.js'
 
@@ -137,7 +136,7 @@ export class StateManager {
 
 		if (this.filesToProcess.length > 0) {
 			const file = this.filesToProcess[0]
-			content = await readFileContent(this.plugin, file)
+			content = await this.plugin.app.vault.read(file)
 			view!.updateEmbeddedFile(file.path)
 		}
 
@@ -160,7 +159,7 @@ export class StateManager {
 		this.linesToProcess = []
 
 		for (const file of inboxFiles) {
-			const content = await readFileContent(this.plugin, file)
+			const content = await this.plugin.app.vault.read(file)
 			const lines = content
 				.split('\n')
 				.filter((line) => line.trim() !== '')

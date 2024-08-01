@@ -144,21 +144,6 @@ export async function addToPersonReference(
 	await addToFileSection(plugin, personFile, line, '## Reference')
 }
 
-export function readFileContent(
-	plugin: FlowPlugin,
-	file: TFile,
-): Promise<string> {
-	return plugin.app.vault.read(file)
-}
-
-export function writeFileContent(
-	plugin: FlowPlugin,
-	file: TFile,
-	content: string,
-): Promise<void> {
-	return plugin.app.vault.modify(file, content)
-}
-
 export function getFilesWithTagPrefix(
 	plugin: FlowPlugin,
 	prefix: string,
