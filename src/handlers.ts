@@ -131,20 +131,20 @@ export class Handlers {
 					this.plugin,
 					projectName,
 				)
-				let content = await this.app.vault.read(projectFile)
 
-				const sphereText = Array.from(spheres)
-					.map((s) => `project/${s}`)
-					.join(' ')
+				await this.app.vault.process(projectFile, (content) => {
+					const sphereText = Array.from(spheres)
+						.map((s) => `project/${s}`)
+						.join(' ')
 
-				content = await parseProjectTemplate({
-					content: content,
-					priority: priority,
-					sphere: sphereText,
-					description: description,
+					const parsedContent = parseProjectTemplate({
+						content: content,
+						priority: priority,
+						sphere: sphereText,
+						description: description,
+					})
+					return parsedContent
 				})
-
-				await this.app.vault.modify(projectFile, content)
 
 				await this.removeProcessedItem()
 				this.plugin.metrics.count('new-project-created')

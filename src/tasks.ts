@@ -34,17 +34,17 @@ export class Tasks {
 			throw new Error(`File not found: ${path}`)
 		}
 
-		const fileContent = await this.plugin.app.vault.read(file)
-		const lines = fileContent.split('\n')
+		await this.plugin.app.vault.process(file, (fileContent) => {
+			const lines = fileContent.split('\n')
 
-		if (lineNumber < 1 || lineNumber > lines.length) {
-			throw new Error(`Line number ${lineNumber} is out of range`)
-		}
+			if (lineNumber < 1 || lineNumber > lines.length) {
+				throw new Error(`Line number ${lineNumber} is out of range`)
+			}
 
-		lines[lineNumber] = newLine
-		const newContent = lines.join('\n')
-
-		await this.plugin.app.vault.modify(file, newContent)
+			lines[lineNumber] = newLine
+			const newContent = lines.join('\n')
+			return newContent
+		})
 	}
 
 	async markTaskAsPlannedNextAction(task: STask) {

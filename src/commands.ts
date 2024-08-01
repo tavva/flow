@@ -50,7 +50,7 @@ export async function registerCommands(plugin: FlowPlugin) {
 						.map((s) => `project/${s}`)
 						.join(' ')
 
-					content = await parseProjectTemplate({
+					content = parseProjectTemplate({
 						content: content,
 						priority: priority,
 						sphere: sphereText,
