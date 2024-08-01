@@ -188,19 +188,21 @@ export class Handlers {
 		if (this.plugin.stateManager.inboxFilesFolder) {
 			await this.removeEmptyLinesFromFile(file)
 
-			const currentContent = await readFileContent(this.plugin, file)
-			const currentLines = currentContent.split('\n')
-			const firstLine = currentLines[0]
-			if (firstLine && firstLine.trim() === line.trim()) {
-				const updatedContent = currentLines.slice(1).join('\n')
-				await this.app.vault.modify(file, updatedContent)
-			} else {
-				console.log('processedLine:', processedLine)
-				console.log('currentLines[0]:', currentLines[0])
-				console.error(
-					'Mismatch in the processed line and the current first line',
-				)
-			}
+			this.plugin.app.vault.process(file, (currentContent) => {
+				const currentLines = currentContent.split('\n')
+				const firstLine = currentLines[0]
+				if (firstLine && firstLine.trim() === line.trim()) {
+					const updatedContent = currentLines.slice(1).join('\n')
+					return updatedContent
+				} else {
+					console.log('processedLine:', processedLine)
+					console.log('currentLines[0]:', currentLines[0])
+					console.error(
+						'Mismatch in the processed line and the current first line',
+					)
+					return currentContent
+				}
+			})
 		}
 	}
 
@@ -209,11 +211,11 @@ export class Handlers {
 	}
 
 	private async removeEmptyLinesFromFile(file: TFile): Promise<void> {
-		const content = await readFileContent(this.plugin, file)
-		const nonEmptyLines = content
-			.split('\n')
-			.filter((line) => line.trim() !== '')
-			.join('\n')
-		await this.app.vault.modify(file, nonEmptyLines)
+		this.plugin.app.vault.process(file, (content) => {
+			return content
+				.split('\n')
+				.filter((line) => line.trim() !== '')
+				.join('\n')
+		})
 	}
 }

@@ -44,20 +44,20 @@ export async function registerCommands(plugin: FlowPlugin) {
 						plugin,
 						projectName,
 					)
-					let content = await plugin.app.vault.read(projectFile)
 
-					const sphereText = Array.from(spheres)
-						.map((s) => `project/${s}`)
-						.join(' ')
+					await plugin.app.vault.process(projectFile, (content) => {
+						const sphereText = Array.from(spheres)
+							.map((s) => `project/${s}`)
+							.join(' ')
 
-					content = parseProjectTemplate({
-						content: content,
-						priority: priority,
-						sphere: sphereText,
-						description: description,
+						content = parseProjectTemplate({
+							content: content,
+							priority: priority,
+							sphere: sphereText,
+							description: description,
+						})
+						return content
 					})
-
-					await plugin.app.vault.modify(projectFile, content)
 
 					plugin.metrics.count('new-project-created-from-command')
 				},

@@ -277,7 +277,7 @@ async function getTemplaterCreateNewFunction(
 	return await tp_file!.static_functions.get('create_new')
 }
 
-export async function parseProjectTemplate(options: {
+export function parseProjectTemplate(options: {
 	content: string
 	priority: number
 	sphere: string
