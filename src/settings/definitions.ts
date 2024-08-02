@@ -352,6 +352,27 @@ export const rawSettingsDefinitions = {
 				})
 		},
 	},
+	automaticallyDeleteOldTasks: {
+		defaultValue: false,
+		check: (_value: boolean, _plugin: FlowPlugin) => {
+			return true
+		},
+		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
+			new Setting(containerEl)
+				.setName('Purge old tasks')
+				.setDesc(
+					'The planning view is meant to be a temporary view of your tasks. Turn this on if you want to automatically delete old tasks. They will be stored temporarily so you can refer to them when replanning.',
+				)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(plugin.settings.automaticallyDeleteOldTasks)
+						.onChange(async (value) => {
+							plugin.settings.automaticallyDeleteOldTasks = value
+							await plugin.saveSettings()
+						})
+				})
+		},
+	},
 }
 
 export type SettingsDefinitions = {
