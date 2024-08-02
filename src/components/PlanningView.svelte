@@ -205,10 +205,11 @@
 
 	<div class="flow-old-tasks">
 		{#if oldPlannedTasks && oldPlannedTasks.length > 0}
+			<hr />
 			<p>
-				We cleared your tasks
+				Stale tasks have been cleared
 				<button on:click={() => (showOldTasks = !showOldTasks)}>
-					{showOldTasks ? 'Hide' : 'Show'} old tasks
+					{showOldTasks ? 'Hide' : 'Show'}
 				</button>
 			</p>
 
