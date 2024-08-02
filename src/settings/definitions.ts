@@ -359,9 +359,9 @@ export const rawSettingsDefinitions = {
 		},
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
-				.setName('Purge old tasks')
+				.setName('Maintain a fresh todo list')
 				.setDesc(
-					'The planning view is meant to be a temporary view of your tasks. Turn this on if you want to automatically delete old tasks. They will be stored temporarily so you can refer to them when replanning.',
+					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default.',
 				)
 				.addToggle((toggle) => {
 					toggle
