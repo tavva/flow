@@ -201,7 +201,7 @@
 	<div class="flow-planning-task-container"></div>
 
 	<div class="flow-old-tasks">
-		{#if oldPlannedTasks.length > 0}
+		{#if oldPlannedTasks && oldPlannedTasks.length > 0}
 			<p>
 				We cleared your tasks
 				<button on:click={() => (showOldTasks = !showOldTasks)}>
