@@ -105,7 +105,7 @@ export class Tasks {
 		this.plugin.store.store({ 'old-tasks': tasksToStore })
 	}
 
-	getOldTasks() {
-		return this.plugin.store?.retrieve('old-tasks') ?? []
+	async getOldTasks() {
+		return (await this.plugin.store?.retrieve('old-tasks')) ?? []
 	}
 }
