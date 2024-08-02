@@ -1,4 +1,5 @@
 import { DateTime } from 'luxon'
+import dotenv from 'dotenv'
 
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
@@ -406,7 +407,19 @@ export async function listProjects(
 		.sort((p: SMarkdownPage) => p.priority, 'asc')
 }
 
-export async function checkBranch() {
+export function loadEnv(plugin: FlowPlugin) {
+	// @ts-ignore
+	const basePath = plugin.app.vault.adapter.basePath
+
+	dotenv.config({
+		path: `${basePath}/.obsidian/plugins/flow/.env`,
+		debug: false,
+	})
+}
+
+export async function checkBranch(plugin: FlowPlugin) {
+	loadEnv(plugin)
+
 	if (process.env.FLOW_ENVIRONMENT == 'development') {
 		setInterval(() => {
 			const gitHead = require('path').join(
