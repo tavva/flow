@@ -8,6 +8,8 @@
 
 	export let plugin: FlowPlugin
 	export let plannedTasks: STask[] = []
+	export let oldPlannedTasks: []
+	let showOldTasks = false
 
 	onMount(() => {
 		renderTasks(plannedTasks)
@@ -195,4 +197,30 @@
 	</div>
 
 	<div class="flow-planning-task-container"></div>
+
+	<div class="flow-old-tasks">
+		{#if oldPlannedTasks.length > 0}
+			<p>
+				We cleared your tasks
+				<button on:click={() => (showOldTasks = !showOldTasks)}>
+					{showOldTasks ? 'Hide' : 'Show'} old tasks
+				</button>
+			</p>
+
+			{#if showOldTasks}
+				<div class="flow-old-tasks-list-container">
+					{#each oldPlannedTasks as task}
+						<a
+							href="obsidian://open?vault={encodeURIComponent(
+								plugin.dv.app.vault.getName(),
+							)}&file={encodeURIComponent(
+								task.link.path,
+							)}#{encodeURIComponent(task.link.subpath)}"
+							>{task.text}</a
+						>
+					{/each}
+				</div>
+			{/if}
+		{/if}
+	</div>
 </div>

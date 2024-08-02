@@ -87,4 +87,25 @@ export class Tasks {
 			}
 		}
 	}
+
+	deleteOldTasks() {
+		const tasks = this.getPlannedTasks()
+		if (tasks.length === 0) {
+			// Return early so we don't update the store (and therefore refresh
+			// the planning view)
+			return
+		}
+		const tasksToStore = []
+
+		for (const task of tasks) {
+			tasksToStore.push(task)
+		}
+
+		this.unmarkAllTasksAsPlannedNextAction()
+		this.plugin.store.store({ 'old-tasks': tasksToStore })
+	}
+
+	getOldTasks() {
+		return this.plugin.store?.retrieve('old-tasks') ?? []
+	}
 }
