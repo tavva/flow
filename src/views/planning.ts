@@ -62,6 +62,10 @@ export class PlanningView extends ItemView {
 	}
 
 	async onOpen() {
+		if (this.plugin.settings.automaticallyDeleteOldTasks) {
+			this.plugin.tasks.deleteOldTasks()
+		}
+
 		this.component = new PlanningViewComponent({
 			target: this.contentEl,
 			props: {
