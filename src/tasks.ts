@@ -129,17 +129,17 @@ export class Tasks {
 		const filename = 'flow-planned-actions-export.md'
 
 		const tasks = this.getPlannedTasks()
-		const content = tasks
-			.map((t: STask) => t.text.replace(/#[^\s]+/g, '').trim())
-			.join('\n')
-			.trim()
+		const output = JSON.stringify(
+			tasks.map((t: STask) => t.text.replace(/#[^\s]+/g, '').trim())
+				.values,
+		)
 
 		const file = this.plugin.app.vault.getAbstractFileByPath(filename)
 		if (!(file instanceof TFile)) {
-			this.plugin.app.vault.create(filename, content)
+			this.plugin.app.vault.create(filename, output)
 			return
 		}
 
-		await this.plugin.app.vault.modify(file, content)
+		await this.plugin.app.vault.modify(file, output)
 	}
 }
