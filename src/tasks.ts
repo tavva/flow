@@ -106,7 +106,7 @@ export class Tasks {
 
 		const tasks = this.getPlannedTasks()
 		const content = tasks
-			.map((t: STask) => t.text)
+			.map((t: STask) => t.text.replace(/#[^\s]+/g, '').trim())
 			.join('\n')
 			.trim()
 
