@@ -112,7 +112,10 @@ export class Tasks {
 			'flow-planned-export.md',
 		)
 		if (!(file instanceof TFile)) {
-			this.plugin.app.vault.create('flow-planned-export.md', content)
+			this.plugin.app.vault.create(
+				'flow-planned-tasks-export.md',
+				content,
+			)
 			return
 		}
 
