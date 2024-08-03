@@ -47,5 +47,9 @@ export class FlowSettingsTab extends PluginSettingTab {
 		)
 		settingsDefinitions.peopleFolderPath.render(containerEl, this.plugin)
 		settingsDefinitions.somedayFilePath.render(containerEl, this.plugin)
+
+		new Setting(containerEl).setName('Advanced').setHeading()
+
+		settingsDefinitions.exportPlannedTasks.render(containerEl, this.plugin)
 	}
 }
