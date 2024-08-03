@@ -23,6 +23,7 @@ export class FlowSettingsTab extends PluginSettingTab {
 			containerEl,
 			this.plugin,
 		)
+		settingsDefinitions.exportPlannedTasks.render(containerEl, this.plugin)
 
 		new Setting(containerEl).setName('Inbox folders').setHeading()
 

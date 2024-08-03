@@ -1,13 +1,22 @@
-import { TFile } from 'obsidian'
+import { TFile, debounce } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 
 import FlowPlugin from 'main.js'
 
 export class Tasks {
 	plugin: FlowPlugin
+	exportPlannedTasksDebounced: () => void
 
 	constructor(plugin: FlowPlugin) {
 		this.plugin = plugin
+		this.exportPlannedTasksDebounced = debounce(
+			this.exportPlannedTasks.bind(this),
+			5000,
+			true,
+		)
+		this.plugin.events.on('planned-tasks-updated', () => {
+			this.exportPlannedTasksDebounced()
+		})
 	}
 
 	getTask(description: string, path: string) {
@@ -107,5 +116,27 @@ export class Tasks {
 
 	async getOldTasks() {
 		return (await this.plugin.store?.retrieve('old-tasks')) ?? []
+	}
+
+	private async exportPlannedTasks() {
+		if (!this.plugin.settings.exportPlannedTasks) {
+			return
+		}
+
+		const tasks = this.getPlannedTasks()
+		const content = tasks
+			.map((t: STask) => t.text)
+			.join('\n')
+			.trim()
+
+		const file = this.plugin.app.vault.getAbstractFileByPath(
+			'flow-planned-export.md',
+		)
+		if (!(file instanceof TFile)) {
+			this.plugin.app.vault.create('flow-planned-export.md', content)
+			return
+		}
+
+		await this.plugin.app.vault.modify(file, content)
 	}
 }

@@ -373,6 +373,27 @@ export const rawSettingsDefinitions = {
 				})
 		},
 	},
+	exportPlannedTasks: {
+		defaultValue: false,
+		check: (_value: boolean, _plugin: FlowPlugin) => {
+			return true
+		},
+		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
+			new Setting(containerEl)
+				.setName('Export planned tasks')
+				.setDesc(
+					'Flow can export your planned tasks to a single note. This can be used to sync with other apps (e.g. for displaying your planned actions in a desktop widget.',
+				)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(plugin.settings.exportPlannedTasks)
+						.onChange(async (value) => {
+							plugin.settings.exportPlannedTasks = value
+							await plugin.saveSettings()
+						})
+				})
+		},
+	},
 }
 
 export type SettingsDefinitions = {
