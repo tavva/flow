@@ -17,6 +17,9 @@ export class Tasks {
 		this.plugin.events.on('planned-tasks-updated', () => {
 			this.exportPlannedTasksDebounced()
 		})
+
+		// Run here to refresh the export with data synced from another device
+		this.exportPlannedTasksDebounced()
 	}
 
 	getTask(description: string, path: string) {
