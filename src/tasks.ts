@@ -123,20 +123,17 @@ export class Tasks {
 			return
 		}
 
+		const filename = 'flow-planned-tasks-export.md'
+
 		const tasks = this.getPlannedTasks()
 		const content = tasks
 			.map((t: STask) => t.text)
 			.join('\n')
 			.trim()
 
-		const file = this.plugin.app.vault.getAbstractFileByPath(
-			'flow-planned-tasks-export.md',
-		)
+		const file = this.plugin.app.vault.getAbstractFileByPath(filename)
 		if (!(file instanceof TFile)) {
-			this.plugin.app.vault.create(
-				'flow-planned-tasks-export.md',
-				content,
-			)
+			this.plugin.app.vault.create(filename, content)
 			return
 		}
 
