@@ -130,7 +130,7 @@ export class Tasks {
 			.trim()
 
 		const file = this.plugin.app.vault.getAbstractFileByPath(
-			'flow-planned-export.md',
+			'flow-planned-tasks-export.md',
 		)
 		if (!(file instanceof TFile)) {
 			this.plugin.app.vault.create(
