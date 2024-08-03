@@ -102,7 +102,7 @@ export class Tasks {
 			return
 		}
 
-		const filename = 'flow-planned-tasks-export.md'
+		const filename = 'flow-planned-actions-export.md'
 
 		const tasks = this.getPlannedTasks()
 		const content = tasks
