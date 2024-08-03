@@ -70,9 +70,6 @@ export default class FlowPlugin extends Plugin {
 			registerCommands(this)
 			this.registerEvents()
 			this.setupWatchers()
-
-			// Run this here, so we refresh if we've synced from another device
-			this.tasks.exportPlannedTasksDebounced()
 		})
 	}
 
