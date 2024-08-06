@@ -3,10 +3,13 @@
 	import { Component } from 'obsidian'
 	import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 
+	import store from 'svelteStore.js'
 	import FlowPlugin from 'main.js'
 	import { isPlanningMode, addTaskClickListeners } from 'planning.js'
 
-	export let plugin: FlowPlugin
+	let plugin: FlowPlugin
+	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
+
 	export let sphere: string
 	export let projects: SMarkdownPage[] = []
 

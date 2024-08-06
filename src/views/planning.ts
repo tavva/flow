@@ -1,7 +1,7 @@
 import { ItemView, WorkspaceLeaf, type EventRef } from 'obsidian'
 
 import FlowPlugin from 'main.js'
-
+import store from 'svelteStore.js'
 import PlanningViewComponent from 'components/PlanningView.svelte'
 
 export const PLANNING_VIEW_TYPE = 'planning-view'
@@ -62,6 +62,8 @@ export class PlanningView extends ItemView {
 	}
 
 	async onOpen() {
+		store.plugin.set(this.plugin)
+
 		if (this.plugin.settings.automaticallyDeleteOldTasks) {
 			this.plugin.tasks.deleteOldTasks()
 		}

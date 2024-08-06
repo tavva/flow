@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 
 import type FlowPlugin from 'main.js'
+import store from 'svelteStore.js'
 import SetupComponent from 'components/SetupView.svelte'
 
 export const SETUP_VIEW_TYPE = 'setup-view'
@@ -27,11 +28,10 @@ export class SetupView extends ItemView {
 	}
 
 	async onOpen() {
+		store.plugin.set(this.plugin)
+
 		this.component = new SetupComponent({
 			target: this.contentEl,
-			props: {
-				plugin: this.plugin,
-			},
 		})
 	}
 
