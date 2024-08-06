@@ -5,10 +5,13 @@
 	import { Component } from 'obsidian'
 	import { onMount } from 'svelte'
 
+	import store from 'svelteStore.js'
 	import FlowPlugin from 'main.js'
 	import { isPlanningMode, togglePlanningMode } from 'planning.js'
 
-	export let plugin: FlowPlugin
+	let plugin: FlowPlugin
+	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
+
 	export let plannedTasks: STask[] = []
 
 	onMount(() => {

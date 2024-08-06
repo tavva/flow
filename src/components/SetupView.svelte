@@ -1,4 +1,5 @@
 <script lang="ts">
+	import store from 'svelteStore.js'
 	import type FlowPlugin from 'main.js'
 
 	import { getMissingDependencies } from 'dependencies.js'
@@ -9,7 +10,8 @@
 	import type { SettingDefinition } from 'settings/definitions.js'
 	import { SETUP_VIEW_TYPE } from 'views/setup.js'
 
-	export let plugin: FlowPlugin
+	let plugin: FlowPlugin
+	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 
 	let settingsData: [string, SettingDefinition<any>][] | null = null
 	let dependenciesData: string[][] | null = null

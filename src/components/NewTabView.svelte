@@ -1,7 +1,9 @@
 <script lang="ts">
+	import store from 'svelteStore.js'
 	import type FlowPlugin from 'main.js'
 
-	export let plugin: FlowPlugin
+	let plugin: FlowPlugin
+	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 </script>
 
 <div>

@@ -1,7 +1,8 @@
 import { ItemView, WorkspaceLeaf, TFile } from 'obsidian'
 
-import ProcessingViewComponent from 'components/ProcessingView.svelte'
 import type FlowPlugin from 'main.js'
+import store from 'svelteStore.js'
+import ProcessingViewComponent from 'components/ProcessingView.svelte'
 
 export const PROCESSING_VIEW_TYPE = 'processing-view'
 
@@ -28,10 +29,11 @@ export class ProcessingView extends ItemView {
 	}
 
 	async onOpen() {
+		store.plugin.set(this.plugin)
+
 		this.component = new ProcessingViewComponent({
 			target: this.contentEl,
 			props: {
-				plugin: this.plugin,
 				line: '',
 				onAddToNextActions: () => {},
 				onAddToProjectNextActions: () => {},

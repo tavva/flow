@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { MarkdownRenderer, Component } from 'obsidian'
 
+	import store from 'svelteStore.js'
 	import FlowPlugin from 'main.js'
 	import { Stage } from 'processing.js'
 	import { openPlanningView } from 'views/planning.js'
 
-	export let plugin: FlowPlugin
+	let plugin: FlowPlugin
+	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 
 	export let lineCount: number
 	export let fileCount: number

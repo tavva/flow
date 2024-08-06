@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf, type ViewStateResult } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 
 import FlowPlugin from 'main.js'
+import store from 'svelteStore.js'
 import SphereComponent from 'components/SphereView.svelte'
 import { listProjects } from 'utils.js'
 
@@ -54,10 +55,11 @@ export class SphereView extends ItemView implements SphereViewState {
 	}
 
 	async onOpen() {
+		store.plugin.set(this.plugin)
+
 		this.component = new SphereComponent({
 			target: this.contentEl,
 			props: {
-				plugin: this.plugin,
 				sphere: this.sphere,
 			},
 		})
