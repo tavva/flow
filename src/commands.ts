@@ -59,6 +59,8 @@ export async function registerCommands(plugin: FlowPlugin) {
 						return content
 					})
 
+					plugin.app.workspace.openLinkText(projectFile.path, '')
+
 					plugin.metrics.count('new-project-created-from-command')
 				},
 			).open()
