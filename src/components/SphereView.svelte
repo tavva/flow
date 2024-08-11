@@ -53,6 +53,15 @@
 		return () => unsubscribe()
 	})
 
+	function openProject(event: MouseEvent) {
+		event.preventDefault()
+		const target = event.target as HTMLElement
+		const path = target.getAttribute('data-path')
+		if (path) {
+			plugin.app.workspace.openLinkText(path, '')
+		}
+	}
+
 	async function renderTaskList(container: HTMLElement, tasks: STask[]) {
 		if (container && tasks) {
 			try {
@@ -242,8 +251,10 @@
 								false}
 						>
 							{project.priority}.
-							<a href={project.link} data-path={project.file.path}
-								>{project.file.name}</a
+							<a
+								href={project.link}
+								data-path={project.file.path}
+								on:click={openProject}>{project.file.name}</a
 							>
 							<div
 								id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
