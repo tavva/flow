@@ -37,6 +37,18 @@
 			plugin.app.workspace.openLinkText(path, '')
 		}
 	}
+
+	function deleteOldTasks() {
+		if (confirm('Are you sure you want to delete the saved stale tasks?')) {
+			plugin.tasks.deleteSavedOldTasks()
+			const ele = document.querySelector('.flow-old-tasks')
+
+			if (ele) {
+				ele.remove()
+			}
+		}
+	}
+
 	function renderTasks(tasks: STask[]) {
 		const container = document.querySelector(
 			'.flow-planning-task-container',
@@ -216,7 +228,10 @@
 			<hr />
 			<p>
 				Stale tasks have been cleared
-				<button on:click={() => (showOldTasks = !showOldTasks)}>
+				<button
+					class="flow-toggle-old-tasks"
+					on:click={() => (showOldTasks = !showOldTasks)}
+				>
 					{showOldTasks ? 'Hide' : 'Show'}
 				</button>
 			</p>
@@ -234,6 +249,11 @@
 							on:click={openTaskNote}>{task.text}</a
 						>
 					{/each}
+					<button
+						on:click={deleteOldTasks}
+						class="flow-delete-old-tasks"
+						>Delete saved stale tasks</button
+					>
 				</div>
 			{/if}
 		{/if}
