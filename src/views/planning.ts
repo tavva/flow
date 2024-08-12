@@ -40,6 +40,8 @@ export async function openPlanningView(plugin: FlowPlugin) {
 }
 
 export class PlanningView extends ItemView {
+	navigation = false
+
 	private component!: PlanningViewComponent
 	plugin: FlowPlugin
 	private eventListenerRef: EventRef | null = null
