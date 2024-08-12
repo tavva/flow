@@ -34,6 +34,29 @@ export function createEditorMenu(
 		})
 
 		subMenu.addItem((subMenuItem) => {
+			subMenuItem.setTitle('Toggle task for planning')
+			subMenuItem.onClick(async () => {
+				const cursor = editor.getCursor()
+				let line = editor.getLine(cursor.line)
+
+				if (!line.startsWith('- [')) {
+					new Notice('Only tasks can be planned.')
+					return
+				}
+
+				if (line.includes('#flow-planned')) {
+					line = line.replace(' #flow-planned', '')
+				} else {
+					line = line + ' #flow-planned'
+				}
+
+				editor.setLine(cursor.line, line)
+
+				new Notice('Task has been toggled for planning.')
+			})
+		})
+
+		subMenu.addItem((subMenuItem) => {
 			subMenuItem.setTitle('Start processing')
 			subMenuItem.onClick(async () => {
 				plugin.stateManager.startProcessing()

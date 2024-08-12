@@ -16,6 +16,9 @@ styles.css
 # Exclude sourcemaps
 *.map
 
+# Exclude environment variables
+.env
+
 # obsidian
 data.json
 

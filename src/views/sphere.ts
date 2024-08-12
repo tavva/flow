@@ -13,6 +13,8 @@ interface SphereViewState {
 }
 
 export class SphereView extends ItemView implements SphereViewState {
+	navigation = false
+
 	private component!: SphereComponent
 	plugin: FlowPlugin
 	sphere: string

@@ -7,6 +7,8 @@ import SetupComponent from 'components/SetupView.svelte'
 export const SETUP_VIEW_TYPE = 'setup-view'
 
 export class SetupView extends ItemView {
+	navigation = false
+
 	plugin: FlowPlugin
 	private component!: SetupComponent
 

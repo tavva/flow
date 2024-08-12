@@ -40,6 +40,8 @@ export async function openPlanningView(plugin: FlowPlugin) {
 }
 
 export class PlanningView extends ItemView {
+	navigation = false
+
 	private component!: PlanningViewComponent
 	plugin: FlowPlugin
 	private eventListenerRef: EventRef | null = null
@@ -64,10 +66,16 @@ export class PlanningView extends ItemView {
 	async onOpen() {
 		store.plugin.set(this.plugin)
 
+		if (this.plugin.settings.automaticallyDeleteOldTasks) {
+			await this.plugin.tasks.deleteOldTasks()
+		}
+
 		this.component = new PlanningViewComponent({
 			target: this.contentEl,
 			props: {
-				plannedTasks: this.plugin.tasks.getPlannedTasks(),
+				plugin: this.plugin,
+				plannedTasks: await this.plugin.tasks.getPlannedTasks(),
+				oldPlannedTasks: await this.plugin.tasks.getOldTasks(),
 			},
 		})
 

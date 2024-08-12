@@ -7,6 +7,8 @@ import ProcessingViewComponent from 'components/ProcessingView.svelte'
 export const PROCESSING_VIEW_TYPE = 'processing-view'
 
 export class ProcessingView extends ItemView {
+	navigation = false
+
 	private plugin: FlowPlugin
 	private component!: ProcessingViewComponent
 

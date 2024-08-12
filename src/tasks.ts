@@ -100,6 +100,48 @@ export class Tasks {
 		}
 	}
 
+	async deleteOldTasks() {
+		if (!this.plugin.settings.automaticallyDeleteOldTasks) {
+			return
+		}
+
+		const today = new Date()
+		today.setHours(0, 0, 0, 0)
+		const epoch = new Date(Date.now() - 6 * 60 * 60 * 1000)
+		const lastTaskPlanned =
+			await this.plugin.store.retrieve('last-task-planned')
+		if (
+			lastTaskPlanned === undefined ||
+			lastTaskPlanned >= today.getTime() ||
+			lastTaskPlanned >= epoch.getTime()
+		) {
+			return
+		}
+
+		const tasks = this.getPlannedTasks()
+		if (tasks.length === 0) {
+			// Return early so we don't update the store (and therefore refresh
+			// the planning view)
+			return
+		}
+		const tasksToStore = []
+
+		for (const task of tasks) {
+			await this.unmarkTaskAsPlannedNextAction(task)
+			tasksToStore.push(task)
+		}
+
+		this.plugin.store.store({ 'old-tasks': tasksToStore })
+	}
+
+	async deleteSavedOldTasks() {
+		this.plugin.store.delete('old-tasks')
+	}
+
+	async getOldTasks() {
+		return (await this.plugin.store?.retrieve('old-tasks')) ?? []
+	}
+
 	private async exportPlannedTasks() {
 		if (!this.plugin.settings.exportPlannedTasks) {
 			return

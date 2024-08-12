@@ -352,6 +352,27 @@ export const rawSettingsDefinitions = {
 				})
 		},
 	},
+	automaticallyDeleteOldTasks: {
+		defaultValue: false,
+		check: (_value: boolean, _plugin: FlowPlugin) => {
+			return true
+		},
+		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
+			new Setting(containerEl)
+				.setName('Maintain a fresh todo list')
+				.setDesc(
+					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default.',
+				)
+				.addToggle((toggle) => {
+					toggle
+						.setValue(plugin.settings.automaticallyDeleteOldTasks)
+						.onChange(async (value) => {
+							plugin.settings.automaticallyDeleteOldTasks = value
+							await plugin.saveSettings()
+						})
+				})
+		},
+	},
 	exportPlannedTasks: {
 		defaultValue: false,
 		check: (_value: boolean, _plugin: FlowPlugin) => {

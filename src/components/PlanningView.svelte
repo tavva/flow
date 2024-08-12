@@ -13,6 +13,8 @@
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 
 	export let plannedTasks: STask[] = []
+	export let oldPlannedTasks: STask[]
+	let showOldTasks = false
 
 	onMount(() => {
 		renderTasks(plannedTasks)
@@ -26,6 +28,26 @@
 	})
 
 	$: renderTasks(plannedTasks)
+
+	function openTaskNote(event: MouseEvent) {
+		event.preventDefault()
+		const target = event.target as HTMLElement
+		const path = target.getAttribute('data-path')
+		if (path) {
+			plugin.app.workspace.openLinkText(path, '')
+		}
+	}
+
+	function deleteOldTasks() {
+		if (confirm('Are you sure you want to delete the saved stale tasks?')) {
+			plugin.tasks.deleteSavedOldTasks()
+			const ele = document.querySelector('.flow-old-tasks')
+
+			if (ele) {
+				ele.remove()
+			}
+		}
+	}
 
 	function renderTasks(tasks: STask[]) {
 		const container = document.querySelector(
@@ -200,4 +222,40 @@
 	</div>
 
 	<div class="flow-planning-task-container"></div>
+
+	<div class="flow-old-tasks">
+		{#if oldPlannedTasks && oldPlannedTasks.length > 0}
+			<hr />
+			<p>
+				Stale tasks have been cleared
+				<button
+					class="flow-toggle-old-tasks"
+					on:click={() => (showOldTasks = !showOldTasks)}
+				>
+					{showOldTasks ? 'Hide' : 'Show'}
+				</button>
+			</p>
+
+			{#if showOldTasks}
+				<div class="flow-old-tasks-list-container">
+					{#each oldPlannedTasks as task}
+						<a
+							href="obsidian://open?vault={encodeURIComponent(
+								plugin.dv.app.vault.getName(),
+							)}&file={encodeURIComponent(
+								task.link.path,
+							)}#{encodeURIComponent(task.link.subpath)}"
+							data-path="{task.link.path}#{task.link.subpath}"
+							on:click={openTaskNote}>{task.text}</a
+						>
+					{/each}
+					<button
+						on:click={deleteOldTasks}
+						class="flow-delete-old-tasks"
+						>Delete saved stale tasks</button
+					>
+				</div>
+			{/if}
+		{/if}
+	</div>
 </div>
