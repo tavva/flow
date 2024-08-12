@@ -65,7 +65,7 @@ export class PlanningView extends ItemView {
 		store.plugin.set(this.plugin)
 
 		if (this.plugin.settings.automaticallyDeleteOldTasks) {
-			this.plugin.tasks.deleteOldTasks()
+			await this.plugin.tasks.deleteOldTasks()
 		}
 
 		this.component = new PlanningViewComponent({

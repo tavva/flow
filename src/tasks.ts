@@ -100,7 +100,7 @@ export class Tasks {
 		}
 	}
 
-	deleteOldTasks() {
+	async deleteOldTasks() {
 		const tasks = this.getPlannedTasks()
 		if (tasks.length === 0) {
 			// Return early so we don't update the store (and therefore refresh
