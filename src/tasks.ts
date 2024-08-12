@@ -110,10 +110,10 @@ export class Tasks {
 		const tasksToStore = []
 
 		for (const task of tasks) {
+			await this.unmarkTaskAsPlannedNextAction(task)
 			tasksToStore.push(task)
 		}
 
-		this.unmarkAllTasksAsPlannedNextAction()
 		this.plugin.store.store({ 'old-tasks': tasksToStore })
 	}
 
