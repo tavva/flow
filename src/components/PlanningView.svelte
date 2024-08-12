@@ -13,7 +13,7 @@
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 
 	export let plannedTasks: STask[] = []
-	export let oldPlannedTasks: []
+	export let oldPlannedTasks: STask[]
 	let showOldTasks = false
 
 	onMount(() => {
