@@ -361,7 +361,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Maintain a fresh todo list')
 				.setDesc(
-					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default.',
+					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default. Note that deleted tasks are saved so you can replan them if needed.',
 				)
 				.addToggle((toggle) => {
 					toggle
