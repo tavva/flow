@@ -29,6 +29,14 @@
 
 	$: renderTasks(plannedTasks)
 
+	function openTaskNote(event: MouseEvent) {
+		event.preventDefault()
+		const target = event.target as HTMLElement
+		const path = target.getAttribute('data-path')
+		if (path) {
+			plugin.app.workspace.openLinkText(path, '')
+		}
+	}
 	function renderTasks(tasks: STask[]) {
 		const container = document.querySelector(
 			'.flow-planning-task-container',
@@ -222,7 +230,8 @@
 							)}&file={encodeURIComponent(
 								task.link.path,
 							)}#{encodeURIComponent(task.link.subpath)}"
-							>{task.text}</a
+							data-path="{task.link.path}#{task.link.subpath}"
+							on:click={openTaskNote}>{task.text}</a
 						>
 					{/each}
 				</div>
