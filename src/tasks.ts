@@ -101,6 +101,10 @@ export class Tasks {
 	}
 
 	async deleteOldTasks() {
+		if (!this.plugin.settings.automaticallyDeleteOldTasks) {
+			return
+		}
+
 		const tasks = this.getPlannedTasks()
 		if (tasks.length === 0) {
 			// Return early so we don't update the store (and therefore refresh
