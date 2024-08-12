@@ -19,10 +19,6 @@ export class FlowSettingsTab extends PluginSettingTab {
 		settingsDefinitions.appendTagToTask.render(containerEl, this.plugin)
 		settingsDefinitions.spheres.render(containerEl, this.plugin)
 		settingsDefinitions.hijackNewTab.render(containerEl, this.plugin)
-		settingsDefinitions.automaticallyDeleteOldTasks.render(
-			containerEl,
-			this.plugin,
-		)
 
 		new Setting(containerEl).setName('Inbox folders').setHeading()
 
