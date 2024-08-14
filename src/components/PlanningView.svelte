@@ -248,6 +248,7 @@
 							data-path="{task.link.path}#{task.link.subpath}"
 							on:click={openTaskNote}>{task.text}</a
 						>
+						<br />
 					{/each}
 					<button
 						on:click={deleteOldTasks}
