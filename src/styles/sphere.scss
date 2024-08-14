@@ -17,7 +17,7 @@
 
 	h1 {
 		&:after {
-			content: " (📝 Planning Mode)";
+			content: "SPHERE (📝 You are in planning mode)";
 			color: var(--color-red);
 		}
 	}
