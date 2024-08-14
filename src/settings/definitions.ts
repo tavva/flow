@@ -340,7 +340,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Replace new tab')
 				.setDesc(
-					'Flow can replace your new tab with Flow-specific guidance',
+					'Flow can replace your new tab with Flow-specific information',
 				)
 				.addToggle((toggle) => {
 					toggle
