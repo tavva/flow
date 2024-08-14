@@ -206,6 +206,10 @@
 	}
 </script>
 
+<div class="flow-sphere-banner">
+	You are in planning mode <button>Exit</button>
+</div>
+
 <div class="flow-sphere-view">
 	<h1>{sphereCapitalised}</h1>
 	<div>

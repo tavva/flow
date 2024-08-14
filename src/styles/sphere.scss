@@ -12,8 +12,12 @@
 	}
 }
 
+.flow-sphere-banner {
+	display: none;
+}
+
 .flow-sphere-in-planning-mode {
-	filter: sepia(80%);
+	filter: sepia(30%);
 
 	h1 {
 		&:after {
@@ -26,6 +30,26 @@
 		font-style: italic;
 		color: var(--text-muted);
 	}
+
+	.flow-sphere-banner {
+		display: block;
+		width: 100%;
+		background-color: var(--color-blue);
+		color: #000;
+		text-align: center;
+		padding: 3px;
+		font-size: 10px;
+		font-weight: bold;
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: 1000;
+
+		button {
+			height: 15px;
+		}
+	}
+
 }
 
 .flow-no-actionables {
