@@ -1,4 +1,4 @@
-import { Plugin, TFile, Events, WorkspaceLeaf } from 'obsidian'
+import { Plugin, TFile, Events, WorkspaceLeaf, moment } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from 'processing.js'
@@ -70,6 +70,7 @@ export default class FlowPlugin extends Plugin {
 			registerCommands(this)
 			this.registerEvents()
 			this.setupWatchers()
+			this.storeInstallTime()
 		})
 	}
 
@@ -151,6 +152,13 @@ export default class FlowPlugin extends Plugin {
 	private async setupWatchers() {
 		await this.setupCountWatcher()
 		await this.setupTaskWatcher()
+	}
+
+	private async storeInstallTime() {
+		if (await this.store.retrieve('install-time')) {
+			return
+		}
+		this.store.store({ 'install-time': moment.utc().valueOf() })
 	}
 
 	private async setupCountWatcher() {

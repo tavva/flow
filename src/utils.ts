@@ -441,3 +441,7 @@ export async function checkBranch(plugin: FlowPlugin) {
 		}, 1000)
 	}
 }
+
+export async function storeInstallTime(plugin: FlowPlugin) {
+	plugin.store.store({ 'install-time': DateTime.now() })
+}
