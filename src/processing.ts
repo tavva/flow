@@ -131,23 +131,26 @@ export class StateManager {
 
 	private async processInboxFolder() {
 		await this.updateStatus()
+
 		const view = await this.setupOrGetProcessingView()
-		let content: string | null = null
-
-		if (this.filesToProcess.length > 0) {
-			const file = this.filesToProcess[0]
-			content = await this.plugin.app.vault.read(file)
-			view!.updateEmbeddedFile(file.path)
-		}
-
-		if (view) {
-			view.setProps({
-				line: content,
-				...this.commonViewProps(),
-			})
-		} else {
+		if (view === undefined) {
 			console.error('ProcessingView not found')
 		}
+
+		let content: string | null = null
+
+		if (this.filesToProcess.length === 0) {
+			return
+		}
+
+		const file = this.filesToProcess[0]
+		content = await this.plugin.app.vault.read(file)
+
+		view?.updateEmbeddedFile(file.path)
+		view?.setProps({
+			line: content,
+			...this.commonViewProps(),
+		})
 	}
 
 	async updateCounts() {
