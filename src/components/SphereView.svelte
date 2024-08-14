@@ -34,6 +34,7 @@
 		const leaves = document.querySelectorAll(
 			'div.workspace-leaf-content[data-type="sphere-view"] div.view-content',
 		)
+
 		if (shadowIsPlanningMode) {
 			leaves.forEach((leaf: Element) => {
 				leaf.addClass('flow-sphere-in-planning-mode')
@@ -205,7 +206,7 @@
 	}
 </script>
 
-<div class="flow-project">
+<div class="flow-sphere-view">
 	<h1>{sphereCapitalised}</h1>
 	<div>
 		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}

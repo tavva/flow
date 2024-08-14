@@ -1,3 +1,17 @@
+.flow-sphere-view {
+	h1 {
+		padding: 10px;
+		background-color: var(--background-secondary);
+	}
+
+	h1:after {
+		content: "SPHERE ";
+		font-size: 50%;
+		color: var(--text-faint);
+		margin-left: 10px;
+	}
+}
+
 .flow-sphere-in-planning-mode {
 	filter: sepia(80%);
 
