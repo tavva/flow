@@ -5,7 +5,11 @@
 
 	import store from 'svelteStore.js'
 	import FlowPlugin from 'main.js'
-	import { isPlanningMode, addTaskClickListeners } from 'planning.js'
+	import {
+		isPlanningMode,
+		addTaskClickListeners,
+		togglePlanningMode,
+	} from 'planning.js'
 
 	let plugin: FlowPlugin
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
@@ -121,6 +125,10 @@
 		})
 	}
 
+	function exitPlanningMode() {
+		togglePlanningMode(plugin)
+	}
+
 	function addPlannedAttributeToTasks(container: HTMLElement) {
 		container
 			.querySelectorAll('.task-list-item')
@@ -207,7 +215,7 @@
 </script>
 
 <div class="flow-sphere-banner">
-	You are in planning mode <button>Exit</button>
+	You are in planning mode <button on:click={exitPlanningMode}>Exit</button>
 </div>
 
 <div class="flow-sphere-view">
