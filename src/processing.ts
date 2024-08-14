@@ -148,7 +148,7 @@ export class StateManager {
 
 		view?.updateEmbeddedFile(file.path)
 		view?.setProps({
-			line: content,
+			line: `${file.name}`,
 			...this.commonViewProps(),
 		})
 	}
