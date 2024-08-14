@@ -59,7 +59,6 @@ export class StateManager {
 
 		if (await this.areInboxFilesEmpty()) {
 			if (await this.isFolderInboxEmpty()) {
-				new Notice('Both inboxes are empty')
 				await this.completeProcessing()
 			} else {
 				this.currentStage = Stage.Folder
