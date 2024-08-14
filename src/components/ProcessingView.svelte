@@ -3,7 +3,6 @@
 
 	import store from 'svelteStore.js'
 	import FlowPlugin from 'main.js'
-	import { Stage } from 'processing.js'
 	import { openPlanningView } from 'views/planning.js'
 
 	let plugin: FlowPlugin
@@ -13,7 +12,6 @@
 	export let fileCount: number
 
 	export let line: string
-	export let currentStage: Stage
 	export let isProcessingComplete: false
 
 	export let noteContent: string = ''
@@ -41,40 +39,29 @@
 		}
 	}
 
-	let inputText: string = currentStage === Stage.File ? line : ''
-	$: if (currentStage === Stage.File) {
-		inputText = line
-	} else if (currentStage === Stage.Folder) {
-		inputText = ''
-	}
-
 	function addToNextActions() {
-		if (inputText.trim() !== '') plugin.handlers.addToNextActions(inputText)
+		if (line.trim() !== '') plugin.handlers.addToNextActions(line)
 	}
 
 	function addToProjectNextActions() {
-		if (inputText.trim() !== '')
-			plugin.handlers.addToProjectNextActions(inputText)
+		if (line.trim() !== '') plugin.handlers.addToProjectNextActions(line)
 	}
 	function addToProjectReference() {
-		if (inputText.trim() !== '')
-			plugin.handlers.addToProjectReference(inputText)
+		if (line.trim() !== '') plugin.handlers.addToProjectReference(line)
 	}
 
 	function addToPersonDiscussNext() {
-		if (inputText.trim() !== '')
-			plugin.handlers.addToPersonDiscussNext(inputText)
+		if (line.trim() !== '') plugin.handlers.addToPersonDiscussNext(line)
 	}
 	function addToPersonReference() {
-		if (inputText.trim() !== '')
-			plugin.handlers.addToPersonReference(inputText)
+		if (line.trim() !== '') plugin.handlers.addToPersonReference(line)
 	}
 
 	function newProject() {
-		if (inputText.trim() !== '') plugin.handlers.newProject(inputText)
+		if (line.trim() !== '') plugin.handlers.newProject(line)
 	}
 	function addToSomeday() {
-		if (inputText.trim() !== '') plugin.handlers.addToSomeday(inputText)
+		if (line.trim() !== '') plugin.handlers.addToSomeday(line)
 	}
 
 	async function startPlanning() {
@@ -101,7 +88,7 @@
 			<button on:click={startPlanning}>Plan your day?</button>
 		</div>
 	{:else}
-		<textarea bind:value={inputText}></textarea>
+		<textarea bind:value={line}></textarea>
 		<p class="flow-2-minute-advice">
 			Can you do this in less than 2 minutes? If so, do it now!
 		</p>
