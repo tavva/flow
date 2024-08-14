@@ -36,7 +36,7 @@
 
 	$: {
 		const leaves = document.querySelectorAll(
-			'div.workspace-leaf-content[data-type="sphere-view"] div.view-content',
+			'div.workspace-leaf-content[data-type="sphere-view"]',
 		)
 
 		if (shadowIsPlanningMode) {
