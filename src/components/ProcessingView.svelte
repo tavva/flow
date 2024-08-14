@@ -164,7 +164,7 @@
 		{#if lineCount > 0 || fileCount > 0}
 			<div>
 				<h3>Currently processing:</h3>
-				<p>{line}</p>
+				<p class="flow-processing-line">{line}</p>
 			</div>
 		{/if}
 		{#if fileCount > 0}
