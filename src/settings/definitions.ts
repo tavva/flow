@@ -33,7 +33,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Line at a time')
 				.setDesc(
-					'Flow processes all lines in every note in this folder. We allow multiple inbox notes to help prevent syncing issues when the inbox can be populated from many different sources.',
+					'Flow processes all lines in every note in this folder. We allow multiple inbox notes to help prevent syncing issues when the inbox can be populated from many different sources',
 				)
 				.addSearch((cb) => {
 					new FolderSuggest(plugin, cb.inputEl)
@@ -64,7 +64,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Note at a time')
 				.setDesc(
-					'Flow processes entire notes one by one in this folder.',
+					'Flow processes entire notes one by one in this folder',
 				)
 				.addSearch((cb) => {
 					new FolderSuggest(plugin, cb.inputEl)
@@ -95,7 +95,7 @@ export const rawSettingsDefinitions = {
 				.setName('Next actions')
 				.setDesc(
 					`This is where Flow will store Next Actions that aren't
-					assigned to a project.`,
+					assigned to a project`,
 				)
 				.addSearch((cb) => {
 					new FileSuggest(plugin, cb.inputEl)
@@ -137,7 +137,7 @@ export const rawSettingsDefinitions = {
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('New project template')
-				.setDesc('Flow will create new projects using this template.')
+				.setDesc('Flow will create new projects using this template')
 				.addSearch((cb) => {
 					new FileSuggest(plugin, cb.inputEl)
 					cb.setPlaceholder('Example: templates/Project.md')
@@ -165,7 +165,7 @@ export const rawSettingsDefinitions = {
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Projects folder')
-				.setDesc('This is where your project notes are stored.')
+				.setDesc('This is where your project notes are stored')
 				.addSearch((cb) => {
 					new FolderSuggest(plugin, cb.inputEl)
 					cb.setPlaceholder('Example: Projects')
@@ -203,7 +203,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('New person template')
 				.setDesc(
-					'Flow will create new person notes using this template.',
+					'Flow will create new person notes using this template',
 				)
 				.addSearch((cb) => {
 					new FileSuggest(plugin, cb.inputEl)
@@ -232,7 +232,7 @@ export const rawSettingsDefinitions = {
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('People folder')
-				.setDesc('This is where your people notes are stored.')
+				.setDesc('This is where your people notes are stored')
 				.addSearch((cb) => {
 					new FolderSuggest(plugin, cb.inputEl)
 					cb.setPlaceholder('Example: People')
@@ -261,7 +261,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Someday/Maybe')
 				.setDesc(
-					'Flow will add your someday/maybe drops using this template.',
+					'Flow will add your someday/maybe drops using this template',
 				)
 				.addSearch((cb) => {
 					new FileSuggest(plugin, cb.inputEl)
@@ -282,7 +282,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Append to task')
 				.setDesc(
-					'Flow will append this to all tasks it creates. This is useful if you use the Tasks plugin and have a global task filter set.',
+					'Flow will append this to all tasks it creates. This is useful if you use the Tasks plugin and have a global task filter set',
 				)
 				.addText((text) => {
 					text.setPlaceholder('Enter text to append to tasks')
@@ -306,7 +306,7 @@ export const rawSettingsDefinitions = {
 		render: (containerEl: HTMLElement, plugin: FlowPlugin) => {
 			new Setting(containerEl)
 				.setName('Spheres')
-				.setDesc('A comma-separated list of spheres.')
+				.setDesc('A comma-separated list of spheres')
 				.addText((text) =>
 					text
 						.setPlaceholder('Enter spheres')
@@ -361,7 +361,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Maintain a fresh todo list')
 				.setDesc(
-					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default. Note that deleted tasks are saved so you can replan them if needed.',
+					'Flow can automatically delete tasks that are no longer relevant. We recommend you turn this on as your todo list should not be long-living, but it can be unnerving at first which is why this is off by default. Note that deleted tasks are saved so you can replan them if needed',
 				)
 				.addToggle((toggle) => {
 					toggle
@@ -382,7 +382,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Export planned tasks')
 				.setDesc(
-					'Flow can export your planned tasks to a single note. This can be used to sync with other apps (e.g. for displaying your planned actions in a desktop widget.',
+					'Flow can export your planned tasks to a single note. This can be used to sync with other apps (e.g. for displaying your planned actions in a desktop widget',
 				)
 				.addToggle((toggle) => {
 					toggle
