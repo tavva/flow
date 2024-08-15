@@ -82,7 +82,7 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 ##### iOS
 
 -   https://actions.work/actions-for-obsidian
--   https://apps.apple.com/us/app/funnel-quick-capture/id6466168248
+-   https://www.notesightlabs.com/funnel
 -   https://www.icloud.com/shortcuts/9a6af22443414858bb6adade86a30f85
 
 ##### Android
