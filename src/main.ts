@@ -35,38 +35,43 @@ export default class FlowPlugin extends Plugin {
 	async onload() {
 		checkBranch(this)
 
-		// All views can only be registered with our dependencies loaded.
-		// However, this one is required even if our dependencies aren't
-		// available, so we register it separately.
-		this.registerView(SETUP_VIEW_TYPE, (leaf) => new SetupView(leaf, this))
+		this.app.workspace.onLayoutReady(async () => {
+			// All views can only be registered with our dependencies loaded.
+			// However, this one is required even if our dependencies aren't
+			// available, so we register it separately.
+			this.registerView(
+				SETUP_VIEW_TYPE,
+				(leaf) => new SetupView(leaf, this),
+			)
 
-		await this.loadSettings()
-		this.addSettingTab(new FlowSettingsTab(this))
+			await this.loadSettings()
+			this.addSettingTab(new FlowSettingsTab(this))
 
-		const allDependenciesMet = await checkDependencies(this)
-		if (!allDependenciesMet) {
-			this.startSetupFlow()
-			return
-		}
+			const allDependenciesMet = await checkDependencies(this)
+			if (!allDependenciesMet) {
+				this.startSetupFlow()
+				return
+			}
 
-		if (await hasInvalidSettings(this)) {
-			this.startSetupFlow()
-			return
-		}
+			if (await hasInvalidSettings(this)) {
+				this.startSetupFlow()
+				return
+			}
 
-		this.dv = getAPI()
-		this.stateManager = new StateManager(this)
-		this.store = new Store(this)
-		this.metrics = new Metrics(this)
-		this.tasks = new Tasks(this)
-		this.handlers = new Handlers(this)
+			this.dv = getAPI()
+			this.stateManager = new StateManager(this)
+			this.store = new Store(this)
+			this.metrics = new Metrics(this)
+			this.tasks = new Tasks(this)
+			this.handlers = new Handlers(this)
 
-		this.registerViews()
+			this.registerViews()
 
-		registerCommands(this)
-		this.registerEvents()
-		this.setupWatchers()
-		this.storeInstallTime()
+			registerCommands(this)
+			this.registerEvents()
+			this.setupWatchers()
+			this.storeInstallTime()
+		})
 	}
 
 	private startSetupFlow() {
