@@ -122,6 +122,7 @@
 		padding: 0 3px;
 		background-color: var(--background-secondary);
 		font-size: var(--font-smaller);
+		user-select: text;
 
 		button.flow-toggle-old-tasks {
 			color: var(--text-muted);
