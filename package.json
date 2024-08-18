@@ -1,6 +1,6 @@
 {
 	"name": "Flow",
-	"version": "0.6.1",
+	"version": "0.6.2",
 	"description": "Flow, inspired by David Allen's Getting Things Done (GTD), is a way of managing everything in your life so you focus on what's important.",
 	"main": "main.js",
 	"type": "module",
