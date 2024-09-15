@@ -118,7 +118,7 @@ export class Tasks {
 			return
 		}
 
-		const tasks = this.getPlannedTasks()
+		const tasks = this.getPlannedTasks().where((t: STask) => !t.completed)
 		if (tasks.length === 0) {
 			// Return early so we don't update the store (and therefore refresh
 			// the planning view)
