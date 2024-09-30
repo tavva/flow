@@ -68,6 +68,18 @@
 		await openPlanningView(plugin)
 		plugin.stateManager.stopProcessing()
 	}
+
+	function isURL(line: string) {
+		let url: URL
+
+		try {
+			url = new URL(line)
+		} catch (_) {
+			return false
+		}
+
+		return url.protocol === 'http:' || url.protocol === 'https:'
+	}
 </script>
 
 {#if !isProcessingComplete}
@@ -149,9 +161,13 @@
 			</div>
 		</div>
 		{#if lineCount > 0 || fileCount > 0}
-			<div>
+			<div class="currently-processing">
 				<h3>Currently processing:</h3>
-				<p class="flow-processing-line">{line}</p>
+				{#if isURL(line)}
+					<iframe title="User added URL" src={line}></iframe>
+				{:else}
+					<p class="flow-processing-line">{line}</p>
+				{/if}
 			</div>
 		{/if}
 		{#if fileCount > 0}

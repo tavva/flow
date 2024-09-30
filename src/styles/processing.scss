@@ -1,4 +1,6 @@
 .flow-processing {
+	height: 100%;
+
 	textarea {
 		font-size: 120%;
 		padding: 20px;
@@ -93,4 +95,13 @@
 .flow-processing-line,
 .flow-note-container {
 	user-select: text;
+}
+
+.currently-processing {
+	height: 100%;
+}
+
+iframe {
+	width: 100%;
+	height: 100%;
 }
