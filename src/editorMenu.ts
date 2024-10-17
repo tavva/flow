@@ -51,8 +51,6 @@ export function createEditorMenu(
 				}
 
 				editor.setLine(cursor.line, line)
-
-				new Notice('Task has been toggled for planning.')
 			})
 		})
 
