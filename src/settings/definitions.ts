@@ -94,7 +94,7 @@ export const rawSettingsDefinitions = {
 			new Setting(containerEl)
 				.setName('Next actions')
 				.setDesc(
-					`This is where Flow will store Next Actions that aren't
+					`This is where Flow will store next actions that aren't
 					assigned to a project`,
 				)
 				.addSearch((cb) => {
