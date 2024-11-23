@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { MarkdownRenderer, Component } from 'obsidian'
 
-	import store from 'svelteStore.js'
-	import FlowPlugin from 'main.js'
-	import { openPlanningView } from 'views/planning.js'
+	import store from '../svelteStore.js'
+	import FlowPlugin from '../main.js'
+	import { openPlanningView } from '../views/planning.js'
 
 	let plugin: FlowPlugin
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))

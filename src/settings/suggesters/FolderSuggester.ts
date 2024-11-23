@@ -1,4 +1,4 @@
-import FlowPlugin from 'main.js'
+import FlowPlugin from '../../main.js'
 import { AbstractInputSuggest, TAbstractFile, TFolder } from 'obsidian'
 
 export class FolderSuggest extends AbstractInputSuggest<TFolder> {

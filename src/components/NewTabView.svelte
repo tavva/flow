@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { moment } from 'obsidian'
-	import store from 'svelteStore.js'
-	import type FlowPlugin from 'main.js'
+	import store from '../svelteStore.js'
+	import type FlowPlugin from '../main.js'
 
 	let plugin!: FlowPlugin
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))

@@ -1,7 +1,7 @@
 import { TFile, debounce } from 'obsidian'
 import { STask } from 'obsidian-dataview'
 
-import FlowPlugin from 'main.js'
+import FlowPlugin from './main.js'
 
 export class Tasks {
 	plugin: FlowPlugin

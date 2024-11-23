@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
-import FlowPlugin from 'main.js'
-import type { TemplaterPlugin, Module } from 'typings/templater.js'
+import FlowPlugin from './main.js'
+import type { TemplaterPlugin, Module } from './typings/templater.js'
 import { SMarkdownPage, STask } from 'obsidian-dataview'
 
 // TODO: Move the add* functions out to their own utils file

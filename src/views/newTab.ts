@@ -1,8 +1,8 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 
-import type FlowPlugin from 'main.js'
-import store from 'svelteStore.js'
-import NewTabComponent from 'components/NewTabView.svelte'
+import type FlowPlugin from '../main.js'
+import store from '../svelteStore.js'
+import NewTabComponent from '../components/NewTabView.svelte'
 
 export const NEW_TAB_VIEW_TYPE = 'new-tab-view'
 

@@ -3,13 +3,13 @@
 	import { Component } from 'obsidian'
 	import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 
-	import store from 'svelteStore.js'
-	import FlowPlugin from 'main.js'
+	import store from '../svelteStore.js'
+	import FlowPlugin from '../main.js'
 	import {
 		isPlanningMode,
 		addTaskClickListeners,
 		togglePlanningMode,
-	} from 'planning.js'
+	} from '../planning.js'
 
 	let plugin: FlowPlugin
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))

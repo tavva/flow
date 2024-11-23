@@ -1,5 +1,5 @@
 import { PluginSettingTab, Setting } from 'obsidian'
-import FlowPlugin from 'main.js'
+import FlowPlugin from '../main.js'
 
 import { settingsDefinitions } from './definitions.js'
 

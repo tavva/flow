@@ -1,26 +1,26 @@
 import { Plugin, TFile, Events, WorkspaceLeaf, moment } from 'obsidian'
 import { getAPI, DataviewApi } from 'obsidian-dataview'
 
-import { StateManager } from 'processing.js'
+import { StateManager } from './processing.js'
 import {
 	type FlowSettingsType,
 	DEFAULT_SETTINGS,
 	hasInvalidSettings,
-} from 'settings/settings.js'
-import { FlowSettingsTab } from 'settings/settingsTab.js'
-import { ProcessingView, PROCESSING_VIEW_TYPE } from 'views/processing.js'
-import { SphereView, SPHERE_VIEW_TYPE } from 'views/sphere.js'
-import { PlanningView, PLANNING_VIEW_TYPE } from 'views/planning.js'
-import { SetupView, SETUP_VIEW_TYPE } from 'views/setup.js'
-import { NewTabView, NEW_TAB_VIEW_TYPE } from 'views/newTab.js'
-import { registerCommands } from 'commands.js'
-import { Store } from 'store.js'
-import { Metrics } from 'metrics.js'
-import { Tasks } from 'tasks.js'
-import { createEditorMenu } from 'editorMenu.js'
-import { checkDependencies } from 'dependencies.js'
-import { Handlers } from 'handlers.js'
-import { checkBranch } from 'utils.js'
+} from './settings/settings.js'
+import { FlowSettingsTab } from './settings/settingsTab.js'
+import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing.js'
+import { SphereView, SPHERE_VIEW_TYPE } from './views/sphere.js'
+import { PlanningView, PLANNING_VIEW_TYPE } from './views/planning.js'
+import { SetupView, SETUP_VIEW_TYPE } from './views/setup.js'
+import { NewTabView, NEW_TAB_VIEW_TYPE } from './views/newTab.js'
+import { registerCommands } from './commands.js'
+import { Store } from './store.js'
+import { Metrics } from './metrics.js'
+import { Tasks } from './tasks.js'
+import { createEditorMenu } from './editorMenu.js'
+import { checkDependencies } from './dependencies.js'
+import { Handlers } from './handlers.js'
+import { checkBranch } from './utils.js'
 
 export default class FlowPlugin extends Plugin {
 	stateManager!: StateManager
