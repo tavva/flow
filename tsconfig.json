@@ -22,6 +22,9 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
+	"paths": {
+      "main.js": ["src/main.ts"]
+    },
   },
   "exclude": ["node_modules"]
 }
