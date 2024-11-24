@@ -25,8 +25,9 @@
 	"paths": {
       "main.js": ["src/main.ts"]
     },
+	"outDir": "./dist"
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
  //  "compilerOptions": {
  //    "baseUrl": "src",
