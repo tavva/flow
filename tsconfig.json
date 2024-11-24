@@ -21,7 +21,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": false
+    "declaration": true,
   },
   "exclude": ["node_modules"]
 }
