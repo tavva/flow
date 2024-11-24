@@ -21,7 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "outFile": "./main.js",
     "declaration": false
   },
   "exclude": ["node_modules"]
