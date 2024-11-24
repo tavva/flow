@@ -136,14 +136,11 @@ export class StateManager {
 			console.error('ProcessingView not found')
 		}
 
-		let content: string | null = null
-
 		if (this.filesToProcess.length === 0) {
 			return
 		}
 
 		const file = this.filesToProcess[0]
-		content = await this.plugin.app.vault.read(file)
 
 		view?.updateEmbeddedFile(file.path)
 		view?.setProps({
