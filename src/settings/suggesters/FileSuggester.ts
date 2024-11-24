@@ -1,7 +1,7 @@
 import { TAbstractFile, TFile, AbstractInputSuggest } from 'obsidian'
 
-import FlowPlugin from 'main.js'
-import { getTFilesFromFolder } from 'utils.js'
+import FlowPlugin from '../../main.js'
+import { getTFilesFromFolder } from '../../utils.js'
 
 export class FileSuggest extends AbstractInputSuggest<TFile> {
 	constructor(

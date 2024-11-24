@@ -1,7 +1,7 @@
 import { App, TFile, TFolder, WorkspaceLeaf, Notice } from 'obsidian'
 
-import FlowPlugin from 'main.js'
-import { PROCESSING_VIEW_TYPE, ProcessingView } from 'views/processing.js'
+import FlowPlugin from './main.js'
+import { PROCESSING_VIEW_TYPE, ProcessingView } from './views/processing.js'
 
 export enum Stage {
 	File = 'file',
@@ -136,14 +136,11 @@ export class StateManager {
 			console.error('ProcessingView not found')
 		}
 
-		let content: string | null = null
-
 		if (this.filesToProcess.length === 0) {
 			return
 		}
 
 		const file = this.filesToProcess[0]
-		content = await this.plugin.app.vault.read(file)
 
 		view?.updateEmbeddedFile(file.path)
 		view?.setProps({
@@ -203,6 +200,8 @@ export class StateManager {
 		if (view) {
 			return view as ProcessingView
 		}
+
+		return undefined
 	}
 
 	async setupOrGetProcessingView(): Promise<ProcessingView | undefined> {

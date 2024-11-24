@@ -1,8 +1,8 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian'
 
-import type FlowPlugin from 'main.js'
-import store from 'svelteStore.js'
-import SetupComponent from 'components/SetupView.svelte'
+import type FlowPlugin from '../main.js'
+import store from '../svelteStore.js'
+import SetupComponent from '../components/SetupView.svelte'
 
 export const SETUP_VIEW_TYPE = 'setup-view'
 

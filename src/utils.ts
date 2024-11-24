@@ -3,8 +3,8 @@ import dotenv from 'dotenv'
 
 import { TFile, TAbstractFile, TFolder, Vault, normalizePath } from 'obsidian'
 
-import FlowPlugin from 'main.js'
-import type { TemplaterPlugin, Module } from 'typings/templater.js'
+import FlowPlugin from './main.js'
+import type { TemplaterPlugin, Module } from './typings/templater.js'
 import { SMarkdownPage, STask } from 'obsidian-dataview'
 
 // TODO: Move the add* functions out to their own utils file
@@ -417,7 +417,7 @@ export function loadEnv(plugin: FlowPlugin) {
 	})
 }
 
-export async function checkBranch(plugin: FlowPlugin) {
+export const checkBranch = async (plugin: FlowPlugin) => {
 	loadEnv(plugin)
 
 	if (process.env.FLOW_ENVIRONMENT == 'development') {
@@ -425,6 +425,7 @@ export async function checkBranch(plugin: FlowPlugin) {
 			const gitHead = require('path').join(
 				// @ts-ignore
 				this.app.vault.adapter.getBasePath(),
+				// @ts-ignore
 				this.app.vault.configDir,
 				'/plugins/flow/.git/HEAD',
 			)

@@ -1,23 +1,44 @@
 {
   "compilerOptions": {
-	"types": ["svelte", "node", "jest"],
-    "baseUrl": "src",
-	"rootDir": "src",
-	"outDir": ".",
-    "module": "nodenext",
-    "target": "es6",
+    "baseUrl": ".",
+    "module": "ESNext",
+    "target": "ES2020",
     "allowJs": false,
     "noImplicitAny": true,
-    "moduleResolution": "nodenext",
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "Node",
     "importHelpers": true,
-    "isolatedModules": false,
-	"strictNullChecks": true
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "lib": ["DOM", "ESNext"],
+    "types": ["svelte"],
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+	"paths": {
+      "main.js": ["src/main.ts"]
+    },
+	"outDir": "./dist"
   },
-  "include": [
-    "src/**/*.ts",
-	"typings/**/*.d.ts"
-  ],
-  "exclude": [
-	"node_modules"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
+ //  "compilerOptions": {
+ //    "baseUrl": "src",
+	// "rootDir": "src",
+	// "outDir": ".",
+ //    "module": "nodenext",
+ //    "target": "es6",
+ //    "allowJs": false,
+ //    "noImplicitAny": true,
+ //    "moduleResolution": "nodenext",
+ //    "importHelpers": true,
+ //    "isolatedModules": false,
+	// "strictNullChecks": true
+ //  },

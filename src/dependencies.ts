@@ -1,5 +1,5 @@
-import type FlowPlugin from 'main.js'
-import { getPlugin } from 'utils.js'
+import type FlowPlugin from './main.js'
+import { getPlugin } from './utils.js'
 
 export async function getMissingDependencies(
 	plugin: FlowPlugin,

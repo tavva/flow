@@ -1,13 +1,13 @@
 import { Setting, debounce, normalizePath } from 'obsidian'
 
-import type FlowPlugin from 'main.js'
-import { FileSuggest } from 'settings/suggesters/FileSuggester.js'
-import { FolderSuggest } from 'settings/suggesters/FolderSuggester.js'
-import { resetSphereCommands } from 'commands.js'
+import type FlowPlugin from '../main.js'
+import { FileSuggest } from '../settings/suggesters/FileSuggester.js'
+import { FolderSuggest } from '../settings/suggesters/FolderSuggester.js'
+import { resetSphereCommands } from '../commands.js'
 
-import { projectTemplateContents } from 'templates/Project.js'
-import { personTemplateContents } from 'templates/Person.js'
-import { createFoldersAndFile } from 'utils.js'
+import { projectTemplateContents } from '../templates/Project.js'
+import { personTemplateContents } from '../templates/Person.js'
+import { createFoldersAndFile } from '../utils.js'
 
 export interface SettingDefinition<T> {
 	defaultValue: T

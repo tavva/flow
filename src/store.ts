@@ -1,6 +1,6 @@
 import _ from 'lodash'
 
-import FlowPlugin from 'main.js'
+import FlowPlugin from './main.js'
 
 export class Store {
 	plugin: FlowPlugin

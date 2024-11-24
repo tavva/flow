@@ -1,4 +1,4 @@
-import FlowPlugin from 'main.js'
+import FlowPlugin from './main.js'
 
 export class Metrics {
 	private plugin: FlowPlugin

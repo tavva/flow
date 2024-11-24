@@ -1,14 +1,14 @@
 <script lang="ts">
-	import store from 'svelteStore.js'
-	import type FlowPlugin from 'main.js'
+	import store from '../svelteStore.js'
+	import type FlowPlugin from '../main.js'
 
-	import { getMissingDependencies } from 'dependencies.js'
+	import { getMissingDependencies } from '../dependencies.js'
 	import {
 		createFilesFromSettings,
 		getInvalidSettings,
-	} from 'settings/settings.js'
-	import type { SettingDefinition } from 'settings/definitions.js'
-	import { SETUP_VIEW_TYPE } from 'views/setup.js'
+	} from '../settings/settings.js'
+	import type { SettingDefinition } from '../settings/definitions.js'
+	import { SETUP_VIEW_TYPE } from '../views/setup.js'
 
 	let plugin: FlowPlugin
 	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
