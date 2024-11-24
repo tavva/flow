@@ -36,7 +36,7 @@ export class SphereView extends ItemView implements SphereViewState {
 		return super.setState(state, result)
 	}
 
-	getState(): SphereViewState {
+	getState(): Record<string, string> {
 		return {
 			sphere: this.sphere,
 		}
