@@ -200,6 +200,8 @@ export class StateManager {
 		if (view) {
 			return view as ProcessingView
 		}
+
+		return undefined
 	}
 
 	async setupOrGetProcessingView(): Promise<ProcessingView | undefined> {
