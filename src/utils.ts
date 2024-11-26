@@ -182,6 +182,8 @@ export function getFilesWithTagPrefix(
 			tags = cache.frontmatter.tags.split(/\s+/)
 		}
 
+		tags = tags.filter((tag) => typeof tag === 'string')
+
 		return tags.some((tag) => tag.startsWith(prefix))
 	})
 }
