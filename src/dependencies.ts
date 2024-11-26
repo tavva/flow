@@ -1,9 +1,7 @@
 import type FlowPlugin from './main.js'
 import { getPlugin } from './utils.js'
 
-export async function getMissingDependencies(
-	plugin: FlowPlugin,
-): Promise<string[][]> {
+export function getMissingDependencies(plugin: FlowPlugin): string[][] {
 	const dependencyList = [
 		['obsidian-tasks-plugin', 'Tasks'],
 		['dataview', 'Dataview'],
@@ -21,7 +19,7 @@ export async function getMissingDependencies(
 	return unmetDependencies
 }
 
-export async function checkDependencies(plugin: FlowPlugin): Promise<boolean> {
-	const unmetDependencies = await getMissingDependencies(plugin)
+export function checkDependencies(plugin: FlowPlugin): boolean {
+	const unmetDependencies = getMissingDependencies(plugin)
 	return unmetDependencies.length === 0
 }

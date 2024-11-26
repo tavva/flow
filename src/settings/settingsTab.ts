@@ -2,6 +2,7 @@ import { PluginSettingTab, Setting } from 'obsidian'
 import FlowPlugin from '../main.js'
 
 import { settingsDefinitions } from './definitions.js'
+import { checkDependencies } from 'src/dependencies.js'
 
 export class FlowSettingsTab extends PluginSettingTab {
 	plugin: FlowPlugin
@@ -15,6 +16,17 @@ export class FlowSettingsTab extends PluginSettingTab {
 		const { containerEl } = this
 
 		containerEl.empty()
+
+		if (!checkDependencies(this.plugin)) {
+			new Setting(containerEl)
+				.setName('Dependencies not met')
+				.setDesc(
+					'Flow requires the following plugins to be installed: Tasks, Dataview, and Templater.',
+				)
+				.setClass('flow-error')
+
+			return
+		}
 
 		settingsDefinitions.appendTagToTask.render(containerEl, this.plugin)
 		settingsDefinitions.spheres.render(containerEl, this.plugin)

@@ -17,7 +17,7 @@
 	let dependenciesData: string[][] | null = null
 
 	async function updateDependencies() {
-		dependenciesData = await getMissingDependencies(plugin)
+		dependenciesData = getMissingDependencies(plugin)
 		dependenciesData = dependenciesData
 	}
 
