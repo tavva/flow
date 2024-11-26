@@ -1,3 +1,6 @@
 [
-  "flow"
+  "flow",
+  "obsidian-tasks-plugin",
+  "dataview",
+  "templater-obsidian"
 ]
