@@ -58,8 +58,12 @@ jobs:
               run: |
                   cd flow-release
                   git add README.md
-                  git commit -m "Update README.md for ${{ env.TAG_NAME }}"
-                  git push https://${{ env.FLOW_RELEASE_PAT }}@github.com/${{ env.FLOW_RELEASE_REPO }} HEAD:main
+                  if git diff --cached --quiet; then
+                    echo "No changes to commit."
+                  else
+                    git commit -m "Update README.md for ${{ env.TAG_NAME }}"
+                    git push https://${{ env.FLOW_RELEASE_PAT }}@github.com/${{ env.FLOW_RELEASE_REPO }} HEAD:main
+                  fi
 
             - name: Create release in flow-release
               id: create_release
