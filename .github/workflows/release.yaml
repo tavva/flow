@@ -12,15 +12,15 @@ jobs:
         steps:
             - uses: actions/checkout@v3
 
-			- name: Use Bun
-			  uses: oven-sh/setup-bun@v2
-			  with:
-				  bun-version: latest
+            - name: Use Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
 
-			- name: Use Node.js
-			  uses: actions/setup-node@v4
-			 with:
-				  node-version: latest
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: latest
 
             - name: Build plugin
               run: |
@@ -37,3 +37,37 @@ jobs:
                     --title="$tag" \
                     --draft \
                     main.js manifest.json styles.css
+
+            - name: Create release in flow-release
+              id: create_release
+              env:
+                  FLOW_RELEASE_PAT: ${{ secrets.FLOW_RELEASE_PAT }}
+                  TAG_NAME: ${{ github.ref_name }}
+              run: |
+                  response=$(curl -s -X POST \
+                  -H "Authorization: token $FLOW_RELEASE_PAT" \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: application/json" \
+                  -d '{
+                    "tag_name": "'"$TAG_NAME"'",
+                    "name": "Release '"$TAG_NAME"'",
+                    "body": "Automated release from flow repository.",
+                    "draft": true,
+                    "prerelease": false
+                  }' \
+                  https://api.github.com/repos/tavva/flow-release/releases)
+                  echo "$response"
+                  upload_url=$(echo "$response" | jq -r .upload_url | sed -e "s/{?name,label}//")
+                  echo "upload_url=$upload_url" >> $GITHUB_OUTPUT
+
+            - name: Upload assets
+              env:
+                  FLOW_RELEASE_PAT: ${{ secrets.FLOW_RELEASE_PAT }}
+              run: |
+                  for file in main.js styles.css manifest.json; do
+                    curl -s -X POST \
+                      -H "Authorization: token $FLOW_RELEASE_PAT" \
+                      -H "Content-Type: $(file --mime-type -b $file)" \
+                      --data-binary @$file \
+                      "${{ steps.create_release.outputs.upload_url }}?name=$(basename $file)"
+                  done
