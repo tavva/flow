@@ -5,6 +5,9 @@ on:
         tags:
             - '*'
 
+env:
+    FLOW_RELEASE_REPO: tavva/flow-release
+
 jobs:
     build:
         runs-on: ubuntu-latest
