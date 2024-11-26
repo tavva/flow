@@ -70,6 +70,10 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 -   https://obsidian.rocks/obsidian-quick-capture/
 -   https://obsidian.rocks/obsidian-mobile-quick-capture/
 
+##### General
+
+-   https://obsidian.md/clipper
+
 ##### Mac
 
 -   https://actions.work/actions-for-obsidian
@@ -77,7 +81,7 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 
 ##### Windows
 
--
+-   Nothing here yet, please let me know if you have a good quick capture method!
 
 ##### iOS
 
