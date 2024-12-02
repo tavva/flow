@@ -426,9 +426,9 @@ export const checkBranch = async (plugin: FlowPlugin) => {
 		setInterval(() => {
 			const gitHead = require('path').join(
 				// @ts-ignore
-				this.app.vault.adapter.getBasePath(),
+				plugin.app.vault.adapter.getBasePath(),
 				// @ts-ignore
-				this.app.vault.configDir,
+				plugin.app.vault.configDir,
 				'/plugins/flow/.git/HEAD',
 			)
 
