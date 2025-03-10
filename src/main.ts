@@ -3,9 +3,9 @@ import { getAPI, DataviewApi } from 'obsidian-dataview'
 
 import { StateManager } from './processing.js'
 import {
-	type FlowSettingsType,
-	DEFAULT_SETTINGS,
-	hasInvalidSettings,
+    type FlowSettingsType,
+    DEFAULT_SETTINGS,
+    hasInvalidSettings,
 } from './settings/settings.js'
 import { FlowSettingsTab } from './settings/settingsTab.js'
 import { ProcessingView, PROCESSING_VIEW_TYPE } from './views/processing.js'
@@ -23,260 +23,260 @@ import { Handlers } from './handlers.js'
 import { checkBranch } from './utils.js'
 
 export default class FlowPlugin extends Plugin {
-	stateManager!: StateManager
-	dv: DataviewApi
-	settings!: FlowSettingsType
-	store!: Store
-	metrics!: Metrics
-	tasks!: Tasks
-	handlers!: Handlers
-	events = new Events()
+    stateManager!: StateManager
+    dv: DataviewApi
+    settings!: FlowSettingsType
+    store!: Store
+    metrics!: Metrics
+    tasks!: Tasks
+    handlers!: Handlers
+    events = new Events()
 
-	async onload() {
-		checkBranch(this)
+    async onload() {
+        checkBranch(this)
 
-		this.app.workspace.onLayoutReady(async () => {
-			// All views can only be registered with our dependencies loaded.
-			// However, this one is required even if our dependencies aren't
-			// available, so we register it separately.
-			this.registerView(
-				SETUP_VIEW_TYPE,
-				(leaf) => new SetupView(leaf, this),
-			)
+        this.app.workspace.onLayoutReady(async () => {
+            // All views can only be registered with our dependencies loaded.
+            // However, this one is required even if our dependencies aren't
+            // available, so we register it separately.
+            this.registerView(
+                SETUP_VIEW_TYPE,
+                (leaf) => new SetupView(leaf, this),
+            )
 
-			await this.loadSettings()
-			this.addSettingTab(new FlowSettingsTab(this))
+            await this.loadSettings()
+            this.addSettingTab(new FlowSettingsTab(this))
 
-			if (!checkDependencies(this)) {
-				this.startSetupFlow()
-				return
-			}
+            if (!checkDependencies(this)) {
+                this.startSetupFlow()
+                return
+            }
 
-			if (await hasInvalidSettings(this)) {
-				this.startSetupFlow()
-				return
-			}
+            if (await hasInvalidSettings(this)) {
+                this.startSetupFlow()
+                return
+            }
 
-			this.dv = getAPI()
-			this.stateManager = new StateManager(this)
-			this.store = new Store(this)
-			this.metrics = new Metrics(this)
-			this.tasks = new Tasks(this)
-			this.handlers = new Handlers(this)
+            this.dv = getAPI()
+            this.stateManager = new StateManager(this)
+            this.store = new Store(this)
+            this.metrics = new Metrics(this)
+            this.tasks = new Tasks(this)
+            this.handlers = new Handlers(this)
 
-			this.registerViews()
+            this.registerViews()
 
-			registerCommands(this)
-			this.registerEvents()
-			this.setupWatchers()
-			this.storeInstallTime()
-		})
-	}
+            registerCommands(this)
+            this.registerEvents()
+            this.setupWatchers()
+            this.storeInstallTime()
+        })
+    }
 
-	private startSetupFlow() {
-		const { workspace } = this.app
+    private startSetupFlow() {
+        const { workspace } = this.app
 
-		let leaf: WorkspaceLeaf | null = null
-		const leaves = workspace.getLeavesOfType(SETUP_VIEW_TYPE)
+        let leaf: WorkspaceLeaf | null = null
+        const leaves = workspace.getLeavesOfType(SETUP_VIEW_TYPE)
 
-		if (leaves.length > 0) {
-			leaf = leaves[0]
-		} else {
-			leaf = workspace.getRightLeaf(false)
-			if (!leaf) {
-				console.error(
-					'Could not find or create a leaf for the setup view',
-				)
-				return
-			}
-			leaf.setViewState({ type: SETUP_VIEW_TYPE, active: true })
-		}
+        if (leaves.length > 0) {
+            leaf = leaves[0]
+        } else {
+            leaf = workspace.getRightLeaf(false)
+            if (!leaf) {
+                console.error(
+                    'Could not find or create a leaf for the setup view',
+                )
+                return
+            }
+            leaf.setViewState({ type: SETUP_VIEW_TYPE, active: true })
+        }
 
-		workspace.revealLeaf(leaf)
-	}
+        workspace.revealLeaf(leaf)
+    }
 
-	private registerViews() {
-		this.registerView(
-			PROCESSING_VIEW_TYPE,
-			(leaf) => new ProcessingView(leaf, this),
-		)
-		this.registerView(
-			SPHERE_VIEW_TYPE,
-			(leaf) => new SphereView(leaf, this),
-		)
-		this.registerView(
-			PLANNING_VIEW_TYPE,
-			(leaf) => new PlanningView(leaf, this),
-		)
-		this.registerView(
-			NEW_TAB_VIEW_TYPE,
-			(leaf) => new NewTabView(leaf, this),
-		)
-	}
-	private registerEvents() {
-		this.registerEvent(
-			this.app.workspace.on(
-				'active-leaf-change',
-				this.onActiveLeafChange.bind(this),
-			),
-		)
+    private registerViews() {
+        this.registerView(
+            PROCESSING_VIEW_TYPE,
+            (leaf) => new ProcessingView(leaf, this),
+        )
+        this.registerView(
+            SPHERE_VIEW_TYPE,
+            (leaf) => new SphereView(leaf, this),
+        )
+        this.registerView(
+            PLANNING_VIEW_TYPE,
+            (leaf) => new PlanningView(leaf, this),
+        )
+        this.registerView(
+            NEW_TAB_VIEW_TYPE,
+            (leaf) => new NewTabView(leaf, this),
+        )
+    }
+    private registerEvents() {
+        this.registerEvent(
+            this.app.workspace.on(
+                'active-leaf-change',
+                this.onActiveLeafChange.bind(this),
+            ),
+        )
 
-		this.registerEvent(
-			this.app.workspace.on('editor-menu', (menu, editor) => {
-				createEditorMenu(menu, editor, this)
-			}),
-		)
+        this.registerEvent(
+            this.app.workspace.on('editor-menu', (menu, editor) => {
+                createEditorMenu(menu, editor, this)
+            }),
+        )
 
-		this.registerEvent(
-			this.app.workspace.on(
-				'layout-change',
-				this.onLayoutChange.bind(this),
-			),
-		)
-	}
+        this.registerEvent(
+            this.app.workspace.on(
+                'layout-change',
+                this.onLayoutChange.bind(this),
+            ),
+        )
+    }
 
-	private onLayoutChange(): void {
-		if (!this.settings.hijackNewTab) {
-			return
-		}
+    private onLayoutChange(): void {
+        if (!this.settings.hijackNewTab) {
+            return
+        }
 
-		const leaf = this.app.workspace.getMostRecentLeaf()
-		if (leaf?.getViewState().type === 'empty') {
-			leaf.setViewState({
-				type: NEW_TAB_VIEW_TYPE,
-			})
-		}
-	}
+        const leaf = this.app.workspace.getMostRecentLeaf()
+        if (leaf?.getViewState().type === 'empty') {
+            leaf.setViewState({
+                type: NEW_TAB_VIEW_TYPE,
+            })
+        }
+    }
 
-	private async setupWatchers() {
-		await this.setupCountWatcher()
-		await this.setupTaskWatcher()
-	}
+    private async setupWatchers() {
+        await this.setupCountWatcher()
+        await this.setupTaskWatcher()
+    }
 
-	private async storeInstallTime() {
-		if (await this.store.retrieve('install-time')) {
-			return
-		}
-		this.store.store({ 'install-time': moment.utc().valueOf() })
-	}
+    private async storeInstallTime() {
+        if (await this.store.retrieve('install-time')) {
+            return
+        }
+        this.store.store({ 'install-time': moment.utc().valueOf() })
+    }
 
-	private async setupCountWatcher() {
-		const foldersToWatch = [
-			this.settings.inboxFilesFolderPath,
-			this.settings.inboxFolderPath,
-		]
+    private async setupCountWatcher() {
+        const foldersToWatch = [
+            this.settings.inboxFilesFolderPath,
+            this.settings.inboxFolderPath,
+        ]
 
-		const eventTypes: Array<string> = ['modify', 'create', 'delete']
+        const eventTypes: Array<string> = ['modify', 'create', 'delete']
 
-		foldersToWatch.forEach((folderPath) => {
-			const folder = this.app.vault.getAbstractFileByPath(folderPath)
-			if (!folder) {
-				return
-			}
+        foldersToWatch.forEach((folderPath) => {
+            const folder = this.app.vault.getAbstractFileByPath(folderPath)
+            if (!folder) {
+                return
+            }
 
-			eventTypes.forEach((eventType) => {
-				this.registerEvent(
-					// @ts-ignore FIXME: TS doesn't like the event type here
-					this.app.vault.on(eventType, async (file: TFile) => {
-						if (file.path.startsWith(folder.path)) {
-							await this.stateManager.updateCounts()
-						}
-					}),
-				)
-			})
-		})
-	}
+            eventTypes.forEach((eventType) => {
+                this.registerEvent(
+                    // @ts-ignore FIXME: TS doesn't like the event type here
+                    this.app.vault.on(eventType, async (file: TFile) => {
+                        if (file.path.startsWith(folder.path)) {
+                            await this.stateManager.updateCounts()
+                        }
+                    }),
+                )
+            })
+        })
+    }
 
-	private async setupTaskWatcher() {
-		const cache = this.app.metadataCache
+    private async setupTaskWatcher() {
+        const cache = this.app.metadataCache
 
-		const isFileToWatch = (file: TFile): boolean => {
-			const fileCache = cache.getFileCache(file)
-			if (fileCache === null) {
-				return false
-			}
+        const isFileToWatch = (file: TFile): boolean => {
+            const fileCache = cache.getFileCache(file)
+            if (fileCache === null) {
+                return false
+            }
 
-			if (
-				fileCache.frontmatter?.tags?.filter((t: string) => {
-					t.startsWith('project/')
-				})
-			) {
-				return true
-			}
+            if (
+                fileCache.frontmatter?.tags?.filter((t: string) => {
+                    t.startsWith('project/')
+                })
+            ) {
+                return true
+            }
 
-			if (file.path === this.settings.nextActionsFilePath) {
-				return true
-			}
-			return false
-		}
+            if (file.path === this.settings.nextActionsFilePath) {
+                return true
+            }
+            return false
+        }
 
-		this.registerEvent(
-			// @ts-ignore FIXME: TS doesn't like the event type here
-			this.app.vault.on('modify', async (file: TFile) => {
-				if (isFileToWatch(file)) {
-					const sphereLeaves =
-						this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
-					for (const l of sphereLeaves) {
-						const sphereView = l.view as SphereView
-						setTimeout(function () {
-							sphereView.render()
-						}, 1000)
-					}
-				}
-			}),
-		)
-	}
+        this.registerEvent(
+            // @ts-ignore FIXME: TS doesn't like the event type here
+            this.app.vault.on('modify', async (file: TFile) => {
+                if (isFileToWatch(file)) {
+                    const sphereLeaves =
+                        this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+                    for (const l of sphereLeaves) {
+                        const sphereView = l.view as SphereView
+                        setTimeout(function () {
+                            sphereView.render()
+                        }, 1000)
+                    }
+                }
+            }),
+        )
+    }
 
-	async onActiveLeafChange(leaf: any) {
-		if (leaf.view.getViewType() === PROCESSING_VIEW_TYPE) {
-			this.stateManager.startProcessing()
-		}
-	}
+    async onActiveLeafChange(leaf: any) {
+        if (leaf.view.getViewType() === PROCESSING_VIEW_TYPE) {
+            this.stateManager.startProcessing()
+        }
+    }
 
-	async openSphere(sphere: string) {
-		const existingLeaves =
-			this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
+    async openSphere(sphere: string) {
+        const existingLeaves =
+            this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE)
 
-		for (const l of existingLeaves) {
-			const sphereView = l.view as SphereView
-			if (sphereView.sphere === sphere) {
-				this.app.workspace.setActiveLeaf(l)
-				return
-			}
-		}
+        for (const l of existingLeaves) {
+            const sphereView = l.view as SphereView
+            if (sphereView.sphere === sphere) {
+                this.app.workspace.setActiveLeaf(l)
+                return
+            }
+        }
 
-		const leaf = this.app.workspace.getLeaf(false)
-		await leaf.setViewState({
-			type: SPHERE_VIEW_TYPE,
-			active: true,
-			state: { plugin: this, sphere: sphere },
-		})
-	}
+        const leaf = this.app.workspace.getLeaf(false)
+        await leaf.setViewState({
+            type: SPHERE_VIEW_TYPE,
+            active: true,
+            state: { plugin: this, sphere: sphere },
+        })
+    }
 
-	async loadSettings() {
-		const loadedData = await this.loadData()
+    async loadSettings() {
+        const loadedData = await this.loadData()
 
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			loadedData?.settings || {},
-		)
-	}
+        this.settings = Object.assign(
+            {},
+            DEFAULT_SETTINGS,
+            loadedData?.settings || {},
+        )
+    }
 
-	async saveSettings() {
-		const currentData = await this.loadData()
-		currentData.settings = this.settings
-		await this.saveData(currentData)
-	}
+    async saveSettings() {
+        const currentData = await this.loadData()
+        currentData.settings = this.settings
+        await this.saveData(currentData)
+    }
 
-	async onExternalSettingsChange() {
-		// @ts-ignore
-		await this.app.plugins.disablePlugin('flow')
-		// @ts-ignore
-		await this.app.plugins.enablePlugin('flow')
-	}
+    async onExternalSettingsChange() {
+        // @ts-ignore
+        await this.app.plugins.disablePlugin('flow')
+        // @ts-ignore
+        await this.app.plugins.enablePlugin('flow')
+    }
 
-	onunload() {
-		// Don't do things in here unless we're sure they loaded
-	}
+    onunload() {
+        // Don't do things in here unless we're sure they loaded
+    }
 }

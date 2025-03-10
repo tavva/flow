@@ -7,99 +7,99 @@ import PlanningViewComponent from '../components/PlanningView.svelte'
 export const PLANNING_VIEW_TYPE = 'planning-view'
 
 export async function closePlanningView(plugin: FlowPlugin) {
-	const { workspace } = plugin.app
+    const { workspace } = plugin.app
 
-	const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
-	for (const leaf of leaves) {
-		leaf.detach()
-	}
+    const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
+    for (const leaf of leaves) {
+        leaf.detach()
+    }
 }
 
 export async function openPlanningView(plugin: FlowPlugin) {
-	const { workspace } = plugin.app
+    const { workspace } = plugin.app
 
-	let leaf: WorkspaceLeaf | null = null
-	const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
+    let leaf: WorkspaceLeaf | null = null
+    const leaves = workspace.getLeavesOfType(PLANNING_VIEW_TYPE)
 
-	if (leaves.length > 0) {
-		leaf = leaves[0]
-	} else {
-		leaf = workspace.getRightLeaf(false)
-		await leaf!.setViewState({
-			type: PLANNING_VIEW_TYPE,
-			active: true,
-		})
-	}
+    if (leaves.length > 0) {
+        leaf = leaves[0]
+    } else {
+        leaf = workspace.getRightLeaf(false)
+        await leaf!.setViewState({
+            type: PLANNING_VIEW_TYPE,
+            active: true,
+        })
+    }
 
-	if (!leaf) {
-		console.error('Could not find or create a leaf for the planning view')
-		return
-	}
+    if (!leaf) {
+        console.error('Could not find or create a leaf for the planning view')
+        return
+    }
 
-	workspace.revealLeaf(leaf)
+    workspace.revealLeaf(leaf)
 }
 
 export class PlanningView extends ItemView {
-	navigation = false
+    navigation = false
 
-	private component!: PlanningViewComponent
-	plugin: FlowPlugin
-	private eventListenerRef: EventRef | null = null
+    private component!: PlanningViewComponent
+    plugin: FlowPlugin
+    private eventListenerRef: EventRef | null = null
 
-	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
-		super(leaf)
-		this.plugin = plugin
-	}
+    constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
+        super(leaf)
+        this.plugin = plugin
+    }
 
-	getViewType() {
-		return PLANNING_VIEW_TYPE
-	}
+    getViewType() {
+        return PLANNING_VIEW_TYPE
+    }
 
-	getDisplayText() {
-		return 'Planned actions'
-	}
+    getDisplayText() {
+        return 'Planned actions'
+    }
 
-	override getIcon(): string {
-		return 'waves'
-	}
+    override getIcon(): string {
+        return 'waves'
+    }
 
-	async onOpen() {
-		store.plugin.set(this.plugin)
+    async onOpen() {
+        store.plugin.set(this.plugin)
 
-		if (this.plugin.settings.automaticallyDeleteOldTasks) {
-			await this.plugin.tasks.deleteOldTasks()
-		}
+        if (this.plugin.settings.automaticallyDeleteOldTasks) {
+            await this.plugin.tasks.deleteOldTasks()
+        }
 
-		this.component = new PlanningViewComponent({
-			target: this.contentEl,
-			props: {
-				plugin: this.plugin,
-				plannedTasks: await this.plugin.tasks.getPlannedTasks(),
-				oldPlannedTasks: await this.plugin.tasks.getOldTasks(),
-			},
-		})
+        this.component = new PlanningViewComponent({
+            target: this.contentEl,
+            props: {
+                plugin: this.plugin,
+                plannedTasks: await this.plugin.tasks.getPlannedTasks(),
+                oldPlannedTasks: await this.plugin.tasks.getOldTasks(),
+            },
+        })
 
-		this.eventListenerRef = this.plugin.events.on(
-			'planned-tasks-updated',
-			() => {
-				this.plugin.store.store({ 'last-task-planned': Date.now() })
-				this.setProps({
-					plannedTasks: this.plugin.tasks.getPlannedTasks(),
-				})
-			},
-		)
-	}
+        this.eventListenerRef = this.plugin.events.on(
+            'planned-tasks-updated',
+            () => {
+                this.plugin.store.store({ 'last-task-planned': Date.now() })
+                this.setProps({
+                    plannedTasks: this.plugin.tasks.getPlannedTasks(),
+                })
+            },
+        )
+    }
 
-	public setProps(props: Partial<typeof this.component.$$.props>) {
-		if (this.component) {
-			this.component.$set(props)
-		}
-	}
+    public setProps(props: Partial<typeof this.component.$$.props>) {
+        if (this.component) {
+            this.component.$set(props)
+        }
+    }
 
-	async onClose() {
-		if (this.eventListenerRef !== null) {
-			this.plugin.events.offref(this.eventListenerRef)
-			this.eventListenerRef = null
-		}
-	}
+    async onClose() {
+        if (this.eventListenerRef !== null) {
+            this.plugin.events.offref(this.eventListenerRef)
+            this.eventListenerRef = null
+        }
+    }
 }

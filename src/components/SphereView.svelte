@@ -1,328 +1,333 @@
 <script lang="ts">
-	import { tick, onMount } from 'svelte'
-	import { Component } from 'obsidian'
-	import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
+    import { tick, onMount } from 'svelte'
+    import { Component } from 'obsidian'
+    import type { DataviewApi, STask, SMarkdownPage } from 'obsidian-dataview'
 
-	import store from '../svelteStore.js'
-	import FlowPlugin from '../main.js'
-	import {
-		isPlanningMode,
-		addTaskClickListeners,
-		togglePlanningMode,
-	} from '../planning.js'
+    import store from '../svelteStore.js'
+    import FlowPlugin from '../main.js'
+    import {
+        isPlanningMode,
+        addTaskClickListeners,
+        togglePlanningMode,
+    } from '../planning.js'
 
-	let plugin: FlowPlugin
-	store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
+    let plugin: FlowPlugin
+    store.plugin.subscribe((p: FlowPlugin) => (plugin = p))
 
-	export let sphere: string
-	export let projects: SMarkdownPage[] = []
+    export let sphere: string
+    export let projects: SMarkdownPage[] = []
 
-	let sphereCapitalised: string = ''
+    let sphereCapitalised: string = ''
 
-	let projectsWithNextActions: SMarkdownPage[] = []
-	let projectsWithNextActionsBelowPriorityCutoff: SMarkdownPage[] = []
-	let projectsWithNextActionsAbovePriorityCutoff: SMarkdownPage[] = []
-	let projectsNeedingNextActions: SMarkdownPage[] = []
-	let pausedProjects: SMarkdownPage[] = []
-	let showPausedProjects: boolean = false
+    let projectsWithNextActions: SMarkdownPage[] = []
+    let projectsWithNextActionsBelowPriorityCutoff: SMarkdownPage[] = []
+    let projectsWithNextActionsAbovePriorityCutoff: SMarkdownPage[] = []
+    let projectsNeedingNextActions: SMarkdownPage[] = []
+    let pausedProjects: SMarkdownPage[] = []
+    let showPausedProjects: boolean = false
 
-	let shadowIsPlanningMode: boolean = false
+    let shadowIsPlanningMode: boolean = false
 
-	let priorityCutoff: number = 3
+    let priorityCutoff: number = 3
 
-	export let nonProjectNextActions: DataviewApi.TaskResult = []
+    export let nonProjectNextActions: DataviewApi.TaskResult = []
 
-	$: if (sphere) {
-		sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
-	}
+    $: if (sphere) {
+        sphereCapitalised = sphere.charAt(0).toUpperCase() + sphere.slice(1)
+    }
 
-	$: {
-		const leaves = document.querySelectorAll(
-			'div.workspace-leaf-content[data-type="sphere-view"]',
-		)
+    $: {
+        const leaves = document.querySelectorAll(
+            'div.workspace-leaf-content[data-type="sphere-view"]',
+        )
 
-		if (shadowIsPlanningMode) {
-			leaves.forEach((leaf: Element) => {
-				leaf.addClass('flow-sphere-in-planning-mode')
-			})
-		} else {
-			leaves.forEach((leaf: Element) => {
-				leaf.removeClass('flow-sphere-in-planning-mode')
-			})
-		}
-	}
+        if (shadowIsPlanningMode) {
+            leaves.forEach((leaf: Element) => {
+                leaf.addClass('flow-sphere-in-planning-mode')
+            })
+        } else {
+            leaves.forEach((leaf: Element) => {
+                leaf.removeClass('flow-sphere-in-planning-mode')
+            })
+        }
+    }
 
-	onMount(() => {
-		const unsubscribe = isPlanningMode.subscribe((value) => {
-			shadowIsPlanningMode = value
-		})
+    onMount(() => {
+        const unsubscribe = isPlanningMode.subscribe((value) => {
+            shadowIsPlanningMode = value
+        })
 
-		return () => unsubscribe()
-	})
+        return () => unsubscribe()
+    })
 
-	function openProject(event: MouseEvent) {
-		event.preventDefault()
-		const target = event.target as HTMLElement
-		const path = target.getAttribute('data-path')
-		if (path) {
-			plugin.app.workspace.openLinkText(path, '')
-		}
-	}
+    function openProject(event: MouseEvent) {
+        event.preventDefault()
+        const target = event.target as HTMLElement
+        const path = target.getAttribute('data-path')
+        if (path) {
+            plugin.app.workspace.openLinkText(path, '')
+        }
+    }
 
-	async function renderTaskList(container: HTMLElement, tasks: STask[]) {
-		if (container && tasks) {
-			try {
-				const component = new Component()
-				await plugin.dv.taskList(tasks, false, container, component)
-				component.load()
-			} catch (error) {
-				console.error('Error rendering task list:', error)
-			}
-		}
+    async function renderTaskList(container: HTMLElement, tasks: STask[]) {
+        if (container && tasks) {
+            try {
+                const component = new Component()
+                await plugin.dv.taskList(tasks, false, container, component)
+                component.load()
+            } catch (error) {
+                console.error('Error rendering task list:', error)
+            }
+        }
 
-		setTimeout(() => {
-			// Wait for the taskList to hydrate before running our modifications
-			addTaskTextToElements(tasks, container)
-			addPlannedAttributeToTasks(container)
-			addTaskClickListeners(plugin, container)
-		}, 10)
-	}
+        setTimeout(() => {
+            // Wait for the taskList to hydrate before running our modifications
+            addTaskTextToElements(tasks, container)
+            addPlannedAttributeToTasks(container)
+            addTaskClickListeners(plugin, container)
+        }, 10)
+    }
 
-	function addTaskTextToElements(
-		taskQueryResult: STask[],
-		container: HTMLElement,
-	) {
-		const elementsInOrder = container.querySelectorAll('li')
-		const rawTasks: Array<STask> = Array.from(taskQueryResult)
+    function addTaskTextToElements(
+        taskQueryResult: STask[],
+        container: HTMLElement,
+    ) {
+        const elementsInOrder = container.querySelectorAll('li')
+        const rawTasks: Array<STask> = Array.from(taskQueryResult)
 
-		const seen = new Set<number>()
-		const tasks: STask[] = []
+        const seen = new Set<number>()
+        const tasks: STask[] = []
 
-		// The task query result doesn't include completed items, but the
-		// children of an uncompleted item do. Therefore, we need to traverse
-		// the tree to get all tasks
-		function traverse(tasksToProcess: STask[]) {
-			for (const task of tasksToProcess) {
-				if (!seen.has(task.line)) {
-					seen.add(task.line)
-					tasks.push(task)
-					if (task.children && task.children.length > 0) {
-						traverse(task.children)
-					}
-				}
-			}
-		}
+        // The task query result doesn't include completed items, but the
+        // children of an uncompleted item do. Therefore, we need to traverse
+        // the tree to get all tasks
+        function traverse(tasksToProcess: STask[]) {
+            for (const task of tasksToProcess) {
+                if (!seen.has(task.line)) {
+                    seen.add(task.line)
+                    tasks.push(task)
+                    if (task.children && task.children.length > 0) {
+                        traverse(task.children)
+                    }
+                }
+            }
+        }
 
-		traverse(rawTasks)
+        traverse(rawTasks)
 
-		let elementIndex: number = 0
+        let elementIndex: number = 0
 
-		tasks.forEach((task: STask) => {
-			const element = elementsInOrder[elementIndex]
-			if (element) {
-				element.setAttribute('data-task-text', task.text)
-			}
+        tasks.forEach((task: STask) => {
+            const element = elementsInOrder[elementIndex]
+            if (element) {
+                element.setAttribute('data-task-text', task.text)
+            }
 
-			elementIndex++
-		})
-	}
+            elementIndex++
+        })
+    }
 
-	function exitPlanningMode() {
-		togglePlanningMode(plugin)
-	}
+    function exitPlanningMode() {
+        togglePlanningMode(plugin)
+    }
 
-	function addPlannedAttributeToTasks(container: HTMLElement) {
-		container
-			.querySelectorAll('.task-list-item')
-			.forEach((taskListItem) => {
-				const links = taskListItem.querySelectorAll('a')
+    function addPlannedAttributeToTasks(container: HTMLElement) {
+        container
+            .querySelectorAll('.task-list-item')
+            .forEach((taskListItem) => {
+                const links = taskListItem.querySelectorAll('a')
 
-				links.forEach(function (link) {
-					if (link.getAttribute('href') === '#flow-planned') {
-						taskListItem.addClass('planned-item')
-					}
-				})
-			})
-	}
+                links.forEach(function (link) {
+                    if (link.getAttribute('href') === '#flow-planned') {
+                        taskListItem.addClass('planned-item')
+                    }
+                })
+            })
+    }
 
-	function generateUniqueProjectId(path: string): string {
-		return path.replace(/[^\w-]+/g, '-')
-	}
+    function generateUniqueProjectId(path: string): string {
+        return path.replace(/[^\w-]+/g, '-')
+    }
 
-	$: {
-		if (projects.length > 0) {
-			projectsWithNextActions = projects.filter(
-				(project) => project.nextActions.length > 0 && project.status === 'live',
-			)
-			projectsNeedingNextActions = projects.filter(
-				(project) => project.nextActions.length === 0 && project.status === 'live',
-			)
-			pausedProjects = projects.filter(
-				(project) => project.status === 'paused',
-			)
-		}
-	}
+    $: {
+        if (projects.length > 0) {
+            projectsWithNextActions = projects.filter(
+                (project) =>
+                    project.nextActions.length > 0 && project.status === 'live',
+            )
+            projectsNeedingNextActions = projects.filter(
+                (project) =>
+                    project.nextActions.length === 0 &&
+                    project.status === 'live',
+            )
+            pausedProjects = projects.filter(
+                (project) => project.status === 'paused',
+            )
+        }
+    }
 
-	$: {
-		if (projectsWithNextActions.length > 0) {
-			if (priorityCutoff === 10) {
-				projectsWithNextActionsBelowPriorityCutoff =
-					projectsWithNextActions
-				projectsWithNextActionsAbovePriorityCutoff = []
-			} else {
-				projectsWithNextActionsBelowPriorityCutoff =
-					projectsWithNextActions.filter(
-						(project) => project.priority <= priorityCutoff,
-					)
-				projectsWithNextActionsAbovePriorityCutoff =
-					projectsWithNextActions.filter(
-						(project) => project.priority > priorityCutoff,
-					)
-			}
-		}
-	}
+    $: {
+        if (projectsWithNextActions.length > 0) {
+            if (priorityCutoff === 10) {
+                projectsWithNextActionsBelowPriorityCutoff =
+                    projectsWithNextActions
+                projectsWithNextActionsAbovePriorityCutoff = []
+            } else {
+                projectsWithNextActionsBelowPriorityCutoff =
+                    projectsWithNextActions.filter(
+                        (project) => project.priority <= priorityCutoff,
+                    )
+                projectsWithNextActionsAbovePriorityCutoff =
+                    projectsWithNextActions.filter(
+                        (project) => project.priority > priorityCutoff,
+                    )
+            }
+        }
+    }
 
-	$: updateProjectTaskLists(projectsWithNextActionsBelowPriorityCutoff)
-	$: updateNonProjectTaskList(nonProjectNextActions)
+    $: updateProjectTaskLists(projectsWithNextActionsBelowPriorityCutoff)
+    $: updateNonProjectTaskList(nonProjectNextActions)
 
-	function updateProjectTaskLists(projects: SMarkdownPage[]) {
-		if (plugin && projects.length > 0) {
-			tick().then(() => {
-				projects.forEach((project) => {
-					const projectId = `task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`
-					const container = document.getElementById(projectId)
-					if (container) {
-						container.empty()
-						renderTaskList(container, project.nextActions)
-					}
-				})
-			})
-		}
-	}
+    function updateProjectTaskLists(projects: SMarkdownPage[]) {
+        if (plugin && projects.length > 0) {
+            tick().then(() => {
+                projects.forEach((project) => {
+                    const projectId = `task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`
+                    const container = document.getElementById(projectId)
+                    if (container) {
+                        container.empty()
+                        renderTaskList(container, project.nextActions)
+                    }
+                })
+            })
+        }
+    }
 
-	function updateNonProjectTaskList(tasks: DataviewApi.TaskResult) {
-		if (plugin && tasks.length > 0) {
-			tick().then(() => {
-				const container = document.getElementById(
-					`task-list-non-project-${sphere}`,
-				)
-				if (container) {
-					container.empty()
-					renderTaskList(container, tasks)
-				}
-			})
-		}
-	}
+    function updateNonProjectTaskList(tasks: DataviewApi.TaskResult) {
+        if (plugin && tasks.length > 0) {
+            tick().then(() => {
+                const container = document.getElementById(
+                    `task-list-non-project-${sphere}`,
+                )
+                if (container) {
+                    container.empty()
+                    renderTaskList(container, tasks)
+                }
+            })
+        }
+    }
 
-	function showAllProjects() {
-		priorityCutoff = 10
-	}
+    function showAllProjects() {
+        priorityCutoff = 10
+    }
 </script>
 
 <div class="flow-sphere-banner">
-	You are in planning mode <button on:click={exitPlanningMode}>Exit</button>
+    You are in planning mode <button on:click={exitPlanningMode}>Exit</button>
 </div>
 
 <div class="flow-sphere-view">
-	<h1>{sphereCapitalised}</h1>
-	<div>
-		{#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
-			<h2>You have projects that need next actions</h2>
-			<ul>
-				{#each projectsNeedingNextActions as project}
-					<li>
-						<a href={project.link} data-path={project.file.path}
-							>{project.file.name}</a
-						>
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</div>
-	<div id="flow-task-lists">
-		<div class="flow-header-flex">
-			<h2>Projects</h2>
+    <h1>{sphereCapitalised}</h1>
+    <div>
+        {#if projectsNeedingNextActions && projectsNeedingNextActions.length > 0}
+            <h2>You have projects that need next actions</h2>
+            <ul>
+                {#each projectsNeedingNextActions as project}
+                    <li>
+                        <a href={project.link} data-path={project.file.path}
+                            >{project.file.name}</a
+                        >
+                    </li>
+                {/each}
+            </ul>
+        {/if}
+    </div>
+    <div id="flow-task-lists">
+        <div class="flow-header-flex">
+            <h2>Projects</h2>
 
-			{#if projectsWithNextActions.length > 5}
-				<div id="priority-range">
-					<label for="priority-cutoff">Priority cutoff</label>
-					<input
-						bind:value={priorityCutoff}
-						type="range"
-						min="1"
-						max="10"
-						step="1"
-					/>
-					<span id="priority-cutoff"
-						>{priorityCutoff === 10 ? 'all' : priorityCutoff}</span
-					>
-				</div>
-			{/if}
-		</div>
+            {#if projectsWithNextActions.length > 5}
+                <div id="priority-range">
+                    <label for="priority-cutoff">Priority cutoff</label>
+                    <input
+                        bind:value={priorityCutoff}
+                        type="range"
+                        min="1"
+                        max="10"
+                        step="1"
+                    />
+                    <span id="priority-cutoff"
+                        >{priorityCutoff === 10 ? 'all' : priorityCutoff}</span
+                    >
+                </div>
+            {/if}
+        </div>
 
-		{#if projectsWithNextActions && projectsWithNextActions.length > 0}
-			<ul>
-				{#each projectsWithNextActions as project}
-					{#if project.priority <= priorityCutoff}
-						<li
-							class:flow-no-actionables={project.hasActionables ===
-								false}
-						>
-							{project.priority}.
-							<a
-								href={project.link}
-								data-path={project.file.path}
-								on:click={openProject}>{project.file.name}</a
-							>
-							<div
-								id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
-							></div>
-						</li>
-					{/if}
-				{/each}
-				{#if projectsWithNextActionsAbovePriorityCutoff.length > 0}
-					<p>
-						{projectsWithNextActionsAbovePriorityCutoff.length}
-						more project{#if projectsWithNextActionsAbovePriorityCutoff.length > 1}s{/if}
-						above priority cutoff {priorityCutoff}
-						<button on:click={showAllProjects}
-							>Show all projects</button
-						>
-					</p>
-				{/if}
-			</ul>
-		{:else}
-			<p>No projects found</p>
-		{/if}
-	</div>
-	<div>
-		{#if pausedProjects.length > 0}
-			<div class="flow-header-flex" style="gap: 1em;">
-				<h2>Paused projects</h2>
-				<button on:click={() => showPausedProjects = !showPausedProjects}>
-					{showPausedProjects ? 'Hide' : 'Show'}
-				</button>
-			</div>
+        {#if projectsWithNextActions && projectsWithNextActions.length > 0}
+            <ul>
+                {#each projectsWithNextActions as project}
+                    {#if project.priority <= priorityCutoff}
+                        <li
+                            class:flow-no-actionables={project.hasActionables ===
+                                false}
+                        >
+                            {project.priority}.
+                            <a
+                                href={project.link}
+                                data-path={project.file.path}
+                                on:click={openProject}>{project.file.name}</a
+                            >
+                            <div
+                                id={`task-list-${sphere}-${generateUniqueProjectId(project.file.path)}`}
+                            ></div>
+                        </li>
+                    {/if}
+                {/each}
+                {#if projectsWithNextActionsAbovePriorityCutoff.length > 0}
+                    <p>
+                        {projectsWithNextActionsAbovePriorityCutoff.length}
+                        more project{#if projectsWithNextActionsAbovePriorityCutoff.length > 1}s{/if}
+                        above priority cutoff {priorityCutoff}
+                        <button on:click={showAllProjects}
+                            >Show all projects</button
+                        >
+                    </p>
+                {/if}
+            </ul>
+        {:else}
+            <p>No projects found</p>
+        {/if}
+    </div>
+    <div>
+        {#if pausedProjects.length > 0}
+            <div class="flow-header-flex" style="gap: 1em;">
+                <h2>Paused projects</h2>
+                <button
+                    on:click={() => (showPausedProjects = !showPausedProjects)}
+                >
+                    {showPausedProjects ? 'Hide' : 'Show'}
+                </button>
+            </div>
 
-			{#if showPausedProjects}
-				<ul>
-					{#each pausedProjects as project}
-						<li>
-							<a
-								href={project.link}
-								data-path={project.file.path}
-								on:click={openProject}>{project.file.name}</a
-							>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		{/if}
-	</div>
-	<div>
-		<h2>Non-project next actions</h2>
-		<div id="task-list-non-project-{sphere}">
-			No non-project next actions found
-		</div>
-	</div>
+            {#if showPausedProjects}
+                <ul>
+                    {#each pausedProjects as project}
+                        <li>
+                            <a
+                                href={project.link}
+                                data-path={project.file.path}
+                                on:click={openProject}>{project.file.name}</a
+                            >
+                        </li>
+                    {/each}
+                </ul>
+            {/if}
+        {/if}
+    </div>
+    <div>
+        <h2>Non-project next actions</h2>
+        <div id="task-list-non-project-{sphere}">
+            No non-project next actions found
+        </div>
+    </div>
 </div>

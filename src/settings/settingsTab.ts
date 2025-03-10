@@ -5,58 +5,58 @@ import { settingsDefinitions } from './definitions.js'
 import { checkDependencies } from 'src/dependencies.js'
 
 export class FlowSettingsTab extends PluginSettingTab {
-	plugin: FlowPlugin
+    plugin: FlowPlugin
 
-	constructor(plugin: FlowPlugin) {
-		super(plugin.app, plugin)
-		this.plugin = plugin
-	}
+    constructor(plugin: FlowPlugin) {
+        super(plugin.app, plugin)
+        this.plugin = plugin
+    }
 
-	display(): void {
-		const { containerEl } = this
+    display(): void {
+        const { containerEl } = this
 
-		containerEl.empty()
+        containerEl.empty()
 
-		if (!checkDependencies(this.plugin)) {
-			new Setting(containerEl)
-				.setName('Dependencies not met')
-				.setDesc(
-					'Flow requires the following plugins to be installed: Tasks, Dataview, and Templater.',
-				)
-				.setClass('flow-error')
+        if (!checkDependencies(this.plugin)) {
+            new Setting(containerEl)
+                .setName('Dependencies not met')
+                .setDesc(
+                    'Flow requires the following plugins to be installed: Tasks, Dataview, and Templater.',
+                )
+                .setClass('flow-error')
 
-			return
-		}
+            return
+        }
 
-		settingsDefinitions.appendTagToTask.render(containerEl, this.plugin)
-		settingsDefinitions.spheres.render(containerEl, this.plugin)
-		settingsDefinitions.hijackNewTab.render(containerEl, this.plugin)
+        settingsDefinitions.appendTagToTask.render(containerEl, this.plugin)
+        settingsDefinitions.spheres.render(containerEl, this.plugin)
+        settingsDefinitions.hijackNewTab.render(containerEl, this.plugin)
 
-		new Setting(containerEl).setName('Inbox folders').setHeading()
+        new Setting(containerEl).setName('Inbox folders').setHeading()
 
-		settingsDefinitions.inboxFilesFolderPath.render(
-			containerEl,
-			this.plugin,
-		)
-		settingsDefinitions.inboxFolderPath.render(containerEl, this.plugin)
+        settingsDefinitions.inboxFilesFolderPath.render(
+            containerEl,
+            this.plugin,
+        )
+        settingsDefinitions.inboxFolderPath.render(containerEl, this.plugin)
 
-		new Setting(containerEl).setName('Your notes').setHeading()
+        new Setting(containerEl).setName('Your notes').setHeading()
 
-		settingsDefinitions.nextActionsFilePath.render(containerEl, this.plugin)
-		settingsDefinitions.newProjectTemplateFilePath.render(
-			containerEl,
-			this.plugin,
-		)
-		settingsDefinitions.projectsFolderPath.render(containerEl, this.plugin)
-		settingsDefinitions.newPersonTemplateFilePath.render(
-			containerEl,
-			this.plugin,
-		)
-		settingsDefinitions.peopleFolderPath.render(containerEl, this.plugin)
-		settingsDefinitions.somedayFilePath.render(containerEl, this.plugin)
+        settingsDefinitions.nextActionsFilePath.render(containerEl, this.plugin)
+        settingsDefinitions.newProjectTemplateFilePath.render(
+            containerEl,
+            this.plugin,
+        )
+        settingsDefinitions.projectsFolderPath.render(containerEl, this.plugin)
+        settingsDefinitions.newPersonTemplateFilePath.render(
+            containerEl,
+            this.plugin,
+        )
+        settingsDefinitions.peopleFolderPath.render(containerEl, this.plugin)
+        settingsDefinitions.somedayFilePath.render(containerEl, this.plugin)
 
-		new Setting(containerEl).setName('Advanced').setHeading()
+        new Setting(containerEl).setName('Advanced').setHeading()
 
-		settingsDefinitions.exportPlannedTasks.render(containerEl, this.plugin)
-	}
+        settingsDefinitions.exportPlannedTasks.render(containerEl, this.plugin)
+    }
 }

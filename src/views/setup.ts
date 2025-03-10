@@ -7,39 +7,39 @@ import SetupComponent from '../components/SetupView.svelte'
 export const SETUP_VIEW_TYPE = 'setup-view'
 
 export class SetupView extends ItemView {
-	navigation = false
+    navigation = false
 
-	plugin: FlowPlugin
-	private component!: SetupComponent
+    plugin: FlowPlugin
+    private component!: SetupComponent
 
-	constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
-		super(leaf)
-		this.plugin = plugin
-	}
+    constructor(leaf: WorkspaceLeaf, plugin: FlowPlugin) {
+        super(leaf)
+        this.plugin = plugin
+    }
 
-	getViewType() {
-		return SETUP_VIEW_TYPE
-	}
+    getViewType() {
+        return SETUP_VIEW_TYPE
+    }
 
-	getDisplayText() {
-		return 'Flow setup'
-	}
+    getDisplayText() {
+        return 'Flow setup'
+    }
 
-	override getIcon(): string {
-		return 'waves'
-	}
+    override getIcon(): string {
+        return 'waves'
+    }
 
-	async onOpen() {
-		store.plugin.set(this.plugin)
+    async onOpen() {
+        store.plugin.set(this.plugin)
 
-		this.component = new SetupComponent({
-			target: this.contentEl,
-		})
-	}
+        this.component = new SetupComponent({
+            target: this.contentEl,
+        })
+    }
 
-	async onClose() {
-		if (this.component) {
-			this.component.$destroy()
-		}
-	}
+    async onClose() {
+        if (this.component) {
+            this.component.$destroy()
+        }
+    }
 }
