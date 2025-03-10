@@ -3,5 +3,7 @@
 	"svelteSortOrder": "options-scripts-markup-styles",
 	"svelteStrictMode": false,
 	"svelteBracketNewLine": true,
-	"svelteAllowShorthand": true
+	"svelteAllowShorthand": true,
+	"tabWidth": 4,
+	"useTabs": false
 }
