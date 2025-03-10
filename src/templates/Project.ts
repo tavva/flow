@@ -10,18 +10,15 @@ status: live
 
 {{ description }}
 
-## Objectives
-
-(Consider deadlines, milestones, stakeholders, definition of done)
+## Focus areas
 
 ## Next actions
 
-
 ## Future next actions
-
 
 ## Notes + resources
 
+## Focus areas detail
 
 ## Log
 `
