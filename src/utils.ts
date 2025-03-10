@@ -450,3 +450,142 @@ export const checkBranch = async (plugin: FlowPlugin) => {
 export async function storeInstallTime(plugin: FlowPlugin) {
     plugin.store.store({ 'install-time': DateTime.now() })
 }
+
+function findSectionEndLine(
+    lines: string[],
+    sectionStartIndex: number,
+    sectionHeaderLevel: number,
+): number {
+    for (let i = sectionStartIndex + 1; i < lines.length; i++) {
+        const line = lines[i].trim()
+        // Count the number of # at the start of the line
+        const headerMatch = line.match(/^(#+)\s+/)
+
+        if (headerMatch) {
+            const headerLevel = headerMatch[1].length
+            // If we find a header of the same or higher level (fewer #s),
+            // this is the end of our section
+            if (headerLevel <= sectionHeaderLevel) {
+                return i - 1 // Return the line before this header
+            }
+        }
+    }
+
+    // If we reach here, the section extends to the end of the document
+    return lines.length - 1
+}
+
+export async function addFocusAreaToNote(
+    plugin: FlowPlugin,
+    focusAreaName: string,
+): Promise<{ success: boolean; error?: string }> {
+    const activeFile = plugin.app.workspace.getActiveFile()
+    if (!activeFile) {
+        return { success: false, error: 'No active file' }
+    }
+
+    const activeLeaf = plugin.app.workspace.activeLeaf
+    if (!activeLeaf || !activeLeaf.view || !('editor' in activeLeaf.view)) {
+        return { success: false, error: 'No active editor' }
+    }
+
+    const editor = (activeLeaf.view as any).editor
+
+    const fileContent = await plugin.app.vault.read(activeFile)
+
+    const lines = fileContent.split('\n')
+
+    let focusAreasLineIndex = -1
+    let focusAreasDetailLineIndex = -1
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim()
+        if (line === '## Focus areas') {
+            focusAreasLineIndex = i
+        } else if (line === '## Focus areas detail') {
+            focusAreasDetailLineIndex = i
+        }
+    }
+
+    if (focusAreasLineIndex === -1 || focusAreasDetailLineIndex === -1) {
+        return {
+            success: false,
+            error: 'The note must contain both "## Focus areas" and "## Focus areas detail" sections',
+        }
+    }
+
+    const focusAreasEndLine = findSectionEndLine(lines, focusAreasLineIndex, 2)
+    let focusAreasDetailEndLine = findSectionEndLine(
+        lines,
+        focusAreasDetailLineIndex,
+        2,
+    )
+
+    const focusAreaRegex = new RegExp(
+        `[0-9]+\\.\\s+${focusAreaName}|\\-\\s+${focusAreaName}`,
+        'i',
+    )
+    for (let i = focusAreasLineIndex + 1; i <= focusAreasEndLine; i++) {
+        if (focusAreaRegex.test(lines[i])) {
+            return {
+                success: false,
+                error: `Focus area "${focusAreaName}" already exists`,
+            }
+        }
+    }
+
+    let lastNumberedItemIndex = -1
+    let nextNumber = 1
+
+    for (let i = focusAreasLineIndex + 1; i <= focusAreasEndLine; i++) {
+        const match = lines[i].match(/^(\d+)\.\s+/)
+        if (match) {
+            lastNumberedItemIndex = i
+            nextNumber = parseInt(match[1]) + 1
+        }
+    }
+
+    const newLines = [...lines]
+
+    if (lastNumberedItemIndex !== -1) {
+        newLines.splice(
+            lastNumberedItemIndex + 1,
+            0,
+            `${nextNumber}. ${focusAreaName}`,
+        )
+        focusAreasDetailEndLine += 1
+    } else {
+        newLines.splice(focusAreasLineIndex + 1, 0, `1. ${focusAreaName}`)
+        focusAreasDetailEndLine += 1
+    }
+
+    newLines.splice(
+        focusAreasDetailEndLine + 1,
+        0,
+        ``,
+        `### ${focusAreaName}`,
+        ``,
+    )
+
+    const newContent = newLines.join('\n')
+
+    await plugin.app.vault.modify(activeFile, newContent)
+
+    if (editor && typeof editor.setCursor === 'function') {
+        const updatedLines = newContent.split('\n')
+        let newHeaderLineIndex = -1
+
+        for (let i = 0; i < updatedLines.length; i++) {
+            if (updatedLines[i] === `### ${focusAreaName}`) {
+                newHeaderLineIndex = i
+                break
+            }
+        }
+
+        if (newHeaderLineIndex !== -1) {
+            editor.setCursor({ line: newHeaderLineIndex + 1, ch: 0 })
+        }
+    }
+
+    return { success: true }
+}

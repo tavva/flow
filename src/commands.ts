@@ -1,12 +1,15 @@
 import FlowPlugin from './main.js'
 import { NewProjectModal } from './modals/newProjectModal.js'
 import { AddToInboxModal } from './modals/addToInboxModal.js'
+import { AddFocusAreaModal } from './modals/addFocusAreaModal.js'
+import { Notice } from 'obsidian'
 
 import { openPlanningView } from './views/planning.js'
 import {
 	createNewProjectFile,
 	parseProjectTemplate,
 	getOrCreateInboxFile,
+	addFocusAreaToNote,
 } from './utils.js'
 
 export async function registerCommands(plugin: FlowPlugin) {
@@ -74,6 +77,19 @@ export async function registerCommands(plugin: FlowPlugin) {
 			new AddToInboxModal(plugin, async (content: string) => {
 				const inboxFile = await getOrCreateInboxFile(plugin)
 				plugin.app.vault.append(inboxFile, content + '\n')
+			}).open()
+		},
+	})
+
+	plugin.addCommand({
+		id: 'add-focus-area',
+		name: 'Add focus area',
+		callback: async () => {
+			new AddFocusAreaModal(plugin, async (focusAreaName: string) => {
+				const result = await addFocusAreaToNote(plugin, focusAreaName);
+				if (!result.success && result.error) {
+					new Notice(result.error);
+				}
 			}).open()
 		},
 	})
