@@ -9,442 +9,444 @@ import { SMarkdownPage, STask } from 'obsidian-dataview'
 
 // TODO: Move the add* functions out to their own utils file
 async function addLineToFile(
-	plugin: FlowPlugin,
-	text: string,
-	filePath: string,
-	spheres: string[],
+    plugin: FlowPlugin,
+    text: string,
+    filePath: string,
+    spheres: string[],
 ) {
-	text = text.trim()
-	let file = plugin.app.vault.getAbstractFileByPath(filePath) as TFile
+    text = text.trim()
+    let file = plugin.app.vault.getAbstractFileByPath(filePath) as TFile
 
-	if (!file) {
-		file = await plugin.app.vault.create(filePath, '')
-	}
+    if (!file) {
+        file = await plugin.app.vault.create(filePath, '')
+    }
 
-	const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
+    const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
 
-	let content = await plugin.app.vault.read(file)
-	content = content + '\n- [ ] ' + text
+    let content = await plugin.app.vault.read(file)
+    content = content + '\n- [ ] ' + text
 
-	if (sphereString) {
-		content = content + ' ' + sphereString
-	}
-	if (plugin.settings.appendTagToTask) {
-		content = content + ' ' + plugin.settings.appendTagToTask
-	}
-	content.concat('\n')
+    if (sphereString) {
+        content = content + ' ' + sphereString
+    }
+    if (plugin.settings.appendTagToTask) {
+        content = content + ' ' + plugin.settings.appendTagToTask
+    }
+    content.concat('\n')
 
-	await plugin.app.vault.modify(file, content)
+    await plugin.app.vault.modify(file, content)
 }
 
 export async function addToNextActions(
-	plugin: FlowPlugin,
-	text: string,
-	spheres: string[],
+    plugin: FlowPlugin,
+    text: string,
+    spheres: string[],
 ) {
-	await addLineToFile(
-		plugin,
-		text,
-		plugin.settings.nextActionsFilePath,
-		spheres,
-	)
+    await addLineToFile(
+        plugin,
+        text,
+        plugin.settings.nextActionsFilePath,
+        spheres,
+    )
 }
 
 export async function addToSomeday(
-	plugin: FlowPlugin,
-	text: string,
-	spheres: string[],
+    plugin: FlowPlugin,
+    text: string,
+    spheres: string[],
 ) {
-	await addLineToFile(plugin, text, plugin.settings.somedayFilePath, spheres)
+    await addLineToFile(plugin, text, plugin.settings.somedayFilePath, spheres)
 }
 
 async function addToFileSection(
-	plugin: FlowPlugin,
-	projectFile: TFile,
-	line: string,
-	sectionName: string,
-	isTask: boolean = false,
+    plugin: FlowPlugin,
+    projectFile: TFile,
+    line: string,
+    sectionName: string,
+    isTask: boolean = false,
 ) {
-	// TODO: use an options map for the function arguments
+    // TODO: use an options map for the function arguments
 
-	line = line.trim()
-	const fileContent = await plugin.app.vault.read(projectFile)
+    line = line.trim()
+    const fileContent = await plugin.app.vault.read(projectFile)
 
-	const nextActionsIndex = fileContent.indexOf(sectionName)
+    const nextActionsIndex = fileContent.indexOf(sectionName)
 
-	let newContent = fileContent
+    let newContent = fileContent
 
-	const taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
+    const taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
 
-	if (plugin.settings.appendTagToTask) {
-		taskLine.concat(' ' + plugin.settings.appendTagToTask)
-	}
+    if (plugin.settings.appendTagToTask) {
+        taskLine.concat(' ' + plugin.settings.appendTagToTask)
+    }
 
-	taskLine.concat('\n')
+    taskLine.concat('\n')
 
-	if (nextActionsIndex !== -1) {
-		const insertionIndex = nextActionsIndex + sectionName.length + 1
-		newContent =
-			newContent.slice(0, insertionIndex) +
-			taskLine +
-			newContent.slice(insertionIndex)
-	} else {
-		newContent +=
-			'\n' +
-			sectionName +
-			taskLine +
-			' ' +
-			plugin.settings.appendTagToTask
-	}
+    if (nextActionsIndex !== -1) {
+        const insertionIndex = nextActionsIndex + sectionName.length + 1
+        newContent =
+            newContent.slice(0, insertionIndex) +
+            taskLine +
+            newContent.slice(insertionIndex)
+    } else {
+        newContent +=
+            '\n' +
+            sectionName +
+            taskLine +
+            ' ' +
+            plugin.settings.appendTagToTask
+    }
 
-	await plugin.app.vault.modify(projectFile, newContent)
+    await plugin.app.vault.modify(projectFile, newContent)
 }
 
 export async function addToProjectNextActions(
-	plugin: FlowPlugin,
-	projectFile: TFile,
-	line: string,
+    plugin: FlowPlugin,
+    projectFile: TFile,
+    line: string,
 ) {
-	await addToFileSection(
-		plugin,
-		projectFile,
-		line,
-		'## Next actions',
-		true, // isTask
-	)
+    await addToFileSection(
+        plugin,
+        projectFile,
+        line,
+        '## Next actions',
+        true, // isTask
+    )
 }
 export async function addToPersonDiscussNext(
-	plugin: FlowPlugin,
-	projectFile: TFile,
-	line: string,
+    plugin: FlowPlugin,
+    projectFile: TFile,
+    line: string,
 ) {
-	await addToFileSection(
-		plugin,
-		projectFile,
-		line,
-		'## Discuss next',
-		true, // isTask
-	)
+    await addToFileSection(
+        plugin,
+        projectFile,
+        line,
+        '## Discuss next',
+        true, // isTask
+    )
 }
 
 export async function addToProjectReference(
-	plugin: FlowPlugin,
-	projectFile: TFile,
-	line: string,
+    plugin: FlowPlugin,
+    projectFile: TFile,
+    line: string,
 ) {
-	// TODO: make the section name a setting
-	await addToFileSection(plugin, projectFile, line, '## Notes + resources')
+    // TODO: make the section name a setting
+    await addToFileSection(plugin, projectFile, line, '## Notes + resources')
 }
 
 export async function addToPersonReference(
-	plugin: FlowPlugin,
-	personFile: TFile,
-	line: string,
+    plugin: FlowPlugin,
+    personFile: TFile,
+    line: string,
 ) {
-	// TODO: make the section name a setting
-	await addToFileSection(plugin, personFile, line, '## Reference')
+    // TODO: make the section name a setting
+    await addToFileSection(plugin, personFile, line, '## Reference')
 }
 
 export function getFilesWithTagPrefix(
-	plugin: FlowPlugin,
-	prefix: string,
+    plugin: FlowPlugin,
+    prefix: string,
 ): TFile[] {
-	const metadataCache = plugin.app.metadataCache
-	const vault = plugin.app.vault
-	const files = vault.getFiles()
+    const metadataCache = plugin.app.metadataCache
+    const vault = plugin.app.vault
+    const files = vault.getFiles()
 
-	const templaterPlugin = getPlugin(
-		'templater-obsidian',
-		plugin,
-	) as TemplaterPlugin
+    const templaterPlugin = getPlugin(
+        'templater-obsidian',
+        plugin,
+    ) as TemplaterPlugin
 
-	return files.filter((file) => {
-		if (
-			file.path === plugin.settings.newPersonTemplateFilePath ||
-			file.path === plugin.settings.newProjectTemplateFilePath
-		) {
-			return false
-		}
+    return files.filter((file) => {
+        if (
+            file.path === plugin.settings.newPersonTemplateFilePath ||
+            file.path === plugin.settings.newProjectTemplateFilePath
+        ) {
+            return false
+        }
 
-		if (file.path.startsWith(templaterPlugin.settings.template_folder)) {
-			return false
-		}
+        if (file.path.startsWith(templaterPlugin.settings.template_folder)) {
+            return false
+        }
 
-		const cache = metadataCache.getFileCache(file)
-		if (!cache || !cache.frontmatter) {
-			return false
-		}
+        const cache = metadataCache.getFileCache(file)
+        if (!cache || !cache.frontmatter) {
+            return false
+        }
 
-		let tags: string[] = []
-		if (Array.isArray(cache.frontmatter.tags)) {
-			tags = cache.frontmatter.tags
-		} else if (typeof cache.frontmatter.tags === 'string') {
-			tags = cache.frontmatter.tags.split(/\s+/)
-		}
+        let tags: string[] = []
+        if (Array.isArray(cache.frontmatter.tags)) {
+            tags = cache.frontmatter.tags
+        } else if (typeof cache.frontmatter.tags === 'string') {
+            tags = cache.frontmatter.tags.split(/\s+/)
+        }
 
-		tags = tags.filter((tag) => typeof tag === 'string')
+        tags = tags.filter((tag) => typeof tag === 'string')
 
-		return tags.some((tag) => tag.startsWith(prefix))
-	})
+        return tags.some((tag) => tag.startsWith(prefix))
+    })
 }
 
 export function resolveTFolder(
-	plugin: FlowPlugin,
-	folder_str: string,
+    plugin: FlowPlugin,
+    folder_str: string,
 ): TFolder {
-	folder_str = normalizePath(folder_str)
+    folder_str = normalizePath(folder_str)
 
-	const folder = plugin.app.vault.getAbstractFileByPath(folder_str)
-	if (!folder) {
-		throw new Error(`Folder "${folder_str}" doesn't exist`)
-	}
-	if (!(folder instanceof TFolder)) {
-		throw new Error(`${folder_str} is a file, not a folder`)
-	}
+    const folder = plugin.app.vault.getAbstractFileByPath(folder_str)
+    if (!folder) {
+        throw new Error(`Folder "${folder_str}" doesn't exist`)
+    }
+    if (!(folder instanceof TFolder)) {
+        throw new Error(`${folder_str} is a file, not a folder`)
+    }
 
-	return folder
+    return folder
 }
 
 export function getTFilesFromFolder(
-	plugin: FlowPlugin,
-	folder_str: string,
+    plugin: FlowPlugin,
+    folder_str: string,
 ): Array<TFile> {
-	const folder = resolveTFolder(plugin, folder_str)
+    const folder = resolveTFolder(plugin, folder_str)
 
-	const files: Array<TFile> = []
-	Vault.recurseChildren(folder, (file: TAbstractFile) => {
-		if (file instanceof TFile) {
-			files.push(file)
-		}
-	})
+    const files: Array<TFile> = []
+    Vault.recurseChildren(folder, (file: TAbstractFile) => {
+        if (file instanceof TFile) {
+            files.push(file)
+        }
+    })
 
-	files.sort((a, b) => {
-		return a.basename.localeCompare(b.basename)
-	})
+    files.sort((a, b) => {
+        return a.basename.localeCompare(b.basename)
+    })
 
-	return files
+    return files
 }
 
 export async function getProjectFilePath(
-	plugin: FlowPlugin,
-	projectName: string,
+    plugin: FlowPlugin,
+    projectName: string,
 ): Promise<string> {
-	const projectFiles = getFilesWithTagPrefix(plugin, 'project')
-	const projectFile = projectFiles.find(
-		(file) => file.name === `${projectName}.md`,
-	)
+    const projectFiles = getFilesWithTagPrefix(plugin, 'project')
+    const projectFile = projectFiles.find(
+        (file) => file.name === `${projectName}.md`,
+    )
 
-	if (projectFile) {
-		return projectFile.path
-	} else {
-		return ''
-	}
+    if (projectFile) {
+        return projectFile.path
+    } else {
+        return ''
+    }
 }
 
 export async function createNewProjectFile(
-	plugin: FlowPlugin,
-	projectName: string,
+    plugin: FlowPlugin,
+    projectName: string,
 ): Promise<TFile> {
-	const templateFile = plugin.app.vault.getAbstractFileByPath(
-		plugin.settings.newProjectTemplateFilePath,
-	) as TFile
+    const templateFile = plugin.app.vault.getAbstractFileByPath(
+        plugin.settings.newProjectTemplateFilePath,
+    ) as TFile
 
-	const open_in_new_window = false
-	const create_new = await getTemplaterCreateNewFunction(plugin)
-	return create_new(
-		templateFile,
-		projectName,
-		open_in_new_window,
-		plugin.settings.projectsFolderPath,
-	)
+    const open_in_new_window = false
+    const create_new = await getTemplaterCreateNewFunction(plugin)
+    return create_new(
+        templateFile,
+        projectName,
+        open_in_new_window,
+        plugin.settings.projectsFolderPath,
+    )
 }
 
 async function getTemplaterCreateNewFunction(
-	plugin: FlowPlugin,
+    plugin: FlowPlugin,
 ): Promise<Function> {
-	const templaterPlugin = getPlugin(
-		'templater-obsidian',
-		plugin,
-	) as TemplaterPlugin
-	let tp_file =
-		templaterPlugin.templater.functions_generator.internal_functions.modules_array.find(
-			(m: Module) => m.name == 'file',
-		)
+    const templaterPlugin = getPlugin(
+        'templater-obsidian',
+        plugin,
+    ) as TemplaterPlugin
+    let tp_file =
+        templaterPlugin.templater.functions_generator.internal_functions.modules_array.find(
+            (m: Module) => m.name == 'file',
+        )
 
-	if (tp_file === undefined) {
-		console.error(
-			"We can't get the templater function. Is it installed correctly?",
-		)
-	}
+    if (tp_file === undefined) {
+        console.error(
+            "We can't get the templater function. Is it installed correctly?",
+        )
+    }
 
-	return await tp_file!.static_functions.get('create_new')
+    return await tp_file!.static_functions.get('create_new')
 }
 
 export function parseProjectTemplate(options: {
-	content: string
-	priority: number
-	sphere: string
-	description: string
+    content: string
+    priority: number
+    sphere: string
+    description: string
 }) {
-	const { content, priority, sphere, description } = options
+    const { content, priority, sphere, description } = options
 
-	let newContent = content
+    let newContent = content
 
-	const replacements = [
-		{
-			regex: /{{\s*priority\s*}}/g,
-			replaceWith: priority.toString(),
-		},
-		{
-			regex: /{{\s*sphere\s*}}/g,
-			replaceWith: sphere,
-		},
-		{
-			regex: /{{\s*description\s*}}/g,
-			replaceWith: description,
-		},
-	]
+    const replacements = [
+        {
+            regex: /{{\s*priority\s*}}/g,
+            replaceWith: priority.toString(),
+        },
+        {
+            regex: /{{\s*sphere\s*}}/g,
+            replaceWith: sphere,
+        },
+        {
+            regex: /{{\s*description\s*}}/g,
+            replaceWith: description,
+        },
+    ]
 
-	function replacer(str: string, regex: RegExp, replaceWith: string) {
-		return str.replace(regex, function () {
-			return replaceWith
-		})
-	}
+    function replacer(str: string, regex: RegExp, replaceWith: string) {
+        return str.replace(regex, function() {
+            return replaceWith
+        })
+    }
 
-	for (const { regex, replaceWith } of replacements) {
-		newContent = replacer(newContent, regex, replaceWith)
-	}
+    for (const { regex, replaceWith } of replacements) {
+        newContent = replacer(newContent, regex, replaceWith)
+    }
 
-	return newContent
+    return newContent
 }
 
 export function getPlugin(pluginName: string, plugin: FlowPlugin) {
-	// @ts-ignore
-	return plugin.app.plugins.plugins[pluginName]
+    // @ts-ignore
+    return plugin.app.plugins.plugins[pluginName]
 }
 
 export const ensureFolderExists = async (
-	folderPath: string,
-	plugin: FlowPlugin,
+    folderPath: string,
+    plugin: FlowPlugin,
 ) => {
-	const folderExists = await plugin.app.vault.adapter.exists(folderPath)
-	if (!folderExists) {
-		const parentFolder = folderPath.split('/').slice(0, -1).join('/')
-		if (parentFolder && parentFolder !== folderPath) {
-			await ensureFolderExists(parentFolder, plugin)
-		}
-		await plugin.app.vault.createFolder(folderPath)
-	}
+    const folderExists = await plugin.app.vault.adapter.exists(folderPath)
+    if (!folderExists) {
+        const parentFolder = folderPath.split('/').slice(0, -1).join('/')
+        if (parentFolder && parentFolder !== folderPath) {
+            await ensureFolderExists(parentFolder, plugin)
+        }
+        await plugin.app.vault.createFolder(folderPath)
+    }
 }
 
 export const createFoldersAndFile = async (
-	filePath: string,
-	contents: string,
-	plugin: FlowPlugin,
+    filePath: string,
+    contents: string,
+    plugin: FlowPlugin,
 ) => {
-	const fileDir = filePath.substring(0, filePath.lastIndexOf('/'))
-	if (fileDir) {
-		await ensureFolderExists(fileDir, plugin)
-	}
-	plugin.app.vault.create(filePath, contents)
+    const fileDir = filePath.substring(0, filePath.lastIndexOf('/'))
+    if (fileDir) {
+        await ensureFolderExists(fileDir, plugin)
+    }
+    plugin.app.vault.create(filePath, contents)
 }
 
 export async function getOrCreateInboxFile(plugin: FlowPlugin): Promise<TFile> {
-	const inboxPath = plugin.settings.inboxFilesFolderPath
-	const inboxFileFolder = plugin.app.vault.getAbstractFileByPath(inboxPath)
-	if (!inboxFileFolder) {
-		throw new Error('Inbox folder not found')
-	}
+    const inboxPath = plugin.settings.inboxFilesFolderPath
+    const inboxFileFolder = plugin.app.vault.getAbstractFileByPath(inboxPath)
+    if (!inboxFileFolder) {
+        throw new Error('Inbox folder not found')
+    }
 
-	const inboxFilePath = inboxFileFolder.path + '/Flow generated inbox.md'
-	let inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
+    const inboxFilePath = inboxFileFolder.path + '/Flow generated inbox.md'
+    let inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
 
-	if (!inboxFile) {
-		await plugin.app.vault.create(inboxFilePath, '')
-	}
+    if (!inboxFile) {
+        await plugin.app.vault.create(inboxFilePath, '')
+    }
 
-	inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
+    inboxFile = plugin.app.vault.getAbstractFileByPath(inboxFilePath)
 
-	return inboxFile as TFile
+    return inboxFile as TFile
 }
 
 export async function listProjects(
-	plugin: FlowPlugin,
-	sphere: string,
+    plugin: FlowPlugin,
+    sphere: string,
 ): Promise<SMarkdownPage[]> {
-	const now = DateTime.now()
-	const oneDayAhead = now.plus({ days: 1 })
+    const now = DateTime.now()
+    const oneDayAhead = now.plus({ days: 1 })
 
-	return await plugin.dv
-		.pages(`#project/${sphere}`)
-		.filter(
-			(p: SMarkdownPage) =>
-				!p.file.path.startsWith('Templates/'),
-		)
-		.map((p: SMarkdownPage) => ({
-			...p,
-			nextActions: p.file.tasks.filter(
-				(t: STask) =>
-					t.section?.subpath == 'Next actions' && !t.completed,
-			),
-			link:
-				'obsidian://open?vault=' +
-				encodeURIComponent(plugin.dv.app.vault.getName()) +
-				'&file=' +
-				encodeURIComponent(p.file.path),
-		}))
-		.map((p: SMarkdownPage) => ({
-			...p,
-			hasActionables: p.nextActions.some((t: STask) => {
-				return (
-					t.status != 'w' &&
-					(t.due == undefined || t.due <= oneDayAhead)
-				)
-			}),
-		}))
-		// This sorts by priority, then by projects that have actionables,
-		// then by file name
-		.sort((p: SMarkdownPage) => p.file.name, 'asc')
-		.sort((p: SMarkdownPage) => p.hasActionables, 'desc')
-		.sort((p: SMarkdownPage) => p.priority, 'asc')
+    return await plugin.dv
+        .pages(`#project/${sphere}`)
+        .filter(
+            (p: SMarkdownPage) =>
+                p.status == 'live' && !p.file.path.startsWith('Templates/'),
+        )
+        .map((p: SMarkdownPage) => ({
+            ...p,
+            nextActions: p.file.tasks.filter(
+                (t: STask) =>
+                    t.section?.subpath == 'Next actions' && !t.completed,
+            ),
+            link:
+                'obsidian://open?vault=' +
+                encodeURIComponent(plugin.dv.app.vault.getName()) +
+                '&file=' +
+                encodeURIComponent(p.file.path),
+        }))
+        .map((p: SMarkdownPage) => ({
+            ...p,
+            hasActionables: p.nextActions.some((t: STask) => {
+                return (
+                    t.status != 'w' &&
+                    (t.due == undefined || t.due <= oneDayAhead)
+                )
+            }),
+        }))
+        // This sorts by priority, then by projects that have actionables,
+        // then by file name
+        .sort((p: SMarkdownPage) => p.file.name, 'asc')
+        .sort((p: SMarkdownPage) => p.hasActionables, 'desc')
+        .sort((p: SMarkdownPage) => p.priority, 'asc')
 }
 
 export function loadEnv(plugin: FlowPlugin) {
-	// @ts-ignore
-	const basePath = plugin.app.vault.adapter.basePath
+    // @ts-ignore
+    const basePath = plugin.app.vault.adapter.basePath
 
-	dotenv.config({
-		path: `${basePath}/.obsidian/plugins/flow/.env`,
-		debug: false,
-	})
+    dotenv.config({
+        path: `${basePath}/.obsidian/plugins/flow/.env`,
+        debug: false,
+    })
 }
 
 export const checkBranch = async (plugin: FlowPlugin) => {
-	loadEnv(plugin)
+    console.log('Checking branch')
+    console.log('plugin:', plugin)
+    loadEnv(plugin)
 
-	if (process.env.FLOW_ENVIRONMENT == 'development') {
-		setInterval(() => {
-			const gitHead = require('path').join(
-				// @ts-ignore
-				plugin.app.vault.adapter.getBasePath(),
-				// @ts-ignore
-				plugin.app.vault.configDir,
-				'/plugins/flow/.git/HEAD',
-			)
+    if (process.env.FLOW_ENVIRONMENT == 'development') {
+        setInterval(() => {
+            const gitHead = require('path').join(
+                // @ts-ignore
+                plugin.app.vault.adapter.getBasePath(),
+                // @ts-ignore
+                plugin.app.vault.configDir,
+                '/plugins/flow/.git/HEAD',
+            )
 
-			require('fs')
-				.promises.readFile(gitHead, 'utf8')
-				.then((data: string) => {
-					const branch = data.split('/').pop()?.trim()
-					document.body.classList.toggle(
-						'flow-dev-branch',
-						branch?.trim() !== 'main',
-					)
-				})
-		}, 1000)
-	}
+            require('fs')
+                .promises.readFile(gitHead, 'utf8')
+                .then((data: string) => {
+                    const branch = data.split('/').pop()?.trim()
+                    document.body.classList.toggle(
+                        'flow-dev-branch',
+                        branch?.trim() !== 'main',
+                    )
+                })
+        }, 1000)
+    }
 }
 
 export async function storeInstallTime(plugin: FlowPlugin) {
-	plugin.store.store({ 'install-time': DateTime.now() })
+    plugin.store.store({ 'install-time': DateTime.now() })
 }
