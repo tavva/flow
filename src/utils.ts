@@ -379,7 +379,7 @@ export async function listProjects(
 		.pages(`#project/${sphere}`)
 		.filter(
 			(p: SMarkdownPage) =>
-				p.status == 'live' && !p.file.path.startsWith('Templates/'),
+				!p.file.path.startsWith('Templates/'),
 		)
 		.map((p: SMarkdownPage) => ({
 			...p,

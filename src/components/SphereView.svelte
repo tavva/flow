@@ -23,6 +23,8 @@
 	let projectsWithNextActionsBelowPriorityCutoff: SMarkdownPage[] = []
 	let projectsWithNextActionsAbovePriorityCutoff: SMarkdownPage[] = []
 	let projectsNeedingNextActions: SMarkdownPage[] = []
+	let pausedProjects: SMarkdownPage[] = []
+	let showPausedProjects: boolean = false
 
 	let shadowIsPlanningMode: boolean = false
 
@@ -150,10 +152,13 @@
 	$: {
 		if (projects.length > 0) {
 			projectsWithNextActions = projects.filter(
-				(project) => project.nextActions.length > 0,
+				(project) => project.nextActions.length > 0 && project.status === 'live',
 			)
 			projectsNeedingNextActions = projects.filter(
-				(project) => project.nextActions.length === 0,
+				(project) => project.nextActions.length === 0 && project.status === 'live',
+			)
+			pausedProjects = projects.filter(
+				(project) => project.status === 'paused',
 			)
 		}
 	}
@@ -288,6 +293,30 @@
 			</ul>
 		{:else}
 			<p>No projects found</p>
+		{/if}
+	</div>
+	<div>
+		{#if pausedProjects.length > 0}
+			<div class="flow-header-flex" style="gap: 1em;">
+				<h2>Paused projects</h2>
+				<button on:click={() => showPausedProjects = !showPausedProjects}>
+					{showPausedProjects ? 'Hide' : 'Show'}
+				</button>
+			</div>
+
+			{#if showPausedProjects}
+				<ul>
+					{#each pausedProjects as project}
+						<li>
+							<a
+								href={project.link}
+								data-path={project.file.path}
+								on:click={openProject}>{project.file.name}</a
+							>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		{/if}
 	</div>
 	<div>
