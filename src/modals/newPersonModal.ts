@@ -1,4 +1,4 @@
-import { Modal, Setting, ButtonComponent, debounce } from 'obsidian'
+import { Modal, Setting } from 'obsidian'
 import FlowPlugin from '../main.js'
 import { getPersonFilePath } from '../utils.js'
 

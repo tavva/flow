@@ -12,7 +12,6 @@ import {
     getFilesWithTagPrefix,
     createNewProjectFile,
     parseProjectTemplate,
-    getPersonFilePath,
     createNewPersonFile,
     parsePersonTemplate,
 } from './utils.js'
