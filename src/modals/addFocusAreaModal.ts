@@ -3,13 +3,11 @@ import { Modal, ButtonComponent } from 'obsidian'
 import type FlowPlugin from '../main.js'
 
 export class AddFocusAreaModal extends Modal {
-    private plugin: FlowPlugin
     private onSubmit: (focusAreaName: string) => void
     private warningEl!: HTMLElement | null
 
     constructor(plugin: FlowPlugin, onSubmit: (focusAreaName: string) => void) {
         super(plugin.app)
-        this.plugin = plugin
         this.onSubmit = onSubmit
     }
 
