@@ -60,6 +60,9 @@
     function newProject() {
         if (line.trim() !== '') plugin.handlers.newProject(line)
     }
+    function newPerson() {
+        if (line.trim() !== '') plugin.handlers.newPerson(line)
+    }
     function addToSomeday() {
         if (line.trim() !== '') plugin.handlers.addToSomeday(line)
     }
@@ -148,6 +151,10 @@
                     <button class="flow-person" on:click={newProject}
                         ><span class="flow-icon flow-icon-person"></span>
                         New project</button
+                    >
+                    <button class="flow-person" on:click={newPerson}
+                        ><span class="flow-icon flow-icon-person"></span>
+                        New person</button
                     >
                     <button class="flow-someday" on:click={addToSomeday}
                         ><span class="flow-icon flow-icon-someday"

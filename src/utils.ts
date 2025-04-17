@@ -258,6 +258,38 @@ export async function createNewProjectFile(
         plugin.settings.projectsFolderPath,
     )
 }
+// PERSON: mirror project functions for person notes
+export async function getPersonFilePath(
+  plugin: FlowPlugin,
+  personName: string
+): Promise<string> {
+  const personFiles = getFilesWithTagPrefix(plugin, 'person')
+  const match = personFiles.find(f => f.name === `${personName}.md`)
+  return match ? match.path : ''
+}
+
+export async function createNewPersonFile(
+  plugin: FlowPlugin,
+  personName: string
+): Promise<TFile> {
+  const templateFile = plugin.app.vault.getAbstractFileByPath(
+    plugin.settings.newPersonTemplateFilePath
+  ) as TFile
+  const open_in_new_window = false
+  const create_new = await getTemplaterCreateNewFunction(plugin)
+  return create_new(
+    templateFile,
+    personName,
+    open_in_new_window,
+    plugin.settings.peopleFolderPath
+  )
+}
+
+export function parsePersonTemplate(options: { content: string; description: string }) {
+  let { content, description } = options
+  // simple replacement of {{ description }}
+  return content.replace(/{{\s*description\s*}}/g, description)
+}
 
 async function getTemplaterCreateNewFunction(
     plugin: FlowPlugin,
@@ -551,7 +583,7 @@ export async function addFocusAreaToNote(
         newLines.splice(
             lastNumberedItemIndex + 1,
             0,
-            `${nextNumber}. ${focusAreaName}`,
+            `${nextNumber}. [[#${focusAreaName}]]`,
         )
         focusAreasDetailEndLine += 1
     } else {

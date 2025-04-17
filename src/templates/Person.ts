@@ -5,13 +5,11 @@ tags:
 status: live
 ---
 
-# Discuss next 
-
 {{ description }}
 
+# Discuss next
+
 ## Reference
-
-
 
 ## Log
 `

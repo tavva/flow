@@ -12,10 +12,14 @@ import {
     getFilesWithTagPrefix,
     createNewProjectFile,
     parseProjectTemplate,
+    getPersonFilePath,
+    createNewPersonFile,
+    parsePersonTemplate,
 } from './utils.js'
 import { FileSelectorModal } from './modals/fileSelectorModal.js'
 import { NewProjectModal } from './modals/newProjectModal.js'
 import { SphereSelectorModal } from './modals/sphereSelectorModal.js'
+import { NewPersonModal } from './modals/newPersonModal.js'
 
 import { Stage, type LineWithFile } from './processing.js'
 
@@ -39,6 +43,22 @@ export class Handlers {
             },
         ).open()
     }
+    // Create a new person note from processing flow
+    newPerson = async (text: string) => {
+        new NewPersonModal(
+            this.plugin,
+            text,
+            async (personName: string, description: string) => {
+                const personFile = await createNewPersonFile(this.plugin, personName)
+                await this.app.vault.process(personFile, (content) =>
+                    parsePersonTemplate({ content, description })
+                )
+                await this.removeProcessedItem()
+                this.plugin.metrics.count('new-person-created')
+            }
+        ).open()
+    }
+    
 
     addToProjectNextActions = async (text: string) => {
         const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
