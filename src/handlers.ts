@@ -48,16 +48,18 @@ export class Handlers {
             this.plugin,
             text,
             async (personName: string, description: string) => {
-                const personFile = await createNewPersonFile(this.plugin, personName)
+                const personFile = await createNewPersonFile(
+                    this.plugin,
+                    personName,
+                )
                 await this.app.vault.process(personFile, (content) =>
-                    parsePersonTemplate({ content, description })
+                    parsePersonTemplate({ content, description }),
                 )
                 await this.removeProcessedItem()
                 this.plugin.metrics.count('new-person-created')
-            }
+            },
         ).open()
     }
-    
 
     addToProjectNextActions = async (text: string) => {
         const projectFiles = getFilesWithTagPrefix(this.plugin, 'project')
