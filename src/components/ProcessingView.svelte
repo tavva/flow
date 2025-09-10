@@ -12,7 +12,7 @@
     export let fileCount: number
 
     export let line: string
-    export let isProcessingComplete: false
+    export let isProcessingComplete: boolean = false
 
     export let noteContent: string = ''
     export let sourcePath: string = ''
