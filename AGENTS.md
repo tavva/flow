@@ -29,10 +29,27 @@ Note: Node 20 is required (`.mise.toml`).
 - Aim for meaningful unit tests around utilities and view logic. Include minimal vault fixtures under `tests/` when needed.
 - Run locally with `npm test`.
 
+## Test-Driven Development (TDD)
+- Default to TDD for all features and fixes. Write a failing test first, then implement the smallest change to make it pass, and finally refactor.
+- Where to put tests:
+  - Unit tests live under `tests/` or as colocated `*.test.ts` next to the code.
+  - Prefer testing pure logic (utilities, view-model/state, parsing). For Svelte UI, extract logic into testable modules when possible. Avoid DOM/JSDOM reliance since Jest runs in Node env.
+- Workflow:
+  1) Add/adjust a test that expresses the desired behavior (red) → `npm test`
+  2) Implement the minimal code to satisfy the test (green) → `npm test`
+  3) Refactor safely → `npm run typecheck` and `npm test`
+  4) Before marking done, run `npm run verify` (type-check/build + tests) and `npm run format`
+- Bug fixes: first reproduce with a failing test; only then apply the fix.
+- Mocks/stubs:
+  - Externalized modules (e.g., `obsidian`, `electron`) should be mocked. Add light stubs under `tests/__mocks__/` or use `jest.mock` as needed.
+  - For filesystem-like behavior, prefer minimal fixtures under `tests/` (e.g., `tests/DefaultTestVault`).
+- PR expectations: every new behavior or bug fix includes appropriate tests authored prior to implementation wherever feasible.
+
 ## Definition of Done (Agent + Devs)
 - Every feature or bugfix must pass both:
   - Type-check/build: `npm run build` (or `npm run typecheck` during iteration)
   - Tests: `npm test`
+- TDD: new or changed behavior is covered by tests authored before implementation wherever feasible
 - Do not mark a task complete until both pass locally.
 - CI enforces this on pushes and PRs (see `.github/workflows/ci.yaml`).
 
