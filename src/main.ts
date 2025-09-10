@@ -196,12 +196,19 @@ export default class FlowPlugin extends Plugin {
                 return false
             }
 
-            if (
-                fileCache.frontmatter?.tags?.filter((t: string) => {
-                    t.startsWith('project/')
-                })
-            ) {
-                return true
+            const tags = fileCache.frontmatter?.tags as
+                | string[]
+                | string
+                | undefined
+            if (Array.isArray(tags)) {
+                if (tags.some((t: string) => t.startsWith('project/'))) {
+                    return true
+                }
+            } else if (typeof tags === 'string') {
+                const parts = tags.split(/\s+/)
+                if (parts.some((t: string) => t.startsWith('project/'))) {
+                    return true
+                }
             }
 
             if (file.path === this.settings.nextActionsFilePath) {
