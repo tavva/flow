@@ -1,7 +1,6 @@
 import { TAbstractFile, TFile, AbstractInputSuggest } from 'obsidian'
 
 import FlowPlugin from '../../main.js'
-import { getTFilesFromFolder } from '../../utils.js'
 
 export class FileSuggest extends AbstractInputSuggest<TFile> {
     constructor(
@@ -12,19 +11,15 @@ export class FileSuggest extends AbstractInputSuggest<TFile> {
     }
 
     getSuggestions(input_str: string): TFile[] {
-        const all_files = getTFilesFromFolder(this.plugin, '')
-        if (!all_files) {
-            return []
-        }
+        const allFiles = this.plugin.app.vault.getMarkdownFiles()
+        const lower = input_str.toLowerCase()
 
         const files: TFile[] = []
-        const lower_input_str = input_str.toLowerCase()
-
-        all_files.forEach((file: TAbstractFile) => {
+        allFiles.forEach((file: TAbstractFile) => {
             if (
                 file instanceof TFile &&
                 file.extension === 'md' &&
-                file.path.toLowerCase().contains(lower_input_str)
+                file.path.toLowerCase().includes(lower)
             ) {
                 files.push(file)
             }
