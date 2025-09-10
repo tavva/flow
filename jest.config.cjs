@@ -12,7 +12,7 @@ module.exports = {
     '^\.\./\.\./main\\.js$': '<rootDir>/tests/__mocks__/main.ts',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { isolatedModules: true, useESM: true }],
+    '^.+\\.(ts|tsx)$': ['ts-jest', { useESM: true }],
   },
   testMatch: ['**/tests/**/*.test.(ts|tsx)', '**/*.test.(ts|tsx)'],
 }
