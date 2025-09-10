@@ -32,7 +32,7 @@ async function addLineToFile(
     if (plugin.settings.appendTagToTask) {
         content = content + ' ' + plugin.settings.appendTagToTask
     }
-    content.concat('\n')
+    content = content + '\n'
 
     await plugin.app.vault.modify(file, content)
 }
@@ -74,13 +74,11 @@ async function addToFileSection(
 
     let newContent = fileContent
 
-    const taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
-
+    let taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
     if (plugin.settings.appendTagToTask) {
-        taskLine.concat(' ' + plugin.settings.appendTagToTask)
+        taskLine = taskLine + ' ' + plugin.settings.appendTagToTask
     }
-
-    taskLine.concat('\n')
+    taskLine = taskLine + '\n'
 
     if (nextActionsIndex !== -1) {
         const insertionIndex = nextActionsIndex + sectionName.length + 1
@@ -89,12 +87,7 @@ async function addToFileSection(
             taskLine +
             newContent.slice(insertionIndex)
     } else {
-        newContent +=
-            '\n' +
-            sectionName +
-            taskLine +
-            ' ' +
-            plugin.settings.appendTagToTask
+        newContent += '\n' + sectionName + taskLine
     }
 
     await plugin.app.vault.modify(projectFile, newContent)
@@ -378,7 +371,7 @@ export const createFoldersAndFile = async (
     if (fileDir) {
         await ensureFolderExists(fileDir, plugin)
     }
-    plugin.app.vault.create(filePath, contents)
+    await plugin.app.vault.create(filePath, contents)
 }
 
 export async function getOrCreateInboxFile(plugin: FlowPlugin): Promise<TFile> {
