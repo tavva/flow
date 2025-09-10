@@ -122,7 +122,7 @@ export class Handlers {
             },
             'Select a person',
             'Search for a person',
-        )
+        ).open()
     }
 
     addToSomeday = async (text: string) => {

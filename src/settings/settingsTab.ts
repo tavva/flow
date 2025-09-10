@@ -2,7 +2,7 @@ import { PluginSettingTab, Setting } from 'obsidian'
 import FlowPlugin from '../main.js'
 
 import { settingsDefinitions } from './definitions.js'
-import { checkDependencies } from 'src/dependencies.js'
+import { checkDependencies } from '../dependencies.js'
 
 export class FlowSettingsTab extends PluginSettingTab {
     plugin: FlowPlugin
