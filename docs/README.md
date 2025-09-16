@@ -43,7 +43,7 @@ People use Obsidian in different ways, and we don't want to dictate how you shou
 
 ### Why Flow helps keep your mind like water
 
-Flow helps you take of the thoughts and ideas that pop up in your head at any moment, as well as the requests and actions that appear in our email, in our letterbox, on our phones, through chatting to friends and colleagues – any time we have something we need to think about or do later it can go into Flow. This prevents us from storing these things in our head allowing us to think freely about what we're doing at any one time.
+Flow helps you take note of the thoughts and ideas that pop up in your head at any moment, as well as the requests and actions that appear in our email, in our letterbox, on our phones, through chatting to friends and colleagues – any time we have something we need to think about or do later it can go into Flow. This prevents us from storing these things in our head allowing us to think freely about what we're doing at any one time.
 
 ## How to use Flow
 
