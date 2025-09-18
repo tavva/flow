@@ -11,6 +11,8 @@ env:
 jobs:
     build:
         runs-on: ubuntu-latest
+        env:
+            TAG_NAME: ${{ github.ref_name }}
 
         steps:
             - uses: actions/checkout@v3
@@ -34,10 +36,8 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  tag="${GITHUB_REF#refs/tags/}"
-
-                  gh release create "$tag" \
-                    --title="$tag" \
+                  gh release create "$TAG_NAME" \
+                    --title="$TAG_NAME" \
                     --draft \
                     main.js manifest.json styles.css
 
@@ -69,7 +69,6 @@ jobs:
               id: create_release
               env:
                   FLOW_RELEASE_PAT: ${{ secrets.FLOW_RELEASE_PAT }}
-                  TAG_NAME: ${{ github.ref_name }}
               run: |
                   response=$(curl -s -X POST \
                   -H "Authorization: token $FLOW_RELEASE_PAT" \
