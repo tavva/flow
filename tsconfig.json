@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "lib": ["DOM", "ESNext"],
-    "types": ["svelte"],
+    "types": ["svelte", "jest"],
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "noEmitOnError": true,
