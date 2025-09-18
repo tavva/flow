@@ -40,6 +40,10 @@ function makePluginForTasks(initialFiles: Record<string,string>, dvTasks: any[])
 }
 
 describe('Tasks', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   test('markTaskAsPlannedNextAction and unmark reverse the change', async () => {
     const content = ['- [ ] Do X', '- [ ] Other'].join('\n')
     const path = 'A.md'
@@ -134,5 +138,85 @@ describe('Tasks', () => {
     jest.runAllTimers()
 
     expect(files[path]).toBe(['- [ ] Heading', '  - [x] Nested', '- [ ] Footer'].join('\n'))
+  })
+
+  test('deleteOldTasks skips work when automation disabled or timestamp is recent', async () => {
+    const { plugin } = makePluginForTasks({}, [])
+    const tasks = new Tasks(plugin as any)
+    plugin.settings.automaticallyDeleteOldTasks = false
+    await tasks.deleteOldTasks()
+    expect(plugin.store.retrieve).not.toHaveBeenCalled()
+
+    plugin.settings.automaticallyDeleteOldTasks = true
+    jest.setSystemTime(new Date('2024-01-01T12:00:00Z'))
+    plugin.store.retrieve.mockResolvedValue(Date.now())
+
+    await tasks.deleteOldTasks()
+    expect(plugin.store.store).not.toHaveBeenCalled()
+  })
+
+  test('deleteOldTasks unmarks unfinished tasks, stores payload, and respects filters', async () => {
+    const { plugin } = makePluginForTasks({}, [])
+    const tasks = new Tasks(plugin as any)
+    plugin.settings.automaticallyDeleteOldTasks = true
+    jest.setSystemTime(new Date('2024-01-05T10:00:00Z'))
+    plugin.store.retrieve.mockResolvedValue(Date.now() - 3 * 24 * 60 * 60 * 1000)
+
+    const incompleteTask = { text: 'Do work', path: 'file.md', line: 1 }
+    const completedTask = { text: 'Done', completed: true }
+    const filtered = [incompleteTask, completedTask]
+    const where = jest.fn((predicate: any) => filtered.filter(predicate))
+    jest.spyOn(tasks as any, 'getPlannedTasks').mockReturnValue({ where })
+    const unmark = jest
+      .spyOn(tasks as any, 'unmarkTaskAsPlannedNextAction')
+      .mockResolvedValue(undefined)
+
+    await tasks.deleteOldTasks()
+
+    expect(where).toHaveBeenCalled()
+    expect(unmark).toHaveBeenCalledTimes(1)
+    expect(unmark).toHaveBeenCalledWith(incompleteTask)
+    expect(plugin.store.store).toHaveBeenCalledWith({ 'old-tasks': [incompleteTask] })
+  })
+
+  test('deleteOldTasks leaves store untouched when no eligible tasks remain', async () => {
+    const { plugin } = makePluginForTasks({}, [])
+    const tasks = new Tasks(plugin as any)
+    plugin.settings.automaticallyDeleteOldTasks = true
+    jest.setSystemTime(new Date('2024-02-01T07:00:00Z'))
+    plugin.store.retrieve.mockResolvedValue(0)
+    jest
+      .spyOn(tasks as any, 'getPlannedTasks')
+      .mockReturnValue({ where: () => [] })
+
+    await tasks.deleteOldTasks()
+
+    expect(plugin.store.store).not.toHaveBeenCalled()
+  })
+
+  test('deleteSavedOldTasks clears persisted entries and getOldTasks normalizes undefined', async () => {
+    const { plugin } = makePluginForTasks({}, [])
+    const tasks = new Tasks(plugin as any)
+    plugin.store.retrieve.mockResolvedValueOnce(undefined)
+    expect(await tasks.getOldTasks()).toEqual([])
+
+    await tasks.deleteSavedOldTasks()
+    expect(plugin.store.delete).toHaveBeenCalledWith('old-tasks')
+  })
+
+  test('resolveLineIndex clamps indices and favors trimmed original matches', () => {
+    const { plugin } = makePluginForTasks({}, [])
+    const tasks = new Tasks(plugin as any)
+    const resolver = (tasks as any).resolveLineIndex.bind(tasks)
+    const lines = ['alpha', 'beta  ', 'gamma']
+
+    expect(resolver(lines, -5)).toBe(0)
+    expect(resolver(lines, 10)).toBe(2)
+    expect(resolver(lines, 2, 'beta')).toBe(1)
+
+    const moved = ['beta', 'alpha', 'gamma']
+    expect(resolver(moved, 3, 'beta  ')).toBe(0)
+
+    expect(() => resolver([], 1)).toThrow('Cannot update empty file')
   })
 })
