@@ -4,12 +4,8 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js'],
   extensionsToTreatAsEsm: ['.ts'],
   moduleNameMapper: {
-    '^\.\./src/(.*)\\.js$': '<rootDir>/src/$1.ts',
-    '^\.\/utils\\.js$': '<rootDir>/src/utils.ts',
-    '^\.\/processing\\.js$': '<rootDir>/src/processing.ts',
-    '^\.\/views\/(.*)\\.js$': '<rootDir>/src/views/$1.ts',
-    '^\.\/main\\.js$': '<rootDir>/tests/__mocks__/main.ts',
-    '^\.\./\.\./main\\.js$': '<rootDir>/tests/__mocks__/main.ts',
+    '^(?:\\.{1,2}/)*main\\.js$': '<rootDir>/tests/__mocks__/main.ts',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', { useESM: true }],
