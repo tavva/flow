@@ -220,11 +220,6 @@
     function showAllProjects() {
         priorityCutoff = 10
     }
-
-    function exitPlanningMode() {
-        // Toggle planning mode off
-        togglePlanningMode(plugin)
-    }
 </script>
 
 <div class="flow-sphere-banner">

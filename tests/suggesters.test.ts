@@ -15,7 +15,7 @@ jest.mock('obsidian', () => {
       this.stat = { mtime: 0 }
     }
   }
-  class AbstractInputSuggest<T> {
+  class AbstractInputSuggest {
     constructor(_app: any, _inputEl: any) {}
   }
   return {

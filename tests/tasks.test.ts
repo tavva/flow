@@ -56,6 +56,19 @@ describe('Tasks', () => {
     expect(files[path]).toContain('- [ ] Do X\n')
   })
 
+  test('markTaskAsPlannedNextAction handles zero-based line numbers', async () => {
+    const path = 'Zero.md'
+    const content = '- [ ] First'
+    const task = { text: 'First', path, line: 0, symbol: '-', status: ' ', tags: [] }
+    const { plugin, files } = makePluginForTasks({ [path]: content }, [task])
+    const tasks = new Tasks(plugin as any)
+
+    await tasks.markTaskAsPlannedNextAction(task as any)
+    jest.runAllTimers()
+
+    expect(files[path]).toBe('- [ ] First #flow-planned')
+  })
+
   test('exportPlannedTasks writes JSON array when enabled', async () => {
     const path = 'A.md'
     const task = { text: 'Do X #flow-planned', path, line: 1, symbol: '-', status: ' ', tags: ['#flow-planned'] }
@@ -66,5 +79,60 @@ describe('Tasks', () => {
     // trigger export via event listener indirectly
     await (tasks as any).exportPlannedTasks()
     expect(files['flow-planned-actions-export.md']).toBe('["Do X"]')
+  })
+
+  test('unmarkAllDoneTasks clears tag from completed tasks using 1-based lines', async () => {
+    const path = 'Tasks.md'
+    const initial = ['- [x] Completed #flow-planned', '- [ ] Planned #flow-planned'].join('\n')
+    const doneTask = {
+      text: 'Completed #flow-planned',
+      path,
+      line: 1,
+      symbol: '-',
+      status: 'x',
+      completed: true,
+      tags: ['#flow-planned'],
+    }
+    const plannedTask = {
+      text: 'Planned #flow-planned',
+      path,
+      line: 2,
+      symbol: '-',
+      status: ' ',
+      completed: false,
+      tags: ['#flow-planned'],
+    }
+    const { plugin, files } = makePluginForTasks({ [path]: initial }, [doneTask, plannedTask])
+    const tasks = new Tasks(plugin as any)
+
+    await tasks.unmarkAllDoneTasksAsPlannedNextAction()
+    jest.runAllTimers()
+
+    expect(files[path]).toBe(['- [x] Completed', '- [ ] Planned #flow-planned'].join('\n'))
+  })
+
+  test('unmarkAllDoneTasks resolves stale indices by matching original line text', async () => {
+    const path = 'Offsets.md'
+    const initial = [
+      '- [ ] Heading',
+      '  - [x] Nested #flow-planned',
+      '- [ ] Footer',
+    ].join('\n')
+    const doneTask = {
+      text: 'Nested #flow-planned',
+      path,
+      line: 42,
+      symbol: '  -',
+      status: 'x',
+      completed: true,
+      tags: ['#flow-planned'],
+    }
+    const { plugin, files } = makePluginForTasks({ [path]: initial }, [doneTask])
+    const tasks = new Tasks(plugin as any)
+
+    await tasks.unmarkAllDoneTasksAsPlannedNextAction()
+    jest.runAllTimers()
+
+    expect(files[path]).toBe(['- [ ] Heading', '  - [x] Nested', '- [ ] Footer'].join('\n'))
   })
 })

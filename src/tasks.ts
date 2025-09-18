@@ -40,6 +40,7 @@ export class Tasks {
         path: string,
         lineNumber: number,
         newLine: string,
+        originalLine?: string,
     ): Promise<void> {
         const file = this.plugin.app.vault.getAbstractFileByPath(path)
         if (!(file instanceof TFile)) {
@@ -49,11 +50,13 @@ export class Tasks {
         await this.plugin.app.vault.process(file, (fileContent) => {
             const lines = fileContent.split('\n')
 
-            if (lineNumber < 1 || lineNumber > lines.length) {
-                throw new Error(`Line number ${lineNumber} is out of range`)
-            }
+            const resolvedIndex = this.resolveLineIndex(
+                lines,
+                lineNumber,
+                originalLine,
+            )
 
-            lines[lineNumber] = newLine
+            lines[resolvedIndex] = newLine
             const newContent = lines.join('\n')
             return newContent
         })
@@ -63,10 +66,16 @@ export class Tasks {
         if (task.tags.includes('#flow-planned')) {
             return
         }
-        const text = task.text.trimEnd() + ' #flow-planned'
-        const line = task.symbol + ' [' + task.status + '] ' + text
+        const originalLine = this.buildTaskLine(task, task.text)
+        const text = this.addPlannedTag(task.text)
+        const line = this.buildTaskLine(task, text)
 
-        await this.replaceLineInFile(task.path, task.line, line)
+        await this.replaceLineInFile(
+            task.path,
+            task.line,
+            line,
+            originalLine,
+        )
 
         setTimeout(() => {
             this.plugin.events.trigger('planned-tasks-updated')
@@ -74,10 +83,16 @@ export class Tasks {
     }
 
     async unmarkTaskAsPlannedNextAction(task: STask) {
-        const text = task.text.replace(/\s*#flow-planned/, '')
-        const line = task.symbol + ' [' + task.status + '] ' + text
+        const originalLine = this.buildTaskLine(task, task.text)
+        const text = this.removePlannedTag(task.text)
+        const line = this.buildTaskLine(task, text)
 
-        await this.replaceLineInFile(task.path, task.line, line)
+        await this.replaceLineInFile(
+            task.path,
+            task.line,
+            line,
+            originalLine,
+        )
 
         setTimeout(() => {
             this.plugin.events.trigger('planned-tasks-updated')
@@ -161,5 +176,92 @@ export class Tasks {
         }
 
         await this.plugin.app.vault.modify(file, output)
+    }
+
+    private buildTaskLine(task: STask, text: string): string {
+        return `${task.symbol} [${task.status}] ${text}`
+    }
+
+    private addPlannedTag(text: string): string {
+        const withoutTrailingWhitespace = text.replace(/\s+$/, '')
+        const separator = withoutTrailingWhitespace.length === 0 ? '' : ' '
+        return `${withoutTrailingWhitespace}${separator}#flow-planned`
+    }
+
+    private removePlannedTag(text: string): string {
+        const withoutTag = text.replace(/\s*#flow-planned\b/, '')
+        return withoutTag.replace(/\s+$/, '')
+    }
+
+    private resolveLineIndex(
+        lines: string[],
+        lineNumber: number,
+        originalLine?: string,
+    ): number {
+        if (lines.length === 0) {
+            throw new Error('Cannot update empty file')
+        }
+
+        const matchesOriginal = (line: string) => {
+            if (originalLine === undefined) {
+                return true
+            }
+
+            if (line === originalLine) {
+                return true
+            }
+
+            return line.trimEnd() === originalLine.trimEnd()
+        }
+
+        const clamp = (idx: number) => {
+            if (idx < 0) {
+                return 0
+            }
+            if (idx >= lines.length) {
+                return lines.length - 1
+            }
+            return idx
+        }
+
+        const candidates: number[] = []
+        const addCandidate = (idx: number) => {
+            if (idx < 0 || idx >= lines.length) {
+                return
+            }
+            if (!candidates.includes(idx)) {
+                candidates.push(idx)
+            }
+        }
+
+        const zeroBasedGuess = lineNumber > 0 ? clamp(lineNumber - 1) : clamp(lineNumber)
+
+        addCandidate(clamp(lineNumber))
+        addCandidate(zeroBasedGuess)
+        addCandidate(clamp(zeroBasedGuess - 1))
+        addCandidate(clamp(zeroBasedGuess + 1))
+
+        if (originalLine !== undefined) {
+            const trimmedOriginal = originalLine.trimEnd()
+            lines.forEach((line, index) => {
+                if (line.trimEnd() === trimmedOriginal) {
+                    addCandidate(index)
+                }
+            })
+        }
+
+        for (const idx of candidates) {
+            if (matchesOriginal(lines[idx])) {
+                return idx
+            }
+        }
+
+        if (candidates.length > 0) {
+            return candidates[0]
+        }
+
+        throw new Error(
+            `Line number ${lineNumber} is out of range for file with ${lines.length} lines`,
+        )
     }
 }
