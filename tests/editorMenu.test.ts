@@ -1,10 +1,24 @@
 /** @jest-environment node */
 
-// Mock Notice to avoid UI
-jest.mock('obsidian', () => ({ Notice: class { constructor(_msg?: string) {} } }), { virtual: true })
-// Mock planning import BEFORE importing the module under test
+jest.mock(
+  'obsidian',
+  () => ({
+    Notice: jest.fn().mockImplementation((_message?: string) => {
+    }),
+  }),
+  { virtual: true },
+)
+
+jest.mock('../src/utils.js', () => ({
+  ...jest.requireActual('../src/utils.js'),
+  getOrCreateInboxFile: jest.fn(),
+}))
+
 jest.mock('../src/views/planning.js', () => ({ openPlanningView: jest.fn() }))
 
+const { Notice } = require('obsidian')
+const { getOrCreateInboxFile } = require('../src/utils.js')
+const { openPlanningView } = require('../src/views/planning.js')
 const { createEditorMenu } = require('../src/editorMenu.js')
 
 function makeMenu() {
@@ -25,41 +39,85 @@ function makeMenu() {
 }
 
 describe('editorMenu', () => {
-  test('adds Flow submenu with actions that call vault APIs', async () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(getOrCreateInboxFile as jest.Mock).mockResolvedValue({ path: 'Inbox/Flow generated inbox.md' })
+  })
+
+  test('send line to inbox appends text via vault helper', async () => {
     const menu = makeMenu() as any
     const append = jest.fn()
-    const files: Record<string,string> = {}
     const plugin: any = {
-      app: { vault: {
-        append,
-        create: async (p: string, content: string) => { files[p] = content },
-        getAbstractFileByPath: (p: string) => {
-          if (p === 'Inbox') return { path: 'Inbox' }
-          if (files[p] !== undefined) return { path: p }
-          return null
-        },
-      }, commands: { executeCommandById: jest.fn() } },
+      app: { vault: { append } },
       stateManager: { startProcessing: jest.fn() },
+      settings: { inboxFilesFolderPath: 'Inbox' },
     }
-    plugin.settings = { inboxFilesFolderPath: 'Inbox' }
     const editor: any = {
       getCursor: () => ({ line: 0 }),
       getLine: () => 'Hello world',
       setLine: jest.fn(),
     }
 
-    // Mock planning view import for this module too
-    jest.mock('../src/views/planning.js', () => ({ openPlanningView: jest.fn() }))
+    createEditorMenu(menu, editor, plugin)
+    const sendBack = menu.items[0].subItems[0]
+    await sendBack._onClick?.()
+
+    expect(getOrCreateInboxFile).toHaveBeenCalledWith(plugin)
+    expect(append).toHaveBeenCalledWith({ path: 'Inbox/Flow generated inbox.md' }, 'Hello world\n')
+  })
+
+  test('toggle planning guard rails non-task lines and toggles tag state', async () => {
+    const menu = makeMenu() as any
+    let currentLine = 'Plain text'
+    const editor: any = {
+      getCursor: () => ({ line: 0 }),
+      getLine: jest.fn(() => currentLine),
+      setLine: jest.fn((_line: number, value: string) => {
+        currentLine = value
+      }),
+    }
+    const plugin: any = {
+      app: { vault: { append: jest.fn() } },
+      stateManager: { startProcessing: jest.fn() },
+      settings: { inboxFilesFolderPath: 'Inbox' },
+    }
 
     createEditorMenu(menu, editor, plugin)
-    // We expect first addItem creates Flow group; its submenu has multiple entries
-    expect(menu.items.length).toBeGreaterThan(0)
-    const sub = menu.items[0]
-    expect(sub.subItems.length).toBeGreaterThanOrEqual(4)
+    const toggleItem = menu.items[0].subItems[1]
 
-    // Execute the first submenu callback (send line back to inbox)
-    const sendBack = sub.subItems[0]
-    await sendBack._onClick?.()
-    expect(append).toHaveBeenCalled()
+    await toggleItem._onClick?.()
+    expect((Notice as jest.Mock).mock.calls[0][0]).toBe('Only tasks can be planned.')
+    expect(editor.setLine).not.toHaveBeenCalled()
+
+    currentLine = '- [ ] Task'
+    await toggleItem._onClick?.()
+    expect(editor.setLine).toHaveBeenCalledWith(0, '- [ ] Task #flow-planned')
+
+    currentLine = '- [ ] Task #flow-planned'
+    await toggleItem._onClick?.()
+    expect(editor.setLine).toHaveBeenLastCalledWith(0, '- [ ] Task')
+  })
+
+  test('start processing and planning entries call plugin APIs', async () => {
+    const menu = makeMenu() as any
+    const plugin: any = {
+      app: { vault: { append: jest.fn() } },
+      stateManager: { startProcessing: jest.fn() },
+      settings: { inboxFilesFolderPath: 'Inbox' },
+    }
+    const editor: any = {
+      getCursor: () => ({ line: 0 }),
+      getLine: () => '- [ ] Task',
+      setLine: jest.fn(),
+    }
+
+    createEditorMenu(menu, editor, plugin)
+    const [, , startProcessingItem, startPlanningItem] = menu.items[0].subItems
+
+    await startProcessingItem._onClick?.()
+    expect(plugin.stateManager.startProcessing).toHaveBeenCalled()
+
+    await startPlanningItem._onClick?.()
+    expect(openPlanningView).toHaveBeenCalledWith(plugin)
   })
 })
