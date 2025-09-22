@@ -20,16 +20,16 @@ Flow also helps you plan your day, ensuring you're working on the things that ar
 
 Flow is for you if you:
 
--   Have a lot of things to do and are struggling to keep track of them
--   Often forget things you need to do
--   Can't focus on something important because other things are popping up in your head
--   Often feel overwhelmed at all the open loops you have in your life
--   Feel unorganised and want to get on top of things
--   Struggle to get into a flow state
--   Want to feel in control
--   Wear multiple hats, work, family, personal projects, etc.
--   Have tried other systems and they haven't worked for you
--   Are neurodiverse and have trouble focusing or struggle with executive function
+- Have a lot of things to do and are struggling to keep track of them
+- Often forget things you need to do
+- Can't focus on something important because other things are popping up in your head
+- Often feel overwhelmed at all the open loops you have in your life
+- Feel unorganised and want to get on top of things
+- Struggle to get into a flow state
+- Want to feel in control
+- Wear multiple hats, work, family, personal projects, etc.
+- Have tried other systems and they haven't worked for you
+- Are neurodiverse and have trouble focusing or struggle with executive function
 
 ## How does it work?
 
@@ -67,50 +67,50 @@ We've heard lots of different techniques for capturing thoughts and ideas into O
 
 Two great articles on 'Quick Capture' which include lots of methods for capturing thoughts and ideas quickly:
 
--   https://obsidian.rocks/obsidian-quick-capture/
--   https://obsidian.rocks/obsidian-mobile-quick-capture/
+- https://obsidian.rocks/obsidian-quick-capture/
+- https://obsidian.rocks/obsidian-mobile-quick-capture/
 
 ##### General
 
--   https://obsidian.md/clipper
+- https://obsidian.md/clipper
 
 ##### Mac
 
--   https://actions.work/actions-for-obsidian
--   https://www.raycast.com/KevinBatdorf/obsidian
+- https://actions.work/actions-for-obsidian
+- https://www.raycast.com/KevinBatdorf/obsidian
 
 ##### Windows
 
--   Nothing here yet, please let me know if you have a good quick capture method!
+- Nothing here yet, please let me know if you have a good quick capture method!
 
 ##### iOS
 
--   https://actions.work/actions-for-obsidian
--   https://www.notesightlabs.com/funnel
--   https://www.icloud.com/shortcuts/9a6af22443414858bb6adade86a30f85
+- https://actions.work/actions-for-obsidian
+- https://www.notesightlabs.com/funnel
+- https://www.icloud.com/shortcuts/9a6af22443414858bb6adade86a30f85
 
 ##### Android
 
--   https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
--   https://play.google.com/store/apps/details?id=net.gsantner.markor
--   https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
+- https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
+- https://play.google.com/store/apps/details?id=net.gsantner.markor
+- https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
 
 ### Process
 
--   Run the command: Start processing
--   Go through each item in your inbox and decide what to do with it
+- Run the command: Start processing
+- Go through each item in your inbox and decide what to do with it
 
 ### Plan
 
--   Run the command: Open planning view
--   Open the sphere you want to plan from (there are buttons to do this easily in the planning view)
--   Enter planning mode
--   Select a task in the sphere view to add it to your planned actions list
+- Run the command: Open planning view
+- Open the sphere you want to plan from (there are buttons to do this easily in the planning view)
+- Enter planning mode
+- Select a task in the sphere view to add it to your planned actions list
 
 ## Current development focus
 
--   Weekly review
--   Better documentation
+- Weekly review
+- Better documentation
 
 ## Source
 
@@ -120,6 +120,6 @@ This plugin is currently closed source and the source code has a proprietary lic
 
 We rely on some other plugins for Flow to work. These are amazing plugins that we're so grateful to the developers for creating. Without both their functionality and their inspiration, Flow wouldn't be possible.
 
--   [Dataview](https://github.com/blacksmithgu/obsidian-dataview/tree/master), allowing querying of your vault in many different ways.
--   [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks), for management of tasks in Obsidian.
--   [Templater](https://github.com/SilentVoid13/Templater), which defines a template language allowing easy content insertion into notes.
+- [Dataview](https://github.com/blacksmithgu/obsidian-dataview/tree/master), allowing querying of your vault in many different ways.
+- [Tasks](https://github.com/obsidian-tasks-group/obsidian-tasks), for management of tasks in Obsidian.
+- [Templater](https://github.com/SilentVoid13/Templater), which defines a template language allowing easy content insertion into notes.
