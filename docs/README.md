@@ -94,6 +94,7 @@ Two great articles on 'Quick Capture' which include lots of methods for capturin
 - https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
 - https://play.google.com/store/apps/details?id=net.gsantner.markor
 - https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
+- https://play.google.com/store/apps/details?id=com.xectrone.quickmark
 
 ### Process
 
