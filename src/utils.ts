@@ -24,11 +24,9 @@ async function addLineToFile(
     const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
 
     let content = await plugin.app.vault.read(file)
-    content = content.replace(/\n+$/, '\n')
+    content = content.replace(/\n+$/, '')
 
-    const needsLeadingNewline = content.length === 0 || !content.endsWith('\n')
-
-    if (needsLeadingNewline) {
+    if (content.length > 0) {
         content = content + '\n'
     }
 
@@ -82,20 +80,43 @@ async function addToFileSection(
 
     let newContent = fileContent
 
-    let taskLine = `\n${isTask ? '- [ ] ' : '- '}${line}`
+    let taskLine = `${isTask ? '- [ ] ' : '- '}${line}`
     if (plugin.settings.appendTagToTask) {
         taskLine = taskLine + ' ' + plugin.settings.appendTagToTask
     }
     taskLine = taskLine + '\n'
 
     if (nextActionsIndex !== -1) {
-        const insertionIndex = nextActionsIndex + sectionName.length + 1
+        const sectionStart = nextActionsIndex + sectionName.length
+        const rest = newContent.slice(sectionStart)
+        const nextSectionIndex = rest.indexOf('\n## ')
+
+        let sectionBody =
+            nextSectionIndex === -1 ? rest : rest.slice(0, nextSectionIndex)
+        sectionBody = sectionBody.replace(/^[\r\n]+/, '')
+        if (sectionBody.length > 0 && !sectionBody.endsWith('\n')) {
+            sectionBody = sectionBody + '\n'
+        }
+
+        const remainder =
+            nextSectionIndex === -1 ? '' : rest.slice(nextSectionIndex)
+
+        const updatedSection = `${sectionName}\n${taskLine}${sectionBody}`
+
         newContent =
-            newContent.slice(0, insertionIndex) +
-            taskLine +
-            newContent.slice(insertionIndex)
+            newContent.slice(0, nextActionsIndex) + updatedSection + remainder
     } else {
-        newContent += '\n' + sectionName + taskLine
+        let prefix = newContent.replace(/[ \t]+$/, '')
+
+        if (prefix.length > 0 && !prefix.endsWith('\n')) {
+            prefix = prefix + '\n'
+        }
+
+        if (prefix.length > 0 && !prefix.endsWith('\n\n')) {
+            prefix = prefix + '\n'
+        }
+
+        newContent = `${prefix}${sectionName}\n${taskLine}`
     }
 
     await plugin.app.vault.modify(projectFile, newContent)

@@ -80,7 +80,9 @@ describe('utils task and file helpers', () => {
     await addToNextActions(plugin as any, 'Do a thing', ['personal', 'work'])
     const content = files['Next actions.md']
     expect(content).toBeDefined()
-    expect(content).toMatch(/\n- \[ \] Do a thing #sphere\/personal #sphere\/work #filters\/me\n$/)
+    expect(content).toBe(
+      '- [ ] Do a thing #sphere/personal #sphere/work #filters/me\n',
+    )
   })
 
   test('addToNextActions appends tasks without blank lines', async () => {
@@ -89,6 +91,7 @@ describe('utils task and file helpers', () => {
     await addToNextActions(plugin as any, 'Second task', [])
 
     const content = files['Next actions.md']
+    expect(content.startsWith('- [ ] First task')).toBe(true)
     expect(content).toContain('- [ ] First task\n- [ ] Second task')
   })
 
@@ -112,6 +115,27 @@ describe('utils task and file helpers', () => {
     // Ensure the new task line appears below the section header and includes tag
     expect(content).toContain('## Next actions')
     expect(content).toContain('\n- [ ] Plan step 1 #filters/me\n')
+  })
+
+  test('addToProjectNextActions keeps tasks adjacent without blank separator', async () => {
+    const { plugin, files } = makePlugin({ appendTagToTask: '' })
+    const projectPath = 'Projects/Gamma.md'
+    files[projectPath] = [
+      '# Description',
+      '',
+      '## Next actions',
+      '- [ ] Existing task',
+      '',
+      '## Notes + resources',
+      '',
+    ].join('\n')
+
+    const projectFile = { path: projectPath }
+    await addToProjectNextActions(plugin as any, projectFile as any, 'New task')
+
+    const content = files[projectPath]
+    expect(content).toContain('## Next actions\n- [ ] New task\n- [ ] Existing task')
+    expect(content).not.toContain('## Next actions\n\n- [ ] New task')
   })
 
   test('addToProjectReference creates section if missing and does not append empty tag', async () => {
