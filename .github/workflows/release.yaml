@@ -22,6 +22,24 @@ jobs:
               with:
                   node-version: '20.x'
 
+            - name: Ensure versions match tag
+              run: |
+                  node - <<'NODE'
+                  const fs = require('fs')
+                  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+                  const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'))
+                  const tag = process.env.TAG_NAME || ''
+                  const normalizedTag = tag.startsWith('v') ? tag.slice(1) : tag
+                  if (pkg.version !== manifest.version) {
+                      console.error(`package.json version ${pkg.version} does not match manifest.json version ${manifest.version}`)
+                      process.exit(1)
+                  }
+                  if (pkg.version !== normalizedTag) {
+                      console.error(`Version ${pkg.version} does not match tag ${tag}`)
+                      process.exit(1)
+                  }
+                  NODE
+
             - name: Cache npm
               uses: actions/cache@v4
               with:
