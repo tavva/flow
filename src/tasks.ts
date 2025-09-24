@@ -70,12 +70,7 @@ export class Tasks {
         const text = this.addPlannedTag(task.text)
         const line = this.buildTaskLine(task, text)
 
-        await this.replaceLineInFile(
-            task.path,
-            task.line,
-            line,
-            originalLine,
-        )
+        await this.replaceLineInFile(task.path, task.line, line, originalLine)
 
         setTimeout(() => {
             this.plugin.events.trigger('planned-tasks-updated')
@@ -87,12 +82,7 @@ export class Tasks {
         const text = this.removePlannedTag(task.text)
         const line = this.buildTaskLine(task, text)
 
-        await this.replaceLineInFile(
-            task.path,
-            task.line,
-            line,
-            originalLine,
-        )
+        await this.replaceLineInFile(task.path, task.line, line, originalLine)
 
         setTimeout(() => {
             this.plugin.events.trigger('planned-tasks-updated')
@@ -234,7 +224,8 @@ export class Tasks {
             }
         }
 
-        const zeroBasedGuess = lineNumber > 0 ? clamp(lineNumber - 1) : clamp(lineNumber)
+        const zeroBasedGuess =
+            lineNumber > 0 ? clamp(lineNumber - 1) : clamp(lineNumber)
 
         addCandidate(clamp(lineNumber))
         addCandidate(zeroBasedGuess)

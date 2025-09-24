@@ -253,35 +253,38 @@ export async function createNewProjectFile(
 }
 // PERSON: mirror project functions for person notes
 export async function getPersonFilePath(
-  plugin: FlowPlugin,
-  personName: string
+    plugin: FlowPlugin,
+    personName: string,
 ): Promise<string> {
-  const personFiles = getFilesWithTagPrefix(plugin, 'person')
-  const match = personFiles.find(f => f.name === `${personName}.md`)
-  return match ? match.path : ''
+    const personFiles = getFilesWithTagPrefix(plugin, 'person')
+    const match = personFiles.find((f) => f.name === `${personName}.md`)
+    return match ? match.path : ''
 }
 
 export async function createNewPersonFile(
-  plugin: FlowPlugin,
-  personName: string
+    plugin: FlowPlugin,
+    personName: string,
 ): Promise<TFile> {
-  const templateFile = plugin.app.vault.getAbstractFileByPath(
-    plugin.settings.newPersonTemplateFilePath
-  ) as TFile
-  const open_in_new_window = false
-  const create_new = await getTemplaterCreateNewFunction(plugin)
-  return create_new(
-    templateFile,
-    personName,
-    open_in_new_window,
-    plugin.settings.peopleFolderPath
-  )
+    const templateFile = plugin.app.vault.getAbstractFileByPath(
+        plugin.settings.newPersonTemplateFilePath,
+    ) as TFile
+    const open_in_new_window = false
+    const create_new = await getTemplaterCreateNewFunction(plugin)
+    return create_new(
+        templateFile,
+        personName,
+        open_in_new_window,
+        plugin.settings.peopleFolderPath,
+    )
 }
 
-export function parsePersonTemplate(options: { content: string; description: string }) {
-  let { content, description } = options
-  // simple replacement of {{ description }}
-  return content.replace(/{{\s*description\s*}}/g, description)
+export function parsePersonTemplate(options: {
+    content: string
+    description: string
+}) {
+    let { content, description } = options
+    // simple replacement of {{ description }}
+    return content.replace(/{{\s*description\s*}}/g, description)
 }
 
 async function getTemplaterCreateNewFunction(
@@ -331,7 +334,7 @@ export function parseProjectTemplate(options: {
     ]
 
     function replacer(str: string, regex: RegExp, replaceWith: string) {
-        return str.replace(regex, function() {
+        return str.replace(regex, function () {
             return replaceWith
         })
     }
