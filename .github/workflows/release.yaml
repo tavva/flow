@@ -25,12 +25,8 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Run tests
-              run: npm test --silent
-
-            - name: Build plugin
-              run: |
-                  npm run build
+            - name: Verify build and tests
+              run: npm run verify
 
             - name: Create release
               env:
