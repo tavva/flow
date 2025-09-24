@@ -5,10 +5,10 @@ These steps describe how to cut a new Flow release and publish it to both plugin
 ## 1. Prepare the release locally
 
 1. Ensure the `main` branch is up to date and the working tree is clean.
-2. Run `npm run release -- <version>` (use a `v` prefix if you prefer, e.g. `npm run release -- v0.6.7`). The script will:
+2. Run `npm run release -- <version>` (a leading `v` in the input is ignored, so `npm run release -- v0.6.7` and `npm run release -- 0.6.7` behave the same). The script will:
    - update `package.json` and `manifest.json`
    - run the formatter and `npm run verify`
-   - create a release commit and `v<version>` tag
+   - create a release commit and `<version>` tag
 3. Review the build artefacts (`main.js`, `styles.css`, `manifest.json`) and any documentation edits before pushing.
 
 If the script exits early, fix the reported issue and rerun it.

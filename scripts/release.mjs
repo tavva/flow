@@ -49,18 +49,18 @@ run('npm run verify')
 run('git add package.json manifest.json docs/README.md')
 
 try {
-    run(`git commit -m "Release v${version}"`)
+    run(`git commit -m "Release ${version}"`)
 } catch (error) {
     console.error('Failed to create release commit. Aborting.')
     throw error
 }
 
 try {
-    run(`git tag v${version}`)
+    run(`git tag ${version}`)
 } catch (error) {
     console.error('Failed to create git tag. Aborting.')
     throw error
 }
 
-console.log(`\nRelease v${version} prepared. Review changes, then push with:`)
+console.log(`\nRelease ${version} prepared. Review changes, then push with:`)
 console.log('  git push origin HEAD --tags')
