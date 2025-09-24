@@ -39,16 +39,33 @@ export function createHandleTaskClick(plugin: FlowPlugin) {
 
         const textContent = taskElement.getAttribute('data-task-text')
 
-        let path = null
+        let path: string | null = null
 
-        try {
-            const projectLink = taskElement
-                .closest('div')
-                .parentElement.closest('li')
-                .querySelector('a')
-            path = projectLink.getAttribute('data-path')
-        } catch (error) {
-            path = plugin.settings.nextActionsFilePath
+        const projectContainer = taskElement.closest(
+            '[data-project-path]',
+        ) as HTMLElement | null
+
+        if (projectContainer) {
+            path =
+                projectContainer.getAttribute('data-project-path') ??
+                projectContainer.dataset?.projectPath ??
+                null
+        }
+
+        if (!path) {
+            try {
+                const projectLink = taskElement
+                    .closest('div')
+                    .parentElement.closest('li')
+                    .querySelector('a')
+                path = projectLink.getAttribute('data-path')
+            } catch (error) {
+                path = plugin.settings.nextActionsFilePath ?? null
+            }
+        }
+
+        if (!path) {
+            return
         }
 
         const task = plugin.tasks.getTask(textContent, path)

@@ -270,6 +270,7 @@
                         <li
                             class:flow-no-actionables={project.hasActionables ===
                                 false}
+                            data-project-path={project.file.path}
                         >
                             {project.priority}.
                             <a

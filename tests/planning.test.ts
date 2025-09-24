@@ -59,7 +59,9 @@ describe('planning helpers', () => {
       getAttribute: (_: string) => mockTask.text,
       closest: (sel: string) => {
         if (sel.includes('dataview.task-list-item')) return li
-        throw new Error('no dom')
+        if (sel === '[data-project-path]') return null
+        if (sel === 'div') throw new Error('no dom')
+        return null
       },
     }
 
@@ -70,5 +72,63 @@ describe('planning helpers', () => {
 
     // leave planning mode
     togglePlanningMode(plugin)
+  })
+
+  test('createHandleTaskClick resolves project path from data attribute', async () => {
+    const mockTask = { text: 'Task body', path: 'Project.md', line: 7, symbol: '-', status: ' ' }
+    const plugin: any = {
+      tasks: {
+        getTask: jest.fn().mockReturnValue(mockTask),
+        markTaskAsPlannedNextAction: jest.fn(),
+      },
+      settings: { nextActionsFilePath: 'Fallback.md' },
+    }
+
+    const handler = createHandleTaskClick(plugin)
+
+    const projectContainer: any = {
+      dataset: { projectPath: 'Project.md' },
+      getAttribute: jest.fn().mockReturnValue('Project.md'),
+    }
+
+    const projectListItem: any = {
+      querySelector: jest
+        .fn()
+        .mockReturnValue({ getAttribute: jest.fn().mockReturnValue('Wrong.md') }),
+    }
+
+    const taskElement: any = {
+      getAttribute: jest.fn((attribute: string) => {
+        if (attribute === 'data-task-text') return mockTask.text
+        return null
+      }),
+      closest: jest.fn((selector: string) => {
+        if (selector === '.dataview.task-list-item') return taskElement
+        if (selector === '[data-project-path]') return projectContainer
+        if (selector === 'div') {
+          return {
+            parentElement: {
+              closest: jest.fn(() => projectListItem),
+            },
+          }
+        }
+        return null
+      }),
+    }
+
+    const eventTarget: any = {
+      closest: jest.fn((selector: string) => {
+        if (selector === '.dataview.task-list-item') return taskElement
+        return null
+      }),
+    }
+
+    await handler({
+      target: eventTarget,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    })
+
+    expect(plugin.tasks.getTask).toHaveBeenCalledWith(mockTask.text, 'Project.md')
   })
 })
