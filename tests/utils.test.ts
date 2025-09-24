@@ -83,6 +83,15 @@ describe('utils task and file helpers', () => {
     expect(content).toMatch(/\n- \[ \] Do a thing #sphere\/personal #sphere\/work #filters\/me\n$/)
   })
 
+  test('addToNextActions appends tasks without blank lines', async () => {
+    const { plugin, files } = makePlugin({ appendTagToTask: '' })
+    await addToNextActions(plugin as any, 'First task', [])
+    await addToNextActions(plugin as any, 'Second task', [])
+
+    const content = files['Next actions.md']
+    expect(content).toContain('- [ ] First task\n- [ ] Second task')
+  })
+
   test('addToProjectNextActions inserts under existing section with optional tag', async () => {
     const { plugin, files } = makePlugin({ appendTagToTask: '#filters/me' })
     const projectPath = 'Projects/Alpha.md'

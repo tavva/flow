@@ -24,7 +24,16 @@ async function addLineToFile(
     const sphereString = spheres.map((sphere) => `#sphere/${sphere}`).join(' ')
 
     let content = await plugin.app.vault.read(file)
-    content = content + '\n- [ ] ' + text
+    content = content.replace(/\n+$/, '\n')
+
+    const needsLeadingNewline =
+        content.length === 0 || !content.endsWith('\n')
+
+    if (needsLeadingNewline) {
+        content = content + '\n'
+    }
+
+    content = content + '- [ ] ' + text
 
     if (sphereString) {
         content = content + ' ' + sphereString
