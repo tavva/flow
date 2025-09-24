@@ -26,8 +26,7 @@ async function addLineToFile(
     let content = await plugin.app.vault.read(file)
     content = content.replace(/\n+$/, '\n')
 
-    const needsLeadingNewline =
-        content.length === 0 || !content.endsWith('\n')
+    const needsLeadingNewline = content.length === 0 || !content.endsWith('\n')
 
     if (needsLeadingNewline) {
         content = content + '\n'
