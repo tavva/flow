@@ -10,7 +10,8 @@
 		"typecheck": "tsc -noEmit -skipLibCheck",
 		"verify": "npm run build && npm test",
 		"test": "NODE_OPTIONS='$NODE_OPTIONS --experimental-vm-modules' npx jest",
-		"format": "prettier --write \"src/**/*.{ts,js,json,svelte}\""
+		"format": "prettier --write \"src/**/*.{ts,js,json,svelte}\"",
+		"release": "node scripts/release.mjs"
 	},
 	"keywords": [],
 	"author": "",
