@@ -54,6 +54,13 @@ jobs:
             - name: Verify build and tests
               run: npm run verify
 
+            - name: Create plugin zip
+              run: |
+                  ZIP_NAME="flow.zip"
+                  echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+                  rm -f "$ZIP_NAME"
+                  zip -j "$ZIP_NAME" main.js styles.css manifest.json
+
             - name: Upload plugin bundle
               uses: actions/upload-artifact@v4
               with:
@@ -62,6 +69,7 @@ jobs:
                       main.js
                       styles.css
                       manifest.json
+                      ${{ env.ZIP_NAME }}
 
     release:
         needs: preflight
@@ -81,6 +89,9 @@ jobs:
             - name: Prepare assets
               run: cp release-assets/* .
 
+            - name: Determine zip name
+              run: echo "ZIP_NAME=flow.zip" >> $GITHUB_ENV
+
             - name: Create release
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,7 +99,7 @@ jobs:
                   gh release create "${TAG_NAME}" \
                     --title="${TAG_NAME}" \
                     --draft \
-                    main.js manifest.json styles.css
+                    main.js manifest.json styles.css "${ZIP_NAME}"
 
             - name: Clone flow-release repository
               run: |
@@ -139,7 +150,7 @@ jobs:
               env:
                   FLOW_RELEASE_PAT: ${{ secrets.FLOW_RELEASE_PAT }}
               run: |
-                  for file in main.js styles.css manifest.json; do
+                  for file in main.js styles.css manifest.json "${ZIP_NAME}"; do
                     curl -s -X POST \
                       -H "Authorization: token $FLOW_RELEASE_PAT" \
                       -H "Content-Type: $(file --mime-type -b $file)" \

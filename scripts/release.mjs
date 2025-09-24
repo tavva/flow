@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +45,14 @@ writeFileSync(manifestPath, `${JSON.stringify(manifestJson, null, jsonIndent)}\n
 
 run('npm run format')
 run('npm run verify')
+
+const zipName = 'flow.zip'
+const zipPath = path.join(repoRoot, zipName)
+if (existsSync(zipPath)) {
+    unlinkSync(zipPath)
+}
+run(`zip -j ${zipName} main.js styles.css manifest.json`)
+console.log(`Created ${zipName}`)
 
 run('git add package.json manifest.json docs/README.md')
 

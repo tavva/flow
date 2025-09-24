@@ -9,6 +9,7 @@ These steps describe how to cut a new Flow release and publish it to both plugin
    - update `package.json` and `manifest.json`
    - run the formatter and `npm run verify`
    - create a release commit and `<version>` tag
+   - build `flow.zip` containing `main.js`, `manifest.json`, and `styles.css`
 3. Review the build artefacts (`main.js`, `styles.css`, `manifest.json`) and any documentation edits before pushing.
 
 If the script exits early, fix the reported issue and rerun it.
@@ -16,7 +17,7 @@ If the script exits early, fix the reported issue and rerun it.
 ## 2. Push the release
 
 1. Push the release branch and tag: `git push origin HEAD --tags`.
-2. GitHub Actions will trigger the `Release Flow` workflow on the tag.
+2. GitHub Actions will trigger the `Release Flow` workflow on the tag, which uploads both the loose files and the `flow.zip` archive to the draft release.
 
 ## 3. Monitor automation
 
