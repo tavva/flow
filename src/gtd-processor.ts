@@ -114,6 +114,87 @@ Examples:
 	}
 
 	/**
+	 * Normalize a string for comparison by removing punctuation,
+	 * extra whitespace, and converting to lowercase
+	 */
+	private normalizeForMatching(text: string): string {
+		return text
+			.toLowerCase()
+			.replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
+			.replace(/\s+/g, ' ')      // Normalize whitespace
+			.trim();
+	}
+
+	/**
+	 * Calculate similarity between two strings using Dice coefficient
+	 * Returns a score between 0 (no similarity) and 1 (identical)
+	 */
+	private calculateSimilarity(str1: string, str2: string): number {
+		const normalized1 = this.normalizeForMatching(str1);
+		const normalized2 = this.normalizeForMatching(str2);
+
+		// Exact match after normalization
+		if (normalized1 === normalized2) return 1;
+
+		// Bigram-based Dice coefficient
+		const bigrams1 = this.getBigrams(normalized1);
+		const bigrams2 = this.getBigrams(normalized2);
+
+		if (bigrams1.size === 0 && bigrams2.size === 0) return 1;
+		if (bigrams1.size === 0 || bigrams2.size === 0) return 0;
+
+		const intersection = new Set(
+			[...bigrams1].filter(x => bigrams2.has(x))
+		);
+
+		return (2 * intersection.size) / (bigrams1.size + bigrams2.size);
+	}
+
+	/**
+	 * Get bigrams (pairs of consecutive characters) from a string
+	 */
+	private getBigrams(str: string): Set<string> {
+		const bigrams = new Set<string>();
+		for (let i = 0; i < str.length - 1; i++) {
+			bigrams.add(str.substring(i, i + 2));
+		}
+		return bigrams;
+	}
+
+	/**
+	 * Find the best matching project using fuzzy matching
+	 */
+	private findMatchingProject(
+		suggestedTitle: string,
+		existingProjects: FlowProject[]
+	): FlowProject | null {
+		// First try exact match (case-insensitive)
+		const exactMatch = existingProjects.find(
+			p => p.title.toLowerCase() === suggestedTitle.toLowerCase()
+		);
+		if (exactMatch) return exactMatch;
+
+		// Try fuzzy matching with similarity threshold
+		const SIMILARITY_THRESHOLD = 0.6; // 60% similarity required
+		let bestMatch: FlowProject | null = null;
+		let bestScore = 0;
+
+		for (const project of existingProjects) {
+			const similarity = this.calculateSimilarity(
+				suggestedTitle,
+				project.title
+			);
+
+			if (similarity > bestScore && similarity >= SIMILARITY_THRESHOLD) {
+				bestScore = similarity;
+				bestMatch = project;
+			}
+		}
+
+		return bestMatch;
+	}
+
+	/**
 	 * Parse Claude's response into structured result
 	 */
 	private parseResponse(
@@ -133,8 +214,9 @@ Examples:
 			const suggestedProjects: ProjectSuggestion[] = [];
 			if (parsed.suggestedProjects && Array.isArray(parsed.suggestedProjects)) {
 				for (const suggestion of parsed.suggestedProjects) {
-					const project = existingProjects.find(
-						p => p.title.toLowerCase() === suggestion.projectTitle.toLowerCase()
+					const project = this.findMatchingProject(
+						suggestion.projectTitle,
+						existingProjects
 					);
 					if (project) {
 						suggestedProjects.push({
