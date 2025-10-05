@@ -1,1 +1,28 @@
 .mise.toml
+
+# Node modules
+node_modules/
+
+# Build outputs
+main.js
+main.js.map
+*.js.map
+
+# Test coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
