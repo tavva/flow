@@ -75,6 +75,36 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		// Inbox Settings
+		containerEl.createEl('h3', { text: 'Inbox Settings' });
+		containerEl.createDiv('setting-item-description').innerHTML = `
+			<p>Configure inbox folders for processing. These match the Flow plugin's inbox settings.</p>
+		`;
+
+		// Line-at-a-time inbox
+		new Setting(containerEl)
+			.setName('Line at a time')
+			.setDesc('Flow processes all lines in every note in this folder.')
+			.addText(text => text
+				.setPlaceholder('Flow Inbox Files')
+				.setValue(this.plugin.settings.inboxFilesFolderPath)
+				.onChange(async (value) => {
+					this.plugin.settings.inboxFilesFolderPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Note-at-a-time inbox
+		new Setting(containerEl)
+			.setName('Note at a time')
+			.setDesc('Flow processes entire notes one by one in this folder.')
+			.addText(text => text
+				.setPlaceholder('Flow Inbox Folder')
+				.setValue(this.plugin.settings.inboxFolderPath)
+				.onChange(async (value) => {
+					this.plugin.settings.inboxFolderPath = value;
+					await this.plugin.saveSettings();
+				}));
+
 		// GTD Principles Info
 		containerEl.createEl('h3', { text: 'GTD Principles' });
 		const gtdInfo = containerEl.createDiv('flow-gtd-info');

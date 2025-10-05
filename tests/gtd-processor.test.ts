@@ -147,6 +147,162 @@ describe('GTDProcessor', () => {
 			});
 		});
 
+		it('should match projects with fuzzy matching on similar titles', async () => {
+			const projectsWithSpecificTitle: FlowProject[] = [
+				{
+					file: 'office.md',
+					title: 'Create a 3-day office counter argument',
+					tags: ['project/work'],
+					nextActions: ['Draft initial outline'],
+					futureNextActions: []
+				}
+			];
+
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: JSON.stringify({
+						isActionable: true,
+						category: 'next-action',
+						nextAction: 'Draft initial outline for 3-day office document',
+						reasoning: 'This relates to creating a counter argument document',
+						suggestedProjects: [
+							{
+								projectTitle: '3-day office counter argument',
+								relevance: 'This is about creating the same document',
+								confidence: 'high'
+							}
+						]
+					})
+				}]
+			};
+
+			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+			const result = await processor.processInboxItem(
+				'Start doc for 3 day in the office counter argument',
+				projectsWithSpecificTitle
+			);
+
+			expect(result.suggestedProjects).toHaveLength(1);
+			expect(result.suggestedProjects![0].project.title).toBe(
+				'Create a 3-day office counter argument'
+			);
+		});
+
+		it('should match projects ignoring punctuation differences', async () => {
+			const projectsWithPunctuation: FlowProject[] = [
+				{
+					file: 'health.md',
+					title: 'Health & Fitness Goals',
+					tags: ['project/personal'],
+					nextActions: [],
+					futureNextActions: []
+				}
+			];
+
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: JSON.stringify({
+						isActionable: true,
+						category: 'next-action',
+						nextAction: 'Set fitness goals',
+						reasoning: 'Related to health tracking',
+						suggestedProjects: [
+							{
+								projectTitle: 'Health and Fitness Goals',
+								relevance: 'Same project, different punctuation',
+								confidence: 'high'
+							}
+						]
+					})
+				}]
+			};
+
+			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+			const result = await processor.processInboxItem('track fitness', projectsWithPunctuation);
+
+			expect(result.suggestedProjects).toHaveLength(1);
+			expect(result.suggestedProjects![0].project.title).toBe('Health & Fitness Goals');
+		});
+
+		it('should not match projects below similarity threshold', async () => {
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: JSON.stringify({
+						isActionable: true,
+						category: 'next-action',
+						nextAction: 'Research quantum computing',
+						reasoning: 'Not related to existing projects',
+						suggestedProjects: [
+							{
+								projectTitle: 'Completely Unrelated Project Name',
+								relevance: 'Not actually related',
+								confidence: 'low'
+							}
+						]
+					})
+				}]
+			};
+
+			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+			const result = await processor.processInboxItem('quantum computing', mockProjects);
+
+			// Should not match because 'Completely Unrelated Project Name'
+			// is not similar to 'Health and Fitness' or 'Website Redesign'
+			expect(result.suggestedProjects).toHaveLength(0);
+		});
+
+		it('should prefer exact matches over fuzzy matches', async () => {
+			const projectsWithSimilarTitles: FlowProject[] = [
+				{
+					file: 'website.md',
+					title: 'Website Redesign',
+					tags: ['project/work'],
+					nextActions: [],
+					futureNextActions: []
+				},
+				{
+					file: 'website2.md',
+					title: 'Website',
+					tags: ['project/work'],
+					nextActions: [],
+					futureNextActions: []
+				}
+			];
+
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: JSON.stringify({
+						isActionable: true,
+						category: 'next-action',
+						nextAction: 'Update website',
+						reasoning: 'Website work',
+						suggestedProjects: [
+							{
+								projectTitle: 'Website',
+								relevance: 'Exact match',
+								confidence: 'high'
+							}
+						]
+					})
+				}]
+			};
+
+			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+			const result = await processor.processInboxItem('website work', projectsWithSimilarTitles);
+
+			// Should match the exact title 'Website', not 'Website Redesign'
+			expect(result.suggestedProjects).toHaveLength(1);
+			expect(result.suggestedProjects![0].project.title).toBe('Website');
+		});
+
 		it('should include project context in the prompt', async () => {
 			const mockResponse = {
 				content: [{

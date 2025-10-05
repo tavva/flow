@@ -3,36 +3,48 @@ import { GTDProcessor } from './gtd-processor';
 import { FlowProjectScanner } from './flow-scanner';
 import { FileWriter } from './file-writer';
 import { GTDProcessingResult, FlowProject, PluginSettings } from './types';
+import { InboxScanner, InboxItem } from './inbox-scanner';
 
 interface ProcessedItem {
 	original: string;
 	result: GTDProcessingResult;
 	selectedProject?: FlowProject;
 	createNew: boolean;
+	inboxItem?: InboxItem; // Track the original inbox item for deletion
 }
+
+type InputMode = 'single' | 'bulk' | 'inbox';
 
 export class InboxProcessingModal extends Modal {
 	private mindsweepItems: string[] = [];
 	private processedItems: ProcessedItem[] = [];
 	private currentInput: string = '';
 	private bulkInput: string = '';
-	private isBulkMode: boolean = false;
+	private inputMode: InputMode = 'single';
 	private currentProcessingIndex: number = 0;
 	private isProcessing: boolean = false;
+	private inboxItems: InboxItem[] = [];
 
 	private processor: GTDProcessor;
 	private scanner: FlowProjectScanner;
 	private writer: FileWriter;
+	private inboxScanner: InboxScanner;
 	private existingProjects: FlowProject[] = [];
 
 	constructor(
 		app: App,
-		private settings: PluginSettings
+		private settings: PluginSettings,
+		private startWithInbox: boolean = false
 	) {
 		super(app);
 		this.processor = new GTDProcessor(settings.anthropicApiKey);
 		this.scanner = new FlowProjectScanner(app);
 		this.writer = new FileWriter(app, settings);
+		this.inboxScanner = new InboxScanner(app, settings);
+
+		if (startWithInbox) {
+			this.inputMode = 'inbox';
+		}
 	}
 
 	async onOpen() {
@@ -48,7 +60,12 @@ export class InboxProcessingModal extends Modal {
 			console.error(error);
 		}
 
-		this.renderMindsweep();
+		// If starting with inbox mode, load the inbox items
+		if (this.startWithInbox) {
+			await this.loadInboxItems();
+		} else {
+			this.renderMindsweep();
+		}
 	}
 
 	onClose() {
@@ -72,24 +89,33 @@ export class InboxProcessingModal extends Modal {
 		modeSetting.addButton(button => {
 			button.setButtonText('Single Item')
 				.onClick(() => {
-					this.isBulkMode = false;
+					this.inputMode = 'single';
 					this.renderMindsweep();
 				});
-			if (!this.isBulkMode) button.setCta();
+			if (this.inputMode === 'single') button.setCta();
 			return button;
 		});
 		modeSetting.addButton(button => {
 			button.setButtonText('Bulk Input')
 				.onClick(() => {
-					this.isBulkMode = true;
+					this.inputMode = 'bulk';
 					this.renderMindsweep();
 				});
-			if (this.isBulkMode) button.setCta();
+			if (this.inputMode === 'bulk') button.setCta();
+			return button;
+		});
+		modeSetting.addButton(button => {
+			button.setButtonText('From Inbox')
+				.onClick(() => {
+					this.inputMode = 'inbox';
+					this.loadInboxItems();
+				});
+			if (this.inputMode === 'inbox') button.setCta();
 			return button;
 		});
 
 		// Input area
-		if (this.isBulkMode) {
+		if (this.inputMode === 'bulk') {
 			const bulkContainer = contentEl.createDiv('flow-gtd-bulk-input');
 			const textarea = bulkContainer.createEl('textarea', {
 				placeholder: 'Paste your list here, one item per line:\n\nCall dentist\nPlan vacation\nFix kitchen sink\nReview quarterly report\nBuy groceries',
@@ -106,6 +132,12 @@ export class InboxProcessingModal extends Modal {
 					.setButtonText('Add All Items')
 					.setCta()
 					.onClick(() => this.addBulkItems()));
+		} else if (this.inputMode === 'inbox') {
+			const inboxContainer = contentEl.createDiv('flow-gtd-inbox-info');
+			inboxContainer.createEl('p', {
+				text: `Loading items from your Flow inbox folders...`,
+				cls: 'flow-gtd-description'
+			});
 		} else {
 			const inputContainer = contentEl.createDiv('flow-gtd-single-input');
 			new Setting(inputContainer)
@@ -175,7 +207,30 @@ export class InboxProcessingModal extends Modal {
 				.filter(item => item.length > 0);
 			this.mindsweepItems.push(...items);
 			this.bulkInput = '';
-			this.isBulkMode = false;
+			this.inputMode = 'single';
+			this.renderMindsweep();
+		}
+	}
+
+	private async loadInboxItems() {
+		try {
+			this.inboxItems = await this.inboxScanner.getAllInboxItems();
+
+			if (this.inboxItems.length === 0) {
+				new Notice('No items found in inbox folders');
+				this.inputMode = 'single';
+				this.renderMindsweep();
+				return;
+			}
+
+			// Add inbox items to mindsweep list
+			this.mindsweepItems = this.inboxItems.map(item => item.content);
+			new Notice(`Loaded ${this.inboxItems.length} items from inbox`);
+			this.renderMindsweep();
+		} catch (error) {
+			new Notice('Error loading inbox items');
+			console.error(error);
+			this.inputMode = 'single';
 			this.renderMindsweep();
 		}
 	}
@@ -250,10 +305,16 @@ export class InboxProcessingModal extends Modal {
 		try {
 			const result = await this.processor.processInboxItem(item, this.existingProjects);
 
+			// Find the corresponding inbox item if we're in inbox mode
+			const inboxItem = this.inputMode === 'inbox'
+				? this.inboxItems[this.currentProcessingIndex]
+				: undefined;
+
 			this.processedItems.push({
 				original: item,
 				result,
-				createNew: result.category === 'project' || (result.suggestedProjects?.length ?? 0) === 0
+				createNew: result.category === 'project' || (result.suggestedProjects?.length ?? 0) === 0,
+				inboxItem
 			});
 
 			this.currentProcessingIndex++;
@@ -269,6 +330,11 @@ export class InboxProcessingModal extends Modal {
 	private skipCurrentItem() {
 		const item = this.mindsweepItems[this.currentProcessingIndex];
 
+		// Find the corresponding inbox item if we're in inbox mode
+		const inboxItem = this.inputMode === 'inbox'
+			? this.inboxItems[this.currentProcessingIndex]
+			: undefined;
+
 		this.processedItems.push({
 			original: item,
 			result: {
@@ -278,7 +344,8 @@ export class InboxProcessingModal extends Modal {
 				reasoning: 'Skipped processing',
 				suggestedProjects: []
 			},
-			createNew: true
+			createNew: true,
+			inboxItem
 		});
 
 		this.currentProcessingIndex++;
@@ -364,6 +431,11 @@ export class InboxProcessingModal extends Modal {
 				} else if (item.result.category === 'next-action' && item.createNew) {
 					// Could create a dedicated "Next Actions" file or handle differently
 					new Notice(`Next action needs manual placement: ${item.result.nextAction}`);
+				}
+
+				// Delete the inbox item if it exists
+				if (item.inboxItem) {
+					await this.inboxScanner.deleteInboxItem(item.inboxItem);
 				}
 			} catch (error) {
 				new Notice(`Error saving ${item.original}: ${error.message}`);

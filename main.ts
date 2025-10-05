@@ -32,6 +32,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
 			}
 		});
 
+		// Add command for processing inbox folders
+		this.addCommand({
+			id: 'process-inbox-folders',
+			name: 'Process Inbox Folders',
+			callback: () => {
+				this.openInboxModalWithInbox();
+			}
+		});
+
 		// Add settings tab
 		this.addSettingTab(new FlowGTDSettingTab(this.app, this));
 
@@ -57,6 +66,16 @@ export default class FlowGTDCoachPlugin extends Plugin {
 		}
 
 		const modal = new InboxProcessingModal(this.app, this.settings);
+		modal.open();
+	}
+
+	private openInboxModalWithInbox() {
+		if (!this.settings.anthropicApiKey) {
+			new Notice('Please set your Anthropic API key in the plugin settings first');
+			return;
+		}
+
+		const modal = new InboxProcessingModal(this.app, this.settings, true);
 		modal.open();
 	}
 }

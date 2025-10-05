@@ -29,10 +29,14 @@ export interface PluginSettings {
 	anthropicApiKey: string;
 	defaultPriority: number;
 	defaultStatus: string;
+	inboxFilesFolderPath: string;
+	inboxFolderPath: string;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
 	anthropicApiKey: '',
 	defaultPriority: 2,
-	defaultStatus: 'live'
+	defaultStatus: 'live',
+	inboxFilesFolderPath: 'Flow Inbox Files',
+	inboxFolderPath: 'Flow Inbox Folder'
 };
