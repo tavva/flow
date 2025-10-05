@@ -127,6 +127,24 @@ npm run test:watch
 npm run test:coverage
 ```
 
+### Evaluation Framework
+
+The plugin includes a comprehensive evaluation framework to measure GTD processing quality:
+
+```bash
+# Run evaluation (requires API key)
+export ANTHROPIC_API_KEY=your-key
+npm run evaluate
+```
+
+The evaluation tests against 15 curated test cases, measuring:
+- Category accuracy (project vs. action identification)
+- Action quality (GTD compliance)
+- Specificity and verb usage
+- Project outcome clarity
+
+See [`evaluation/README.md`](evaluation/README.md) for details.
+
 ### Project Structure
 
 ```

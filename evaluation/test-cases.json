@@ -1,0 +1,166 @@
+[
+  {
+    "id": "simple-next-action-1",
+    "input": "call dentist",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "isActionable": true,
+      "startsWithVerb": true,
+      "isSpecific": true
+    },
+    "notes": "Simple single action - should be enhanced with specificity"
+  },
+  {
+    "id": "simple-project-1",
+    "input": "plan vacation to Italy",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true,
+      "hasFutureActions": true
+    },
+    "notes": "Multi-step project requiring planning and booking"
+  },
+  {
+    "id": "reference-1",
+    "input": "recipe for lasagna",
+    "expectedCategory": "reference",
+    "expectedAttributes": {
+      "isActionable": false
+    },
+    "notes": "Information to store, not an action"
+  },
+  {
+    "id": "someday-1",
+    "input": "learn to play piano",
+    "expectedCategory": "someday",
+    "expectedAttributes": {
+      "isActionable": false
+    },
+    "notes": "Aspiration without immediate commitment"
+  },
+  {
+    "id": "project-disguised-as-action-1",
+    "input": "fix broken kitchen sink",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true
+    },
+    "notes": "Appears simple but likely requires multiple steps (diagnose, buy parts, repair)"
+  },
+  {
+    "id": "vague-action-1",
+    "input": "do something about the project",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "needsClarification": true,
+      "isSpecific": false
+    },
+    "notes": "Vague - should be clarified into specific action"
+  },
+  {
+    "id": "complex-project-1",
+    "input": "redesign company website",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true,
+      "hasFutureActions": true,
+      "futureActionsCount": ">=3"
+    },
+    "notes": "Large project with many steps"
+  },
+  {
+    "id": "specific-action-1",
+    "input": "email Sarah at sarah@example.com to confirm Thursday meeting at 2pm",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "isActionable": true,
+      "startsWithVerb": true,
+      "isSpecific": true,
+      "hasContext": true
+    },
+    "notes": "Already well-formed GTD action"
+  },
+  {
+    "id": "waiting-for-1",
+    "input": "waiting for John to send report",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "isActionable": true,
+      "isWaitingFor": true
+    },
+    "notes": "Waiting-for items are still actionable (follow up)"
+  },
+  {
+    "id": "purchase-1",
+    "input": "buy groceries",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "isActionable": true,
+      "startsWithVerb": true,
+      "needsContext": true
+    },
+    "notes": "Could benefit from list/context"
+  },
+  {
+    "id": "project-with-dependencies-1",
+    "input": "organize team offsite",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true,
+      "hasFutureActions": true
+    },
+    "notes": "Project requiring coordination and multiple dependencies"
+  },
+  {
+    "id": "research-task-1",
+    "input": "research best CRM software",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true
+    },
+    "notes": "Research is often multi-step (search, compare, decide)"
+  },
+  {
+    "id": "quick-action-1",
+    "input": "reply to Bob's email",
+    "expectedCategory": "next-action",
+    "expectedAttributes": {
+      "isActionable": true,
+      "startsWithVerb": true,
+      "isQuickAction": true
+    },
+    "notes": "2-minute action"
+  },
+  {
+    "id": "ambiguous-1",
+    "input": "think about career change",
+    "expectedCategory": "someday",
+    "expectedAttributes": {
+      "isActionable": false,
+      "needsClarification": true
+    },
+    "notes": "Thinking isn't actionable - needs to become a project or action"
+  },
+  {
+    "id": "maintenance-project-1",
+    "input": "quarterly financial review",
+    "expectedCategory": "project",
+    "expectedAttributes": {
+      "isActionable": true,
+      "hasOutcome": true,
+      "hasNextAction": true,
+      "isRecurring": true
+    },
+    "notes": "Recurring project with multiple steps"
+  }
+]
