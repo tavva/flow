@@ -1,0 +1,10 @@
+{
+	"id": "flow-gtd-coach",
+	"name": "Flow GTD Coach",
+	"version": "0.1.0",
+	"minAppVersion": "0.15.0",
+	"description": "GTD coach for Flow-based Obsidian vaults. Process inbox items and intelligently route them to projects with quality next actions.",
+	"author": "Ben",
+	"authorUrl": "",
+	"isDesktopOnly": false
+}

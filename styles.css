@@ -1,0 +1,228 @@
+/* Flow GTD Coach Plugin Styles */
+
+.flow-gtd-inbox-modal {
+	padding: 20px;
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.flow-gtd-description {
+	color: var(--text-muted);
+	margin-bottom: 20px;
+}
+
+.flow-gtd-mode-toggle {
+	margin-bottom: 20px;
+}
+
+.flow-gtd-textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	font-size: 14px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	resize: vertical;
+}
+
+.flow-gtd-items-list {
+	margin: 20px 0;
+}
+
+.flow-gtd-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px;
+	margin-bottom: 8px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-item-text {
+	flex: 1;
+	margin-right: 10px;
+}
+
+.flow-gtd-delete-btn {
+	background-color: var(--background-modifier-error);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	width: 24px;
+	height: 24px;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.flow-gtd-delete-btn:hover {
+	opacity: 0.8;
+}
+
+.flow-gtd-empty-state {
+	text-align: center;
+	padding: 40px 20px;
+}
+
+.flow-gtd-empty {
+	color: var(--text-muted);
+	font-size: 16px;
+}
+
+.flow-gtd-progress {
+	margin: 20px 0;
+}
+
+.flow-gtd-progress-text {
+	margin-bottom: 8px;
+	color: var(--text-muted);
+	font-size: 14px;
+}
+
+.flow-gtd-progress-bar {
+	width: 100%;
+	height: 8px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.flow-gtd-progress-fill {
+	height: 100%;
+	background-color: var(--interactive-accent);
+	transition: width 0.3s ease;
+}
+
+.flow-gtd-current-item {
+	background-color: var(--background-primary-alt);
+	padding: 20px;
+	border-radius: 8px;
+	margin: 20px 0;
+	border: 2px solid var(--interactive-accent);
+}
+
+.flow-gtd-label {
+	font-size: 12px;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.flow-gtd-current-text {
+	font-size: 18px;
+	font-weight: 500;
+	margin: 0;
+}
+
+.flow-gtd-buttons {
+	margin: 20px 0;
+}
+
+.flow-gtd-complete {
+	text-align: center;
+	padding: 40px 20px;
+}
+
+.flow-gtd-complete-text {
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--text-success);
+}
+
+.flow-gtd-processed-list {
+	margin: 20px 0;
+}
+
+.flow-gtd-processed-item {
+	padding: 15px;
+	margin-bottom: 12px;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 4px solid var(--interactive-accent);
+}
+
+.flow-gtd-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	margin-bottom: 8px;
+	text-transform: uppercase;
+}
+
+.flow-gtd-badge-next-action {
+	background-color: var(--text-success);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-project {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-reference {
+	background-color: var(--text-accent);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-someday {
+	background-color: var(--text-muted);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-original {
+	font-size: 13px;
+	color: var(--text-muted);
+	font-style: italic;
+	margin: 4px 0;
+}
+
+.flow-gtd-action {
+	font-size: 14px;
+	font-weight: 500;
+	margin: 8px 0;
+}
+
+.flow-gtd-suggestions {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-suggestion {
+	padding: 8px;
+	margin: 4px 0;
+	background-color: var(--background-primary);
+	border-radius: 4px;
+	font-size: 13px;
+}
+
+.flow-gtd-confidence {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.flow-gtd-info {
+	padding: 15px;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 4px solid var(--interactive-accent);
+}
+
+.flow-gtd-info ul {
+	margin-left: 20px;
+}
+
+.flow-gtd-info li {
+	margin: 8px 0;
+}

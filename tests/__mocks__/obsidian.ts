@@ -1,0 +1,120 @@
+// Mock Obsidian API for testing
+
+export class TFile {
+	path: string;
+	basename: string;
+
+	constructor(path?: string, basename?: string) {
+		this.path = path || '';
+		this.basename = basename || '';
+	}
+}
+
+export class Vault {
+	create = jest.fn();
+	modify = jest.fn();
+	read = jest.fn();
+	getAbstractFileByPath = jest.fn();
+}
+
+export class MetadataCache {
+	getFileCache = jest.fn();
+}
+
+export class FileManager {
+	processFrontMatter = jest.fn();
+}
+
+export class App {
+	vault = new Vault();
+	metadataCache = new MetadataCache();
+	fileManager = new FileManager();
+}
+
+export class Modal {
+	app: App;
+	contentEl: HTMLElement;
+
+	constructor(app: App) {
+		this.app = app;
+		this.contentEl = document.createElement('div');
+	}
+
+	open() {}
+	close() {}
+	onOpen() {}
+	onClose() {}
+}
+
+export class Setting {
+	constructor(containerEl: HTMLElement) {}
+	setName(name: string) { return this; }
+	setDesc(desc: string) { return this; }
+	addText(cb: (text: any) => void) {
+		cb({ setValue: jest.fn(), onChange: jest.fn(), setPlaceholder: jest.fn(), inputEl: document.createElement('input') });
+		return this;
+	}
+	addButton(cb: (button: any) => void) {
+		cb({ setButtonText: jest.fn().mockReturnThis(), setCta: jest.fn().mockReturnThis(), onClick: jest.fn(), setDisabled: jest.fn().mockReturnThis() });
+		return this;
+	}
+	addSlider(cb: (slider: any) => void) {
+		cb({ setLimits: jest.fn().mockReturnThis(), setValue: jest.fn().mockReturnThis(), setDynamicTooltip: jest.fn().mockReturnThis(), onChange: jest.fn() });
+		return this;
+	}
+	addDropdown(cb: (dropdown: any) => void) {
+		cb({ addOptions: jest.fn().mockReturnThis(), setValue: jest.fn().mockReturnThis(), onChange: jest.fn() });
+		return this;
+	}
+}
+
+export class Plugin {
+	app: App;
+	manifest: any;
+
+	constructor(app: App, manifest: any) {
+		this.app = app;
+		this.manifest = manifest;
+	}
+
+	addRibbonIcon(icon: string, title: string, callback: () => void) {}
+	addCommand(command: any) {}
+	addSettingTab(tab: any) {}
+	loadData() { return Promise.resolve({}); }
+	saveData(data: any) { return Promise.resolve(); }
+	registerEvent(event: any) {}
+	registerDomEvent(el: HTMLElement, event: string, callback: () => void) {}
+	registerInterval(interval: number) {}
+}
+
+export class PluginSettingTab {
+	app: App;
+	plugin: Plugin;
+	containerEl: HTMLElement;
+
+	constructor(app: App, plugin: Plugin) {
+		this.app = app;
+		this.plugin = plugin;
+		this.containerEl = document.createElement('div');
+	}
+
+	display() {}
+	hide() {}
+}
+
+export class Notice {
+	constructor(message: string, timeout?: number) {}
+}
+
+export function normalizePath(path: string): string {
+	return path.replace(/\\/g, '/');
+}
+
+export interface CachedMetadata {
+	frontmatter?: any;
+	sections?: any[];
+	headings?: any[];
+	links?: any[];
+	embeds?: any[];
+	tags?: any[];
+}
