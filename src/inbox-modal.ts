@@ -289,6 +289,10 @@ export class InboxProcessingModal extends Modal {
 					.setDisabled(this.isProcessing)
 					.onClick(() => this.skipCurrentItem()))
 				.addButton(button => button
+					.setButtonText('⚡ Refine All Remaining')
+					.setDisabled(this.isProcessing)
+					.onClick(() => this.processAllRemaining()))
+				.addButton(button => button
 					.setButtonText('Finish Session')
 					.setDisabled(this.isProcessing)
 					.onClick(() => this.finishSession()));
@@ -351,6 +355,63 @@ export class InboxProcessingModal extends Modal {
 		} catch (error) {
 			new Notice(`Error processing item: ${error.message}`);
 			console.error(error);
+		} finally {
+			this.isProcessing = false;
+			this.renderProcessing();
+		}
+	}
+
+	private async processAllRemaining() {
+		if (this.isProcessing) {
+			return;
+		}
+
+		this.isProcessing = true;
+		this.renderProcessing();
+
+		const remainingItems = this.mindsweepItems.slice(this.currentProcessingIndex);
+		new Notice(`Processing ${remainingItems.length} remaining items...`);
+
+		try {
+			for (let i = 0; i < remainingItems.length; i++) {
+				const absoluteIndex = this.currentProcessingIndex + i;
+				const item = remainingItems[i];
+
+				try {
+					const result = await this.processor.processInboxItem(item, this.existingProjects);
+
+					// Find the corresponding inbox item if we're in inbox mode
+					const inboxItem = this.inputMode === 'inbox'
+						? this.inboxItems[absoluteIndex]
+						: undefined;
+
+					this.processedItems.push({
+						original: item,
+						result,
+						selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
+							? result.suggestedProjects[0].project
+							: undefined,
+						selectedAction: result.recommendedAction,
+						selectedSpheres: result.recommendedSpheres || [],
+						inboxItem
+					});
+
+					this.currentProcessingIndex++;
+
+					// Update UI periodically to show progress
+					if ((i + 1) % 3 === 0 || i === remainingItems.length - 1) {
+						this.renderProcessing();
+						// Small delay to prevent UI freezing
+						await new Promise(resolve => setTimeout(resolve, 100));
+					}
+				} catch (error) {
+					new Notice(`Error processing "${item}": ${error.message}`);
+					console.error(error);
+					this.currentProcessingIndex++;
+				}
+			}
+
+			new Notice(`✅ Processed ${remainingItems.length} items`);
 		} finally {
 			this.isProcessing = false;
 			this.renderProcessing();
