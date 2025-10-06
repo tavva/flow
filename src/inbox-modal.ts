@@ -251,8 +251,9 @@ export class InboxProcessingModal extends Modal {
 		// Progress bar
 		const progress = (this.currentProcessingIndex / this.mindsweepItems.length) * 100;
 		const progressContainer = contentEl.createDiv('flow-gtd-progress');
+		const displayIndex = this.currentProcessingIndex + 1; // Display as 1-indexed
 		progressContainer.createEl('div', {
-			text: `${this.currentProcessingIndex} of ${this.mindsweepItems.length}`,
+			text: `${displayIndex} of ${this.mindsweepItems.length}`,
 			cls: 'flow-gtd-progress-text'
 		});
 		const progressBar = progressContainer.createDiv('flow-gtd-progress-bar');
@@ -262,7 +263,10 @@ export class InboxProcessingModal extends Modal {
 			// Show current item
 			const currentItem = this.mindsweepItems[this.currentProcessingIndex];
 			const itemContainer = contentEl.createDiv('flow-gtd-current-item');
-			itemContainer.createEl('p', { text: 'Current item:', cls: 'flow-gtd-label' });
+			itemContainer.createEl('p', {
+				text: `Current item (${displayIndex}/${this.mindsweepItems.length}):`,
+				cls: 'flow-gtd-label'
+			});
 			itemContainer.createEl('p', { text: currentItem, cls: 'flow-gtd-current-text' });
 
 			// Action buttons
@@ -298,17 +302,27 @@ export class InboxProcessingModal extends Modal {
 	}
 
 	private async processCurrentItem() {
+		if (this.isProcessing) {
+			return;
+		}
+
 		this.isProcessing = true;
 		this.renderProcessing();
 
-		const item = this.mindsweepItems[this.currentProcessingIndex];
+		const currentIndex = this.currentProcessingIndex;
+		const item = this.mindsweepItems[currentIndex];
 
 		try {
 			const result = await this.processor.processInboxItem(item, this.existingProjects);
 
+			// Verify we're still on the same item (in case of race conditions)
+			if (this.currentProcessingIndex !== currentIndex) {
+				return;
+			}
+
 			// Find the corresponding inbox item if we're in inbox mode
 			const inboxItem = this.inputMode === 'inbox'
-				? this.inboxItems[this.currentProcessingIndex]
+				? this.inboxItems[currentIndex]
 				: undefined;
 
 			this.processedItems.push({
@@ -369,17 +383,23 @@ export class InboxProcessingModal extends Modal {
 		this.processedItems.forEach((item, index) => {
 			const itemEl = listContainer.createDiv('flow-gtd-processed-item');
 
+			// Item number header
+			itemEl.createEl('h4', {
+				text: `Item ${index + 1}`,
+				cls: 'flow-gtd-item-number'
+			});
+
 			// Category badge
 			const badge = itemEl.createSpan({
 				text: item.result.category.toUpperCase().replace('-', ' '),
 				cls: `flow-gtd-badge flow-gtd-badge-${item.result.category}`
 			});
 
-			// Original item
+			// Original item - more prominent
 			itemEl.createEl('p', {
-				text: `Original: ${item.original}`,
+				text: `Original: "${item.original}"`,
 				cls: 'flow-gtd-original'
-			});
+			}).style.fontWeight = 'bold';
 
 			// Next action
 			itemEl.createEl('p', {
