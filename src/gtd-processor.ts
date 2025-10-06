@@ -330,7 +330,10 @@ Examples:
                 }
 
                 if (parsed.futureActions !== undefined) {
-                        if (!Array.isArray(parsed.futureActions) || !parsed.futureActions.every(action => typeof action === 'string')) {
+                        if (
+                                !Array.isArray(parsed.futureActions) ||
+                                !parsed.futureActions.every((action: unknown) => typeof action === 'string')
+                        ) {
                                 throw new GTDResponseValidationError('Invalid Claude response: "futureActions" must be an array of strings when provided');
                         }
                 }
@@ -386,7 +389,10 @@ Examples:
                 }
 
                 if (parsed.recommendedSpheres !== undefined) {
-                        if (!Array.isArray(parsed.recommendedSpheres) || !parsed.recommendedSpheres.every(sphere => typeof sphere === 'string')) {
+                        if (
+                                !Array.isArray(parsed.recommendedSpheres) ||
+                                !parsed.recommendedSpheres.every((sphere: unknown) => typeof sphere === 'string')
+                        ) {
                                 throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheres" must be an array of strings when provided');
                         }
                 }
