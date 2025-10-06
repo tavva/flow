@@ -612,13 +612,14 @@ export class InboxProcessingModal extends Modal {
 				.onClick(() => this.close()));
 	}
 
-	private async saveAllItems() {
-		new Notice('Saving items to vault...');
-		let savedCount = 0;
-		let skippedCount = 0;
+        private async saveAllItems() {
+                new Notice('Saving items to vault...');
+                let savedCount = 0;
+                let skippedCount = 0;
+                const deletionOffsets = new Map<string, number>();
 
-		for (const item of this.processedItems) {
-			try {
+                for (const item of this.processedItems) {
+                        try {
 				// Use edited values if available
 				const finalNextAction = item.editedName || item.result.nextAction;
 
@@ -672,11 +673,31 @@ export class InboxProcessingModal extends Modal {
 				}
 
 				// Delete the inbox item if it exists (even for trash items)
-				if (item.inboxItem) {
-					await this.inboxScanner.deleteInboxItem(item.inboxItem);
-				}
-			} catch (error) {
-				new Notice(`Error saving ${item.original}: ${error.message}`);
+                                if (item.inboxItem) {
+                                        let inboxItemToDelete = item.inboxItem;
+
+                                        if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+                                                const filePath = item.inboxItem.sourceFile.path;
+                                                const priorDeletions = deletionOffsets.get(filePath) ?? 0;
+                                                const originalLineNumber = item.inboxItem.lineNumber ?? 0;
+                                                const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
+
+                                                inboxItemToDelete = {
+                                                        ...item.inboxItem,
+                                                        lineNumber: adjustedLineNumber
+                                                };
+                                        }
+
+                                        await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+
+                                        if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+                                                const filePath = item.inboxItem.sourceFile.path;
+                                                const priorDeletions = deletionOffsets.get(filePath) ?? 0;
+                                                deletionOffsets.set(filePath, priorDeletions + 1);
+                                        }
+                                }
+                        } catch (error) {
+                                new Notice(`Error saving ${item.original}: ${error.message}`);
 				console.error(error);
 			}
 		}
