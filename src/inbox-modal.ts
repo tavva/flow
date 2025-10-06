@@ -404,12 +404,18 @@ export class InboxProcessingModal extends Modal {
 
 		listContainer.createEl('h3', { text: `Processed Items (${this.processedItems.length})` });
 
-		this.processedItems.forEach((item, index) => {
+		const itemsWithIndex = this.processedItems.map((item, index) => ({
+			item,
+			displayIndex: index + 1
+		}));
+
+		for (let i = itemsWithIndex.length - 1; i >= 0; i--) {
+			const { item, displayIndex } = itemsWithIndex[i];
 			const itemEl = listContainer.createDiv('flow-gtd-processed-item');
 
 			// Item number header
 			itemEl.createEl('h4', {
-				text: `Item ${index + 1}`,
+				text: `Item ${displayIndex}`,
 				cls: 'flow-gtd-item-number'
 			});
 
@@ -580,7 +586,7 @@ export class InboxProcessingModal extends Modal {
 					});
 				});
 			}
-		});
+		}
 	}
 
 	private getActionLabel(action: ProcessingAction): string {
