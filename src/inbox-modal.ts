@@ -4,6 +4,7 @@ import { FlowProjectScanner } from './flow-scanner';
 import { FileWriter } from './file-writer';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
 import { InboxScanner, InboxItem } from './inbox-scanner';
+import { GTDResponseValidationError } from './errors';
 
 interface ProcessedItem {
 	original: string;
@@ -618,40 +619,50 @@ export class InboxProcessingModal extends Modal {
 		let skippedCount = 0;
 
 		for (const item of this.processedItems) {
-			try {
-				// Use edited values if available
-				const finalNextAction = item.editedName || item.result.nextAction;
+                        try {
+                                // Use edited values if available
+                                const finalNextAction = item.editedName || item.result.nextAction;
+                                const trimmedNextAction = finalNextAction?.trim() ?? '';
+                                const sanitizedNextAction =
+                                        trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
 
-				// Create a modified result with edited values
-				const modifiedResult: GTDProcessingResult = {
-					...item.result,
-					nextAction: finalNextAction,
-					projectOutcome: item.editedProjectTitle || item.result.projectOutcome
-				};
+                                if (
+                                        ['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
+                                        trimmedNextAction.length === 0
+                                ) {
+                                        throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+                                }
 
-				switch (item.selectedAction) {
-					case 'create-project':
-						await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
-						savedCount++;
-						break;
+                                // Create a modified result with edited values
+                                const modifiedResult: GTDProcessingResult = {
+                                        ...item.result,
+                                        nextAction: sanitizedNextAction,
+                                        projectOutcome: item.editedProjectTitle || item.result.projectOutcome
+                                };
 
-					case 'add-to-project':
-						if (item.selectedProject) {
-							await this.writer.addNextActionToProject(
-								item.selectedProject,
-								finalNextAction
-							);
-							savedCount++;
-						} else {
-							new Notice(`No project selected for: ${item.original}`);
-							skippedCount++;
-						}
-						break;
+                                switch (item.selectedAction) {
+                                        case 'create-project':
+                                                await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
+                                                savedCount++;
+                                                break;
 
-					case 'next-actions-file':
-						await this.writer.addToNextActionsFile(finalNextAction, item.selectedSpheres);
-						savedCount++;
-						break;
+                                        case 'add-to-project':
+                                                if (item.selectedProject) {
+                                                        await this.writer.addNextActionToProject(
+                                                                item.selectedProject,
+                                                                sanitizedNextAction
+                                                        );
+                                                        savedCount++;
+                                                } else {
+                                                        new Notice(`No project selected for: ${item.original}`);
+                                                        skippedCount++;
+                                                }
+                                                break;
+
+                                        case 'next-actions-file':
+                                                await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
+                                                savedCount++;
+                                                break;
 
 					case 'someday-file':
 						await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
@@ -675,11 +686,17 @@ export class InboxProcessingModal extends Modal {
 				if (item.inboxItem) {
 					await this.inboxScanner.deleteInboxItem(item.inboxItem);
 				}
-			} catch (error) {
-				new Notice(`Error saving ${item.original}: ${error.message}`);
-				console.error(error);
-			}
-		}
+                        } catch (error) {
+                                if (error instanceof GTDResponseValidationError) {
+                                        new Notice(`Skipped ${item.original}: ${error.message}`);
+                                        skippedCount++;
+                                } else {
+                                        new Notice(`Error saving ${item.original}: ${error.message}`);
+                                        skippedCount++;
+                                }
+                                console.error(error);
+                        }
+                }
 
 		new Notice(`✅ Saved ${savedCount} items, skipped ${skippedCount}`);
 		this.close();

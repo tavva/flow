@@ -6,9 +6,48 @@ import Anthropic from '@anthropic-ai/sdk';
 jest.mock('@anthropic-ai/sdk');
 
 describe('GTDProcessor', () => {
-	let processor: GTDProcessor;
-	let mockClient: jest.Mocked<Anthropic>;
-	const mockApiKey = 'test-api-key';
+        let processor: GTDProcessor;
+        let mockClient: jest.Mocked<Anthropic>;
+        const mockApiKey = 'test-api-key';
+
+        type MockClaudeResponse = {
+                isActionable: boolean;
+                category: 'next-action' | 'project' | 'reference' | 'someday';
+                projectOutcome?: string;
+                nextAction: string;
+                reasoning: string;
+                futureActions?: string[];
+                suggestedProjects?: Array<{
+                        projectTitle: string;
+                        relevance: string;
+                        confidence: 'high' | 'medium' | 'low';
+                }>;
+                recommendedAction?:
+                        | 'create-project'
+                        | 'add-to-project'
+                        | 'next-actions-file'
+                        | 'someday-file'
+                        | 'reference'
+                        | 'trash';
+                recommendedActionReasoning?: string;
+                recommendedSpheres?: string[];
+                recommendedSpheresReasoning?: string;
+        };
+
+        const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
+                JSON.stringify({
+                        isActionable: true,
+                        category: 'next-action',
+                        nextAction: 'Default next action',
+                        reasoning: 'Default reasoning',
+                        futureActions: [],
+                        suggestedProjects: [],
+                        recommendedAction: 'next-actions-file',
+                        recommendedActionReasoning: 'Default recommended action reasoning',
+                        recommendedSpheres: [],
+                        recommendedSpheresReasoning: '',
+                        ...overrides
+                });
 
 	beforeEach(() => {
 		mockClient = {
@@ -44,18 +83,15 @@ describe('GTDProcessor', () => {
 		];
 
 		it('should process a simple next action', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Call Dr. Smith at 555-0123 to schedule dental cleaning',
-						reasoning: 'This is a single, specific action that can be completed in one call',
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Call Dr. Smith at 555-0123 to schedule dental cleaning',
+                                                reasoning: 'This is a single, specific action that can be completed in one call'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -77,24 +113,24 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should process a project with outcome and future actions', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'project',
-						projectOutcome: 'Summer vacation fully planned and booked',
-						nextAction: 'Email Sarah to discuss preferred vacation dates',
-						reasoning: 'Planning a vacation requires multiple steps',
-						futureActions: [
-							'Research destinations',
-							'Book flights',
-							'Reserve accommodation'
-						],
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                category: 'project',
+                                                projectOutcome: 'Summer vacation fully planned and booked',
+                                                nextAction: 'Email Sarah to discuss preferred vacation dates',
+                                                reasoning: 'Planning a vacation requires multiple steps',
+                                                futureActions: [
+                                                        'Research destinations',
+                                                        'Book flights',
+                                                        'Reserve accommodation'
+                                                ],
+                                                recommendedAction: 'create-project',
+                                                recommendedActionReasoning: 'This item requires a dedicated project with multiple follow-up steps.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -114,24 +150,24 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should suggest existing projects when relevant', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Research and compare gym membership options in my area',
-						reasoning: 'This is related to the existing Health and Fitness project',
-						suggestedProjects: [
-							{
-								projectTitle: 'Health and Fitness',
-								relevance: 'This action relates to getting started with fitness activities',
-								confidence: 'high'
-							}
-						]
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Research and compare gym membership options in my area',
+                                                reasoning: 'This is related to the existing Health and Fitness project',
+                                                suggestedProjects: [
+                                                        {
+                                                                projectTitle: 'Health and Fitness',
+                                                                relevance: 'This action relates to getting started with fitness activities',
+                                                                confidence: 'high'
+                                                        }
+                                                ],
+                                                recommendedAction: 'add-to-project',
+                                                recommendedActionReasoning: 'This should be tracked within the existing Health and Fitness project.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -158,24 +194,24 @@ describe('GTDProcessor', () => {
 				}
 			];
 
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Draft initial outline for 3-day office document',
-						reasoning: 'This relates to creating a counter argument document',
-						suggestedProjects: [
-							{
-								projectTitle: '3-day office counter argument',
-								relevance: 'This is about creating the same document',
-								confidence: 'high'
-							}
-						]
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Draft initial outline for 3-day office document',
+                                                reasoning: 'This relates to creating a counter argument document',
+                                                suggestedProjects: [
+                                                        {
+                                                                projectTitle: '3-day office counter argument',
+                                                                relevance: 'This is about creating the same document',
+                                                                confidence: 'high'
+                                                        }
+                                                ],
+                                                recommendedAction: 'add-to-project',
+                                                recommendedActionReasoning: 'This action belongs within the existing project.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -201,24 +237,24 @@ describe('GTDProcessor', () => {
 				}
 			];
 
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Set fitness goals',
-						reasoning: 'Related to health tracking',
-						suggestedProjects: [
-							{
-								projectTitle: 'Health and Fitness Goals',
-								relevance: 'Same project, different punctuation',
-								confidence: 'high'
-							}
-						]
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Set fitness goals',
+                                                reasoning: 'Related to health tracking',
+                                                suggestedProjects: [
+                                                        {
+                                                                projectTitle: 'Health and Fitness Goals',
+                                                                relevance: 'Same project, different punctuation',
+                                                                confidence: 'high'
+                                                        }
+                                                ],
+                                                recommendedAction: 'add-to-project',
+                                                recommendedActionReasoning: 'This belongs with the existing Health and Fitness project.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -229,24 +265,24 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should not match projects below similarity threshold', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Research quantum computing',
-						reasoning: 'Not related to existing projects',
-						suggestedProjects: [
-							{
-								projectTitle: 'Completely Unrelated Project Name',
-								relevance: 'Not actually related',
-								confidence: 'low'
-							}
-						]
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Research quantum computing',
+                                                reasoning: 'Not related to existing projects',
+                                                suggestedProjects: [
+                                                        {
+                                                                projectTitle: 'Completely Unrelated Project Name',
+                                                                relevance: 'Not actually related',
+                                                                confidence: 'low'
+                                                        }
+                                                ],
+                                                recommendedAction: 'next-actions-file',
+                                                recommendedActionReasoning: 'This is a standalone research task.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -275,24 +311,24 @@ describe('GTDProcessor', () => {
 				}
 			];
 
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Update website',
-						reasoning: 'Website work',
-						suggestedProjects: [
-							{
-								projectTitle: 'Website',
-								relevance: 'Exact match',
-								confidence: 'high'
-							}
-						]
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Update website',
+                                                reasoning: 'Website work',
+                                                suggestedProjects: [
+                                                        {
+                                                                projectTitle: 'Website',
+                                                                relevance: 'Exact match',
+                                                                confidence: 'high'
+                                                        }
+                                                ],
+                                                recommendedAction: 'add-to-project',
+                                                recommendedActionReasoning: 'This action should be tracked in the Website project.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -304,18 +340,15 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should include project context in the prompt', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Test action',
-						reasoning: 'Test',
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Test action',
+                                                reasoning: 'Test'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -330,18 +363,19 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should handle reference items', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: false,
-						category: 'reference',
-						nextAction: 'Store in recipe collection',
-						reasoning: 'This is information to keep for later, no action needed',
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                isActionable: false,
+                                                category: 'reference',
+                                                nextAction: 'Store in recipe collection',
+                                                reasoning: 'This is information to keep for later, no action needed',
+                                                recommendedAction: 'reference',
+                                                recommendedActionReasoning: 'Store it in your reference materials.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -354,18 +388,19 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should handle someday/maybe items', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: false,
-						category: 'someday',
-						nextAction: 'Add to someday/maybe list',
-						reasoning: 'Not actionable right now but might be in the future',
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                isActionable: false,
+                                                category: 'someday',
+                                                nextAction: 'Add to someday/maybe list',
+                                                reasoning: 'Not actionable right now but might be in the future',
+                                                recommendedAction: 'someday-file',
+                                                recommendedActionReasoning: 'Capture it in the someday/maybe list for future review.'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -378,18 +413,17 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should strip markdown code blocks from response', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: '```json\n' + JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Test action',
-						reasoning: 'Test',
-						suggestedProjects: []
-					}) + '\n```'
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: '```json\n' +
+                                                buildClaudeResponse({
+                                                        nextAction: 'Test action',
+                                                        reasoning: 'Test'
+                                                }) +
+                                                '\n```'
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -406,34 +440,105 @@ describe('GTDProcessor', () => {
 			).rejects.toThrow('Failed to process inbox item: API Error');
 		});
 
-		it('should throw error on invalid JSON response', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: 'Invalid JSON response'
-				}]
-			};
+                it('should throw error on invalid JSON response', async () => {
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: 'Invalid JSON response'
+                                }]
+                        };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
-			await expect(
-				processor.processInboxItem('test', [])
-			).rejects.toThrow('Failed to parse Claude response');
-		});
+                        await expect(
+                                processor.processInboxItem('test', [])
+                        ).rejects.toThrow('Failed to parse Claude response');
+                });
 
-		it('should handle empty project list', async () => {
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Test action',
-						reasoning: 'Test',
-						suggestedProjects: []
-					})
-				}]
-			};
+                it('should throw descriptive error when nextAction is missing', async () => {
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: JSON.stringify({
+                                                isActionable: true,
+                                                category: 'next-action',
+                                                reasoning: 'Test reasoning',
+                                                suggestedProjects: [],
+                                                recommendedAction: 'next-actions-file',
+                                                recommendedActionReasoning: 'Test recommendation.'
+                                        })
+                                }]
+                        };
+
+                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+                        await expect(
+                                processor.processInboxItem('test', [])
+                        ).rejects.toThrow(
+                                'Failed to process inbox item: Invalid Claude response: missing or invalid "nextAction" (expected string)'
+                        );
+                });
+
+                it('should throw descriptive error when actionable nextAction is empty', async () => {
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: JSON.stringify({
+                                                isActionable: true,
+                                                category: 'next-action',
+                                                nextAction: '   ',
+                                                reasoning: 'Test reasoning',
+                                                suggestedProjects: [],
+                                                recommendedAction: 'next-actions-file',
+                                                recommendedActionReasoning: 'Test recommendation.'
+                                        })
+                                }]
+                        };
+
+                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+                        await expect(
+                                processor.processInboxItem('test', [])
+                        ).rejects.toThrow(
+                                'Failed to process inbox item: Invalid Claude response: "nextAction" must be a non-empty string for actionable items'
+                        );
+                });
+
+                it('should throw descriptive error when recommendedAction is invalid', async () => {
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: JSON.stringify({
+                                                isActionable: true,
+                                                category: 'next-action',
+                                                nextAction: 'Test action',
+                                                reasoning: 'Test reasoning',
+                                                suggestedProjects: [],
+                                                recommendedAction: 'invalid-action',
+                                                recommendedActionReasoning: 'Test recommendation.'
+                                        })
+                                }]
+                        };
+
+                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+
+                        await expect(
+                                processor.processInboxItem('test', [])
+                        ).rejects.toThrow(
+                                'Failed to process inbox item: Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/trash'
+                        );
+                });
+
+                it('should handle empty project list', async () => {
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Test action',
+                                                reasoning: 'Test'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -455,18 +560,15 @@ describe('GTDProcessor', () => {
 				futureNextActions: []
 			}));
 
-			const mockResponse = {
-				content: [{
-					type: 'text' as const,
-					text: JSON.stringify({
-						isActionable: true,
-						category: 'next-action',
-						nextAction: 'Test action',
-						reasoning: 'Test',
-						suggestedProjects: []
-					})
-				}]
-			};
+                        const mockResponse = {
+                                content: [{
+                                        type: 'text' as const,
+                                        text: buildClaudeResponse({
+                                                nextAction: 'Test action',
+                                                reasoning: 'Test'
+                                        })
+                                }]
+                        };
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 

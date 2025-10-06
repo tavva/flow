@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { FlowProject, GTDProcessingResult, ProjectSuggestion } from './types';
+import { GTDResponseValidationError } from './errors';
 
 export class GTDProcessor {
 	private client: Anthropic;
@@ -216,54 +217,180 @@ Examples:
 	/**
 	 * Parse Claude's response into structured result
 	 */
-	private parseResponse(
-		responseText: string,
-		existingProjects: FlowProject[]
-	): GTDProcessingResult {
-		// Strip markdown code blocks if present
-		let cleanedText = responseText
-			.replace(/```json\n?/g, '')
-			.replace(/```\n?/g, '')
-			.trim();
+        private parseResponse(
+                responseText: string,
+                existingProjects: FlowProject[]
+        ): GTDProcessingResult {
+                // Strip markdown code blocks if present
+                let cleanedText = responseText
+                        .replace(/```json\n?/g, '')
+                        .replace(/```\n?/g, '')
+                        .trim();
 
-		try {
-			const parsed = JSON.parse(cleanedText);
+                let parsed: unknown;
 
-			// Map suggested projects to actual project objects
-			const suggestedProjects: ProjectSuggestion[] = [];
-			if (parsed.suggestedProjects && Array.isArray(parsed.suggestedProjects)) {
-				for (const suggestion of parsed.suggestedProjects) {
-					const project = this.findMatchingProject(
-						suggestion.projectTitle,
-						existingProjects
-					);
-					if (project) {
-						suggestedProjects.push({
-							project,
-							relevance: suggestion.relevance,
-							confidence: suggestion.confidence
-						});
-					}
-				}
-			}
+                try {
+                        parsed = JSON.parse(cleanedText);
+                } catch (error) {
+                        throw new Error(`Failed to parse Claude response: ${error.message}\n\nResponse: ${cleanedText}`);
+                }
 
-			return {
-				isActionable: parsed.isActionable,
-				category: parsed.category,
-				projectOutcome: parsed.projectOutcome,
-				nextAction: parsed.nextAction,
-				reasoning: parsed.reasoning,
-				futureActions: parsed.futureActions || [],
-				suggestedProjects,
-				recommendedAction: parsed.recommendedAction || 'next-actions-file',
-				recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
-				recommendedSpheres: parsed.recommendedSpheres || [],
-				recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || ''
-			};
-		} catch (error) {
-			throw new Error(`Failed to parse Claude response: ${error.message}\n\nResponse: ${cleanedText}`);
-		}
-	}
+                this.validateParsedResponse(parsed);
+
+                const suggestedProjects: ProjectSuggestion[] = [];
+                if (parsed.suggestedProjects && Array.isArray(parsed.suggestedProjects)) {
+                        for (const suggestion of parsed.suggestedProjects) {
+                                const project = this.findMatchingProject(
+                                        suggestion.projectTitle,
+                                        existingProjects
+                                );
+                                if (project) {
+                                        suggestedProjects.push({
+                                                project,
+                                                relevance: suggestion.relevance,
+                                                confidence: suggestion.confidence
+                                        });
+                                }
+                        }
+                }
+
+                return {
+                        isActionable: parsed.isActionable,
+                        category: parsed.category,
+                        projectOutcome: parsed.projectOutcome,
+                        nextAction: parsed.nextAction,
+                        reasoning: parsed.reasoning,
+                        futureActions: parsed.futureActions || [],
+                        suggestedProjects,
+                        recommendedAction: parsed.recommendedAction || 'next-actions-file',
+                        recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
+                        recommendedSpheres: parsed.recommendedSpheres || [],
+                        recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || ''
+                };
+        }
+
+        private validateParsedResponse(parsed: any): asserts parsed is {
+                isActionable: boolean;
+                category: 'next-action' | 'project' | 'reference' | 'someday';
+                projectOutcome?: string;
+                nextAction: string;
+                reasoning: string;
+                futureActions?: string[];
+                suggestedProjects?: Array<{
+                        projectTitle: string;
+                        relevance: string;
+                        confidence: 'high' | 'medium' | 'low';
+                }>;
+                recommendedAction?:
+                        | 'create-project'
+                        | 'add-to-project'
+                        | 'next-actions-file'
+                        | 'someday-file'
+                        | 'reference'
+                        | 'trash';
+                recommendedActionReasoning?: string;
+                recommendedSpheres?: string[];
+                recommendedSpheresReasoning?: string;
+        } {
+                if (typeof parsed !== 'object' || parsed === null) {
+                        throw new GTDResponseValidationError('Invalid Claude response: expected an object');
+                }
+
+                if (typeof parsed.isActionable !== 'boolean') {
+                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "isActionable" (expected boolean)');
+                }
+
+                const validCategories = new Set(['next-action', 'project', 'reference', 'someday']);
+                if (typeof parsed.category !== 'string' || !validCategories.has(parsed.category)) {
+                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "category" (expected one of next-action/project/reference/someday)');
+                }
+
+                if (typeof parsed.nextAction !== 'string') {
+                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "nextAction" (expected string)');
+                }
+
+                if (parsed.isActionable && parsed.nextAction.trim().length === 0) {
+                        throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a non-empty string for actionable items');
+                }
+
+                if (typeof parsed.reasoning !== 'string' || parsed.reasoning.trim().length === 0) {
+                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "reasoning" (expected non-empty string)');
+                }
+
+                if (parsed.category === 'project') {
+                        if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "projectOutcome" must be provided for project items');
+                        }
+                }
+
+                if (parsed.futureActions !== undefined) {
+                        if (!Array.isArray(parsed.futureActions) || !parsed.futureActions.every(action => typeof action === 'string')) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "futureActions" must be an array of strings when provided');
+                        }
+                }
+
+                if (parsed.suggestedProjects !== undefined) {
+                        if (!Array.isArray(parsed.suggestedProjects)) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "suggestedProjects" must be an array when provided');
+                        }
+
+                        for (const [index, suggestion] of parsed.suggestedProjects.entries()) {
+                                if (
+                                        typeof suggestion !== 'object' ||
+                                        suggestion === null ||
+                                        typeof suggestion.projectTitle !== 'string' ||
+                                        typeof suggestion.relevance !== 'string' ||
+                                        typeof suggestion.confidence !== 'string'
+                                ) {
+                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedProjects[${index}] must include string "projectTitle", "relevance", and "confidence"`);
+                                }
+
+                                const validConfidence = new Set(['high', 'medium', 'low']);
+                                if (!validConfidence.has(suggestion.confidence)) {
+                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedProjects[${index}].confidence must be one of high/medium/low`);
+                                }
+                        }
+                }
+
+                const validRecommendedActions = new Set([
+                        'create-project',
+                        'add-to-project',
+                        'next-actions-file',
+                        'someday-file',
+                        'reference',
+                        'trash'
+                ]);
+
+                if (parsed.recommendedAction !== undefined) {
+                        if (typeof parsed.recommendedAction !== 'string' || !validRecommendedActions.has(parsed.recommendedAction)) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/trash');
+                        }
+                }
+
+                if (parsed.recommendedActionReasoning !== undefined) {
+                        if (typeof parsed.recommendedActionReasoning !== 'string' || parsed.recommendedActionReasoning.trim().length === 0) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedActionReasoning" must be a non-empty string when provided');
+                        }
+                }
+
+                if (parsed.recommendedAction && parsed.recommendedAction === 'create-project') {
+                        if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "projectOutcome" must accompany a "create-project" recommendation');
+                        }
+                }
+
+                if (parsed.recommendedSpheres !== undefined) {
+                        if (!Array.isArray(parsed.recommendedSpheres) || !parsed.recommendedSpheres.every(sphere => typeof sphere === 'string')) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheres" must be an array of strings when provided');
+                        }
+                }
+
+                if (parsed.recommendedSpheresReasoning !== undefined) {
+                        if (typeof parsed.recommendedSpheresReasoning !== 'string') {
+                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheresReasoning" must be a string when provided');
+                        }
+                }
+        }
 
 	/**
 	 * Prioritize a list of next actions using Eisenhower Matrix

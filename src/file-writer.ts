@@ -1,5 +1,6 @@
 import { App, TFile, normalizePath } from 'obsidian';
 import { FlowProject, GTDProcessingResult, PluginSettings } from './types';
+import { GTDResponseValidationError } from './errors';
 
 export class FileWriter {
 	constructor(
@@ -10,14 +11,22 @@ export class FileWriter {
 	/**
 	 * Create a new Flow project file
 	 */
-	async createProject(
-		result: GTDProcessingResult,
-		originalItem: string,
-		spheres: string[] = []
-	): Promise<TFile> {
-		const fileName = this.generateFileName(result.projectOutcome || originalItem);
-		const folderPath = this.settings.projectsFolderPath;
-		const filePath = normalizePath(`${folderPath}/${fileName}.md`);
+        async createProject(
+                result: GTDProcessingResult,
+                originalItem: string,
+                spheres: string[] = []
+        ): Promise<TFile> {
+                if (!result.nextAction || result.nextAction.trim().length === 0) {
+                        throw new GTDResponseValidationError('Cannot create a project without a defined next action.');
+                }
+
+                if (!result.reasoning || result.reasoning.trim().length === 0) {
+                        throw new GTDResponseValidationError('Cannot create a project without supporting reasoning.');
+                }
+
+                const fileName = this.generateFileName(result.projectOutcome || originalItem);
+                const folderPath = this.settings.projectsFolderPath;
+                const filePath = normalizePath(`${folderPath}/${fileName}.md`);
 
 		// Check if file already exists
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
