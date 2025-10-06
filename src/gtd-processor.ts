@@ -317,4 +317,26 @@ Sort by suggestedOrder (1 being highest priority).`;
 			throw new Error(`Failed to prioritize actions: ${error.message}`);
 		}
 	}
+
+	/**
+	 * Make a simple AI call with a prompt and get text response
+	 */
+	async callAI(prompt: string): Promise<string> {
+		try {
+			const response = await this.client.messages.create({
+				model: 'claude-sonnet-4-20250514',
+				max_tokens: 500,
+				messages: [{ role: 'user', content: prompt }]
+			});
+
+			const content = response.content[0];
+			if (content.type !== 'text') {
+				throw new Error('Unexpected response type from Claude');
+			}
+
+			return content.text;
+		} catch (error) {
+			throw new Error(`AI call failed: ${error.message}`);
+		}
+	}
 }

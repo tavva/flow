@@ -226,3 +226,120 @@
 .flow-gtd-info li {
 	margin: 8px 0;
 }
+
+/* Editable fields */
+.flow-gtd-action-editor {
+	margin: 12px 0;
+}
+
+.flow-gtd-action-input,
+.flow-gtd-project-title-input {
+	width: 100%;
+	padding: 8px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+	font-family: var(--font-text);
+	margin-top: 4px;
+}
+
+.flow-gtd-action-input:focus,
+.flow-gtd-project-title-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.flow-gtd-project-title-editor {
+	margin: 12px 0;
+	padding: 12px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+}
+
+.flow-gtd-project-title-label-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.flow-gtd-ai-suggest-button {
+	margin-top: 8px;
+}
+
+.flow-gtd-item-number {
+	margin: 0 0 8px 0;
+	font-size: 14px;
+	color: var(--text-muted);
+}
+
+/* AI Recommendations and selectors */
+.flow-gtd-recommendation {
+	margin: 12px 0;
+	padding: 10px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.flow-gtd-ai-recommendation {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.flow-gtd-recommendation-reason {
+	font-size: 13px;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.flow-gtd-action-selector,
+.flow-gtd-project-selector {
+	margin: 12px 0;
+}
+
+.flow-gtd-sphere-selector {
+	margin: 12px 0;
+}
+
+.flow-gtd-sphere-recommendation {
+	margin-bottom: 8px;
+	padding: 8px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+}
+
+.flow-gtd-sphere-recommendation-text {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.flow-gtd-sphere-buttons {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.flow-gtd-sphere-button {
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: 13px;
+	transition: all 0.2s ease;
+}
+
+.flow-gtd-sphere-button:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.flow-gtd-sphere-button.selected {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}

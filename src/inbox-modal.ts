@@ -12,6 +12,8 @@ interface ProcessedItem {
 	selectedAction: ProcessingAction; // User's final decision
 	selectedSpheres: string[]; // User's sphere selection
 	inboxItem?: InboxItem; // Track the original inbox item for deletion
+	editedName?: string; // User's edited name for the next action
+	editedProjectTitle?: string; // User's edited project title (for create-project)
 }
 
 type InputMode = 'single' | 'bulk' | 'inbox';
@@ -387,7 +389,14 @@ export class InboxProcessingModal extends Modal {
 	}
 
 	private renderProcessedItems(container: HTMLElement) {
-		const listContainer = container.createDiv('flow-gtd-processed-list');
+		// Find existing processed list container or create new one
+		let listContainer = container.querySelector('.flow-gtd-processed-list') as HTMLElement;
+		if (listContainer) {
+			listContainer.empty();
+		} else {
+			listContainer = container.createDiv('flow-gtd-processed-list');
+		}
+
 		listContainer.createEl('h3', { text: `Processed Items (${this.processedItems.length})` });
 
 		this.processedItems.forEach((item, index) => {
@@ -411,10 +420,21 @@ export class InboxProcessingModal extends Modal {
 				cls: 'flow-gtd-original'
 			}).style.fontWeight = 'bold';
 
-			// Next action
-			itemEl.createEl('p', {
-				text: `Next Action: ${item.result.nextAction}`,
-				cls: 'flow-gtd-action'
+			// Editable next action
+			const actionContainer = itemEl.createDiv('flow-gtd-action-editor');
+			actionContainer.createEl('label', {
+				text: 'Next Action:',
+				cls: 'flow-gtd-label'
+			});
+
+			const actionInput = actionContainer.createEl('input', {
+				type: 'text',
+				cls: 'flow-gtd-action-input'
+			});
+			actionInput.value = item.editedName || item.result.nextAction;
+			actionInput.addEventListener('input', (e) => {
+				const value = (e.target as HTMLInputElement).value;
+				item.editedName = value !== item.result.nextAction ? value : undefined;
 			});
 
 			// AI Recommendation
@@ -445,28 +465,69 @@ export class InboxProcessingModal extends Modal {
 					dropdown.setValue(item.selectedAction);
 					dropdown.onChange((value) => {
 						item.selectedAction = value as ProcessingAction;
+						this.renderProcessedItems(container);
 					});
 				});
 
+			// Editable project title (only show if action is create-project)
+			if (item.selectedAction === 'create-project') {
+				const projectTitleEl = itemEl.createDiv('flow-gtd-project-title-editor');
+
+				const labelContainer = projectTitleEl.createDiv('flow-gtd-project-title-label-row');
+				labelContainer.createEl('label', {
+					text: 'Project Title:',
+					cls: 'flow-gtd-label'
+				});
+
+				const titleInput = projectTitleEl.createEl('input', {
+					type: 'text',
+					cls: 'flow-gtd-project-title-input',
+					placeholder: 'Enter project title or click "AI Suggest" below'
+				});
+				titleInput.value = item.editedProjectTitle || item.result.projectOutcome || '';
+				titleInput.addEventListener('input', (e) => {
+					const value = (e.target as HTMLInputElement).value;
+					item.editedProjectTitle = value || undefined;
+				});
+
+				// AI Suggest button
+				new Setting(projectTitleEl)
+					.addButton(button => button
+						.setButtonText('✨ AI Suggest Project Name')
+						.setClass('flow-gtd-ai-suggest-button')
+						.onClick(async () => {
+							button.setButtonText('Suggesting...');
+							button.setDisabled(true);
+							try {
+								const suggestedTitle = await this.suggestProjectName(item.original, item.result);
+								titleInput.value = suggestedTitle;
+								item.editedProjectTitle = suggestedTitle;
+							} catch (error) {
+								new Notice(`Error suggesting project name: ${error.message}`);
+							} finally {
+								button.setButtonText('✨ AI Suggest Project Name');
+								button.setDisabled(false);
+							}
+						}));
+			}
+
 			// Project selector (only show if action is add-to-project)
-			if (item.selectedAction === 'add-to-project' && item.result.suggestedProjects && item.result.suggestedProjects.length > 0) {
+			if (item.selectedAction === 'add-to-project') {
 				const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
 				projectSelectorEl.createEl('p', { text: 'Select project:', cls: 'flow-gtd-label' });
 
 				new Setting(projectSelectorEl)
 					.addDropdown(dropdown => {
-						item.result.suggestedProjects!.forEach(suggestion => {
-							dropdown.addOption(
-								suggestion.project.file,
-								`${suggestion.project.title} (${suggestion.confidence})`
-							);
+						// Add all existing projects to the dropdown
+						this.existingProjects.forEach(project => {
+							dropdown.addOption(project.file, project.title);
 						});
 
 						dropdown.setValue(item.selectedProject?.file || '');
 						dropdown.onChange((value) => {
-							item.selectedProject = item.result.suggestedProjects!.find(
-								s => s.project.file === value
-							)?.project;
+							item.selectedProject = this.existingProjects.find(
+								p => p.file === value
+							);
 						});
 					});
 			}
@@ -558,9 +619,19 @@ export class InboxProcessingModal extends Modal {
 
 		for (const item of this.processedItems) {
 			try {
+				// Use edited values if available
+				const finalNextAction = item.editedName || item.result.nextAction;
+
+				// Create a modified result with edited values
+				const modifiedResult: GTDProcessingResult = {
+					...item.result,
+					nextAction: finalNextAction,
+					projectOutcome: item.editedProjectTitle || item.result.projectOutcome
+				};
+
 				switch (item.selectedAction) {
 					case 'create-project':
-						await this.writer.createProject(item.result, item.original, item.selectedSpheres);
+						await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
 						savedCount++;
 						break;
 
@@ -568,7 +639,7 @@ export class InboxProcessingModal extends Modal {
 						if (item.selectedProject) {
 							await this.writer.addNextActionToProject(
 								item.selectedProject,
-								item.result.nextAction
+								finalNextAction
 							);
 							savedCount++;
 						} else {
@@ -578,7 +649,7 @@ export class InboxProcessingModal extends Modal {
 						break;
 
 					case 'next-actions-file':
-						await this.writer.addToNextActionsFile(item.result.nextAction, item.selectedSpheres);
+						await this.writer.addToNextActionsFile(finalNextAction, item.selectedSpheres);
 						savedCount++;
 						break;
 
@@ -612,5 +683,31 @@ export class InboxProcessingModal extends Modal {
 
 		new Notice(`✅ Saved ${savedCount} items, skipped ${skippedCount}`);
 		this.close();
+	}
+
+	private async suggestProjectName(originalItem: string, result: GTDProcessingResult): Promise<string> {
+		// Use the GTD processor to suggest a project name
+		const prompt = `Given this inbox item: "${originalItem}"
+
+The user wants to create a project for this. Suggest a clear, concise project title that:
+- States the desired outcome (not just the topic)
+- Is specific and measurable
+- Defines what "done" looks like
+- Uses past tense or completion-oriented language when appropriate
+
+Examples:
+- Good: "Website redesign complete and deployed"
+- Bad: "Website project"
+- Good: "Kitchen renovation finished"
+- Bad: "Kitchen stuff"
+
+Respond with ONLY the project title, nothing else.`;
+
+		try {
+			const response = await this.processor.callAI(prompt);
+			return response.trim();
+		} catch (error) {
+			throw new Error(`Failed to suggest project name: ${error.message}`);
+		}
 	}
 }
