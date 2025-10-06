@@ -6,20 +6,21 @@ import Anthropic from '@anthropic-ai/sdk';
 jest.mock('@anthropic-ai/sdk');
 
 describe('GTDProcessor', () => {
-	let processor: GTDProcessor;
-	let mockClient: jest.Mocked<Anthropic>;
-	const mockApiKey = 'test-api-key';
+        let processor: GTDProcessor;
+        let mockClient: jest.Mocked<Anthropic>;
+        const mockApiKey = 'test-api-key';
+        const mockModel = 'claude-test-model';
 
-	beforeEach(() => {
-		mockClient = {
-			messages: {
-				create: jest.fn(),
-			},
-		} as any;
+        beforeEach(() => {
+                mockClient = {
+                        messages: {
+                                create: jest.fn(),
+                        },
+                } as any;
 
-		(Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => mockClient);
-		processor = new GTDProcessor(mockApiKey);
-	});
+                (Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => mockClient);
+                processor = new GTDProcessor(mockApiKey, ['personal', 'work'], mockModel);
+        });
 
 	afterEach(() => {
 		jest.clearAllMocks();
@@ -68,12 +69,12 @@ describe('GTDProcessor', () => {
 				suggestedProjects: []
 			});
 
-			expect(mockClient.messages.create).toHaveBeenCalledWith(
-				expect.objectContaining({
-					model: 'claude-sonnet-4-20250514',
-					max_tokens: 2000
-				})
-			);
+                        expect(mockClient.messages.create).toHaveBeenCalledWith(
+                                expect.objectContaining({
+                                        model: mockModel,
+                                        max_tokens: 2000
+                                })
+                        );
 		});
 
 		it('should process a project with outcome and future actions', async () => {

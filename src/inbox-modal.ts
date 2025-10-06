@@ -34,16 +34,20 @@ export class InboxProcessingModal extends Modal {
 	private inboxScanner: InboxScanner;
 	private existingProjects: FlowProject[] = [];
 
-	constructor(
-		app: App,
-		private settings: PluginSettings,
-		private startWithInbox: boolean = false
-	) {
-		super(app);
-		this.processor = new GTDProcessor(settings.anthropicApiKey, settings.spheres);
-		this.scanner = new FlowProjectScanner(app);
-		this.writer = new FileWriter(app, settings);
-		this.inboxScanner = new InboxScanner(app, settings);
+        constructor(
+                app: App,
+                private settings: PluginSettings,
+                private startWithInbox: boolean = false
+        ) {
+                super(app);
+                this.processor = new GTDProcessor(
+                        settings.anthropicApiKey,
+                        settings.spheres,
+                        settings.anthropicModel
+                );
+                this.scanner = new FlowProjectScanner(app);
+                this.writer = new FileWriter(app, settings);
+                this.inboxScanner = new InboxScanner(app, settings);
 
 		if (startWithInbox) {
 			this.inputMode = 'inbox';
