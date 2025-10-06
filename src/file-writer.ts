@@ -16,8 +16,9 @@ export class FileWriter {
 		spheres: string[] = []
 	): Promise<TFile> {
 		const fileName = this.generateFileName(result.projectOutcome || originalItem);
-		const folderPath = this.settings.projectsFolderPath;
-		const filePath = normalizePath(`${folderPath}/${fileName}.md`);
+                const folderPath = normalizePath(this.settings.projectsFolderPath);
+                await this.ensureFolderExists(folderPath);
+                const filePath = normalizePath(`${folderPath}/${fileName}.md`);
 
 		// Check if file already exists
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
@@ -25,11 +26,28 @@ export class FileWriter {
 			throw new Error(`File ${filePath} already exists`);
 		}
 
-		const content = this.buildProjectContent(result, originalItem, spheres);
-		const file = await this.app.vault.create(filePath, content);
+                const content = this.buildProjectContent(result, originalItem, spheres);
+                const file = await this.app.vault.create(filePath, content);
 
-		return file;
-	}
+                return file;
+        }
+
+        private async ensureFolderExists(folderPath: string): Promise<void> {
+                const normalizedPath = normalizePath(folderPath);
+                const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+                if (existing) {
+                        return;
+                }
+
+                const lastSlashIndex = normalizedPath.lastIndexOf('/');
+                if (lastSlashIndex > 0) {
+                        const parentPath = normalizedPath.slice(0, lastSlashIndex);
+                        await this.ensureFolderExists(parentPath);
+                }
+
+                await this.app.vault.createFolder(normalizedPath);
+        }
 
 	/**
 	 * Add an action to the Next Actions file
