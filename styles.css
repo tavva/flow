@@ -2,8 +2,14 @@
 
 .flow-gtd-inbox-modal {
 	padding: 20px;
-	max-width: 800px;
+	max-width: 1200px;
 	margin: 0 auto;
+}
+
+/* Override Obsidian's modal width for our inbox modal */
+.modal:has(.flow-gtd-inbox-modal) {
+	width: 90vw !important;
+	max-width: 1200px !important;
 }
 
 .flow-gtd-description {
