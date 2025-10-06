@@ -38,23 +38,25 @@ export interface ProjectSuggestion {
 }
 
 export interface PluginSettings {
-	anthropicApiKey: string;
-	defaultPriority: number;
-	defaultStatus: string;
-	inboxFilesFolderPath: string;
-	inboxFolderPath: string;
-	nextActionsFilePath: string;
+        anthropicApiKey: string;
+        anthropicModel: string;
+        defaultPriority: number;
+        defaultStatus: string;
+        inboxFilesFolderPath: string;
+        inboxFolderPath: string;
+        nextActionsFilePath: string;
 	somedayFilePath: string;
 	projectsFolderPath: string;
 	spheres: string[];
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-	anthropicApiKey: '',
-	defaultPriority: 2,
-	defaultStatus: 'live',
-	inboxFilesFolderPath: 'Flow Inbox Files',
-	inboxFolderPath: 'Flow Inbox Folder',
+        anthropicApiKey: '',
+        anthropicModel: 'claude-sonnet-4-20250514',
+        defaultPriority: 2,
+        defaultStatus: 'live',
+        inboxFilesFolderPath: 'Flow Inbox Files',
+        inboxFolderPath: 'Flow Inbox Folder',
 	nextActionsFilePath: 'Next actions.md',
 	somedayFilePath: 'Someday.md',
 	projectsFolderPath: 'Projects',

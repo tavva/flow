@@ -2,16 +2,22 @@ import Anthropic from '@anthropic-ai/sdk';
 import { FlowProject, GTDProcessingResult, ProjectSuggestion } from './types';
 
 export class GTDProcessor {
-	private client: Anthropic;
-	private availableSpheres: string[];
+        private client: Anthropic;
+        private availableSpheres: string[];
+        private model: string;
 
-	constructor(apiKey: string, spheres: string[] = ['personal', 'work']) {
-		this.client = new Anthropic({
-			apiKey,
-			dangerouslyAllowBrowser: true
-		});
-		this.availableSpheres = spheres;
-	}
+        constructor(
+                apiKey: string,
+                spheres: string[] = ['personal', 'work'],
+                model: string = 'claude-sonnet-4-20250514'
+        ) {
+                this.client = new Anthropic({
+                        apiKey,
+                        dangerouslyAllowBrowser: true
+                });
+                this.availableSpheres = spheres;
+                this.model = model;
+        }
 
 	/**
 	 * Process an inbox item with context from existing Flow projects
@@ -23,11 +29,11 @@ export class GTDProcessor {
 		const prompt = this.buildProcessingPrompt(item, existingProjects);
 
 		try {
-			const response = await this.client.messages.create({
-				model: 'claude-sonnet-4-20250514',
-				max_tokens: 2000,
-				messages: [{ role: 'user', content: prompt }]
-			});
+                        const response = await this.client.messages.create({
+                                model: this.model,
+                                max_tokens: 2000,
+                                messages: [{ role: 'user', content: prompt }]
+                        });
 
 			const content = response.content[0];
 			if (content.type !== 'text') {
@@ -296,11 +302,11 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
 Sort by suggestedOrder (1 being highest priority).`;
 
 		try {
-			const response = await this.client.messages.create({
-				model: 'claude-sonnet-4-20250514',
-				max_tokens: 3000,
-				messages: [{ role: 'user', content: prompt }]
-			});
+                        const response = await this.client.messages.create({
+                                model: this.model,
+                                max_tokens: 3000,
+                                messages: [{ role: 'user', content: prompt }]
+                        });
 
 			const content = response.content[0];
 			if (content.type !== 'text') {
@@ -323,11 +329,11 @@ Sort by suggestedOrder (1 being highest priority).`;
 	 */
 	async callAI(prompt: string): Promise<string> {
 		try {
-			const response = await this.client.messages.create({
-				model: 'claude-sonnet-4-20250514',
-				max_tokens: 500,
-				messages: [{ role: 'user', content: prompt }]
-			});
+                        const response = await this.client.messages.create({
+                                model: this.model,
+                                max_tokens: 500,
+                                messages: [{ role: 'user', content: prompt }]
+                        });
 
 			const content = response.content[0];
 			if (content.type !== 'text') {
