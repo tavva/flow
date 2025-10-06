@@ -280,7 +280,11 @@ export class InboxProcessingModal extends Modal {
 				.addButton(button => button
 					.setButtonText('Keep As-Is')
 					.setDisabled(this.isProcessing)
-					.onClick(() => this.skipCurrentItem()));
+					.onClick(() => this.skipCurrentItem()))
+				.addButton(button => button
+					.setButtonText('Finish Session')
+					.setDisabled(this.isProcessing)
+					.onClick(() => this.finishSession()));
 		} else {
 			// Processing complete
 			contentEl.createDiv('flow-gtd-complete').createEl('p', {
@@ -374,6 +378,12 @@ export class InboxProcessingModal extends Modal {
 
 		this.currentProcessingIndex++;
 		this.renderProcessing();
+	}
+
+	private finishSession() {
+		// Skip directly to review with items processed so far
+		this.currentProcessingIndex = this.mindsweepItems.length;
+		this.renderReview();
 	}
 
 	private renderProcessedItems(container: HTMLElement) {
