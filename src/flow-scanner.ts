@@ -83,25 +83,26 @@ export class FlowProjectScanner {
 	/**
 	 * Extracts content from a markdown section
 	 */
-	private extractSection(content: string, heading: string): string[] {
-		const lines = content.split('\n');
-		const items: string[] = [];
-		let inSection = false;
-		let sectionLevel = 0;
+        private extractSection(content: string, heading: string): string[] {
+                const lines = content.split('\n');
+                const items: string[] = [];
+                let inSection = false;
+                let sectionLevel = 0;
+                const normalizedHeading = heading.replace(/^#+\s+/, '').toLowerCase();
 
-		for (const line of lines) {
-			// Check if this is a heading line
-			const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+                for (const line of lines) {
+                        // Check if this is a heading line
+                        const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
 
-			if (headingMatch) {
-				const level = headingMatch[1].length;
-				const title = headingMatch[2].trim();
+                        if (headingMatch) {
+                                const level = headingMatch[1].length;
+                                const title = headingMatch[2].trim();
 
-				if (title === heading.replace(/^#+\s+/, '')) {
-					inSection = true;
-					sectionLevel = level;
-					continue;
-				} else if (inSection && level <= sectionLevel) {
+                                if (title.toLowerCase() === normalizedHeading) {
+                                        inSection = true;
+                                        sectionLevel = level;
+                                        continue;
+                                } else if (inSection && level <= sectionLevel) {
 					// We've hit another section at the same or higher level
 					break;
 				}
