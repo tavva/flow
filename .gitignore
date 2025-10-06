@@ -26,3 +26,6 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Data files
+data.json
