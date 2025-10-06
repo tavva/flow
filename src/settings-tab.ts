@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import FlowGTDCoachPlugin from '../main';
+import { DEFAULT_SETTINGS } from './types';
 
 export class FlowGTDSettingTab extends PluginSettingTab {
 	plugin: FlowGTDCoachPlugin;
@@ -17,21 +18,33 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: 'Flow GTD Coach Settings' });
 
 		// Anthropic API Key
-		new Setting(containerEl)
-			.setName('Anthropic API Key')
-			.setDesc('Enter your Anthropic API key to enable AI-powered GTD processing')
-			.addText(text => text
-				.setPlaceholder('sk-ant-...')
-				.setValue(this.plugin.settings.anthropicApiKey)
-				.onChange(async (value) => {
-					this.plugin.settings.anthropicApiKey = value;
-					await this.plugin.saveSettings();
-				}))
-			.addButton(button => button
-				.setButtonText('Get API Key')
-				.onClick(() => {
-					window.open('https://console.anthropic.com/settings/keys', '_blank');
-				}));
+                new Setting(containerEl)
+                        .setName('Anthropic API Key')
+                        .setDesc('Enter your Anthropic API key to enable AI-powered GTD processing')
+                        .addText(text => text
+                                .setPlaceholder('sk-ant-...')
+                                .setValue(this.plugin.settings.anthropicApiKey)
+                                .onChange(async (value) => {
+                                        this.plugin.settings.anthropicApiKey = value;
+                                        await this.plugin.saveSettings();
+                                }))
+                        .addButton(button => button
+                                .setButtonText('Get API Key')
+                                .onClick(() => {
+                                        window.open('https://console.anthropic.com/settings/keys', '_blank');
+                                }));
+
+                new Setting(containerEl)
+                        .setName('Anthropic Model')
+                        .setDesc('Specify the Anthropic Messages API model ID to use for GTD processing (e.g., claude-sonnet-4-20250514).')
+                        .addText(text => text
+                                .setPlaceholder(DEFAULT_SETTINGS.anthropicModel)
+                                .setValue(this.plugin.settings.anthropicModel)
+                                .onChange(async (value) => {
+                                        const trimmedValue = value.trim() || DEFAULT_SETTINGS.anthropicModel;
+                                        this.plugin.settings.anthropicModel = trimmedValue;
+                                        await this.plugin.saveSettings();
+                                }));
 
 		// Add info about API key
 		containerEl.createDiv('setting-item-description').innerHTML = `

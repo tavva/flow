@@ -91,18 +91,31 @@ export class InboxScanner {
 		return items;
 	}
 
-	async deleteInboxItem(item: InboxItem): Promise<void> {
-		if (item.type === 'line' && item.lineNumber !== undefined) {
-			// Remove the specific line from the file
-			const content = await this.app.vault.read(item.sourceFile);
-			const lines = content.split('\n');
-			lines.splice(item.lineNumber - 1, 1);
-			await this.app.vault.modify(item.sourceFile, lines.join('\n'));
-		} else if (item.type === 'note') {
-			// Delete the entire file
-			await this.app.vault.delete(item.sourceFile);
-		}
-	}
+        async deleteInboxItem(item: InboxItem): Promise<void> {
+                if (item.type === 'line' && item.lineNumber !== undefined) {
+                        const content = await this.app.vault.read(item.sourceFile);
+                        const lines = content.split('\n');
+
+                        const nonEmptyIndexes = lines
+                                .map((line, index) => ({ line, index }))
+                                .filter(entry => entry.line.trim() !== '');
+
+                        if (nonEmptyIndexes.length === 0) {
+                                return;
+                        }
+
+                        const targetOrdinal = Math.min(item.lineNumber, nonEmptyIndexes.length);
+                        const targetEntry = nonEmptyIndexes[targetOrdinal - 1];
+
+                        if (targetEntry) {
+                                lines.splice(targetEntry.index, 1);
+                                await this.app.vault.modify(item.sourceFile, lines.join('\n'));
+                        }
+                } else if (item.type === 'note') {
+                        // Delete the entire file
+                        await this.app.vault.delete(item.sourceFile);
+                }
+        }
 
 	async getInboxCount(): Promise<{ lineCount: number; noteCount: number }> {
 		const lineItems = await this.getLineItems();

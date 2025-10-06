@@ -11,22 +11,23 @@ export class FileWriter {
 	/**
 	 * Create a new Flow project file
 	 */
-        async createProject(
-                result: GTDProcessingResult,
-                originalItem: string,
-                spheres: string[] = []
-        ): Promise<TFile> {
-                if (!result.nextAction || result.nextAction.trim().length === 0) {
-                        throw new GTDResponseValidationError('Cannot create a project without a defined next action.');
-                }
+	async createProject(
+		result: GTDProcessingResult,
+		originalItem: string,
+		spheres: string[] = []
+	): Promise<TFile> {
+		if (!result.nextAction || result.nextAction.trim().length === 0) {
+			throw new GTDResponseValidationError('Cannot create a project without a defined next action.');
+		}
 
-                if (!result.reasoning || result.reasoning.trim().length === 0) {
-                        throw new GTDResponseValidationError('Cannot create a project without supporting reasoning.');
-                }
+		if (!result.reasoning || result.reasoning.trim().length === 0) {
+			throw new GTDResponseValidationError('Cannot create a project without supporting reasoning.');
+		}
 
-                const fileName = this.generateFileName(result.projectOutcome || originalItem);
-                const folderPath = this.settings.projectsFolderPath;
-                const filePath = normalizePath(`${folderPath}/${fileName}.md`);
+		const fileName = this.generateFileName(result.projectOutcome || originalItem);
+		const folderPath = normalizePath(this.settings.projectsFolderPath);
+		await this.ensureFolderExists(folderPath);
+		const filePath = normalizePath(`${folderPath}/${fileName}.md`);
 
 		// Check if file already exists
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
@@ -38,6 +39,23 @@ export class FileWriter {
 		const file = await this.app.vault.create(filePath, content);
 
 		return file;
+	}
+
+	private async ensureFolderExists(folderPath: string): Promise<void> {
+		const normalizedPath = normalizePath(folderPath);
+		const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+		if (existing) {
+			return;
+		}
+
+		const lastSlashIndex = normalizedPath.lastIndexOf('/');
+		if (lastSlashIndex > 0) {
+			const parentPath = normalizedPath.slice(0, lastSlashIndex);
+			await this.ensureFolderExists(parentPath);
+		}
+
+		await this.app.vault.createFolder(normalizedPath);
 	}
 
 	/**

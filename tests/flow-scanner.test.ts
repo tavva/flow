@@ -174,11 +174,11 @@ status: live
 			});
 		});
 
-		it('should extract next actions from markdown content', async () => {
-			const mockFile = new MockTFile('project.md', 'Project') as TFile;
-			const mockMetadata: Partial<CachedMetadata> = {
-				frontmatter: { tags: 'project/personal' }
-			};
+                it('should extract next actions from markdown content', async () => {
+                        const mockFile = new MockTFile('project.md', 'Project') as TFile;
+                        const mockMetadata: Partial<CachedMetadata> = {
+                                frontmatter: { tags: 'project/personal' }
+                        };
 			const mockContent = `## Next actions
 - First action
 - Second action with details
@@ -199,10 +199,31 @@ status: live
 				'Second action with details',
 				'Third action'
 			]);
-			expect(result?.futureNextActions).toEqual(['Future action 1']);
-		});
+                        expect(result?.futureNextActions).toEqual(['Future action 1']);
+                });
 
-		it('should handle sections with different heading levels', async () => {
+                it('should match section headings regardless of case', async () => {
+                        const mockFile = new MockTFile('project.md', 'Project') as TFile;
+                        const mockMetadata: Partial<CachedMetadata> = {
+                                frontmatter: { tags: 'project/personal' }
+                        };
+                        const mockContent = `## Next Actions
+- Mixed Case Action
+
+## FUTURE NEXT ACTIONS
+- Uppercase Future Action
+`;
+
+                        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+                        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+                        const result = await scanner.parseProjectFile(mockFile);
+
+                        expect(result?.nextActions).toEqual(['Mixed Case Action']);
+                        expect(result?.futureNextActions).toEqual(['Uppercase Future Action']);
+                });
+
+                it('should handle sections with different heading levels', async () => {
 			const mockFile = new MockTFile('project.md', 'Project') as TFile;
 			const mockMetadata: Partial<CachedMetadata> = {
 				frontmatter: { tags: 'project/work' }

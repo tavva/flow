@@ -6,48 +6,49 @@ import Anthropic from '@anthropic-ai/sdk';
 jest.mock('@anthropic-ai/sdk');
 
 describe('GTDProcessor', () => {
-        let processor: GTDProcessor;
-        let mockClient: jest.Mocked<Anthropic>;
-        const mockApiKey = 'test-api-key';
+	let processor: GTDProcessor;
+	let mockClient: jest.Mocked<Anthropic>;
+	const mockApiKey = 'test-api-key';
+	const mockModel = 'claude-test-model';
 
-        type MockClaudeResponse = {
-                isActionable: boolean;
-                category: 'next-action' | 'project' | 'reference' | 'someday';
-                projectOutcome?: string;
-                nextAction: string;
-                reasoning: string;
-                futureActions?: string[];
-                suggestedProjects?: Array<{
-                        projectTitle: string;
-                        relevance: string;
-                        confidence: 'high' | 'medium' | 'low';
-                }>;
-                recommendedAction?:
-                        | 'create-project'
-                        | 'add-to-project'
-                        | 'next-actions-file'
-                        | 'someday-file'
-                        | 'reference'
-                        | 'trash';
-                recommendedActionReasoning?: string;
-                recommendedSpheres?: string[];
-                recommendedSpheresReasoning?: string;
-        };
+	type MockClaudeResponse = {
+		isActionable: boolean;
+		category: 'next-action' | 'project' | 'reference' | 'someday';
+		projectOutcome?: string;
+		nextAction: string;
+		reasoning: string;
+		futureActions?: string[];
+		suggestedProjects?: Array<{
+			projectTitle: string;
+			relevance: string;
+			confidence: 'high' | 'medium' | 'low';
+		}>;
+		recommendedAction?:
+			| 'create-project'
+			| 'add-to-project'
+			| 'next-actions-file'
+			| 'someday-file'
+			| 'reference'
+			| 'trash';
+		recommendedActionReasoning?: string;
+		recommendedSpheres?: string[];
+		recommendedSpheresReasoning?: string;
+	};
 
-        const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
-                JSON.stringify({
-                        isActionable: true,
-                        category: 'next-action',
-                        nextAction: 'Default next action',
-                        reasoning: 'Default reasoning',
-                        futureActions: [],
-                        suggestedProjects: [],
-                        recommendedAction: 'next-actions-file',
-                        recommendedActionReasoning: 'Default recommended action reasoning',
-                        recommendedSpheres: [],
-                        recommendedSpheresReasoning: '',
-                        ...overrides
-                });
+	const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
+		JSON.stringify({
+			isActionable: true,
+			category: 'next-action',
+			nextAction: 'Default next action',
+			reasoning: 'Default reasoning',
+			futureActions: [],
+			suggestedProjects: [],
+			recommendedAction: 'next-actions-file',
+			recommendedActionReasoning: 'Default recommended action reasoning',
+			recommendedSpheres: [],
+			recommendedSpheresReasoning: '',
+			...overrides
+		});
 
 	beforeEach(() => {
 		mockClient = {
@@ -57,7 +58,7 @@ describe('GTDProcessor', () => {
 		} as any;
 
 		(Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => mockClient);
-		processor = new GTDProcessor(mockApiKey);
+		processor = new GTDProcessor(mockApiKey, ['personal', 'work'], mockModel);
 	});
 
 	afterEach(() => {
@@ -83,15 +84,15 @@ describe('GTDProcessor', () => {
 		];
 
 		it('should process a simple next action', async () => {
-                        const mockResponse = {
-                                content: [{
-                                        type: 'text' as const,
-                                        text: buildClaudeResponse({
-                                                nextAction: 'Call Dr. Smith at 555-0123 to schedule dental cleaning',
-                                                reasoning: 'This is a single, specific action that can be completed in one call'
-                                        })
-                                }]
-                        };
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: buildClaudeResponse({
+						nextAction: 'Call Dr. Smith at 555-0123 to schedule dental cleaning',
+						reasoning: 'This is a single, specific action that can be completed in one call'
+					})
+				}]
+			};
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 
@@ -106,31 +107,31 @@ describe('GTDProcessor', () => {
 
 			expect(mockClient.messages.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					model: 'claude-sonnet-4-20250514',
+					model: mockModel,
 					max_tokens: 2000
 				})
 			);
 		});
 
 		it('should process a project with outcome and future actions', async () => {
-                        const mockResponse = {
-                                content: [{
-                                        type: 'text' as const,
-                                        text: buildClaudeResponse({
-                                                category: 'project',
-                                                projectOutcome: 'Summer vacation fully planned and booked',
-                                                nextAction: 'Email Sarah to discuss preferred vacation dates',
-                                                reasoning: 'Planning a vacation requires multiple steps',
-                                                futureActions: [
-                                                        'Research destinations',
-                                                        'Book flights',
-                                                        'Reserve accommodation'
-                                                ],
-                                                recommendedAction: 'create-project',
-                                                recommendedActionReasoning: 'This item requires a dedicated project with multiple follow-up steps.'
-                                        })
-                                }]
-                        };
+			const mockResponse = {
+				content: [{
+					type: 'text' as const,
+					text: buildClaudeResponse({
+						category: 'project',
+						projectOutcome: 'Summer vacation fully planned and booked',
+						nextAction: 'Email Sarah to discuss preferred vacation dates',
+						reasoning: 'Planning a vacation requires multiple steps',
+						futureActions: [
+							'Research destinations',
+							'Book flights',
+							'Reserve accommodation'
+						],
+						recommendedAction: 'create-project',
+						recommendedActionReasoning: 'This item requires a dedicated project with multiple follow-up steps.'
+					})
+				}]
+			};
 
 			mockClient.messages.create.mockResolvedValue(mockResponse as any);
 

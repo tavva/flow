@@ -35,16 +35,20 @@ export class InboxProcessingModal extends Modal {
 	private inboxScanner: InboxScanner;
 	private existingProjects: FlowProject[] = [];
 
-	constructor(
-		app: App,
-		private settings: PluginSettings,
-		private startWithInbox: boolean = false
-	) {
-		super(app);
-		this.processor = new GTDProcessor(settings.anthropicApiKey, settings.spheres);
-		this.scanner = new FlowProjectScanner(app);
-		this.writer = new FileWriter(app, settings);
-		this.inboxScanner = new InboxScanner(app, settings);
+        constructor(
+                app: App,
+                private settings: PluginSettings,
+                private startWithInbox: boolean = false
+        ) {
+                super(app);
+                this.processor = new GTDProcessor(
+                        settings.anthropicApiKey,
+                        settings.spheres,
+                        settings.anthropicModel
+                );
+                this.scanner = new FlowProjectScanner(app);
+                this.writer = new FileWriter(app, settings);
+                this.inboxScanner = new InboxScanner(app, settings);
 
 		if (startWithInbox) {
 			this.inputMode = 'inbox';
@@ -617,52 +621,53 @@ export class InboxProcessingModal extends Modal {
 		new Notice('Saving items to vault...');
 		let savedCount = 0;
 		let skippedCount = 0;
+		const deletionOffsets = new Map<string, number>();
 
 		for (const item of this.processedItems) {
-                        try {
-                                // Use edited values if available
-                                const finalNextAction = item.editedName || item.result.nextAction;
-                                const trimmedNextAction = finalNextAction?.trim() ?? '';
-                                const sanitizedNextAction =
-                                        trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
+			try {
+				// Use edited values if available
+				const finalNextAction = item.editedName || item.result.nextAction;
+				const trimmedNextAction = finalNextAction?.trim() ?? '';
+				const sanitizedNextAction =
+					trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
 
-                                if (
-                                        ['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-                                        trimmedNextAction.length === 0
-                                ) {
-                                        throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
-                                }
+				if (
+					['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
+					trimmedNextAction.length === 0
+				) {
+					throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+				}
 
-                                // Create a modified result with edited values
-                                const modifiedResult: GTDProcessingResult = {
-                                        ...item.result,
-                                        nextAction: sanitizedNextAction,
-                                        projectOutcome: item.editedProjectTitle || item.result.projectOutcome
-                                };
+				// Create a modified result with edited values
+				const modifiedResult: GTDProcessingResult = {
+					...item.result,
+					nextAction: sanitizedNextAction,
+					projectOutcome: item.editedProjectTitle || item.result.projectOutcome
+				};
 
-                                switch (item.selectedAction) {
-                                        case 'create-project':
-                                                await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
-                                                savedCount++;
-                                                break;
+				switch (item.selectedAction) {
+					case 'create-project':
+						await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
+						savedCount++;
+						break;
 
-                                        case 'add-to-project':
-                                                if (item.selectedProject) {
-                                                        await this.writer.addNextActionToProject(
-                                                                item.selectedProject,
-                                                                sanitizedNextAction
-                                                        );
-                                                        savedCount++;
-                                                } else {
-                                                        new Notice(`No project selected for: ${item.original}`);
-                                                        skippedCount++;
-                                                }
-                                                break;
+					case 'add-to-project':
+						if (item.selectedProject) {
+							await this.writer.addNextActionToProject(
+								item.selectedProject,
+								sanitizedNextAction
+							);
+							savedCount++;
+						} else {
+							new Notice(`No project selected for: ${item.original}`);
+							skippedCount++;
+						}
+						break;
 
-                                        case 'next-actions-file':
-                                                await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
-                                                savedCount++;
-                                                break;
+					case 'next-actions-file':
+						await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
+						savedCount++;
+						break;
 
 					case 'someday-file':
 						await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
@@ -684,19 +689,39 @@ export class InboxProcessingModal extends Modal {
 
 				// Delete the inbox item if it exists (even for trash items)
 				if (item.inboxItem) {
-					await this.inboxScanner.deleteInboxItem(item.inboxItem);
+					let inboxItemToDelete = item.inboxItem;
+
+					if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+						const filePath = item.inboxItem.sourceFile.path;
+						const priorDeletions = deletionOffsets.get(filePath) ?? 0;
+						const originalLineNumber = item.inboxItem.lineNumber ?? 0;
+						const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
+
+						inboxItemToDelete = {
+							...item.inboxItem,
+							lineNumber: adjustedLineNumber
+						};
+					}
+
+					await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+
+					if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+						const filePath = item.inboxItem.sourceFile.path;
+						const priorDeletions = deletionOffsets.get(filePath) ?? 0;
+						deletionOffsets.set(filePath, priorDeletions + 1);
+					}
 				}
-                        } catch (error) {
-                                if (error instanceof GTDResponseValidationError) {
-                                        new Notice(`Skipped ${item.original}: ${error.message}`);
-                                        skippedCount++;
-                                } else {
-                                        new Notice(`Error saving ${item.original}: ${error.message}`);
-                                        skippedCount++;
-                                }
-                                console.error(error);
-                        }
-                }
+			} catch (error) {
+				if (error instanceof GTDResponseValidationError) {
+					new Notice(`Skipped ${item.original}: ${error.message}`);
+					skippedCount++;
+				} else {
+					new Notice(`Error saving ${item.original}: ${error.message}`);
+					skippedCount++;
+				}
+				console.error(error);
+			}
+		}
 
 		new Notice(`✅ Saved ${savedCount} items, skipped ${skippedCount}`);
 		this.close();
