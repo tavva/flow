@@ -50,9 +50,12 @@ The evaluation framework tests the AI processor against 15 curated test cases an
 ### Core Processing Flow
 
 1. **Flow Scanner** (`src/flow-scanner.ts`) - Scans the Obsidian vault for Flow projects (files with `project/*` tags in frontmatter)
-2. **GTD Processor** (`src/gtd-processor.ts`) - Uses Claude AI to analyze inbox items with context from existing projects
-3. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
-4. **Inbox Modal** (`src/inbox-modal.ts`) - Main UI component for the inbox processing workflow
+2. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans designated inbox folders for files to process
+3. **GTD Processor** (`src/gtd-processor.ts`) - Uses Claude AI to analyze inbox items with context from existing projects
+4. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
+5. **Inbox Modal** (`src/inbox-modal.ts`) - Main UI component for the inbox processing workflow
+6. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
+7. **Validation** (`src/validation.ts`) - Input validation and error handling
 
 ### Flow Project Structure
 
@@ -112,6 +115,7 @@ The plugin uses Anthropic's SDK with:
 - `gtd-processor.test.ts` - AI processing logic
 - `file-writer.test.ts` - File creation and updates
 - `validation.test.ts` - Input validation
+- `inbox-scanner.test.ts` - Inbox folder scanning functionality
 
 ### Running Single Tests
 ```bash
@@ -185,6 +189,7 @@ Examples:
 ### Commands
 - `process-inbox`: Opens the inbox processing modal
 - `quick-capture`: Same as process-inbox (alias for discoverability)
+- `process-inbox-folders`: Opens the modal with inbox folder scanning enabled
 
 ### UI Components
 - Ribbon icon: 'inbox' icon for quick access
@@ -213,3 +218,31 @@ The main AI prompt is in `src/gtd-processor.ts` `buildProcessingPrompt()`. It:
 - Enforces GTD quality standards
 
 When modifying prompts, ALWAYS run the evaluation suite afterward to measure impact on quality metrics.
+
+## Plugin Settings
+
+The plugin supports several configurable settings accessible via Settings → Flow GTD Coach:
+
+### Core Settings
+- **Anthropic API Key**: Required for AI processing
+- **Model**: Default is `claude-sonnet-4-20250514`
+- **Default Priority**: Priority level for new projects (1-3)
+- **Default Status**: Status for new projects (e.g., "live", "planning")
+
+### File Paths
+- **Inbox Files Folder**: Path for files to be processed (default: "Flow Inbox Files")
+- **Inbox Folder**: Path for general inbox items (default: "Flow Inbox Folder")
+- **Next Actions File**: Path to central next actions file (default: "Next actions.md")
+- **Someday File**: Path to someday/maybe file (default: "Someday.md")
+- **Projects Folder**: Where new project files are created (default: "Projects")
+
+### Spheres
+- **Available Spheres**: Life areas for categorizing projects (default: ["personal", "work"])
+
+## Error Handling
+
+The plugin includes comprehensive error handling:
+- `src/errors.ts` defines custom error types
+- API failures are gracefully handled with user-friendly messages
+- Validation errors prevent malformed data from being processed
+- Network issues are retried with appropriate timeouts
