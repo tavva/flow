@@ -120,11 +120,13 @@ export class FileWriter {
 	 * Generate a clean file name from project title
 	 */
 	private generateFileName(title: string): string {
-		return title
-			.replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special chars
-			.replace(/\s+/g, ' ') // Normalize spaces
+		const cleaned = title
+			.replace(/[\\/:*?"<>|]/g, '') // Remove filesystem-problematic chars
+			.replace(/\s+/g, ' ') // Collapse whitespace
 			.trim()
-			.replace(/\s/g, '-'); // Replace spaces with hyphens
+			.replace(/\.+$/, ''); // Drop trailing dots that Windows forbids
+
+		return cleaned.length > 0 ? cleaned : 'Project';
 	}
 
 	/**

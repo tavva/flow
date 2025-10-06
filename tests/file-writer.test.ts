@@ -72,7 +72,7 @@ describe('FileWriter', () => {
 			expect(mockVault.create).toHaveBeenCalled();
 			const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-			expect(filePath).toBe('Projects/Website-Redesign-Complete.md');
+			expect(filePath).toBe('Projects/Website Redesign Complete.md');
 			expect(content).toContain('# Website Redesign Complete');
 			expect(content).toContain('priority: 2');
 			expect(content).toContain('status: live');
@@ -85,7 +85,7 @@ describe('FileWriter', () => {
 			expect(file).toBe(mockFile);
 		});
 
-		it('should create file with sanitized filename', async () => {
+		it('should strip only disallowed characters while preserving spaces', async () => {
 			const result: GTDProcessingResult = {
 				isActionable: true,
 				category: 'project',
@@ -109,7 +109,34 @@ describe('FileWriter', () => {
                         await fileWriter.createProject(result, 'test');
 
 			const [filePath] = (mockVault.create as jest.Mock).mock.calls[0];
-			expect(filePath).toBe('Projects/My-Cool-Project-v20.md');
+			expect(filePath).toBe('Projects/My Cool Project! (v2.0).md');
+		});
+
+		it('should keep spaces while stripping disallowed filename characters', async () => {
+			const result: GTDProcessingResult = {
+				isActionable: true,
+				category: 'project',
+				projectOutcome: 'Quarterly / Planning: Q1*',
+				nextAction: 'Outline agenda',
+				reasoning: 'Test',
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
+			};
+
+			(mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+				if (path === 'Projects') {
+					return {};
+				}
+
+				return null;
+			});
+			(mockVault.create as jest.Mock).mockResolvedValue(new TFile('test.md', 'test'));
+
+			await fileWriter.createProject(result, 'fallback');
+
+			const [filePath] = (mockVault.create as jest.Mock).mock.calls[0];
+			expect(filePath).toBe('Projects/Quarterly Planning Q1.md');
 		});
 
 		it('should throw error if file already exists', async () => {
@@ -124,22 +151,22 @@ describe('FileWriter', () => {
 				recommendedActionReasoning: 'Test'
 			};
 
-			const existingFile = new TFile('Projects/Existing-Project.md', 'Existing Project');
-                        (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
-                                if (path === 'Projects') {
-                                        return {};
-                                }
+		const existingFile = new TFile('Projects/Existing Project.md', 'Existing Project');
+                       (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+                               if (path === 'Projects') {
+                                       return {};
+                               }
 
-                                if (path === 'Projects/Existing-Project.md') {
-                                        return existingFile;
-                                }
+				if (path === 'Projects/Existing Project.md') {
+					return existingFile;
+				}
 
                                 return null;
                         });
 
                         await expect(
                                 fileWriter.createProject(result, 'test')
-			).rejects.toThrow('File Projects/Existing-Project.md already exists');
+			).rejects.toThrow('File Projects/Existing Project.md already exists');
 		});
 
 		it('should handle empty future actions', async () => {
