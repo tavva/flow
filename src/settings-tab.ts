@@ -105,6 +105,68 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		// Output Files
+		containerEl.createEl('h3', { text: 'Output Files & Folders' });
+		containerEl.createDiv('setting-item-description').innerHTML = `
+			<p>Configure where processed items should be saved.</p>
+		`;
+
+		// Next Actions File
+		new Setting(containerEl)
+			.setName('Next Actions File')
+			.setDesc('File for standalone next actions that aren\'t part of a project.')
+			.addText(text => text
+				.setPlaceholder('Next actions.md')
+				.setValue(this.plugin.settings.nextActionsFilePath)
+				.onChange(async (value) => {
+					this.plugin.settings.nextActionsFilePath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Someday File
+		new Setting(containerEl)
+			.setName('Someday/Maybe File')
+			.setDesc('File for someday/maybe items (things you might do in the future).')
+			.addText(text => text
+				.setPlaceholder('Someday.md')
+				.setValue(this.plugin.settings.somedayFilePath)
+				.onChange(async (value) => {
+					this.plugin.settings.somedayFilePath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Projects Folder
+		new Setting(containerEl)
+			.setName('Projects Folder')
+			.setDesc('Folder where new project files will be created.')
+			.addText(text => text
+				.setPlaceholder('Projects')
+				.setValue(this.plugin.settings.projectsFolderPath)
+				.onChange(async (value) => {
+					this.plugin.settings.projectsFolderPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Spheres
+		containerEl.createEl('h3', { text: 'Spheres' });
+		containerEl.createDiv('setting-item-description').innerHTML = `
+			<p>Spheres help categorise projects and actions (e.g., personal, work, health).</p>
+		`;
+
+		new Setting(containerEl)
+			.setName('Spheres')
+			.setDesc('Comma-separated list of spheres for categorising your projects and actions.')
+			.addText(text => text
+				.setPlaceholder('personal, work, health')
+				.setValue(this.plugin.settings.spheres.join(', '))
+				.onChange(async (value) => {
+					this.plugin.settings.spheres = value
+						.split(',')
+						.map(s => s.trim())
+						.filter(s => s.length > 0);
+					await this.plugin.saveSettings();
+				}));
+
 		// GTD Principles Info
 		containerEl.createEl('h3', { text: 'GTD Principles' });
 		const gtdInfo = containerEl.createDiv('flow-gtd-info');

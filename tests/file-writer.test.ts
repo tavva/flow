@@ -13,7 +13,13 @@ describe('FileWriter', () => {
 	const mockSettings: PluginSettings = {
 		anthropicApiKey: 'test-key',
 		defaultPriority: 2,
-		defaultStatus: 'live'
+		defaultStatus: 'live',
+		inboxFilesFolderPath: 'Flow Inbox Files',
+		inboxFolderPath: 'Flow Inbox Folder',
+		nextActionsFilePath: 'Next actions.md',
+		somedayFilePath: 'Someday.md',
+		projectsFolderPath: 'Projects',
+		spheres: ['personal', 'work']
 	};
 
 	beforeEach(() => {
@@ -45,7 +51,9 @@ describe('FileWriter', () => {
 				nextAction: 'Meet with designer to discuss requirements',
 				reasoning: 'This is a multi-step project requiring coordination',
 				futureActions: ['Review mockups', 'Implement design', 'Deploy to production'],
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Multi-step project'
 			};
 
 			const mockFile = new TFile('Website-Redesign-Complete.md', 'Website Redesign Complete');
@@ -57,7 +65,7 @@ describe('FileWriter', () => {
 			expect(mockVault.create).toHaveBeenCalled();
 			const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-			expect(filePath).toBe('Website-Redesign-Complete.md');
+			expect(filePath).toBe('Projects/Website-Redesign-Complete.md');
 			expect(content).toContain('# Website Redesign Complete');
 			expect(content).toContain('priority: 2');
 			expect(content).toContain('status: live');
@@ -77,7 +85,9 @@ describe('FileWriter', () => {
 				projectOutcome: 'My Cool Project! (v2.0)',
 				nextAction: 'Start',
 				reasoning: 'Test',
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
 			};
 
 			(mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
@@ -86,7 +96,7 @@ describe('FileWriter', () => {
 			await fileWriter.createProject(result, 'test');
 
 			const [filePath] = (mockVault.create as jest.Mock).mock.calls[0];
-			expect(filePath).toBe('My-Cool-Project-v20.md');
+			expect(filePath).toBe('Projects/My-Cool-Project-v20.md');
 		});
 
 		it('should throw error if file already exists', async () => {
@@ -96,15 +106,17 @@ describe('FileWriter', () => {
 				projectOutcome: 'Existing Project',
 				nextAction: 'Do something',
 				reasoning: 'Test',
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
 			};
 
-			const existingFile = new TFile('Existing-Project.md', 'Existing Project');
+			const existingFile = new TFile('Projects/Existing-Project.md', 'Existing Project');
 			(mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(existingFile);
 
 			await expect(
 				fileWriter.createProject(result, 'test')
-			).rejects.toThrow('File Existing-Project.md already exists');
+			).rejects.toThrow('File Projects/Existing-Project.md already exists');
 		});
 
 		it('should handle empty future actions', async () => {
@@ -115,7 +127,9 @@ describe('FileWriter', () => {
 				nextAction: 'First action',
 				reasoning: 'Test',
 				futureActions: [],
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
 			};
 
 			(mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
@@ -134,7 +148,9 @@ describe('FileWriter', () => {
 				category: 'project',
 				nextAction: 'Do something',
 				reasoning: 'Test',
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
 			};
 
 			(mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
@@ -153,7 +169,9 @@ describe('FileWriter', () => {
 				projectOutcome: 'Test Project',
 				nextAction: 'Do something',
 				reasoning: 'Test',
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'create-project',
+				recommendedActionReasoning: 'Test'
 			};
 
 			(mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);

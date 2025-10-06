@@ -12,10 +12,12 @@ export class FileWriter {
 	 */
 	async createProject(
 		result: GTDProcessingResult,
-		originalItem: string
+		originalItem: string,
+		spheres: string[] = []
 	): Promise<TFile> {
 		const fileName = this.generateFileName(result.projectOutcome || originalItem);
-		const filePath = normalizePath(`${fileName}.md`);
+		const folderPath = this.settings.projectsFolderPath;
+		const filePath = normalizePath(`${folderPath}/${fileName}.md`);
 
 		// Check if file already exists
 		const existingFile = this.app.vault.getAbstractFileByPath(filePath);
@@ -23,10 +25,48 @@ export class FileWriter {
 			throw new Error(`File ${filePath} already exists`);
 		}
 
-		const content = this.buildProjectContent(result, originalItem);
+		const content = this.buildProjectContent(result, originalItem, spheres);
 		const file = await this.app.vault.create(filePath, content);
 
 		return file;
+	}
+
+	/**
+	 * Add an action to the Next Actions file
+	 */
+	async addToNextActionsFile(action: string, spheres: string[] = []): Promise<void> {
+		const sphereTags = spheres.map(s => `#sphere/${s}`).join(' ');
+		const content = sphereTags ? `- [ ] ${action} ${sphereTags}` : `- [ ] ${action}`;
+		await this.appendToFile(this.settings.nextActionsFilePath, content);
+	}
+
+	/**
+	 * Add an item to the Someday/Maybe file
+	 */
+	async addToSomedayFile(item: string, spheres: string[] = []): Promise<void> {
+		const sphereTags = spheres.map(s => `#sphere/${s}`).join(' ');
+		const content = sphereTags ? `- ${item} ${sphereTags}` : `- ${item}`;
+		await this.appendToFile(this.settings.somedayFilePath, content);
+	}
+
+	/**
+	 * Append content to a file, creating it if it doesn't exist
+	 */
+	private async appendToFile(filePath: string, content: string): Promise<void> {
+		const normalizedPath = normalizePath(filePath);
+		let file = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+		if (!file) {
+			// Create the file if it doesn't exist
+			file = await this.app.vault.create(normalizedPath, content + '\n');
+		} else if (file instanceof TFile) {
+			// Append to existing file
+			const existingContent = await this.app.vault.read(file);
+			const newContent = existingContent.trim() + '\n' + content + '\n';
+			await this.app.vault.modify(file, newContent);
+		} else {
+			throw new Error(`${filePath} is not a file`);
+		}
 	}
 
 	/**
@@ -65,15 +105,21 @@ export class FileWriter {
 	 */
 	private buildProjectContent(
 		result: GTDProcessingResult,
-		originalItem: string
+		originalItem: string,
+		spheres: string[] = []
 	): string {
 		const date = this.formatDate(new Date());
 		const title = result.projectOutcome || originalItem;
 
+		// Format sphere tags (e.g., "project/personal project/work")
+		const sphereTags = spheres.length > 0
+			? spheres.map(s => `project/${s}`).join(' ')
+			: 'project/personal';
+
 		let content = `---
 creation-date: ${date}
 priority: ${this.settings.defaultPriority}
-tags: project/personal
+tags: ${sphereTags}
 status: ${this.settings.defaultStatus}
 ---
 

@@ -9,6 +9,14 @@ export interface FlowProject {
 	futureNextActions: string[];
 }
 
+export type ProcessingAction =
+	| 'create-project'
+	| 'add-to-project'
+	| 'next-actions-file'
+	| 'someday-file'
+	| 'reference'
+	| 'trash';
+
 export interface GTDProcessingResult {
 	isActionable: boolean;
 	category: 'next-action' | 'project' | 'reference' | 'someday';
@@ -17,6 +25,10 @@ export interface GTDProcessingResult {
 	reasoning: string;
 	futureActions?: string[];
 	suggestedProjects?: ProjectSuggestion[];
+	recommendedAction: ProcessingAction;
+	recommendedActionReasoning: string;
+	recommendedSpheres?: string[];
+	recommendedSpheresReasoning?: string;
 }
 
 export interface ProjectSuggestion {
@@ -31,6 +43,10 @@ export interface PluginSettings {
 	defaultStatus: string;
 	inboxFilesFolderPath: string;
 	inboxFolderPath: string;
+	nextActionsFilePath: string;
+	somedayFilePath: string;
+	projectsFolderPath: string;
+	spheres: string[];
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -38,5 +54,9 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 	defaultPriority: 2,
 	defaultStatus: 'live',
 	inboxFilesFolderPath: 'Flow Inbox Files',
-	inboxFolderPath: 'Flow Inbox Folder'
+	inboxFolderPath: 'Flow Inbox Folder',
+	nextActionsFilePath: 'Next actions.md',
+	somedayFilePath: 'Someday.md',
+	projectsFolderPath: 'Projects',
+	spheres: ['personal', 'work']
 };

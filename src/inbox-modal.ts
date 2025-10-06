@@ -2,14 +2,15 @@ import { App, Modal, Setting, Notice } from 'obsidian';
 import { GTDProcessor } from './gtd-processor';
 import { FlowProjectScanner } from './flow-scanner';
 import { FileWriter } from './file-writer';
-import { GTDProcessingResult, FlowProject, PluginSettings } from './types';
+import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
 import { InboxScanner, InboxItem } from './inbox-scanner';
 
 interface ProcessedItem {
 	original: string;
 	result: GTDProcessingResult;
 	selectedProject?: FlowProject;
-	createNew: boolean;
+	selectedAction: ProcessingAction; // User's final decision
+	selectedSpheres: string[]; // User's sphere selection
 	inboxItem?: InboxItem; // Track the original inbox item for deletion
 }
 
@@ -37,7 +38,7 @@ export class InboxProcessingModal extends Modal {
 		private startWithInbox: boolean = false
 	) {
 		super(app);
-		this.processor = new GTDProcessor(settings.anthropicApiKey);
+		this.processor = new GTDProcessor(settings.anthropicApiKey, settings.spheres);
 		this.scanner = new FlowProjectScanner(app);
 		this.writer = new FileWriter(app, settings);
 		this.inboxScanner = new InboxScanner(app, settings);
@@ -313,7 +314,11 @@ export class InboxProcessingModal extends Modal {
 			this.processedItems.push({
 				original: item,
 				result,
-				createNew: result.category === 'project' || (result.suggestedProjects?.length ?? 0) === 0,
+				selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
+					? result.suggestedProjects[0].project
+					: undefined,
+				selectedAction: result.recommendedAction,
+				selectedSpheres: result.recommendedSpheres || [],
 				inboxItem
 			});
 
@@ -342,9 +347,14 @@ export class InboxProcessingModal extends Modal {
 				category: 'next-action',
 				nextAction: item,
 				reasoning: 'Skipped processing',
-				suggestedProjects: []
+				suggestedProjects: [],
+				recommendedAction: 'next-actions-file',
+				recommendedActionReasoning: 'User skipped AI processing',
+				recommendedSpheres: [],
+				recommendedSpheresReasoning: ''
 			},
-			createNew: true,
+			selectedAction: 'next-actions-file',
+			selectedSpheres: [],
 			inboxItem
 		});
 
@@ -377,21 +387,116 @@ export class InboxProcessingModal extends Modal {
 				cls: 'flow-gtd-action'
 			});
 
-			// Project suggestions
-			if (item.result.suggestedProjects && item.result.suggestedProjects.length > 0) {
-				const suggestionsEl = itemEl.createDiv('flow-gtd-suggestions');
-				suggestionsEl.createEl('p', { text: 'Suggested projects:', cls: 'flow-gtd-label' });
+			// AI Recommendation
+			const recommendationEl = itemEl.createDiv('flow-gtd-recommendation');
+			recommendationEl.createEl('p', {
+				text: `✨ AI Recommendation: ${this.getActionLabel(item.result.recommendedAction)}`,
+				cls: 'flow-gtd-ai-recommendation'
+			});
+			recommendationEl.createEl('p', {
+				text: item.result.recommendedActionReasoning,
+				cls: 'flow-gtd-recommendation-reason'
+			});
 
-				item.result.suggestedProjects.forEach(suggestion => {
-					const suggestionEl = suggestionsEl.createDiv('flow-gtd-suggestion');
-					suggestionEl.createSpan({ text: suggestion.project.title });
-					suggestionEl.createSpan({
-						text: ` (${suggestion.confidence})`,
-						cls: 'flow-gtd-confidence'
+			// Action selector
+			const actionSelectorEl = itemEl.createDiv('flow-gtd-action-selector');
+			actionSelectorEl.createEl('p', { text: 'Where should this go?', cls: 'flow-gtd-label' });
+
+			new Setting(actionSelectorEl)
+				.addDropdown(dropdown => {
+					dropdown
+						.addOption('create-project', '📁 Create New Project')
+						.addOption('add-to-project', '➕ Add to Existing Project')
+						.addOption('next-actions-file', '✅ Next Actions File')
+						.addOption('someday-file', '💭 Someday/Maybe File')
+						.addOption('reference', '📚 Reference (Not Actionable)')
+						.addOption('trash', '🗑️ Trash (Delete)');
+
+					dropdown.setValue(item.selectedAction);
+					dropdown.onChange((value) => {
+						item.selectedAction = value as ProcessingAction;
+					});
+				});
+
+			// Project selector (only show if action is add-to-project)
+			if (item.selectedAction === 'add-to-project' && item.result.suggestedProjects && item.result.suggestedProjects.length > 0) {
+				const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
+				projectSelectorEl.createEl('p', { text: 'Select project:', cls: 'flow-gtd-label' });
+
+				new Setting(projectSelectorEl)
+					.addDropdown(dropdown => {
+						item.result.suggestedProjects!.forEach(suggestion => {
+							dropdown.addOption(
+								suggestion.project.file,
+								`${suggestion.project.title} (${suggestion.confidence})`
+							);
+						});
+
+						dropdown.setValue(item.selectedProject?.file || '');
+						dropdown.onChange((value) => {
+							item.selectedProject = item.result.suggestedProjects!.find(
+								s => s.project.file === value
+							)?.project;
+						});
+					});
+			}
+
+			// Sphere selector
+			if (this.settings.spheres.length > 0) {
+				const sphereSelectorEl = itemEl.createDiv('flow-gtd-sphere-selector');
+
+				// Show AI recommendation if available
+				if (item.result.recommendedSpheres && item.result.recommendedSpheres.length > 0) {
+					const recommendationEl = sphereSelectorEl.createDiv('flow-gtd-sphere-recommendation');
+					recommendationEl.createEl('p', {
+						text: `✨ Recommended: ${item.result.recommendedSpheres.join(', ')}`,
+						cls: 'flow-gtd-sphere-recommendation-text'
+					});
+					if (item.result.recommendedSpheresReasoning) {
+						recommendationEl.createEl('p', {
+							text: item.result.recommendedSpheresReasoning,
+							cls: 'flow-gtd-recommendation-reason'
+						});
+					}
+				}
+
+				sphereSelectorEl.createEl('p', { text: 'Select spheres:', cls: 'flow-gtd-label' });
+
+				const buttonContainer = sphereSelectorEl.createDiv('flow-gtd-sphere-buttons');
+				this.settings.spheres.forEach(sphere => {
+					const button = buttonContainer.createEl('button', {
+						text: sphere,
+						cls: 'flow-gtd-sphere-button'
+					});
+
+					if (item.selectedSpheres.includes(sphere)) {
+						button.addClass('selected');
+					}
+
+					button.addEventListener('click', () => {
+						if (item.selectedSpheres.includes(sphere)) {
+							item.selectedSpheres = item.selectedSpheres.filter(s => s !== sphere);
+							button.removeClass('selected');
+						} else {
+							item.selectedSpheres.push(sphere);
+							button.addClass('selected');
+						}
 					});
 				});
 			}
 		});
+	}
+
+	private getActionLabel(action: ProcessingAction): string {
+		const labels: Record<ProcessingAction, string> = {
+			'create-project': 'Create New Project',
+			'add-to-project': 'Add to Existing Project',
+			'next-actions-file': 'Next Actions File',
+			'someday-file': 'Someday/Maybe File',
+			'reference': 'Reference (Not Actionable)',
+			'trash': 'Trash (Delete)'
+		};
+		return labels[action] || action;
 	}
 
 	private renderReview() {
@@ -418,22 +523,54 @@ export class InboxProcessingModal extends Modal {
 
 	private async saveAllItems() {
 		new Notice('Saving items to vault...');
+		let savedCount = 0;
+		let skippedCount = 0;
 
 		for (const item of this.processedItems) {
 			try {
-				if (item.result.category === 'project' && item.createNew) {
-					await this.writer.createProject(item.result, item.original);
-				} else if (item.selectedProject) {
-					await this.writer.addNextActionToProject(
-						item.selectedProject,
-						item.result.nextAction
-					);
-				} else if (item.result.category === 'next-action' && item.createNew) {
-					// Could create a dedicated "Next Actions" file or handle differently
-					new Notice(`Next action needs manual placement: ${item.result.nextAction}`);
+				switch (item.selectedAction) {
+					case 'create-project':
+						await this.writer.createProject(item.result, item.original, item.selectedSpheres);
+						savedCount++;
+						break;
+
+					case 'add-to-project':
+						if (item.selectedProject) {
+							await this.writer.addNextActionToProject(
+								item.selectedProject,
+								item.result.nextAction
+							);
+							savedCount++;
+						} else {
+							new Notice(`No project selected for: ${item.original}`);
+							skippedCount++;
+						}
+						break;
+
+					case 'next-actions-file':
+						await this.writer.addToNextActionsFile(item.result.nextAction, item.selectedSpheres);
+						savedCount++;
+						break;
+
+					case 'someday-file':
+						await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
+						savedCount++;
+						break;
+
+					case 'reference':
+						// For reference items, we could add them to a reference file
+						// For now, just notify the user
+						new Notice(`Reference item not saved: ${item.original}`);
+						skippedCount++;
+						break;
+
+					case 'trash':
+						// Just delete from inbox, don't save anywhere
+						skippedCount++;
+						break;
 				}
 
-				// Delete the inbox item if it exists
+				// Delete the inbox item if it exists (even for trash items)
 				if (item.inboxItem) {
 					await this.inboxScanner.deleteInboxItem(item.inboxItem);
 				}
@@ -443,7 +580,7 @@ export class InboxProcessingModal extends Modal {
 			}
 		}
 
-		new Notice('✅ Items saved successfully!');
+		new Notice(`✅ Saved ${savedCount} items, skipped ${skippedCount}`);
 		this.close();
 	}
 }

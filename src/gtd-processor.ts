@@ -3,12 +3,14 @@ import { FlowProject, GTDProcessingResult, ProjectSuggestion } from './types';
 
 export class GTDProcessor {
 	private client: Anthropic;
+	private availableSpheres: string[];
 
-	constructor(apiKey: string) {
+	constructor(apiKey: string, spheres: string[] = ['personal', 'work']) {
 		this.client = new Anthropic({
 			apiKey,
 			dangerouslyAllowBrowser: true
 		});
+		this.availableSpheres = spheres;
 	}
 
 	/**
@@ -43,12 +45,15 @@ export class GTDProcessor {
 	 */
 	private buildProcessingPrompt(item: string, projects: FlowProject[]): string {
 		const projectContext = this.buildProjectContext(projects);
+		const spheresContext = this.availableSpheres.length > 0
+			? `\n\nThe user organises their work using these spheres: ${this.availableSpheres.join(', ')}.`
+			: '';
 
 		return `You are a GTD (Getting Things Done) coach. You must use British English spelling and grammar in all responses. A user has captured this item during their mindsweep:
 
 "${item}"
 
-${projectContext}
+${projectContext}${spheresContext}
 
 Analyze this item according to GTD principles:
 
@@ -82,8 +87,22 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
       "relevance": "why this project is relevant",
       "confidence": "high/medium/low"
     }
-  ]
+  ],
+  "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/trash",
+  "recommendedActionReasoning": "brief explanation of where this should go and why",
+  "recommendedSpheres": ["array of recommended spheres from the available list"],
+  "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item"
 }
+
+Where to route items:
+- "create-project": Item needs a new project (multi-step outcome)
+- "add-to-project": Item should be added to an existing project (use this if suggestedProjects has high confidence matches)
+- "next-actions-file": Standalone next action that doesn't belong to a project
+- "someday-file": Something to do someday/maybe, not now
+- "reference": Information to store, not actionable
+- "trash": Not useful, can be discarded
+
+For spheres: Recommend one or more spheres that best categorise this item. Consider the item's content and context.
 
 Examples:
 - "plan vacation" → PROJECT: "Summer vacation planned", next action: "Email Sarah to discuss vacation dates"
@@ -235,7 +254,11 @@ Examples:
 				nextAction: parsed.nextAction,
 				reasoning: parsed.reasoning,
 				futureActions: parsed.futureActions || [],
-				suggestedProjects
+				suggestedProjects,
+				recommendedAction: parsed.recommendedAction || 'next-actions-file',
+				recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
+				recommendedSpheres: parsed.recommendedSpheres || [],
+				recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || ''
 			};
 		} catch (error) {
 			throw new Error(`Failed to parse Claude response: ${error.message}\n\nResponse: ${cleanedText}`);
