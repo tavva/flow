@@ -64,7 +64,7 @@ export class FlowProjectScanner {
 	 */
 	private normalizeTags(tags: string | string[]): string[] {
 		if (Array.isArray(tags)) {
-			return tags;
+			return tags.filter(tag => typeof tag === 'string');
 		}
 		if (typeof tags === 'string') {
 			return [tags];
