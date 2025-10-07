@@ -266,13 +266,13 @@ Examples:
                         category: parsed.category,
                         projectOutcome: parsed.projectOutcome,
                         nextAction: parsed.nextAction,
-                        nextActions: parsed.nextActions || [],
+                        nextActions: Array.isArray(parsed.nextActions) ? parsed.nextActions : [],
                         reasoning: parsed.reasoning,
-                        futureActions: parsed.futureActions || [],
+                        futureActions: Array.isArray(parsed.futureActions) ? parsed.futureActions : [],
                         suggestedProjects,
                         recommendedAction: parsed.recommendedAction || 'next-actions-file',
                         recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
-                        recommendedSpheres: parsed.recommendedSpheres || [],
+                        recommendedSpheres: Array.isArray(parsed.recommendedSpheres) ? parsed.recommendedSpheres : [],
                         recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || ''
                 };
         }
@@ -332,21 +332,21 @@ Examples:
                         }
                 }
 
-                if (parsed.nextActions !== undefined) {
-                        if (
-                                !Array.isArray(parsed.nextActions) ||
-                                !parsed.nextActions.every((action: unknown) => typeof action === 'string')
-                        ) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "nextActions" must be an array of strings when provided');
+                if (parsed.nextActions !== undefined && parsed.nextActions !== null) {
+                        if (!Array.isArray(parsed.nextActions)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`);
+                        }
+                        if (!parsed.nextActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`);
                         }
                 }
 
-                if (parsed.futureActions !== undefined) {
-                        if (
-                                !Array.isArray(parsed.futureActions) ||
-                                !parsed.futureActions.every((action: unknown) => typeof action === 'string')
-                        ) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "futureActions" must be an array of strings when provided');
+                if (parsed.futureActions !== undefined && parsed.futureActions !== null) {
+                        if (!Array.isArray(parsed.futureActions)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "futureActions" must be an array when provided, got ${typeof parsed.futureActions}: ${JSON.stringify(parsed.futureActions)}`);
+                        }
+                        if (!parsed.futureActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "futureActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.futureActions)}`);
                         }
                 }
 
@@ -400,12 +400,12 @@ Examples:
                         }
                 }
 
-                if (parsed.recommendedSpheres !== undefined) {
-                        if (
-                                !Array.isArray(parsed.recommendedSpheres) ||
-                                !parsed.recommendedSpheres.every((sphere: unknown) => typeof sphere === 'string')
-                        ) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheres" must be an array of strings when provided');
+                if (parsed.recommendedSpheres !== undefined && parsed.recommendedSpheres !== null) {
+                        if (!Array.isArray(parsed.recommendedSpheres)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "recommendedSpheres" must be an array when provided, got ${typeof parsed.recommendedSpheres}: ${JSON.stringify(parsed.recommendedSpheres)}`);
+                        }
+                        if (!parsed.recommendedSpheres.every((sphere: unknown) => typeof sphere === 'string' && sphere.trim().length > 0)) {
+                                throw new GTDResponseValidationError(`Invalid Claude response: "recommendedSpheres" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.recommendedSpheres)}`);
                         }
                 }
 
