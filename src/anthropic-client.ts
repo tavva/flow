@@ -35,7 +35,7 @@ interface RateLimiterConfig {
 }
 
 const DEFAULT_CONFIG: RateLimiterConfig = {
-	capacity: 1,
+	capacity: 3,
 	rate: 1,
 	bucketSize: 2,
 	alpha: 0.05,
