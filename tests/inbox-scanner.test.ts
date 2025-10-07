@@ -134,7 +134,19 @@ describe('Inbox deletion handling', () => {
                         }
                 ] as any;
 
-                (modal as any).processedItems = processedItems;
+                // Convert processedItems to editableItems format for the new workflow
+                const editableItems = processedItems.map((item: any) => ({
+                        original: item.original,
+                        inboxItem: item.inboxItem,
+                        isAIProcessed: true,
+                        result: item.result,
+                        selectedProject: item.selectedProject,
+                        selectedAction: item.selectedAction,
+                        selectedSpheres: item.selectedSpheres,
+                        editedName: item.editedName,
+                        editedProjectTitle: item.editedProjectTitle
+                }));
+                (modal as any).editableItems = editableItems;
 
                 await (modal as any).saveAllItems();
 

@@ -6,28 +6,29 @@ import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } fr
 import { InboxScanner, InboxItem } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
 
-interface ProcessedItem {
+interface EditableItem {
 	original: string;
-	result: GTDProcessingResult;
+	inboxItem?: InboxItem; // Track the original inbox item for deletion
+	isAIProcessed: boolean; // Whether this item has been processed by AI
+	result?: GTDProcessingResult; // AI processing result (if processed)
 	selectedProject?: FlowProject;
 	selectedAction: ProcessingAction; // User's final decision
 	selectedSpheres: string[]; // User's sphere selection
-	inboxItem?: InboxItem; // Track the original inbox item for deletion
 	editedName?: string; // User's edited name for the next action
 	editedProjectTitle?: string; // User's edited project title (for create-project)
+	isProcessing?: boolean; // Whether this item is currently being processed by AI
 }
 
 type InputMode = 'single' | 'bulk' | 'inbox';
 
 export class InboxProcessingModal extends Modal {
 	private mindsweepItems: string[] = [];
-	private processedItems: ProcessedItem[] = [];
+	private editableItems: EditableItem[] = [];
 	private currentInput: string = '';
 	private bulkInput: string = '';
 	private inputMode: InputMode = 'single';
-	private currentProcessingIndex: number = 0;
-	private isProcessing: boolean = false;
 	private inboxItems: InboxItem[] = [];
+	private deletionOffsets = new Map<string, number>();
 
 	private processor: GTDProcessor;
 	private scanner: FlowProjectScanner;
@@ -231,10 +232,17 @@ export class InboxProcessingModal extends Modal {
 				return;
 			}
 
-			// Add inbox items to mindsweep list
-			this.mindsweepItems = this.inboxItems.map(item => item.content);
+			// Create editable items immediately without AI processing
+			this.editableItems = this.inboxItems.map(item => ({
+				original: item.content,
+				inboxItem: item,
+				isAIProcessed: false,
+				selectedAction: 'next-actions-file' as ProcessingAction,
+				selectedSpheres: []
+			}));
+
 			new Notice(`Loaded ${this.inboxItems.length} items from inbox`);
-			this.renderMindsweep();
+			this.renderEditableItemsList();
 		} catch (error) {
 			new Notice('Error loading inbox items');
 			console.error(error);
@@ -243,273 +251,200 @@ export class InboxProcessingModal extends Modal {
 		}
 	}
 
-	private startProcessing() {
-		this.currentProcessingIndex = 0;
-		this.processedItems = [];
-		this.renderProcessing();
-	}
-
-	private async renderProcessing() {
+	private renderProcessingInProgress() {
 		const { contentEl } = this;
+		if (!contentEl) {
+			return; // Guard against test environment where contentEl isn't initialized
+		}
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: '✨ Process: Create Quality Next Actions' });
-
-		// Progress bar
-		const progress = (this.currentProcessingIndex / this.mindsweepItems.length) * 100;
-		const progressContainer = contentEl.createDiv('flow-gtd-progress');
-		const displayIndex = this.currentProcessingIndex + 1; // Display as 1-indexed
-		progressContainer.createEl('div', {
-			text: `${displayIndex} of ${this.mindsweepItems.length}`,
-			cls: 'flow-gtd-progress-text'
+		contentEl.createEl('h2', { text: '✨ Processing Inbox Items...' });
+		contentEl.createEl('p', {
+			text: 'AI is analyzing your inbox items and creating quality next actions.',
+			cls: 'flow-gtd-description'
 		});
-		const progressBar = progressContainer.createDiv('flow-gtd-progress-bar');
-		progressBar.createDiv('flow-gtd-progress-fill').style.width = `${progress}%`;
 
-		if (this.currentProcessingIndex < this.mindsweepItems.length) {
-			// Show current item
-			const currentItem = this.mindsweepItems[this.currentProcessingIndex];
-			const itemContainer = contentEl.createDiv('flow-gtd-current-item');
-			itemContainer.createEl('p', {
-				text: `Current item (${displayIndex}/${this.mindsweepItems.length}):`,
-				cls: 'flow-gtd-label'
-			});
-			itemContainer.createEl('p', { text: currentItem, cls: 'flow-gtd-current-text' });
+		const loadingEl = contentEl.createDiv('flow-gtd-loading');
+		loadingEl.createEl('div', { cls: 'flow-gtd-spinner' });
+		loadingEl.createEl('p', { text: 'This may take a moment...', cls: 'flow-gtd-loading-text' });
+	}
 
-			// Action buttons
-			const buttonContainer = contentEl.createDiv('flow-gtd-buttons');
-			new Setting(buttonContainer)
-				.addButton(button => button
-					.setButtonText(this.isProcessing ? 'Processing...' : '✨ Refine with AI')
-					.setCta()
-					.setDisabled(this.isProcessing)
-					.onClick(() => this.processCurrentItem()))
-				.addButton(button => button
-					.setButtonText('Keep As-Is')
-					.setDisabled(this.isProcessing)
-					.onClick(() => this.skipCurrentItem()))
-				.addButton(button => button
-					.setButtonText('⚡ Refine All Remaining')
-					.setDisabled(this.isProcessing)
-					.onClick(() => this.processAllRemaining()))
-				.addButton(button => button
-					.setButtonText('Finish Session')
-					.setDisabled(this.isProcessing)
-					.onClick(() => this.finishSession()));
-		} else {
-			// Processing complete
-			contentEl.createDiv('flow-gtd-complete').createEl('p', {
-				text: '✅ Processing complete!',
-				cls: 'flow-gtd-complete-text'
-			});
+	private renderEditableItemsList() {
+		const { contentEl } = this;
+		if (!contentEl) {
+			return; // Guard against test environment where contentEl isn't initialized
+		}
+		contentEl.empty();
 
-			new Setting(contentEl)
-				.addButton(button => button
-					.setButtonText('Continue to Review →')
-					.setCta()
-					.onClick(() => this.renderReview()));
+		contentEl.createEl('h2', { text: '📝 Edit and Save Items' });
+		contentEl.createEl('p', {
+			text: 'Review your inbox items. You can edit them manually or refine with AI, then save them to your vault.',
+			cls: 'flow-gtd-description'
+		});
+
+		// Batch AI processing button
+		if (this.editableItems.length > 0) {
+			const batchContainer = contentEl.createDiv('flow-gtd-batch-actions');
+			const unprocessedCount = this.editableItems.filter(item => !item.isAIProcessed).length;
+
+			if (unprocessedCount > 0) {
+				new Setting(batchContainer)
+					.addButton(button => button
+						.setButtonText(`✨ Refine All ${unprocessedCount} Items with AI`)
+						.setCta()
+						.onClick(() => this.refineAllWithAI()));
+			}
 		}
 
-		// Show processed items
-		if (this.processedItems.length > 0) {
-			this.renderProcessedItems(contentEl);
+		// Render each item
+		this.renderIndividualEditableItems(contentEl);
+
+		// Show completion message when all items are processed
+		if (this.editableItems.length === 0) {
+			const completionEl = contentEl.createDiv('flow-gtd-completion');
+			completionEl.createEl('h3', { text: '🎉 All items processed!' });
+			completionEl.createEl('p', { text: 'Your inbox is now empty.' });
+
+			new Setting(completionEl)
+				.addButton(button => button
+					.setButtonText('Close')
+					.setCta()
+					.onClick(() => this.close()));
 		}
 	}
 
-	private async processCurrentItem() {
-		if (this.isProcessing) {
+	private async startProcessing() {
+		if (this.mindsweepItems.length === 0) {
+			new Notice('No items to process');
 			return;
 		}
 
-		this.isProcessing = true;
-		this.renderProcessing();
-
-		const currentIndex = this.currentProcessingIndex;
-		const item = this.mindsweepItems[currentIndex];
-
-		try {
-			const result = await this.processor.processInboxItem(item, this.existingProjects);
-
-			// Verify we're still on the same item (in case of race conditions)
-			if (this.currentProcessingIndex !== currentIndex) {
-				return;
-			}
-
-			// Find the corresponding inbox item if we're in inbox mode
-			const inboxItem = this.inputMode === 'inbox'
-				? this.inboxItems[currentIndex]
-				: undefined;
-
-			this.processedItems.push({
-				original: item,
-				result,
-				selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
-					? result.suggestedProjects[0].project
-					: undefined,
-				selectedAction: result.recommendedAction,
-				selectedSpheres: result.recommendedSpheres || [],
-				inboxItem
-			});
-
-			this.currentProcessingIndex++;
-		} catch (error) {
-			new Notice(`Error processing item: ${error.message}`);
-			console.error(error);
-		} finally {
-			this.isProcessing = false;
-			this.renderProcessing();
-		}
-	}
-
-	private async processAllRemaining() {
-		if (this.isProcessing) {
-			return;
-		}
-
-		this.isProcessing = true;
-		this.renderProcessing();
-
-		const remainingItems = this.mindsweepItems.slice(this.currentProcessingIndex);
-		new Notice(`Processing ${remainingItems.length} remaining items...`);
-
-		try {
-			for (let i = 0; i < remainingItems.length; i++) {
-				const absoluteIndex = this.currentProcessingIndex + i;
-				const item = remainingItems[i];
-
-				try {
-					const result = await this.processor.processInboxItem(item, this.existingProjects);
-
-					// Find the corresponding inbox item if we're in inbox mode
-					const inboxItem = this.inputMode === 'inbox'
-						? this.inboxItems[absoluteIndex]
-						: undefined;
-
-					this.processedItems.push({
-						original: item,
-						result,
-						selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
-							? result.suggestedProjects[0].project
-							: undefined,
-						selectedAction: result.recommendedAction,
-						selectedSpheres: result.recommendedSpheres || [],
-						inboxItem
-					});
-
-					this.currentProcessingIndex++;
-
-					// Update UI periodically to show progress
-					if ((i + 1) % 3 === 0 || i === remainingItems.length - 1) {
-						this.renderProcessing();
-						// Small delay to prevent UI freezing
-						await new Promise(resolve => setTimeout(resolve, 100));
-					}
-				} catch (error) {
-					new Notice(`Error processing "${item}": ${error.message}`);
-					console.error(error);
-					this.currentProcessingIndex++;
-				}
-			}
-
-			new Notice(`✅ Processed ${remainingItems.length} items`);
-		} finally {
-			this.isProcessing = false;
-			this.renderProcessing();
-		}
-	}
-
-	private skipCurrentItem() {
-		const item = this.mindsweepItems[this.currentProcessingIndex];
-
-		// Find the corresponding inbox item if we're in inbox mode
-		const inboxItem = this.inputMode === 'inbox'
-			? this.inboxItems[this.currentProcessingIndex]
-			: undefined;
-
-		this.processedItems.push({
+		// Create editable items from mindsweep items
+		this.editableItems = this.mindsweepItems.map(item => ({
 			original: item,
-			result: {
-				isActionable: true,
-				category: 'next-action',
-				nextAction: item,
-				reasoning: 'Skipped processing',
-				suggestedProjects: [],
-				recommendedAction: 'next-actions-file',
-				recommendedActionReasoning: 'User skipped AI processing',
-				recommendedSpheres: [],
-				recommendedSpheresReasoning: ''
-			},
-			selectedAction: 'next-actions-file',
-			selectedSpheres: [],
-			inboxItem
-		});
-
-		this.currentProcessingIndex++;
-		this.renderProcessing();
-	}
-
-	private finishSession() {
-		// Skip directly to review with items processed so far
-		this.currentProcessingIndex = this.mindsweepItems.length;
-		this.renderReview();
-	}
-
-	private renderProcessedItems(container: HTMLElement) {
-		// Find existing processed list container or create new one
-		let listContainer = container.querySelector('.flow-gtd-processed-list') as HTMLElement;
-		if (listContainer) {
-			listContainer.empty();
-		} else {
-			listContainer = container.createDiv('flow-gtd-processed-list');
-		}
-
-		listContainer.createEl('h3', { text: `Processed Items (${this.processedItems.length})` });
-
-		const itemsWithIndex = this.processedItems.map((item, index) => ({
-			item,
-			displayIndex: index + 1
+			isAIProcessed: false,
+			selectedAction: 'next-actions-file' as ProcessingAction,
+			selectedSpheres: []
 		}));
 
-		for (let i = itemsWithIndex.length - 1; i >= 0; i--) {
-			const { item, displayIndex } = itemsWithIndex[i];
-			const itemEl = listContainer.createDiv('flow-gtd-processed-item');
+		new Notice(`Loaded ${this.mindsweepItems.length} items`);
+		this.renderEditableItemsList();
+	}
 
-			// Item number header
-			itemEl.createEl('h4', {
-				text: `Item ${displayIndex}`,
+
+
+	private renderIndividualEditableItems(container: HTMLElement) {
+		if (!container) {
+			return; // Guard against test environment where container is undefined
+		}
+		const listContainer = container.createDiv('flow-gtd-items-list');
+
+		if (this.editableItems.length === 0) {
+			listContainer.createEl('p', {
+				text: 'No items to display.',
+				cls: 'flow-gtd-empty'
+			});
+			return;
+		}
+
+		this.editableItems.forEach((item, index) => {
+			const itemEl = listContainer.createDiv('flow-gtd-editable-item');
+
+			// Item header
+			const headerEl = itemEl.createDiv('flow-gtd-item-header');
+			headerEl.createEl('h4', {
+				text: `Item ${index + 1}`,
 				cls: 'flow-gtd-item-number'
 			});
 
-			// Category badge
-			const badge = itemEl.createSpan({
-				text: item.result.category.toUpperCase().replace('-', ' '),
-				cls: `flow-gtd-badge flow-gtd-badge-${item.result.category}`
-			});
+			// AI status badge
+			if (item.isAIProcessed) {
+				headerEl.createSpan({
+					text: '✨ AI Refined',
+					cls: 'flow-gtd-ai-badge'
+				});
+			}
 
-			// Original item - more prominent
+			if (item.isProcessing === true) {
+				headerEl.createSpan({
+					text: '⏳ Processing...',
+					cls: 'flow-gtd-processing-badge'
+				});
+			}
+
+			// Category badge (if AI processed)
+			if (item.isAIProcessed && item.result) {
+				const badge = itemEl.createSpan({
+					text: item.result.category.toUpperCase().replace('-', ' '),
+					cls: `flow-gtd-badge flow-gtd-badge-${item.result.category}`
+				});
+			}
+
+			// Original item - always show
 			itemEl.createEl('p', {
 				text: `Original: "${item.original}"`,
 				cls: 'flow-gtd-original'
 			}).style.fontWeight = 'bold';
 
-			// Editable next action
-			const actionContainer = itemEl.createDiv('flow-gtd-action-editor');
-			actionContainer.createEl('label', {
-				text: 'Next Action:',
-				cls: 'flow-gtd-label'
-			});
+			// Individual refine button (if not processed and not processing)
+			if (!item.isAIProcessed && !item.isProcessing) {
+				const refineContainer = itemEl.createDiv('flow-gtd-refine-action');
+				new Setting(refineContainer)
+					.addButton(button => button
+						.setButtonText('✨ Refine with AI')
+						.onClick(() => this.refineIndividualItem(item)));
+			}
 
-			const actionInput = actionContainer.createEl('input', {
-				type: 'text',
-				cls: 'flow-gtd-action-input'
-			});
-			actionInput.value = item.editedName || item.result.nextAction;
-			actionInput.addEventListener('input', (e) => {
-				const value = (e.target as HTMLInputElement).value;
-				item.editedName = value !== item.result.nextAction ? value : undefined;
-			});
+			// Editable content
+			this.renderEditableItemContent(itemEl, item);
 
-			// AI Recommendation
+			// Save button
+			const actionButtons = itemEl.createDiv('flow-gtd-item-actions');
+			new Setting(actionButtons)
+				.addButton(button => button
+					.setButtonText('💾 Save to Vault')
+					.setCta()
+					.setDisabled(item.isProcessing === true)
+					.onClick(() => this.saveAndRemoveItem(item)));
+		});
+	}
+
+	private renderEditableProcessedItems(container: HTMLElement) {
+		// This method is for legacy compatibility only
+		// The new workflow uses renderIndividualEditableItems instead
+		return;
+	}
+
+	private renderItemsGroup(container: HTMLElement, items: EditableItem[], isSaved: boolean) {
+		// This method is for legacy compatibility only
+		// The new workflow doesn't use this method
+		return;
+	}
+
+	private renderEditableItemContent(itemEl: HTMLElement, item: EditableItem) {
+		// Determine the current next action text
+		const currentNextAction = item.editedName ||
+			(item.isAIProcessed && item.result ? item.result.nextAction : item.original);
+		// Editable next action
+		const actionContainer = itemEl.createDiv('flow-gtd-action-editor');
+		actionContainer.createEl('label', {
+			text: 'Next Action:',
+			cls: 'flow-gtd-label'
+		});
+
+		const actionInput = actionContainer.createEl('input', {
+			type: 'text',
+			cls: 'flow-gtd-action-input'
+		});
+		actionInput.value = currentNextAction;
+		actionInput.addEventListener('input', (e) => {
+			const value = (e.target as HTMLInputElement).value;
+			const originalValue = item.isAIProcessed && item.result ? item.result.nextAction : item.original;
+			item.editedName = value !== originalValue ? value : undefined;
+		});
+
+		// AI Recommendation (only show if AI processed)
+		if (item.isAIProcessed && item.result) {
 			const recommendationEl = itemEl.createDiv('flow-gtd-recommendation');
 			recommendationEl.createEl('p', {
 				text: `✨ AI Recommendation: ${this.getActionLabel(item.result.recommendedAction)}`,
@@ -519,135 +454,181 @@ export class InboxProcessingModal extends Modal {
 				text: item.result.recommendedActionReasoning,
 				cls: 'flow-gtd-recommendation-reason'
 			});
+		}
 
-			// Action selector
-			const actionSelectorEl = itemEl.createDiv('flow-gtd-action-selector');
-			actionSelectorEl.createEl('p', { text: 'Where should this go?', cls: 'flow-gtd-label' });
+		// Action selector
+		const actionSelectorEl = itemEl.createDiv('flow-gtd-action-selector');
+		actionSelectorEl.createEl('p', { text: 'Where should this go?', cls: 'flow-gtd-label' });
 
-			new Setting(actionSelectorEl)
+		new Setting(actionSelectorEl)
+			.addDropdown(dropdown => {
+				dropdown
+					.addOption('create-project', '📁 Create New Project')
+					.addOption('add-to-project', '➕ Add to Existing Project')
+					.addOption('next-actions-file', '✅ Next Actions File')
+					.addOption('someday-file', '💭 Someday/Maybe File')
+					.addOption('reference', '📚 Reference (Not Actionable)')
+					.addOption('trash', '🗑️ Trash (Delete)');
+
+				dropdown.setValue(item.selectedAction);
+				dropdown.onChange((value) => {
+					item.selectedAction = value as ProcessingAction;
+					// Re-render the entire list to update conditional fields
+					this.renderEditableItemsList();
+				});
+			});
+
+		// Editable project title (only show if action is create-project)
+		if (item.selectedAction === 'create-project') {
+			const projectTitleEl = itemEl.createDiv('flow-gtd-project-title-editor');
+
+			const labelContainer = projectTitleEl.createDiv('flow-gtd-project-title-label-row');
+			labelContainer.createEl('label', {
+				text: 'Project Title:',
+				cls: 'flow-gtd-label'
+			});
+
+			const titleInput = projectTitleEl.createEl('input', {
+				type: 'text',
+				cls: 'flow-gtd-project-title-input',
+				placeholder: 'Enter project title or click "AI Suggest" below'
+			});
+			titleInput.value = item.editedProjectTitle ||
+				(item.isAIProcessed && item.result ? item.result.projectOutcome : '') || '';
+			titleInput.addEventListener('input', (e) => {
+				const value = (e.target as HTMLInputElement).value;
+				item.editedProjectTitle = value || undefined;
+			});
+
+			// AI Suggest button
+			new Setting(projectTitleEl)
+				.addButton(button => button
+					.setButtonText('✨ AI Suggest Project Name')
+					.setClass('flow-gtd-ai-suggest-button')
+					.onClick(async () => {
+						button.setButtonText('Suggesting...');
+						button.setDisabled(true);
+						try {
+							const suggestedTitle = await this.suggestProjectName(item.original, item.result);
+							titleInput.value = suggestedTitle;
+							item.editedProjectTitle = suggestedTitle;
+						} catch (error) {
+							new Notice(`Error suggesting project name: ${error.message}`);
+						} finally {
+							button.setButtonText('✨ AI Suggest Project Name');
+							button.setDisabled(false);
+						}
+					}));
+		}
+
+		// Project selector (only show if action is add-to-project)
+		if (item.selectedAction === 'add-to-project') {
+			const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
+			projectSelectorEl.createEl('p', { text: 'Select project:', cls: 'flow-gtd-label' });
+
+			new Setting(projectSelectorEl)
 				.addDropdown(dropdown => {
-					dropdown
-						.addOption('create-project', '📁 Create New Project')
-						.addOption('add-to-project', '➕ Add to Existing Project')
-						.addOption('next-actions-file', '✅ Next Actions File')
-						.addOption('someday-file', '💭 Someday/Maybe File')
-						.addOption('reference', '📚 Reference (Not Actionable)')
-						.addOption('trash', '🗑️ Trash (Delete)');
+					// Add all existing projects to the dropdown
+					this.existingProjects.forEach(project => {
+						dropdown.addOption(project.file, project.title);
+					});
 
-					dropdown.setValue(item.selectedAction);
+					dropdown.setValue(item.selectedProject?.file || '');
 					dropdown.onChange((value) => {
-						item.selectedAction = value as ProcessingAction;
-						this.renderProcessedItems(container);
+						item.selectedProject = this.existingProjects.find(
+							p => p.file === value
+						);
 					});
 				});
+		}
 
-			// Editable project title (only show if action is create-project)
-			if (item.selectedAction === 'create-project') {
-				const projectTitleEl = itemEl.createDiv('flow-gtd-project-title-editor');
+		// Sphere selector
+		if (this.settings.spheres.length > 0) {
+			const sphereSelectorEl = itemEl.createDiv('flow-gtd-sphere-selector');
 
-				const labelContainer = projectTitleEl.createDiv('flow-gtd-project-title-label-row');
-				labelContainer.createEl('label', {
-					text: 'Project Title:',
-					cls: 'flow-gtd-label'
+			// Show AI recommendation if available
+			if (item.isAIProcessed && item.result?.recommendedSpheres && item.result.recommendedSpheres.length > 0) {
+				const recommendationEl = sphereSelectorEl.createDiv('flow-gtd-sphere-recommendation');
+				recommendationEl.createEl('p', {
+					text: `✨ Recommended: ${item.result.recommendedSpheres.join(', ')}`,
+					cls: 'flow-gtd-sphere-recommendation-text'
 				});
-
-				const titleInput = projectTitleEl.createEl('input', {
-					type: 'text',
-					cls: 'flow-gtd-project-title-input',
-					placeholder: 'Enter project title or click "AI Suggest" below'
-				});
-				titleInput.value = item.editedProjectTitle || item.result.projectOutcome || '';
-				titleInput.addEventListener('input', (e) => {
-					const value = (e.target as HTMLInputElement).value;
-					item.editedProjectTitle = value || undefined;
-				});
-
-				// AI Suggest button
-				new Setting(projectTitleEl)
-					.addButton(button => button
-						.setButtonText('✨ AI Suggest Project Name')
-						.setClass('flow-gtd-ai-suggest-button')
-						.onClick(async () => {
-							button.setButtonText('Suggesting...');
-							button.setDisabled(true);
-							try {
-								const suggestedTitle = await this.suggestProjectName(item.original, item.result);
-								titleInput.value = suggestedTitle;
-								item.editedProjectTitle = suggestedTitle;
-							} catch (error) {
-								new Notice(`Error suggesting project name: ${error.message}`);
-							} finally {
-								button.setButtonText('✨ AI Suggest Project Name');
-								button.setDisabled(false);
-							}
-						}));
-			}
-
-			// Project selector (only show if action is add-to-project)
-			if (item.selectedAction === 'add-to-project') {
-				const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
-				projectSelectorEl.createEl('p', { text: 'Select project:', cls: 'flow-gtd-label' });
-
-				new Setting(projectSelectorEl)
-					.addDropdown(dropdown => {
-						// Add all existing projects to the dropdown
-						this.existingProjects.forEach(project => {
-							dropdown.addOption(project.file, project.title);
-						});
-
-						dropdown.setValue(item.selectedProject?.file || '');
-						dropdown.onChange((value) => {
-							item.selectedProject = this.existingProjects.find(
-								p => p.file === value
-							);
-						});
-					});
-			}
-
-			// Sphere selector
-			if (this.settings.spheres.length > 0) {
-				const sphereSelectorEl = itemEl.createDiv('flow-gtd-sphere-selector');
-
-				// Show AI recommendation if available
-				if (item.result.recommendedSpheres && item.result.recommendedSpheres.length > 0) {
-					const recommendationEl = sphereSelectorEl.createDiv('flow-gtd-sphere-recommendation');
+				if (item.result.recommendedSpheresReasoning) {
 					recommendationEl.createEl('p', {
-						text: `✨ Recommended: ${item.result.recommendedSpheres.join(', ')}`,
-						cls: 'flow-gtd-sphere-recommendation-text'
+						text: item.result.recommendedSpheresReasoning,
+						cls: 'flow-gtd-recommendation-reason'
 					});
-					if (item.result.recommendedSpheresReasoning) {
-						recommendationEl.createEl('p', {
-							text: item.result.recommendedSpheresReasoning,
-							cls: 'flow-gtd-recommendation-reason'
-						});
-					}
+				}
+			}
+
+			sphereSelectorEl.createEl('p', { text: 'Select spheres:', cls: 'flow-gtd-label' });
+
+			const buttonContainer = sphereSelectorEl.createDiv('flow-gtd-sphere-buttons');
+			this.settings.spheres.forEach(sphere => {
+				const button = buttonContainer.createEl('button', {
+					text: sphere,
+					cls: 'flow-gtd-sphere-button'
+				});
+
+				if (item.selectedSpheres.includes(sphere)) {
+					button.addClass('selected');
 				}
 
-				sphereSelectorEl.createEl('p', { text: 'Select spheres:', cls: 'flow-gtd-label' });
-
-				const buttonContainer = sphereSelectorEl.createDiv('flow-gtd-sphere-buttons');
-				this.settings.spheres.forEach(sphere => {
-					const button = buttonContainer.createEl('button', {
-						text: sphere,
-						cls: 'flow-gtd-sphere-button'
-					});
-
+				button.addEventListener('click', () => {
 					if (item.selectedSpheres.includes(sphere)) {
+						item.selectedSpheres = item.selectedSpheres.filter(s => s !== sphere);
+						button.removeClass('selected');
+					} else {
+						item.selectedSpheres.push(sphere);
 						button.addClass('selected');
 					}
-
-					button.addEventListener('click', () => {
-						if (item.selectedSpheres.includes(sphere)) {
-							item.selectedSpheres = item.selectedSpheres.filter(s => s !== sphere);
-							button.removeClass('selected');
-						} else {
-							item.selectedSpheres.push(sphere);
-							button.addClass('selected');
-						}
-					});
 				});
-			}
+			});
 		}
+	}
+
+	private renderSavedItemSummary(itemEl: HTMLElement, item: EditableItem) {
+		const finalNextAction = item.editedName ||
+			(item.result ? item.result.nextAction : item.original);
+
+		itemEl.createEl('p', {
+			text: `Saved as: ${this.getActionLabel(item.selectedAction)}`,
+			cls: 'flow-gtd-saved-action'
+		});
+
+		if (['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction)) {
+			itemEl.createEl('p', {
+				text: `Next Action: "${finalNextAction}"`,
+				cls: 'flow-gtd-saved-content'
+			});
+		}
+
+		if (item.selectedAction === 'create-project' && (item.editedProjectTitle || (item.result && item.result.projectOutcome))) {
+			itemEl.createEl('p', {
+				text: `Project: "${item.editedProjectTitle || (item.result ? item.result.projectOutcome : '')}"`,
+				cls: 'flow-gtd-saved-content'
+			});
+		}
+
+		if (item.selectedAction === 'add-to-project' && item.selectedProject) {
+			itemEl.createEl('p', {
+				text: `Added to: ${item.selectedProject.title}`,
+				cls: 'flow-gtd-saved-content'
+			});
+		}
+
+		if (item.selectedSpheres.length > 0) {
+			itemEl.createEl('p', {
+				text: `Spheres: ${item.selectedSpheres.join(', ')}`,
+				cls: 'flow-gtd-saved-content'
+			});
+		}
+	}
+
+	private renderProcessedItems(container: HTMLElement) {
+		// This method is kept for compatibility with old workflow
+		// but isn't used in the new immediate processing workflow
+		this.renderEditableProcessedItems(container);
 	}
 
 	private getActionLabel(action: ProcessingAction): string {
@@ -662,139 +643,326 @@ export class InboxProcessingModal extends Modal {
 		return labels[action] || action;
 	}
 
-	private renderReview() {
-		const { contentEl } = this;
-		contentEl.empty();
 
-		contentEl.createEl('h2', { text: '📋 Review and Save' });
-		contentEl.createEl('p', {
-			text: 'Review your processed items and save them to your vault.',
-			cls: 'flow-gtd-description'
+	private async refineAllWithAI() {
+		const unprocessedItems = this.editableItems.filter(item => !item.isAIProcessed);
+
+		if (unprocessedItems.length === 0) {
+			new Notice('No items to process');
+			return;
+		}
+
+		new Notice(`Processing ${unprocessedItems.length} items with AI...`);
+
+		// Mark all items as processing
+		unprocessedItems.forEach(item => {
+			item.isProcessing = true;
 		});
+		this.renderEditableItemsList();
 
-		this.renderProcessedItems(contentEl);
+		// Process all items
+		for (const item of unprocessedItems) {
+			try {
+				const result = await this.processor.processInboxItem(item.original, this.existingProjects);
 
-		new Setting(contentEl)
-			.addButton(button => button
-				.setButtonText('Save All to Vault')
-				.setCta()
-				.onClick(() => this.saveAllItems()))
-			.addButton(button => button
-				.setButtonText('Cancel')
-				.onClick(() => this.close()));
+				item.result = result;
+				item.isAIProcessed = true;
+				item.selectedProject = result.suggestedProjects && result.suggestedProjects.length > 0
+					? result.suggestedProjects[0].project
+					: undefined;
+				item.selectedAction = result.recommendedAction;
+				item.selectedSpheres = result.recommendedSpheres || [];
+			} catch (error) {
+				new Notice(`Error processing "${item.original}": ${error.message}`);
+				console.error(error);
+				// Keep item unprocessed but remove processing state
+			}
+
+			item.isProcessing = false;
+		}
+
+		new Notice(`✅ Processed ${unprocessedItems.length} items`);
+		this.renderEditableItemsList();
+	}
+
+	private async refineIndividualItem(item: EditableItem) {
+		if (item.isProcessing || item.isAIProcessed) {
+			return;
+		}
+
+		item.isProcessing = true;
+		this.renderEditableItemsList();
+
+		try {
+			const result = await this.processor.processInboxItem(item.original, this.existingProjects);
+
+			item.result = result;
+			item.isAIProcessed = true;
+			item.selectedProject = result.suggestedProjects && result.suggestedProjects.length > 0
+				? result.suggestedProjects[0].project
+				: undefined;
+			item.selectedAction = result.recommendedAction;
+			item.selectedSpheres = result.recommendedSpheres || [];
+
+			new Notice(`✅ Refined: "${item.original}"`);
+		} catch (error) {
+			new Notice(`Error processing "${item.original}": ${error.message}`);
+			console.error(error);
+		} finally {
+			item.isProcessing = false;
+			this.renderEditableItemsList();
+		}
+	}
+
+	private async saveAndRemoveItem(item: EditableItem) {
+		try {
+			// Use edited values if available
+			const finalNextAction = item.editedName ||
+				(item.isAIProcessed && item.result ? item.result.nextAction : item.original);
+			const trimmedNextAction = finalNextAction?.trim() ?? '';
+			const sanitizedNextAction =
+				trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
+
+			if (
+				['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
+				trimmedNextAction.length === 0
+			) {
+				throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+			}
+
+			// Create a modified result for saving
+			const resultForSaving: GTDProcessingResult = item.result || {
+				isActionable: true,
+				category: 'next-action',
+				nextAction: sanitizedNextAction,
+				reasoning: 'User input',
+				suggestedProjects: [],
+				recommendedAction: item.selectedAction,
+				recommendedActionReasoning: 'User selection',
+				recommendedSpheres: item.selectedSpheres,
+				recommendedSpheresReasoning: ''
+			};
+
+			resultForSaving.nextAction = sanitizedNextAction;
+			resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
+
+			switch (item.selectedAction) {
+				case 'create-project':
+					await this.writer.createProject(resultForSaving, item.original, item.selectedSpheres);
+					break;
+
+				case 'add-to-project':
+					if (item.selectedProject) {
+						await this.writer.addNextActionToProject(
+							item.selectedProject,
+							sanitizedNextAction
+						);
+					} else {
+						throw new Error('No project selected');
+					}
+					break;
+
+				case 'next-actions-file':
+					await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
+					break;
+
+				case 'someday-file':
+					await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
+					break;
+
+				case 'reference':
+					new Notice(`Reference item not saved: ${item.original}`);
+					break;
+
+				case 'trash':
+					// Just delete from inbox, don't save anywhere
+					break;
+			}
+
+			// Delete the inbox item if it exists
+			if (item.inboxItem) {
+				let inboxItemToDelete = item.inboxItem;
+
+				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+					const filePath = item.inboxItem.sourceFile.path;
+					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
+					const originalLineNumber = item.inboxItem.lineNumber ?? 0;
+					const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
+
+					inboxItemToDelete = {
+						...item.inboxItem,
+						lineNumber: adjustedLineNumber
+					};
+				}
+
+				await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+
+				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+					const filePath = item.inboxItem.sourceFile.path;
+					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
+					this.deletionOffsets.set(filePath, priorDeletions + 1);
+				}
+			}
+
+			// Remove item from the list
+			const index = this.editableItems.indexOf(item);
+			if (index > -1) {
+				this.editableItems.splice(index, 1);
+			}
+
+			// Show success message
+			const actionLabel = this.getActionLabel(item.selectedAction);
+			new Notice(`✅ Saved: ${actionLabel}`);
+
+			// Re-render the list to update the UI
+			this.renderEditableItemsList();
+
+		} catch (error) {
+			if (error instanceof GTDResponseValidationError) {
+				new Notice(`Cannot save: ${error.message}`);
+			} else {
+				new Notice(`Error saving item: ${error.message}`);
+			}
+			console.error(error);
+		}
+	}
+
+	private async saveIndividualItem(item: EditableItem) {
+		try {
+			// Use edited values if available
+			const finalNextAction = item.editedName ||
+				(item.result ? item.result.nextAction : item.original);
+			const trimmedNextAction = finalNextAction?.trim() ?? '';
+			const sanitizedNextAction =
+				trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
+
+			if (
+				['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
+				trimmedNextAction.length === 0
+			) {
+				throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+			}
+
+			// Create a modified result with edited values
+			const modifiedResult: GTDProcessingResult = item.result ? {
+				...item.result,
+				nextAction: sanitizedNextAction,
+				projectOutcome: item.editedProjectTitle || item.result.projectOutcome
+			} : {
+				isActionable: true,
+				category: 'next-action',
+				nextAction: sanitizedNextAction,
+				reasoning: 'User input',
+				suggestedProjects: [],
+				recommendedAction: item.selectedAction,
+				recommendedActionReasoning: 'User selection',
+				recommendedSpheres: item.selectedSpheres,
+				recommendedSpheresReasoning: '',
+				projectOutcome: item.editedProjectTitle
+			};
+
+			switch (item.selectedAction) {
+				case 'create-project':
+					await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
+					break;
+
+				case 'add-to-project':
+					if (item.selectedProject) {
+						await this.writer.addNextActionToProject(
+							item.selectedProject,
+							sanitizedNextAction
+						);
+					} else {
+						throw new Error('No project selected');
+					}
+					break;
+
+				case 'next-actions-file':
+					await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
+					break;
+
+				case 'someday-file':
+					await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
+					break;
+
+				case 'reference':
+					// For reference items, we could add them to a reference file
+					// For now, just notify the user
+					new Notice(`Reference item not saved: ${item.original}`);
+					break;
+
+				case 'trash':
+					// Just delete from inbox, don't save anywhere
+					break;
+			}
+
+			// Delete the inbox item if it exists (even for trash items)
+			if (item.inboxItem) {
+				let inboxItemToDelete = item.inboxItem;
+
+				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+					const filePath = item.inboxItem.sourceFile.path;
+					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
+					const originalLineNumber = item.inboxItem.lineNumber ?? 0;
+					const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
+
+					inboxItemToDelete = {
+						...item.inboxItem,
+						lineNumber: adjustedLineNumber
+					};
+				}
+
+				await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+
+				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
+					const filePath = item.inboxItem.sourceFile.path;
+					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
+					this.deletionOffsets.set(filePath, priorDeletions + 1);
+				}
+			}
+
+			// Item will be removed from the list, so no need to mark as saved
+
+			// Show success message
+			const actionLabel = this.getActionLabel(item.selectedAction);
+			new Notice(`✅ Saved: ${actionLabel}`);
+
+			// Re-render the list to update the UI
+			this.renderEditableItemsList();
+
+		} catch (error) {
+			if (error instanceof GTDResponseValidationError) {
+				new Notice(`Cannot save: ${error.message}`);
+			} else {
+				new Notice(`Error saving item: ${error.message}`);
+			}
+			console.error(error);
+		}
 	}
 
 	private async saveAllItems() {
-		new Notice('Saving items to vault...');
-		let savedCount = 0;
-		let skippedCount = 0;
-		const deletionOffsets = new Map<string, number>();
-
-		for (const item of this.processedItems) {
-			try {
-				// Use edited values if available
-				const finalNextAction = item.editedName || item.result.nextAction;
-				const trimmedNextAction = finalNextAction?.trim() ?? '';
-				const sanitizedNextAction =
-					trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
-
-				if (
-					['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-					trimmedNextAction.length === 0
-				) {
-					throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
-				}
-
-				// Create a modified result with edited values
-				const modifiedResult: GTDProcessingResult = {
-					...item.result,
-					nextAction: sanitizedNextAction,
-					projectOutcome: item.editedProjectTitle || item.result.projectOutcome
-				};
-
-				switch (item.selectedAction) {
-					case 'create-project':
-						await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
-						savedCount++;
-						break;
-
-					case 'add-to-project':
-						if (item.selectedProject) {
-							await this.writer.addNextActionToProject(
-								item.selectedProject,
-								sanitizedNextAction
-							);
-							savedCount++;
-						} else {
-							new Notice(`No project selected for: ${item.original}`);
-							skippedCount++;
-						}
-						break;
-
-					case 'next-actions-file':
-						await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
-						savedCount++;
-						break;
-
-					case 'someday-file':
-						await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
-						savedCount++;
-						break;
-
-					case 'reference':
-						// For reference items, we could add them to a reference file
-						// For now, just notify the user
-						new Notice(`Reference item not saved: ${item.original}`);
-						skippedCount++;
-						break;
-
-					case 'trash':
-						// Just delete from inbox, don't save anywhere
-						skippedCount++;
-						break;
-				}
-
-				// Delete the inbox item if it exists (even for trash items)
-				if (item.inboxItem) {
-					let inboxItemToDelete = item.inboxItem;
-
-					if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-						const filePath = item.inboxItem.sourceFile.path;
-						const priorDeletions = deletionOffsets.get(filePath) ?? 0;
-						const originalLineNumber = item.inboxItem.lineNumber ?? 0;
-						const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
-
-						inboxItemToDelete = {
-							...item.inboxItem,
-							lineNumber: adjustedLineNumber
-						};
-					}
-
-					await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-
-					if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-						const filePath = item.inboxItem.sourceFile.path;
-						const priorDeletions = deletionOffsets.get(filePath) ?? 0;
-						deletionOffsets.set(filePath, priorDeletions + 1);
-					}
-				}
-			} catch (error) {
-				if (error instanceof GTDResponseValidationError) {
-					new Notice(`Skipped ${item.original}: ${error.message}`);
-					skippedCount++;
-				} else {
-					new Notice(`Error saving ${item.original}: ${error.message}`);
-					skippedCount++;
-				}
-				console.error(error);
-			}
+		// This method saves all remaining editable items
+		if (this.editableItems.length === 0) {
+			new Notice('No items to save');
+			this.close();
+			return;
 		}
 
-		new Notice(`✅ Saved ${savedCount} items, skipped ${skippedCount}`);
+		new Notice(`Saving ${this.editableItems.length} remaining items...`);
+
+		// Reset deletion offsets for batch operations
+		this.deletionOffsets.clear();
+
+		// Save all items (this will remove them from the list as they're saved)
+		const itemsToSave = [...this.editableItems]; // Create a copy since items will be removed during saving
+		for (const item of itemsToSave) {
+			await this.saveAndRemoveItem(item);
+		}
+
 		this.close();
 	}
 
-	private async suggestProjectName(originalItem: string, result: GTDProcessingResult): Promise<string> {
+	private async suggestProjectName(originalItem: string, result?: GTDProcessingResult): Promise<string> {
 		// Use the GTD processor to suggest a project name
 		const prompt = `Given this inbox item: "${originalItem}"
 
