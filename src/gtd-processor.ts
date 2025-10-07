@@ -79,13 +79,15 @@ Rules:
 - Projects should be stated as outcomes (e.g., "Website redesign complete" not "Redesign website").
 - If this item relates to an existing project, suggest which project(s) it belongs to.
 - ALWAYS provide the option to create a new project, even if suggesting existing ones.
+- If a complex item could be broken into multiple discrete next actions (not requiring dependencies), you may provide multiple next actions in the "nextActions" array.
 
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
 {
   "isActionable": true/false,
   "category": "next-action/project/reference/someday",
   "projectOutcome": "the desired outcome (only if project)",
-  "nextAction": "the specific next action to take",
+  "nextAction": "the primary/first next action to take",
+  "nextActions": ["optional array of multiple discrete next actions if the item can be broken down into independent actions"],
   "reasoning": "brief explanation of your analysis",
   "futureActions": ["array of other actions that will be needed (only if project)"],
   "suggestedProjects": [
@@ -265,6 +267,7 @@ Examples:
                         category: parsed.category,
                         projectOutcome: parsed.projectOutcome,
                         nextAction: parsed.nextAction,
+                        nextActions: parsed.nextActions || [],
                         reasoning: parsed.reasoning,
                         futureActions: parsed.futureActions || [],
                         suggestedProjects,
@@ -280,6 +283,7 @@ Examples:
                 category: 'next-action' | 'project' | 'reference' | 'someday';
                 projectOutcome?: string;
                 nextAction: string;
+                nextActions?: string[];
                 reasoning: string;
                 futureActions?: string[];
                 suggestedProjects?: Array<{
@@ -326,6 +330,15 @@ Examples:
                 if (parsed.category === 'project') {
                         if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
                                 throw new GTDResponseValidationError('Invalid Claude response: "projectOutcome" must be provided for project items');
+                        }
+                }
+
+                if (parsed.nextActions !== undefined) {
+                        if (
+                                !Array.isArray(parsed.nextActions) ||
+                                !parsed.nextActions.every((action: unknown) => typeof action === 'string')
+                        ) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "nextActions" must be an array of strings when provided');
                         }
                 }
 

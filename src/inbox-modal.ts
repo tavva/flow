@@ -498,25 +498,81 @@ export class InboxProcessingModal extends Modal {
 	}
 
 	private renderEditableItemContent(itemEl: HTMLElement, item: EditableItem) {
-		// Determine the current next action text
-		const currentNextAction = item.editedName ||
-			(item.isAIProcessed && item.result ? item.result.nextAction : item.original);
-		// Editable next action
-		const actionContainer = itemEl.createDiv('flow-gtd-action-editor');
-		actionContainer.createEl('label', {
-			text: 'Next Action:',
+		// Determine current next actions (support multiple)
+		let currentNextActions: string[] = [];
+
+		if (item.editedNames && item.editedNames.length > 0) {
+			currentNextActions = [...item.editedNames];
+		} else if (item.editedName) {
+			currentNextActions = [item.editedName];
+		} else if (item.isAIProcessed && item.result) {
+			if (item.result.nextActions && item.result.nextActions.length > 0) {
+				currentNextActions = [...item.result.nextActions];
+			} else if (item.result.nextAction) {
+				currentNextActions = [item.result.nextAction];
+			}
+		} else {
+			currentNextActions = [item.original];
+		}
+
+		// Next Actions section
+		const actionsContainer = itemEl.createDiv('flow-gtd-actions-editor');
+		const actionsHeader = actionsContainer.createDiv('flow-gtd-actions-header');
+		actionsHeader.createEl('label', {
+			text: 'Next Actions:',
 			cls: 'flow-gtd-label'
 		});
 
-		const actionInput = actionContainer.createEl('input', {
-			type: 'text',
-			cls: 'flow-gtd-action-input'
+		// Add new action button
+		const addActionBtn = actionsHeader.createEl('button', {
+			text: '+ Add Action',
+			cls: 'flow-gtd-add-action-btn'
 		});
-		actionInput.value = currentNextAction;
-		actionInput.addEventListener('input', (e) => {
-			const value = (e.target as HTMLInputElement).value;
-			const originalValue = item.isAIProcessed && item.result ? item.result.nextAction : item.original;
-			item.editedName = value !== originalValue ? value : undefined;
+		addActionBtn.addEventListener('click', () => {
+			currentNextActions.push('');
+			item.editedNames = [...currentNextActions];
+			this.renderEditableItemsList(); // Re-render to show new input
+		});
+
+		// Render each next action
+		const actionsList = actionsContainer.createDiv('flow-gtd-actions-list');
+		currentNextActions.forEach((action, index) => {
+			const actionItem = actionsList.createDiv('flow-gtd-action-item');
+
+			const actionInput = actionItem.createEl('input', {
+				type: 'text',
+				cls: 'flow-gtd-action-input'
+			});
+			actionInput.value = action;
+			actionInput.placeholder = `Next action ${index + 1}`;
+
+			actionInput.addEventListener('input', (e) => {
+				const value = (e.target as HTMLInputElement).value;
+				currentNextActions[index] = value;
+				item.editedNames = [...currentNextActions];
+				// Clear editedName if we're using multiple actions
+				if (currentNextActions.length > 1) {
+					item.editedName = undefined;
+				} else {
+					item.editedName = value;
+				}
+			});
+
+			// Remove action button (only show if more than one action)
+			if (currentNextActions.length > 1) {
+				const removeBtn = actionItem.createEl('button', {
+					text: '×',
+					cls: 'flow-gtd-remove-action-btn'
+				});
+				removeBtn.addEventListener('click', () => {
+					currentNextActions.splice(index, 1);
+					item.editedNames = currentNextActions.length > 1 ? [...currentNextActions] : undefined;
+					if (currentNextActions.length === 1) {
+						item.editedName = currentNextActions[0];
+					}
+					this.renderEditableItemsList(); // Re-render to update UI
+				});
+			}
 		});
 
 		// AI Recommendation (only show if AI processed)
@@ -664,8 +720,19 @@ export class InboxProcessingModal extends Modal {
 	}
 
 	private renderSavedItemSummary(itemEl: HTMLElement, item: EditableItem) {
-		const finalNextAction = item.editedName ||
-			(item.result ? item.result.nextAction : item.original);
+		// Determine the final next actions that were saved
+		let finalNextActions: string[] = [];
+		if (item.editedNames && item.editedNames.length > 0) {
+			finalNextActions = item.editedNames.filter(action => action.trim().length > 0);
+		} else if (item.editedName) {
+			finalNextActions = [item.editedName];
+		} else if (item.result?.nextActions && item.result.nextActions.length > 0) {
+			finalNextActions = item.result.nextActions;
+		} else if (item.result?.nextAction) {
+			finalNextActions = [item.result.nextAction];
+		} else {
+			finalNextActions = [item.original];
+		}
 
 		itemEl.createEl('p', {
 			text: `Saved as: ${this.getActionLabel(item.selectedAction)}`,
@@ -673,10 +740,21 @@ export class InboxProcessingModal extends Modal {
 		});
 
 		if (['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction)) {
-			itemEl.createEl('p', {
-				text: `Next Action: "${finalNextAction}"`,
-				cls: 'flow-gtd-saved-content'
-			});
+			if (finalNextActions.length === 1) {
+				itemEl.createEl('p', {
+					text: `Next Action: "${finalNextActions[0]}"`,
+					cls: 'flow-gtd-saved-content'
+				});
+			} else if (finalNextActions.length > 1) {
+				itemEl.createEl('p', {
+					text: `Next Actions (${finalNextActions.length}):`,
+					cls: 'flow-gtd-saved-content'
+				});
+				const actionsList = itemEl.createEl('ul', { cls: 'flow-gtd-saved-actions-list' });
+				finalNextActions.forEach(action => {
+					actionsList.createEl('li', { text: `"${action}"` });
+				});
+			}
 		}
 
 		if (item.selectedAction === 'create-project' && (item.editedProjectTitle || (item.result && item.result.projectOutcome))) {

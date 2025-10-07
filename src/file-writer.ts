@@ -61,10 +61,14 @@ export class FileWriter {
 	/**
 	 * Add an action to the Next Actions file
 	 */
-	async addToNextActionsFile(action: string, spheres: string[] = []): Promise<void> {
+	async addToNextActionsFile(actions: string | string[], spheres: string[] = []): Promise<void> {
+		const actionsArray = Array.isArray(actions) ? actions : [actions];
 		const sphereTags = spheres.map(s => `#sphere/${s}`).join(' ');
-		const content = sphereTags ? `- [ ] ${action} ${sphereTags}` : `- [ ] ${action}`;
-		await this.appendToFile(this.settings.nextActionsFilePath, content);
+
+		for (const action of actionsArray) {
+			const content = sphereTags ? `- [ ] ${action} ${sphereTags}` : `- [ ] ${action}`;
+			await this.appendToFile(this.settings.nextActionsFilePath, content);
+		}
 	}
 
 	/**
@@ -101,7 +105,7 @@ export class FileWriter {
 	 */
 	async addNextActionToProject(
 		project: FlowProject,
-		action: string,
+		actions: string | string[],
 		isFuture: boolean = false
 	): Promise<void> {
 		const file = this.app.vault.getAbstractFileByPath(project.file);
@@ -109,11 +113,15 @@ export class FileWriter {
 			throw new Error(`Project file not found: ${project.file}`);
 		}
 
-		const content = await this.app.vault.read(file);
-		const sectionName = isFuture ? '## Future next actions' : '## Next actions';
-		const updatedContent = this.addActionToSection(content, sectionName, action);
+		const actionsArray = Array.isArray(actions) ? actions : [actions];
+		let content = await this.app.vault.read(file);
 
-		await this.app.vault.modify(file, updatedContent);
+		for (const action of actionsArray) {
+			const sectionName = isFuture ? '## Future next actions' : '## Next actions';
+			content = this.addActionToSection(content, sectionName, action);
+		}
+
+		await this.app.vault.modify(file, content);
 	}
 
 	/**
@@ -157,8 +165,16 @@ status: ${this.settings.defaultStatus}
 ${result.reasoning}
 
 ## Next actions
-- [ ] ${result.nextAction}
+`;
 
+		// Handle multiple next actions or single next action
+		if (result.nextActions && result.nextActions.length > 0) {
+			content += result.nextActions.map(action => `- [ ] ${action}`).join('\n') + '\n';
+		} else {
+			content += `- [ ] ${result.nextAction}\n`;
+		}
+
+		content += `
 ## Future next actions
 `;
 

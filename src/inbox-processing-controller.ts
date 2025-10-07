@@ -15,6 +15,7 @@ export interface EditableItem {
         selectedAction: ProcessingAction;
         selectedSpheres: string[];
         editedName?: string;
+        editedNames?: string[]; // Support multiple edited next actions
         editedProjectTitle?: string;
         isProcessing?: boolean;
 }
@@ -93,6 +94,12 @@ export class InboxProcessingController {
 
         async refineItem(item: EditableItem, existingProjects: FlowProject[]): Promise<EditableItem> {
                 const result = await this.processor.processInboxItem(item.original, existingProjects);
+
+                // Initialize editedNames with AI-recommended next actions if multiple were provided
+                const editedNames = result.nextActions && result.nextActions.length > 1
+                        ? [...result.nextActions]
+                        : undefined;
+
                 return {
                         ...item,
                         result,
@@ -102,7 +109,8 @@ export class InboxProcessingController {
                                 ? result.suggestedProjects[0].project
                                 : undefined,
                         selectedAction: result.recommendedAction,
-                        selectedSpheres: result.recommendedSpheres || []
+                        selectedSpheres: result.recommendedSpheres || [],
+                        editedNames
                 };
         }
 
@@ -116,27 +124,46 @@ export class InboxProcessingController {
                         }
                 });
 
-                return Promise.all(promises);
+                const outcomes = await Promise.all(promises);
+                console.log(`Completed processing ${items.length} items.`);
+                return outcomes;
         }
 
         async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
-                const finalNextAction = item.editedName ||
-                        (item.isAIProcessed && item.result ? item.result.nextAction : item.original);
-                const trimmedNextAction = finalNextAction?.trim() ?? '';
-                const sanitizedNextAction =
-                        trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
+                // Determine final next actions - prioritize edited names, then AI results, then original
+                let finalNextActions: string[] = [];
+
+                if (item.editedNames && item.editedNames.length > 0) {
+                        finalNextActions = item.editedNames.filter(action => action.trim().length > 0);
+                } else if (item.editedName && item.editedName.trim().length > 0) {
+                        finalNextActions = [item.editedName.trim()];
+                } else if (item.isAIProcessed && item.result) {
+                        if (item.result.nextActions && item.result.nextActions.length > 0) {
+                                finalNextActions = item.result.nextActions.filter(action => action.trim().length > 0);
+                        } else if (item.result.nextAction && item.result.nextAction.trim().length > 0) {
+                                finalNextActions = [item.result.nextAction.trim()];
+                        }
+                }
+
+                // Fallback to original item if nothing else available
+                if (finalNextActions.length === 0) {
+                        finalNextActions = [item.original];
+                }
 
                 if (
                         ['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-                        trimmedNextAction.length === 0
+                        finalNextActions.every(action => action.trim().length === 0)
                 ) {
                         throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
                 }
 
+                const primaryNextAction = finalNextActions[0] || item.original;
+
                 const resultForSaving: GTDProcessingResult = item.result || {
                         isActionable: true,
                         category: 'next-action',
-                        nextAction: sanitizedNextAction,
+                        nextAction: primaryNextAction,
+                        nextActions: finalNextActions,
                         reasoning: 'User input',
                         suggestedProjects: [],
                         recommendedAction: item.selectedAction,
@@ -145,7 +172,8 @@ export class InboxProcessingController {
                         recommendedSpheresReasoning: ''
                 };
 
-                resultForSaving.nextAction = sanitizedNextAction;
+                resultForSaving.nextAction = primaryNextAction;
+                resultForSaving.nextActions = finalNextActions;
                 resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
 
                 switch (item.selectedAction) {
@@ -157,7 +185,7 @@ export class InboxProcessingController {
                                 if (item.selectedProject) {
                                         await this.writer.addNextActionToProject(
                                                 item.selectedProject,
-                                                sanitizedNextAction
+                                                finalNextActions
                                         );
                                 } else {
                                         throw new Error('No project selected');
@@ -165,7 +193,7 @@ export class InboxProcessingController {
                                 break;
 
                         case 'next-actions-file':
-                                await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
+                                await this.writer.addToNextActionsFile(finalNextActions, item.selectedSpheres);
                                 break;
 
                         case 'someday-file':

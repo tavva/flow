@@ -22,6 +22,7 @@ export interface GTDProcessingResult {
 	category: 'next-action' | 'project' | 'reference' | 'someday';
 	projectOutcome?: string;
 	nextAction: string;
+	nextActions?: string[]; // Support multiple next actions
 	reasoning: string;
 	futureActions?: string[];
 	suggestedProjects?: ProjectSuggestion[];
