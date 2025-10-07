@@ -1,13 +1,10 @@
 import { GTDProcessor } from '../src/gtd-processor';
 import { FlowProject } from '../src/types';
-import Anthropic from '@anthropic-ai/sdk';
-
-// Mock the Anthropic SDK
-jest.mock('@anthropic-ai/sdk');
+import { RateLimitedAnthropicClient } from '../src/anthropic-client';
 
 describe('GTDProcessor', () => {
 	let processor: GTDProcessor;
-	let mockClient: jest.Mocked<Anthropic>;
+	let mockClient: jest.Mocked<RateLimitedAnthropicClient>;
 	const mockApiKey = 'test-api-key';
 	const mockModel = 'claude-test-model';
 
@@ -52,13 +49,10 @@ describe('GTDProcessor', () => {
 
 	beforeEach(() => {
 		mockClient = {
-			messages: {
-				create: jest.fn(),
-			},
+			createMessage: jest.fn(),
 		} as any;
 
-		(Anthropic as jest.MockedClass<typeof Anthropic>).mockImplementation(() => mockClient);
-		processor = new GTDProcessor(mockApiKey, ['personal', 'work'], mockModel);
+		processor = new GTDProcessor(mockApiKey, ['personal', 'work'], mockModel, mockClient);
 	});
 
 	afterEach(() => {
@@ -94,7 +88,7 @@ describe('GTDProcessor', () => {
 				}]
 			};
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('call dentist', []);
 
@@ -105,7 +99,7 @@ describe('GTDProcessor', () => {
 				suggestedProjects: []
 			});
 
-			expect(mockClient.messages.create).toHaveBeenCalledWith(
+			expect(mockClient.createMessage).toHaveBeenCalledWith(
 				expect.objectContaining({
 					model: mockModel,
 					max_tokens: 2000
@@ -133,7 +127,7 @@ describe('GTDProcessor', () => {
 				}]
 			};
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('plan vacation', []);
 
@@ -170,7 +164,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('look into gym memberships', mockProjects);
 
@@ -214,7 +208,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem(
 				'Start doc for 3 day in the office counter argument',
@@ -257,7 +251,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('track fitness', projectsWithPunctuation);
 
@@ -285,7 +279,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('quantum computing', mockProjects);
 
@@ -331,7 +325,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('website work', projectsWithSimilarTitles);
 
@@ -351,11 +345,11 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			await processor.processInboxItem('test item', mockProjects);
 
-			const callArgs = mockClient.messages.create.mock.calls[0][0];
+			const callArgs = mockClient.createMessage.mock.calls[0][0];
 			const prompt = callArgs.messages[0].content;
 
 			expect(prompt).toContain('Health and Fitness');
@@ -378,7 +372,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('recipe for lasagna', []);
 
@@ -403,7 +397,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('learn to play piano', []);
 
@@ -426,7 +420,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.processInboxItem('test', []);
 
@@ -434,7 +428,7 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should throw error on API failure', async () => {
-			mockClient.messages.create.mockRejectedValue(new Error('API Error'));
+			mockClient.createMessage.mockRejectedValue(new Error('API Error'));
 
 			await expect(
 				processor.processInboxItem('test', [])
@@ -449,7 +443,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+                        mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
                         await expect(
                                 processor.processInboxItem('test', [])
@@ -471,7 +465,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+                        mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
                         await expect(
                                 processor.processInboxItem('test', [])
@@ -496,7 +490,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+                        mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
                         await expect(
                                 processor.processInboxItem('test', [])
@@ -521,7 +515,7 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-                        mockClient.messages.create.mockResolvedValue(mockResponse as any);
+                        mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
                         await expect(
                                 processor.processInboxItem('test', [])
@@ -541,11 +535,11 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			await processor.processInboxItem('test item', []);
 
-			const callArgs = mockClient.messages.create.mock.calls[0][0];
+			const callArgs = mockClient.createMessage.mock.calls[0][0];
 			const prompt = callArgs.messages[0].content;
 
 			expect(prompt).toContain('The user currently has no existing projects');
@@ -571,11 +565,11 @@ describe('GTDProcessor', () => {
                                 }]
                         };
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			await processor.processInboxItem('test', manyProjects);
 
-			const callArgs = mockClient.messages.create.mock.calls[0][0];
+			const callArgs = mockClient.createMessage.mock.calls[0][0];
 			const prompt = callArgs.messages[0].content;
 
 			// Should include first 20 projects
@@ -623,7 +617,7 @@ describe('GTDProcessor', () => {
 				}]
 			};
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.prioritizeActions(actions);
 
@@ -652,7 +646,7 @@ describe('GTDProcessor', () => {
 				}]
 			};
 
-			mockClient.messages.create.mockResolvedValue(mockResponse as any);
+			mockClient.createMessage.mockResolvedValue(mockResponse as any);
 
 			const result = await processor.prioritizeActions(['test action']);
 
@@ -660,7 +654,7 @@ describe('GTDProcessor', () => {
 		});
 
 		it('should throw error on API failure', async () => {
-			mockClient.messages.create.mockRejectedValue(new Error('API Error'));
+			mockClient.createMessage.mockRejectedValue(new Error('API Error'));
 
 			await expect(
 				processor.prioritizeActions(['test'])

@@ -1,21 +1,19 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { RateLimitedAnthropicClient, getAnthropicClient } from './anthropic-client';
 import { FlowProject, GTDProcessingResult, ProjectSuggestion } from './types';
 import { GTDResponseValidationError } from './errors';
 
 export class GTDProcessor {
-        private client: Anthropic;
+        private client: RateLimitedAnthropicClient;
         private availableSpheres: string[];
         private model: string;
 
         constructor(
                 apiKey: string,
                 spheres: string[] = ['personal', 'work'],
-                model: string = 'claude-sonnet-4-20250514'
+                model: string = 'claude-sonnet-4-20250514',
+                client?: RateLimitedAnthropicClient
         ) {
-                this.client = new Anthropic({
-                        apiKey,
-                        dangerouslyAllowBrowser: true
-                });
+                this.client = client ?? getAnthropicClient(apiKey);
                 this.availableSpheres = spheres;
                 this.model = model;
         }
@@ -30,7 +28,7 @@ export class GTDProcessor {
 		const prompt = this.buildProcessingPrompt(item, existingProjects);
 
 		try {
-                        const response = await this.client.messages.create({
+                        const response = await this.client.createMessage({
                                 model: this.model,
                                 max_tokens: 2000,
                                 messages: [{ role: 'user', content: prompt }]
@@ -43,7 +41,8 @@ export class GTDProcessor {
 
 			return this.parseResponse(content.text, existingProjects);
 		} catch (error) {
-			throw new Error(`Failed to process inbox item: ${error.message}`);
+			const err = error instanceof Error ? error : new Error(String(error));
+			throw new Error(`Failed to process inbox item: ${err.message}`);
 		}
 	}
 
@@ -448,7 +447,7 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
 Sort by suggestedOrder (1 being highest priority).`;
 
 		try {
-                        const response = await this.client.messages.create({
+                        const response = await this.client.createMessage({
                                 model: this.model,
                                 max_tokens: 3000,
                                 messages: [{ role: 'user', content: prompt }]
@@ -475,7 +474,7 @@ Sort by suggestedOrder (1 being highest priority).`;
 	 */
 	async callAI(prompt: string): Promise<string> {
 		try {
-                        const response = await this.client.messages.create({
+                        const response = await this.client.createMessage({
                                 model: this.model,
                                 max_tokens: 500,
                                 messages: [{ role: 'user', content: prompt }]
