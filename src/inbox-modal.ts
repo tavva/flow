@@ -1,23 +1,7 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import { GTDProcessor } from './gtd-processor';
-import { FlowProjectScanner } from './flow-scanner';
-import { FileWriter } from './file-writer';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
-import { InboxScanner, InboxItem } from './inbox-scanner';
+import { InboxProcessingController, EditableItem, ProcessingOutcome } from './inbox-processing-controller';
 import { GTDResponseValidationError } from './errors';
-
-interface EditableItem {
-	original: string;
-	inboxItem?: InboxItem; // Track the original inbox item for deletion
-	isAIProcessed: boolean; // Whether this item has been processed by AI
-	result?: GTDProcessingResult; // AI processing result (if processed)
-	selectedProject?: FlowProject;
-	selectedAction: ProcessingAction; // User's final decision
-	selectedSpheres: string[]; // User's sphere selection
-	editedName?: string; // User's edited name for the next action
-	editedProjectTitle?: string; // User's edited project title (for create-project)
-	isProcessing?: boolean; // Whether this item is currently being processed by AI
-}
 
 type InputMode = 'single' | 'bulk' | 'inbox';
 
@@ -27,29 +11,18 @@ export class InboxProcessingModal extends Modal {
 	private currentInput: string = '';
 	private bulkInput: string = '';
 	private inputMode: InputMode = 'single';
-	private inboxItems: InboxItem[] = [];
 	private deletionOffsets = new Map<string, number>();
 
-	private processor: GTDProcessor;
-	private scanner: FlowProjectScanner;
-	private writer: FileWriter;
-	private inboxScanner: InboxScanner;
+	private controller: InboxProcessingController;
 	private existingProjects: FlowProject[] = [];
 
-        constructor(
-                app: App,
-                private settings: PluginSettings,
-                private startWithInbox: boolean = false
-        ) {
-                super(app);
-                this.processor = new GTDProcessor(
-                        settings.anthropicApiKey,
-                        settings.spheres,
-                        settings.anthropicModel
-                );
-                this.scanner = new FlowProjectScanner(app);
-                this.writer = new FileWriter(app, settings);
-                this.inboxScanner = new InboxScanner(app, settings);
+	constructor(
+		app: App,
+		private settings: PluginSettings,
+		private startWithInbox: boolean = false
+	) {
+		super(app);
+		this.controller = new InboxProcessingController(app, settings);
 
 		if (startWithInbox) {
 			this.inputMode = 'inbox';
@@ -63,7 +36,7 @@ export class InboxProcessingModal extends Modal {
 
 		// Load existing projects
 		try {
-			this.existingProjects = await this.scanner.scanProjects();
+			this.existingProjects = await this.controller.loadExistingProjects();
 		} catch (error) {
 			new Notice('Failed to load existing projects');
 			console.error(error);
@@ -229,25 +202,17 @@ export class InboxProcessingModal extends Modal {
 
 	private async loadInboxItems() {
 		try {
-			this.inboxItems = await this.inboxScanner.getAllInboxItems();
+			const inboxEditableItems = await this.controller.loadInboxEditableItems();
 
-			if (this.inboxItems.length === 0) {
+			if (inboxEditableItems.length === 0) {
 				new Notice('No items found in inbox folders');
 				this.inputMode = 'single';
 				this.renderMindsweep();
 				return;
 			}
 
-			// Create editable items immediately without AI processing
-			this.editableItems = this.inboxItems.map(item => ({
-				original: item.content,
-				inboxItem: item,
-				isAIProcessed: false,
-				selectedAction: 'next-actions-file' as ProcessingAction,
-				selectedSpheres: []
-			}));
-
-			new Notice(`Loaded ${this.inboxItems.length} items from inbox`);
+			this.editableItems = inboxEditableItems;
+			new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
 			this.renderEditableItemsList();
 		} catch (error) {
 			new Notice('Error loading inbox items');
@@ -326,12 +291,7 @@ export class InboxProcessingModal extends Modal {
 		}
 
 		// Create editable items from mindsweep items
-		this.editableItems = this.mindsweepItems.map(item => ({
-			original: item,
-			isAIProcessed: false,
-			selectedAction: 'next-actions-file' as ProcessingAction,
-			selectedSpheres: []
-		}));
+		this.editableItems = this.controller.createEditableItemsFromMindsweep(this.mindsweepItems);
 
 		new Notice(`Loaded ${this.mindsweepItems.length} items`);
 		this.renderEditableItemsList();
@@ -761,39 +721,33 @@ export class InboxProcessingModal extends Modal {
 
 		new Notice(`Processing ${unprocessedItems.length} items with AI...`);
 
-		// Mark all items as processing
 		unprocessedItems.forEach(item => {
 			item.isProcessing = true;
 		});
 		this.renderEditableItemsList();
 
-		// Process all items in parallel
-		const processingPromises = unprocessedItems.map(async (item) => {
-			try {
-				const result = await this.processor.processInboxItem(item.original, this.existingProjects);
+		const outcomes: ProcessingOutcome[] = await this.controller.refineItems(
+			unprocessedItems,
+			this.existingProjects
+		);
 
-				item.result = result;
-				item.isAIProcessed = true;
-				item.selectedProject = result.suggestedProjects && result.suggestedProjects.length > 0
-					? result.suggestedProjects[0].project
-					: undefined;
-				item.selectedAction = result.recommendedAction;
-				item.selectedSpheres = result.recommendedSpheres || [];
-			} catch (error) {
+		let successCount = 0;
+		outcomes.forEach(({ item, updatedItem, error }) => {
+			const index = this.editableItems.indexOf(item);
+
+			if (updatedItem && index !== -1) {
+				this.editableItems[index] = { ...updatedItem };
+				successCount += 1;
+			} else if (error) {
+				if (index !== -1) {
+					this.editableItems[index] = { ...item, isProcessing: false };
+				}
 				new Notice(`Error processing "${item.original}": ${error.message}`);
 				console.error(error);
-				// Keep item unprocessed but remove processing state
-			} finally {
-				// Ensure processing flag is always reset, even on error
-				item.isProcessing = false;
 			}
 		});
 
-		// Wait for all processing to complete
-		await Promise.all(processingPromises);
-
-		const successfullyProcessed = unprocessedItems.filter(item => item.isAIProcessed).length;
-		new Notice(`✅ Processed ${successfullyProcessed} of ${unprocessedItems.length} items`);
+		new Notice(`✅ Processed ${successCount} of ${unprocessedItems.length} items`);
 		this.renderEditableItemsList();
 	}
 
@@ -819,19 +773,18 @@ export class InboxProcessingModal extends Modal {
 		this.scheduleRender();
 
 		try {
-			const result = await this.processor.processInboxItem(item.original, this.existingProjects);
+			const updatedItem = await this.controller.refineItem(item, this.existingProjects);
+			const index = this.editableItems.indexOf(item);
 
-			item.result = result;
-			item.isAIProcessed = true;
-			item.selectedProject = result.suggestedProjects && result.suggestedProjects.length > 0
-				? result.suggestedProjects[0].project
-				: undefined;
-			item.selectedAction = result.recommendedAction;
-			item.selectedSpheres = result.recommendedSpheres || [];
+			if (index !== -1) {
+				this.editableItems[index] = { ...updatedItem };
+			}
 
 			new Notice(`✅ Refined: "${item.original}"`);
 		} catch (error) {
-			new Notice(`Error processing "${item.original}": ${error.message}`);
+			item.isProcessing = false;
+			const message = error instanceof Error ? error.message : String(error);
+			new Notice(`Error processing "${item.original}": ${message}`);
 			console.error(error);
 		} finally {
 			item.isProcessing = false;
@@ -841,225 +794,20 @@ export class InboxProcessingModal extends Modal {
 
 	private async saveAndRemoveItem(item: EditableItem) {
 		try {
-			// Use edited values if available
-			const finalNextAction = item.editedName ||
-				(item.isAIProcessed && item.result ? item.result.nextAction : item.original);
-			const trimmedNextAction = finalNextAction?.trim() ?? '';
-			const sanitizedNextAction =
-				trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
-
-			if (
-				['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-				trimmedNextAction.length === 0
-			) {
-				throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+			await this.controller.saveItem(item, this.deletionOffsets);
+			if (item.selectedAction === 'reference') {
+				new Notice(`Reference item not saved: ${item.original}`);
 			}
-
-			// Create a modified result for saving
-			const resultForSaving: GTDProcessingResult = item.result || {
-				isActionable: true,
-				category: 'next-action',
-				nextAction: sanitizedNextAction,
-				reasoning: 'User input',
-				suggestedProjects: [],
-				recommendedAction: item.selectedAction,
-				recommendedActionReasoning: 'User selection',
-				recommendedSpheres: item.selectedSpheres,
-				recommendedSpheresReasoning: ''
-			};
-
-			resultForSaving.nextAction = sanitizedNextAction;
-			resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
-
-			switch (item.selectedAction) {
-				case 'create-project':
-					await this.writer.createProject(resultForSaving, item.original, item.selectedSpheres);
-					break;
-
-				case 'add-to-project':
-					if (item.selectedProject) {
-						await this.writer.addNextActionToProject(
-							item.selectedProject,
-							sanitizedNextAction
-						);
-					} else {
-						throw new Error('No project selected');
-					}
-					break;
-
-				case 'next-actions-file':
-					await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
-					break;
-
-				case 'someday-file':
-					await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
-					break;
-
-				case 'reference':
-					new Notice(`Reference item not saved: ${item.original}`);
-					break;
-
-				case 'trash':
-					// Just delete from inbox, don't save anywhere
-					break;
-			}
-
-			// Delete the inbox item if it exists
-			if (item.inboxItem) {
-				let inboxItemToDelete = item.inboxItem;
-
-				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-					const filePath = item.inboxItem.sourceFile.path;
-					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
-					const originalLineNumber = item.inboxItem.lineNumber ?? 0;
-					const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
-
-					inboxItemToDelete = {
-						...item.inboxItem,
-						lineNumber: adjustedLineNumber
-					};
-				}
-
-				await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-
-				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-					const filePath = item.inboxItem.sourceFile.path;
-					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
-					this.deletionOffsets.set(filePath, priorDeletions + 1);
-				}
-			}
-
-			// Remove item from the list
-			const index = this.editableItems.indexOf(item);
-			if (index > -1) {
-				this.editableItems.splice(index, 1);
-			}
-
-			// Show success message
+			this.editableItems = this.editableItems.filter(current => current !== item);
 			const actionLabel = this.getActionLabel(item.selectedAction);
 			new Notice(`✅ Saved: ${actionLabel}`);
-
-			// Re-render the list to update the UI
 			this.renderEditableItemsList();
-
 		} catch (error) {
 			if (error instanceof GTDResponseValidationError) {
 				new Notice(`Cannot save: ${error.message}`);
 			} else {
-				new Notice(`Error saving item: ${error.message}`);
-			}
-			console.error(error);
-		}
-	}
-
-	private async saveIndividualItem(item: EditableItem) {
-		try {
-			// Use edited values if available
-			const finalNextAction = item.editedName ||
-				(item.result ? item.result.nextAction : item.original);
-			const trimmedNextAction = finalNextAction?.trim() ?? '';
-			const sanitizedNextAction =
-				trimmedNextAction.length > 0 ? trimmedNextAction : finalNextAction;
-
-			if (
-				['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-				trimmedNextAction.length === 0
-			) {
-				throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
-			}
-
-			// Create a modified result with edited values
-			const modifiedResult: GTDProcessingResult = item.result ? {
-				...item.result,
-				nextAction: sanitizedNextAction,
-				projectOutcome: item.editedProjectTitle || item.result.projectOutcome
-			} : {
-				isActionable: true,
-				category: 'next-action',
-				nextAction: sanitizedNextAction,
-				reasoning: 'User input',
-				suggestedProjects: [],
-				recommendedAction: item.selectedAction,
-				recommendedActionReasoning: 'User selection',
-				recommendedSpheres: item.selectedSpheres,
-				recommendedSpheresReasoning: '',
-				projectOutcome: item.editedProjectTitle
-			};
-
-			switch (item.selectedAction) {
-				case 'create-project':
-					await this.writer.createProject(modifiedResult, item.original, item.selectedSpheres);
-					break;
-
-				case 'add-to-project':
-					if (item.selectedProject) {
-						await this.writer.addNextActionToProject(
-							item.selectedProject,
-							sanitizedNextAction
-						);
-					} else {
-						throw new Error('No project selected');
-					}
-					break;
-
-				case 'next-actions-file':
-					await this.writer.addToNextActionsFile(sanitizedNextAction, item.selectedSpheres);
-					break;
-
-				case 'someday-file':
-					await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
-					break;
-
-				case 'reference':
-					// For reference items, we could add them to a reference file
-					// For now, just notify the user
-					new Notice(`Reference item not saved: ${item.original}`);
-					break;
-
-				case 'trash':
-					// Just delete from inbox, don't save anywhere
-					break;
-			}
-
-			// Delete the inbox item if it exists (even for trash items)
-			if (item.inboxItem) {
-				let inboxItemToDelete = item.inboxItem;
-
-				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-					const filePath = item.inboxItem.sourceFile.path;
-					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
-					const originalLineNumber = item.inboxItem.lineNumber ?? 0;
-					const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
-
-					inboxItemToDelete = {
-						...item.inboxItem,
-						lineNumber: adjustedLineNumber
-					};
-				}
-
-				await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-
-				if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-					const filePath = item.inboxItem.sourceFile.path;
-					const priorDeletions = this.deletionOffsets.get(filePath) ?? 0;
-					this.deletionOffsets.set(filePath, priorDeletions + 1);
-				}
-			}
-
-			// Item will be removed from the list, so no need to mark as saved
-
-			// Show success message
-			const actionLabel = this.getActionLabel(item.selectedAction);
-			new Notice(`✅ Saved: ${actionLabel}`);
-
-			// Re-render the list to update the UI
-			this.renderEditableItemsList();
-
-		} catch (error) {
-			if (error instanceof GTDResponseValidationError) {
-				new Notice(`Cannot save: ${error.message}`);
-			} else {
-				new Notice(`Error saving item: ${error.message}`);
+				const message = error instanceof Error ? error.message : String(error);
+				new Notice(`Error saving item: ${message}`);
 			}
 			console.error(error);
 		}
@@ -1087,29 +835,12 @@ export class InboxProcessingModal extends Modal {
 		this.close();
 	}
 
-	private async suggestProjectName(originalItem: string, result?: GTDProcessingResult): Promise<string> {
-		// Use the GTD processor to suggest a project name
-		const prompt = `Given this inbox item: "${originalItem}"
-
-The user wants to create a project for this. Suggest a clear, concise project title that:
-- States the desired outcome (not just the topic)
-- Is specific and measurable
-- Defines what "done" looks like
-- Uses past tense or completion-oriented language when appropriate
-
-Examples:
-- Good: "Website redesign complete and deployed"
-- Bad: "Website project"
-- Good: "Kitchen renovation finished"
-- Bad: "Kitchen stuff"
-
-Respond with ONLY the project title, nothing else.`;
-
+	private async suggestProjectName(originalItem: string, _result?: GTDProcessingResult): Promise<string> {
 		try {
-			const response = await this.processor.callAI(prompt);
-			return response.trim();
+			return await this.controller.suggestProjectName(originalItem);
 		} catch (error) {
-			throw new Error(`Failed to suggest project name: ${error.message}`);
+			const message = error instanceof Error ? error.message : String(error);
+			throw new Error(`Failed to suggest project name: ${message}`);
 		}
 	}
 }
