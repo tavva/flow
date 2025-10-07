@@ -350,38 +350,120 @@ export class InboxProcessingModal extends Modal {
 		this.editableItems.forEach((item, index) => {
 			const itemEl = listContainer.createDiv('flow-gtd-editable-item');
 
-			// Item header
+			// Add visual separation and distinct styling
+			itemEl.style.marginBottom = '24px';
+			itemEl.style.padding = '16px';
+			itemEl.style.border = '2px solid var(--background-modifier-border)';
+			itemEl.style.borderRadius = '8px';
+			itemEl.style.backgroundColor = 'var(--background-primary-alt)';
+
+			// Add alternating background colors for better distinction
+			if (index % 2 === 1) {
+				itemEl.style.backgroundColor = 'var(--background-secondary)';
+			}
+
+			// Item header with enhanced styling
 			const headerEl = itemEl.createDiv('flow-gtd-item-header');
-			headerEl.createEl('h4', {
+			headerEl.style.display = 'flex';
+			headerEl.style.alignItems = 'center';
+			headerEl.style.marginBottom = '12px';
+			headerEl.style.paddingBottom = '8px';
+			headerEl.style.borderBottom = '1px solid var(--background-modifier-border)';
+
+			const itemNumberEl = headerEl.createEl('h4', {
 				text: `Item ${index + 1}`,
 				cls: 'flow-gtd-item-number'
 			});
+			itemNumberEl.style.margin = '0';
+			itemNumberEl.style.padding = '4px 12px';
+			itemNumberEl.style.backgroundColor = 'var(--interactive-accent)';
+			itemNumberEl.style.color = 'var(--text-on-accent)';
+			itemNumberEl.style.borderRadius = '12px';
+			itemNumberEl.style.fontSize = '0.9em';
+			itemNumberEl.style.fontWeight = 'bold';
+			itemNumberEl.style.marginRight = '12px';
 
-			// AI status badge
+			// AI status badge with enhanced styling
 			if (item.isAIProcessed) {
-				headerEl.createSpan({
+				const aiBadge = headerEl.createSpan({
 					text: '✨ AI Refined',
 					cls: 'flow-gtd-ai-badge'
 				});
+				aiBadge.style.padding = '4px 8px';
+				aiBadge.style.backgroundColor = 'var(--color-green)';
+				aiBadge.style.color = 'var(--text-on-accent)';
+				aiBadge.style.borderRadius = '6px';
+				aiBadge.style.fontSize = '0.8em';
+				aiBadge.style.fontWeight = 'bold';
+				aiBadge.style.marginRight = '8px';
 			}
 
 			if (item.isProcessing === true) {
-				headerEl.createSpan({
+				const processingBadge = headerEl.createSpan({
 					text: '⏳ Processing...',
 					cls: 'flow-gtd-processing-badge'
 				});
+				processingBadge.style.padding = '4px 8px';
+				processingBadge.style.backgroundColor = 'var(--color-orange)';
+				processingBadge.style.color = 'var(--text-on-accent)';
+				processingBadge.style.borderRadius = '6px';
+				processingBadge.style.fontSize = '0.8em';
+				processingBadge.style.fontWeight = 'bold';
+				processingBadge.style.marginRight = '8px';
+				processingBadge.style.animation = 'pulse 1.5s infinite';
 			}
 
-			// Category badge (if AI processed)
+			// Category badge (if AI processed) - positioned after header
 			if (item.isAIProcessed && item.result) {
-				const badge = itemEl.createSpan({
+				const categoryContainer = itemEl.createDiv('flow-gtd-category-container');
+				categoryContainer.style.marginBottom = '12px';
+
+				const badge = categoryContainer.createSpan({
 					text: item.result.category.toUpperCase().replace('-', ' '),
 					cls: `flow-gtd-badge flow-gtd-badge-${item.result.category}`
 				});
+				badge.style.padding = '6px 12px';
+				badge.style.borderRadius = '16px';
+				badge.style.fontSize = '0.85em';
+				badge.style.fontWeight = 'bold';
+				badge.style.textTransform = 'uppercase';
+				badge.style.letterSpacing = '0.5px';
+
+				// Category-specific colors
+				switch (item.result.category) {
+					case 'project':
+						badge.style.backgroundColor = 'var(--color-blue)';
+						badge.style.color = 'white';
+						break;
+					case 'next-action':
+						badge.style.backgroundColor = 'var(--color-green)';
+						badge.style.color = 'white';
+						break;
+					case 'reference':
+						badge.style.backgroundColor = 'var(--color-purple)';
+						badge.style.color = 'white';
+						break;
+					case 'someday':
+						badge.style.backgroundColor = 'var(--color-yellow)';
+						badge.style.color = 'var(--text-normal)';
+						break;
+					default:
+						badge.style.backgroundColor = 'var(--background-modifier-border)';
+						badge.style.color = 'var(--text-normal)';
+				}
 			}
 
-			// Original item - always show
-			itemEl.createEl('p', {
+			// Original item - enhanced styling for better visibility
+			const originalEl = itemEl.createEl('div', {
+				cls: 'flow-gtd-original-container'
+			});
+			originalEl.style.marginBottom = '16px';
+			originalEl.style.padding = '12px';
+			originalEl.style.backgroundColor = 'var(--background-modifier-hover)';
+			originalEl.style.borderRadius = '6px';
+			originalEl.style.borderLeft = '4px solid var(--interactive-accent)';
+
+			originalEl.createEl('p', {
 				text: `Original: "${item.original}"`,
 				cls: 'flow-gtd-original'
 			}).style.fontWeight = 'bold';
@@ -389,17 +471,26 @@ export class InboxProcessingModal extends Modal {
 			// Individual refine button (if not processed and not processing)
 			if (!item.isAIProcessed && !item.isProcessing) {
 				const refineContainer = itemEl.createDiv('flow-gtd-refine-action');
+				refineContainer.style.marginBottom = '16px';
+				refineContainer.style.textAlign = 'center';
+
 				new Setting(refineContainer)
 					.addButton(button => button
 						.setButtonText('✨ Refine with AI')
+						.setClass('mod-warning')
 						.onClick(() => this.refineIndividualItem(item)));
 			}
 
 			// Editable content
 			this.renderEditableItemContent(itemEl, item);
 
-			// Save button
+			// Save button with enhanced styling
 			const actionButtons = itemEl.createDiv('flow-gtd-item-actions');
+			actionButtons.style.marginTop = '20px';
+			actionButtons.style.paddingTop = '16px';
+			actionButtons.style.borderTop = '1px solid var(--background-modifier-border)';
+			actionButtons.style.textAlign = 'center';
+
 			new Setting(actionButtons)
 				.addButton(button => button
 					.setButtonText('💾 Save to Vault')
