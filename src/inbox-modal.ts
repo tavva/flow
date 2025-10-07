@@ -80,6 +80,12 @@ export class InboxProcessingModal extends Modal {
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
+
+		// Clean up any pending render timeout
+		if (this.renderTimeout) {
+			clearTimeout(this.renderTimeout);
+			this.renderTimeout = undefined;
+		}
 	}
 
 	private renderMindsweep() {
@@ -781,13 +787,26 @@ export class InboxProcessingModal extends Modal {
 		this.renderEditableItemsList();
 	}
 
+	private renderTimeout?: NodeJS.Timeout;
+
+	private scheduleRender() {
+		// Debounce render calls to prevent interference during concurrent processing
+		if (this.renderTimeout) {
+			clearTimeout(this.renderTimeout);
+		}
+		this.renderTimeout = setTimeout(() => {
+			this.renderEditableItemsList();
+			this.renderTimeout = undefined;
+		}, 50); // Small delay to batch concurrent updates
+	}
+
 	private async refineIndividualItem(item: EditableItem) {
 		if (item.isProcessing || item.isAIProcessed) {
 			return;
 		}
 
 		item.isProcessing = true;
-		this.renderEditableItemsList();
+		this.scheduleRender();
 
 		try {
 			const result = await this.processor.processInboxItem(item.original, this.existingProjects);
@@ -806,7 +825,7 @@ export class InboxProcessingModal extends Modal {
 			console.error(error);
 		} finally {
 			item.isProcessing = false;
-			this.renderEditableItemsList();
+			this.scheduleRender();
 		}
 	}
 
