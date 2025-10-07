@@ -424,9 +424,11 @@ export class InboxProcessingModal extends Modal {
 				const categoryContainer = itemEl.createDiv('flow-gtd-category-container');
 				categoryContainer.style.marginBottom = '12px';
 
+				// Show the recommended action instead of just the category
+				const recommendedActionText = this.getActionLabel(item.result.recommendedAction).toUpperCase();
 				const badge = categoryContainer.createSpan({
-					text: item.result.category.toUpperCase().replace('-', ' '),
-					cls: `flow-gtd-badge flow-gtd-badge-${item.result.category}`
+					text: recommendedActionText,
+					cls: `flow-gtd-badge flow-gtd-badge-${item.result.recommendedAction}`
 				});
 				badge.style.padding = '6px 12px';
 				badge.style.borderRadius = '16px';
@@ -435,23 +437,31 @@ export class InboxProcessingModal extends Modal {
 				badge.style.textTransform = 'uppercase';
 				badge.style.letterSpacing = '0.5px';
 
-				// Category-specific colors
-				switch (item.result.category) {
-					case 'project':
+				// Action-specific colors
+				switch (item.result.recommendedAction) {
+					case 'create-project':
 						badge.style.backgroundColor = 'var(--color-blue)';
 						badge.style.color = 'white';
 						break;
-					case 'next-action':
+					case 'add-to-project':
+						badge.style.backgroundColor = 'var(--color-cyan)';
+						badge.style.color = 'white';
+						break;
+					case 'next-actions-file':
 						badge.style.backgroundColor = 'var(--color-green)';
 						badge.style.color = 'white';
+						break;
+					case 'someday-file':
+						badge.style.backgroundColor = 'var(--color-yellow)';
+						badge.style.color = 'var(--text-normal)';
 						break;
 					case 'reference':
 						badge.style.backgroundColor = 'var(--color-purple)';
 						badge.style.color = 'white';
 						break;
-					case 'someday':
-						badge.style.backgroundColor = 'var(--color-yellow)';
-						badge.style.color = 'var(--text-normal)';
+					case 'trash':
+						badge.style.backgroundColor = 'var(--color-red)';
+						badge.style.color = 'white';
 						break;
 					default:
 						badge.style.backgroundColor = 'var(--background-modifier-border)';
