@@ -751,8 +751,8 @@ export class InboxProcessingModal extends Modal {
 		});
 		this.renderEditableItemsList();
 
-		// Process all items
-		for (const item of unprocessedItems) {
+		// Process all items in parallel
+		const processingPromises = unprocessedItems.map(async (item) => {
 			try {
 				const result = await this.processor.processInboxItem(item.original, this.existingProjects);
 
@@ -767,12 +767,17 @@ export class InboxProcessingModal extends Modal {
 				new Notice(`Error processing "${item.original}": ${error.message}`);
 				console.error(error);
 				// Keep item unprocessed but remove processing state
+			} finally {
+				// Ensure processing flag is always reset, even on error
+				item.isProcessing = false;
 			}
+		});
 
-			item.isProcessing = false;
-		}
+		// Wait for all processing to complete
+		await Promise.all(processingPromises);
 
-		new Notice(`✅ Processed ${unprocessedItems.length} items`);
+		const successfullyProcessed = unprocessedItems.filter(item => item.isAIProcessed).length;
+		new Notice(`✅ Processed ${successfullyProcessed} of ${unprocessedItems.length} items`);
 		this.renderEditableItemsList();
 	}
 
