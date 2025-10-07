@@ -26,18 +26,29 @@ describe('Inbox deletion handling', () => {
         };
 
         beforeAll(() => {
-                (global as any).document = {
-                        createElement: jest.fn(() => ({
-                                addClass: jest.fn(),
-                                createEl: jest.fn(),
-                                createDiv: jest.fn(() => ({
-                                        createEl: jest.fn(),
-                                        createDiv: jest.fn(),
-                                        addClass: jest.fn()
-                                })),
-                                empty: jest.fn()
-                        }))
+        const createMockElement = () => {
+                const element: any = {
+                        addClass: jest.fn(),
+                        appendChild: jest.fn(),
+                        classList: {
+                                add: jest.fn(),
+                                remove: jest.fn(),
+                                toggle: jest.fn()
+                        },
+                        createDiv: jest.fn(() => createMockElement()),
+                        createEl: jest.fn(() => createMockElement()),
+                        empty: jest.fn(),
+                        setAttr: jest.fn(),
+                        setText: jest.fn(),
+                        style: {}
                 };
+
+                return element;
+        };
+
+        (global as any).document = {
+                createElement: jest.fn(() => createMockElement())
+        };
         });
 
         beforeEach(() => {
@@ -89,6 +100,8 @@ describe('Inbox deletion handling', () => {
 
         it('tracks per-file deletions when saving multiple processed inbox items', async () => {
                 const modal = new InboxProcessingModal(app as unknown as App, settings, false);
+
+                (modal as any).renderEditableItemsList = jest.fn();
 
                 const deleteMock = jest.fn().mockResolvedValue(undefined);
 
