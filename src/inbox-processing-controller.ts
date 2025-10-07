@@ -25,21 +25,32 @@ export interface ProcessingOutcome {
         error?: Error;
 }
 
+interface ControllerDependencies {
+        processor?: GTDProcessor;
+        scanner?: FlowProjectScanner;
+        writer?: FileWriter;
+        inboxScanner?: Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>;
+}
+
 export class InboxProcessingController {
         private processor: GTDProcessor;
         private scanner: FlowProjectScanner;
         private writer: FileWriter;
         private inboxScanner: InboxScanner;
 
-        constructor(app: App, settings: PluginSettings) {
-                this.processor = new GTDProcessor(
-                        settings.anthropicApiKey,
-                        settings.spheres,
-                        settings.anthropicModel
-                );
-                this.scanner = new FlowProjectScanner(app);
-                this.writer = new FileWriter(app, settings);
-                this.inboxScanner = new InboxScanner(app, settings);
+        constructor(app: App, settings: PluginSettings, dependencies: ControllerDependencies = {}) {
+                this.processor =
+                        dependencies.processor ??
+                        new GTDProcessor(
+                                settings.anthropicApiKey,
+                                settings.spheres,
+                                settings.anthropicModel
+                        );
+                this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
+                this.writer = dependencies.writer ?? new FileWriter(app, settings);
+                this.inboxScanner = (dependencies.inboxScanner
+                        ? Object.assign(new InboxScanner(app, settings), dependencies.inboxScanner)
+                        : new InboxScanner(app, settings)) as InboxScanner;
         }
 
         async loadExistingProjects(): Promise<FlowProject[]> {
@@ -49,6 +60,16 @@ export class InboxProcessingController {
         async loadInboxEditableItems(): Promise<EditableItem[]> {
                 const inboxItems = await this.inboxScanner.getAllInboxItems();
                 return this.createEditableItemsFromInbox(inboxItems);
+        }
+
+        setInboxScanner(
+                scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>
+        ) {
+                this.inboxScanner = Object.assign(this.inboxScanner, scanner);
+        }
+
+        getInboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
+                return this.inboxScanner;
         }
 
         createEditableItemsFromInbox(inboxItems: InboxItem[]): EditableItem[] {

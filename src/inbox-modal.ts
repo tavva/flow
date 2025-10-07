@@ -1,6 +1,7 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
 import { InboxProcessingController, EditableItem, ProcessingOutcome } from './inbox-processing-controller';
+import { InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
 
 type InputMode = 'single' | 'bulk' | 'inbox';
@@ -13,8 +14,8 @@ export class InboxProcessingModal extends Modal {
 	private inputMode: InputMode = 'single';
 	private deletionOffsets = new Map<string, number>();
 
-	private controller: InboxProcessingController;
-	private existingProjects: FlowProject[] = [];
+        private controller: InboxProcessingController;
+        private existingProjects: FlowProject[] = [];
 
 	constructor(
 		app: App,
@@ -24,10 +25,18 @@ export class InboxProcessingModal extends Modal {
 		super(app);
 		this.controller = new InboxProcessingController(app, settings);
 
-		if (startWithInbox) {
-			this.inputMode = 'inbox';
-		}
-	}
+                if (startWithInbox) {
+                        this.inputMode = 'inbox';
+                }
+        }
+
+        get inboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
+                return this.controller.getInboxScanner();
+        }
+
+        set inboxScanner(scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>) {
+                this.controller.setInboxScanner(scanner);
+        }
 
 	async onOpen() {
 		const { contentEl } = this;
