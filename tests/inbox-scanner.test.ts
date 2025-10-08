@@ -14,7 +14,12 @@ describe('Inbox deletion handling', () => {
         let fileContents: Record<string, string>;
 
         const baseSettings: PluginSettings = {
+                llmProvider: 'anthropic',
                 anthropicApiKey: 'test-key',
+                anthropicModel: 'claude-sonnet-4-20250514',
+                openaiApiKey: '',
+                openaiBaseUrl: 'https://openrouter.ai/api/v1',
+                openaiModel: 'openrouter/anthropic/claude-3.5-sonnet',
                 defaultPriority: 2,
                 defaultStatus: 'live',
                 inboxFilesFolderPath: 'Flow Inbox Files',

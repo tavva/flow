@@ -1,8 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import {
-	APIConnectionTimeoutError,
-	APIError
+        APIConnectionTimeoutError,
+        APIError
 } from '@anthropic-ai/sdk/error';
+import { LanguageModelClient, LanguageModelRequest } from './language-model';
 
 export type MessageCreateParams = Anthropic.Messages.MessageCreateParamsNonStreaming;
 export type MessageResponse = Anthropic.Messages.Message;
@@ -79,7 +80,7 @@ export class RateLimitedAnthropicClient {
 		});
 	}
 
-	async createMessage(params: MessageCreateParams): Promise<MessageResponse> {
+        async createMessage(params: MessageCreateParams): Promise<MessageResponse> {
 		return new Promise<MessageResponse>((resolve, reject) => {
 			this.queue.push({
 				execute: () => this.sdk.messages.create(params),
@@ -313,18 +314,64 @@ export class RateLimitedAnthropicClient {
 	}
 }
 
+class AnthropicLanguageModelClient implements LanguageModelClient {
+        constructor(private readonly client: RateLimitedAnthropicClient) {}
+
+        async sendMessage(request: LanguageModelRequest): Promise<string> {
+                const systemMessages: string[] = [];
+                const anthropicMessages = request.messages
+                        .filter(message => {
+                                if (message.role === 'system') {
+                                        systemMessages.push(message.content);
+                                        return false;
+                                }
+                                return true;
+                        })
+                        .map(message => ({
+                                role: message.role as 'user' | 'assistant',
+                                content: message.content
+                        }));
+
+                const response = await this.client.createMessage({
+                        model: request.model,
+                        max_tokens: request.maxTokens,
+                        messages: anthropicMessages,
+                        system: systemMessages.length > 0 ? systemMessages.join('\n\n') : undefined
+                });
+
+                const content = response.content[0];
+                if (!content || content.type !== 'text') {
+                        throw new Error('Unexpected response type from Anthropic Messages API');
+                }
+
+                return content.text;
+        }
+}
+
 let sharedClient: RateLimitedAnthropicClient | null = null;
 let sharedApiKey: string | null = null;
+let sharedAdapter: AnthropicLanguageModelClient | null = null;
 
-export function getAnthropicClient(apiKey: string): RateLimitedAnthropicClient {
-	if (!sharedClient || sharedApiKey !== apiKey) {
-			sharedClient = new RateLimitedAnthropicClient(apiKey);
-			sharedApiKey = apiKey;
-	}
-	return sharedClient;
+export function getAnthropicClient(apiKey: string): LanguageModelClient {
+        if (!sharedClient || sharedApiKey !== apiKey) {
+                sharedClient = new RateLimitedAnthropicClient(apiKey);
+                sharedApiKey = apiKey;
+                sharedAdapter = new AnthropicLanguageModelClient(sharedClient);
+        }
+
+        if (!sharedAdapter && sharedClient) {
+                sharedAdapter = new AnthropicLanguageModelClient(sharedClient);
+        }
+
+        if (!sharedAdapter) {
+                throw new Error('Failed to initialise Anthropic client');
+        }
+
+        return sharedAdapter;
 }
 
 export function resetSharedAnthropicClient(): void {
-	sharedClient = null;
-	sharedApiKey = null;
+        sharedClient = null;
+        sharedApiKey = null;
+        sharedAdapter = null;
 }

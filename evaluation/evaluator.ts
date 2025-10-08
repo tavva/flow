@@ -1,5 +1,6 @@
 import { GTDProcessor } from '../src/gtd-processor';
-import { GTDProcessingResult } from '../src/types';
+import { GTDProcessingResult, DEFAULT_SETTINGS } from '../src/types';
+import { getAnthropicClient } from '../src/anthropic-client';
 const testCases = require('./test-cases.json');
 
 interface TestCase {
@@ -41,9 +42,13 @@ interface EvaluationSummary {
 export class GTDEvaluator {
 	private processor: GTDProcessor;
 
-	constructor(apiKey: string) {
-		this.processor = new GTDProcessor(apiKey);
-	}
+        constructor(apiKey: string, model: string = DEFAULT_SETTINGS.anthropicModel) {
+                this.processor = new GTDProcessor(
+                        getAnthropicClient(apiKey),
+                        DEFAULT_SETTINGS.spheres,
+                        model
+                );
+        }
 
 	/**
 	 * Run evaluation on all test cases

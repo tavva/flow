@@ -50,14 +50,20 @@ export interface ProjectSuggestion {
 }
 
 export interface PersonSuggestion {
-	person: PersonNote;
-	relevance: string;
-	confidence: 'high' | 'medium' | 'low';
+        person: PersonNote;
+        relevance: string;
+        confidence: 'high' | 'medium' | 'low';
 }
 
+export type LLMProvider = 'anthropic' | 'openai-compatible';
+
 export interface PluginSettings {
+        llmProvider: LLMProvider;
         anthropicApiKey: string;
         anthropicModel: string;
+        openaiApiKey: string;
+        openaiBaseUrl: string;
+        openaiModel: string;
         defaultPriority: number;
         defaultStatus: string;
         inboxFilesFolderPath: string;
@@ -69,13 +75,17 @@ export interface PluginSettings {
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
+        llmProvider: 'anthropic',
         anthropicApiKey: '',
         anthropicModel: 'claude-sonnet-4-20250514',
+        openaiApiKey: '',
+        openaiBaseUrl: 'https://openrouter.ai/api/v1',
+        openaiModel: 'openrouter/anthropic/claude-3.5-sonnet',
         defaultPriority: 2,
         defaultStatus: 'live',
         inboxFilesFolderPath: 'Flow Inbox Files',
         inboxFolderPath: 'Flow Inbox Folder',
-	nextActionsFilePath: 'Next actions.md',
+        nextActionsFilePath: 'Next actions.md',
 	somedayFilePath: 'Someday.md',
 	projectsFolderPath: 'Projects',
 	spheres: ['personal', 'work']

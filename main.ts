@@ -59,23 +59,39 @@ export default class FlowGTDCoachPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	private openInboxModal() {
-		if (!this.settings.anthropicApiKey) {
-			new Notice('Please set your Anthropic API key in the plugin settings first');
-			return;
-		}
+        private openInboxModal() {
+                if (!this.hasRequiredApiKey()) {
+                        new Notice(this.getMissingApiKeyMessage());
+                        return;
+                }
 
-		const modal = new InboxProcessingModal(this.app, this.settings);
-		modal.open();
-	}
+                const modal = new InboxProcessingModal(this.app, this.settings);
+                modal.open();
+        }
 
-	private openInboxModalWithInbox() {
-		if (!this.settings.anthropicApiKey) {
-			new Notice('Please set your Anthropic API key in the plugin settings first');
-			return;
-		}
+        private openInboxModalWithInbox() {
+                if (!this.hasRequiredApiKey()) {
+                        new Notice(this.getMissingApiKeyMessage());
+                        return;
+                }
 
-		const modal = new InboxProcessingModal(this.app, this.settings, true);
-		modal.open();
-	}
+                const modal = new InboxProcessingModal(this.app, this.settings, true);
+                modal.open();
+        }
+
+        private hasRequiredApiKey(): boolean {
+                if (this.settings.llmProvider === 'openai-compatible') {
+                        return Boolean(this.settings.openaiApiKey);
+                }
+
+                return Boolean(this.settings.anthropicApiKey);
+        }
+
+        private getMissingApiKeyMessage(): string {
+                if (this.settings.llmProvider === 'openai-compatible') {
+                        return 'Please set your OpenAI-compatible API key in the plugin settings first';
+                }
+
+                return 'Please set your Anthropic API key in the plugin settings first';
+        }
 }

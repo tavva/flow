@@ -6,6 +6,8 @@ import { FileWriter } from './file-writer';
 import { FlowProject, GTDProcessingResult, PluginSettings, ProcessingAction, PersonNote } from './types';
 import { InboxItem, InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
+import { LanguageModelClient } from './language-model';
+import { createLanguageModelClient, getModelForSettings } from './llm-factory';
 
 export interface EditableItem {
         original: string;
@@ -31,6 +33,7 @@ export interface ProcessingOutcome {
 
 interface ControllerDependencies {
         processor?: GTDProcessor;
+        client?: LanguageModelClient;
         scanner?: FlowProjectScanner;
         personScanner?: PersonScanner;
         writer?: FileWriter;
@@ -48,9 +51,9 @@ export class InboxProcessingController {
                 this.processor =
                         dependencies.processor ??
                         new GTDProcessor(
-                                settings.anthropicApiKey,
+                                dependencies.client ?? createLanguageModelClient(settings),
                                 settings.spheres,
-                                settings.anthropicModel
+                                getModelForSettings(settings)
                         );
                 this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
                 this.personScanner = dependencies.personScanner ?? new PersonScanner(app);

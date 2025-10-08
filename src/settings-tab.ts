@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import FlowGTDCoachPlugin from '../main';
-import { DEFAULT_SETTINGS } from './types';
+import { DEFAULT_SETTINGS, LLMProvider } from './types';
 
 export class FlowGTDSettingTab extends PluginSettingTab {
 	plugin: FlowGTDCoachPlugin;
@@ -15,10 +15,27 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Flow GTD Coach Settings' });
+                containerEl.createEl('h2', { text: 'Flow GTD Coach Settings' });
 
-		// Anthropic API Key
                 new Setting(containerEl)
+                        .setName('AI Provider')
+                        .setDesc('Choose which language model to use for GTD processing.')
+                        .addDropdown(dropdown => dropdown
+                                .addOptions({
+                                        'anthropic': 'Anthropic Messages API',
+                                        'openai-compatible': 'OpenAI-compatible (e.g. OpenRouter)'
+                                })
+                                .setValue(this.plugin.settings.llmProvider)
+                                .onChange(async (value) => {
+                                        this.plugin.settings.llmProvider = value as LLMProvider;
+                                        await this.plugin.saveSettings();
+                                        updateProviderVisibility();
+                                }));
+
+                const anthropicContainer = containerEl.createDiv();
+                const openAIContainer = containerEl.createDiv();
+
+                new Setting(anthropicContainer)
                         .setName('Anthropic API Key')
                         .setDesc('Enter your Anthropic API key to enable AI-powered GTD processing')
                         .addText(text => text
@@ -34,7 +51,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                                         window.open('https://console.anthropic.com/settings/keys', '_blank');
                                 }));
 
-                new Setting(containerEl)
+                new Setting(anthropicContainer)
                         .setName('Anthropic Model')
                         .setDesc('Specify the Anthropic Messages API model ID to use for GTD processing (e.g., claude-sonnet-4-20250514).')
                         .addText(text => text
@@ -46,11 +63,56 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                                         await this.plugin.saveSettings();
                                 }));
 
-		// Add info about API key
-		containerEl.createDiv('setting-item-description').innerHTML = `
-			<p>You can get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a>.</p>
-			<p><strong>Note:</strong> Your API key is stored locally and never shared.</p>
-		`;
+                anthropicContainer.createDiv('setting-item-description').innerHTML = `
+                        <p>You can get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a>.</p>
+                        <p><strong>Note:</strong> Your API key is stored locally and never shared.</p>
+                `;
+
+                new Setting(openAIContainer)
+                        .setName('OpenAI-compatible API Key')
+                        .setDesc('Enter the API key for your OpenAI-compatible provider (e.g., OpenRouter).')
+                        .addText(text => text
+                                .setPlaceholder('sk-or-v1-...')
+                                .setValue(this.plugin.settings.openaiApiKey)
+                                .onChange(async (value) => {
+                                        this.plugin.settings.openaiApiKey = value;
+                                        await this.plugin.saveSettings();
+                                }));
+
+                new Setting(openAIContainer)
+                        .setName('OpenAI-compatible Base URL')
+                        .setDesc('Override the API base URL (use https://openrouter.ai/api/v1 for OpenRouter).')
+                        .addText(text => text
+                                .setPlaceholder(DEFAULT_SETTINGS.openaiBaseUrl)
+                                .setValue(this.plugin.settings.openaiBaseUrl)
+                                .onChange(async (value) => {
+                                        this.plugin.settings.openaiBaseUrl = value.trim() || DEFAULT_SETTINGS.openaiBaseUrl;
+                                        await this.plugin.saveSettings();
+                                }));
+
+                new Setting(openAIContainer)
+                        .setName('OpenAI-compatible Model')
+                        .setDesc('Specify the model ID to use with your OpenAI-compatible provider.')
+                        .addText(text => text
+                                .setPlaceholder(DEFAULT_SETTINGS.openaiModel)
+                                .setValue(this.plugin.settings.openaiModel)
+                                .onChange(async (value) => {
+                                        this.plugin.settings.openaiModel = value.trim() || DEFAULT_SETTINGS.openaiModel;
+                                        await this.plugin.saveSettings();
+                                }));
+
+                openAIContainer.createDiv('setting-item-description').innerHTML = `
+                        <p>OpenRouter requires the <code>HTTP-Referer</code> and <code>X-Title</code> headers. This plugin sends them automatically when the base URL contains <code>openrouter.ai</code>.</p>
+                        <p><strong>Note:</strong> API keys are stored locally on your device.</p>
+                `;
+
+                const updateProviderVisibility = () => {
+                        const isAnthropic = this.plugin.settings.llmProvider === 'anthropic';
+                        anthropicContainer.style.display = isAnthropic ? '' : 'none';
+                        openAIContainer.style.display = isAnthropic ? 'none' : '';
+                };
+
+                updateProviderVisibility();
 
 		containerEl.createEl('h3', { text: 'Default Project Settings' });
 		containerEl.createDiv('setting-item-description').innerHTML = `

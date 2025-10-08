@@ -1,19 +1,18 @@
-import { RateLimitedAnthropicClient, getAnthropicClient } from './anthropic-client';
+import { LanguageModelClient } from './language-model';
 import { FlowProject, GTDProcessingResult, ProjectSuggestion, PersonNote, PersonSuggestion } from './types';
 import { GTDResponseValidationError } from './errors';
 
 export class GTDProcessor {
-        private client: RateLimitedAnthropicClient;
+        private client: LanguageModelClient;
         private availableSpheres: string[];
         private model: string;
 
         constructor(
-                apiKey: string,
+                client: LanguageModelClient,
                 spheres: string[] = ['personal', 'work'],
-                model: string = 'claude-sonnet-4-20250514',
-                client?: RateLimitedAnthropicClient
+                model: string = 'claude-sonnet-4-20250514'
         ) {
-                this.client = client ?? getAnthropicClient(apiKey);
+                this.client = client;
                 this.availableSpheres = spheres;
                 this.model = model;
         }
@@ -29,18 +28,13 @@ export class GTDProcessor {
 		const prompt = this.buildProcessingPrompt(item, existingProjects, existingPersons);
 
 		try {
-                        const response = await this.client.createMessage({
+                        const responseText = await this.client.sendMessage({
                                 model: this.model,
-                                max_tokens: 2000,
+                                maxTokens: 2000,
                                 messages: [{ role: 'user', content: prompt }]
                         });
 
-			const content = response.content[0];
-			if (content.type !== 'text') {
-				throw new Error('Unexpected response type from Claude');
-			}
-
-			return this.parseResponse(content.text, existingProjects, existingPersons);
+                        return this.parseResponse(responseText, existingProjects, existingPersons);
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
 			throw new Error(`Failed to process inbox item: ${err.message}`);
@@ -48,7 +42,7 @@ export class GTDProcessor {
 	}
 
 	/**
-	 * Build the Claude prompt with project and person context
+	 * Build the model prompt with project and person context
 	 */
 	private buildProcessingPrompt(item: string, projects: FlowProject[], persons: PersonNote[] = []): string {
 		const projectContext = this.buildProjectContext(projects);
@@ -291,7 +285,7 @@ Examples:
 	}
 
 	/**
-	 * Parse Claude's response into structured result
+	 * Parse model's response into structured result
 	 */
         private parseResponse(
                 responseText: string,
@@ -309,7 +303,7 @@ Examples:
                 try {
                         parsed = JSON.parse(cleanedText);
                 } catch (error) {
-                        throw new Error(`Failed to parse Claude response: ${error.message}\n\nResponse: ${cleanedText}`);
+                        throw new Error(`Failed to parse model response: ${error.message}\n\nResponse: ${cleanedText}`);
                 }
 
                 this.validateParsedResponse(parsed);
@@ -398,63 +392,63 @@ Examples:
                 referenceContent?: string;
         } {
                 if (typeof parsed !== 'object' || parsed === null) {
-                        throw new GTDResponseValidationError('Invalid Claude response: expected an object');
+                        throw new GTDResponseValidationError('Invalid model response: expected an object');
                 }
 
                 if (typeof parsed.isActionable !== 'boolean') {
-                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "isActionable" (expected boolean)');
+                        throw new GTDResponseValidationError('Invalid model response: missing or invalid "isActionable" (expected boolean)');
                 }
 
                 const validCategories = new Set(['next-action', 'project', 'reference', 'person', 'someday']);
                 if (typeof parsed.category !== 'string' || !validCategories.has(parsed.category)) {
-                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)');
+                        throw new GTDResponseValidationError('Invalid model response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)');
                 }
 
                 if (parsed.isActionable) {
                         if (typeof parsed.nextAction !== 'string') {
-                                throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "nextAction" (expected string for actionable items)');
+                                throw new GTDResponseValidationError('Invalid model response: missing or invalid "nextAction" (expected string for actionable items)');
                         }
                         if (parsed.nextAction.trim().length === 0) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a non-empty string for actionable items');
+                                throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a non-empty string for actionable items');
                         }
                 } else {
                         // For non-actionable items, nextAction can be undefined or empty
                         if (parsed.nextAction !== undefined && typeof parsed.nextAction !== 'string') {
-                                throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a string when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a string when provided');
                         }
                 }
 
                 if (typeof parsed.reasoning !== 'string' || parsed.reasoning.trim().length === 0) {
-                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "reasoning" (expected non-empty string)');
+                        throw new GTDResponseValidationError('Invalid model response: missing or invalid "reasoning" (expected non-empty string)');
                 }
 
                 if (parsed.category === 'project') {
                         if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "projectOutcome" must be provided for project items');
+                                throw new GTDResponseValidationError('Invalid model response: "projectOutcome" must be provided for project items');
                         }
                 }
 
                 if (parsed.nextActions !== undefined && parsed.nextActions !== null) {
                         if (!Array.isArray(parsed.nextActions)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`);
                         }
                         if (!parsed.nextActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`);
                         }
                 }
 
                 if (parsed.futureActions !== undefined && parsed.futureActions !== null) {
                         if (!Array.isArray(parsed.futureActions)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "futureActions" must be an array when provided, got ${typeof parsed.futureActions}: ${JSON.stringify(parsed.futureActions)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "futureActions" must be an array when provided, got ${typeof parsed.futureActions}: ${JSON.stringify(parsed.futureActions)}`);
                         }
                         if (!parsed.futureActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "futureActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.futureActions)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "futureActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.futureActions)}`);
                         }
                 }
 
                 if (parsed.suggestedProjects !== undefined) {
                         if (!Array.isArray(parsed.suggestedProjects)) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "suggestedProjects" must be an array when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "suggestedProjects" must be an array when provided');
                         }
 
                         for (const [index, suggestion] of parsed.suggestedProjects.entries()) {
@@ -465,19 +459,19 @@ Examples:
                                         typeof suggestion.relevance !== 'string' ||
                                         typeof suggestion.confidence !== 'string'
                                 ) {
-                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedProjects[${index}] must include string "projectTitle", "relevance", and "confidence"`);
+                                        throw new GTDResponseValidationError(`Invalid model response: suggestedProjects[${index}] must include string "projectTitle", "relevance", and "confidence"`);
                                 }
 
                                 const validConfidence = new Set(['high', 'medium', 'low']);
                                 if (!validConfidence.has(suggestion.confidence)) {
-                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedProjects[${index}].confidence must be one of high/medium/low`);
+                                        throw new GTDResponseValidationError(`Invalid model response: suggestedProjects[${index}].confidence must be one of high/medium/low`);
                                 }
                         }
                 }
 
                 if (parsed.suggestedPersons !== undefined) {
                         if (!Array.isArray(parsed.suggestedPersons)) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "suggestedPersons" must be an array when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "suggestedPersons" must be an array when provided');
                         }
 
                         for (const [index, suggestion] of parsed.suggestedPersons.entries()) {
@@ -488,12 +482,12 @@ Examples:
                                         typeof suggestion.relevance !== 'string' ||
                                         typeof suggestion.confidence !== 'string'
                                 ) {
-                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedPersons[${index}] must include string "personName", "relevance", and "confidence"`);
+                                        throw new GTDResponseValidationError(`Invalid model response: suggestedPersons[${index}] must include string "personName", "relevance", and "confidence"`);
                                 }
 
                                 const validConfidence = new Set(['high', 'medium', 'low']);
                                 if (!validConfidence.has(suggestion.confidence)) {
-                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedPersons[${index}].confidence must be one of high/medium/low`);
+                                        throw new GTDResponseValidationError(`Invalid model response: suggestedPersons[${index}].confidence must be one of high/medium/low`);
                                 }
                         }
                 }
@@ -510,40 +504,40 @@ Examples:
 
                 if (parsed.recommendedAction !== undefined) {
                         if (typeof parsed.recommendedAction !== 'string' || !validRecommendedActions.has(parsed.recommendedAction)) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash');
+                                throw new GTDResponseValidationError('Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash');
                         }
                 }
 
                 if (parsed.recommendedActionReasoning !== undefined) {
                         if (typeof parsed.recommendedActionReasoning !== 'string' || parsed.recommendedActionReasoning.trim().length === 0) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedActionReasoning" must be a non-empty string when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "recommendedActionReasoning" must be a non-empty string when provided');
                         }
                 }
 
                 if (parsed.recommendedAction && parsed.recommendedAction === 'create-project') {
                         if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "projectOutcome" must accompany a "create-project" recommendation');
+                                throw new GTDResponseValidationError('Invalid model response: "projectOutcome" must accompany a "create-project" recommendation');
                         }
                 }
 
                 if (parsed.recommendedSpheres !== undefined && parsed.recommendedSpheres !== null) {
                         if (!Array.isArray(parsed.recommendedSpheres)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "recommendedSpheres" must be an array when provided, got ${typeof parsed.recommendedSpheres}: ${JSON.stringify(parsed.recommendedSpheres)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "recommendedSpheres" must be an array when provided, got ${typeof parsed.recommendedSpheres}: ${JSON.stringify(parsed.recommendedSpheres)}`);
                         }
                         if (!parsed.recommendedSpheres.every((sphere: unknown) => typeof sphere === 'string' && sphere.trim().length > 0)) {
-                                throw new GTDResponseValidationError(`Invalid Claude response: "recommendedSpheres" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.recommendedSpheres)}`);
+                                throw new GTDResponseValidationError(`Invalid model response: "recommendedSpheres" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.recommendedSpheres)}`);
                         }
                 }
 
                 if (parsed.recommendedSpheresReasoning !== undefined) {
                         if (typeof parsed.recommendedSpheresReasoning !== 'string') {
-                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheresReasoning" must be a string when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "recommendedSpheresReasoning" must be a string when provided');
                         }
                 }
 
                 if (parsed.referenceContent !== undefined) {
                         if (typeof parsed.referenceContent !== 'string') {
-                                throw new GTDResponseValidationError('Invalid Claude response: "referenceContent" must be a string when provided');
+                                throw new GTDResponseValidationError('Invalid model response: "referenceContent" must be a string when provided');
                         }
                 }
         }
@@ -578,24 +572,19 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
 
 Sort by suggestedOrder (1 being highest priority).`;
 
-		try {
-                        const response = await this.client.createMessage({
+                try {
+                        const responseText = await this.client.sendMessage({
                                 model: this.model,
-                                max_tokens: 3000,
+                                maxTokens: 3000,
                                 messages: [{ role: 'user', content: prompt }]
                         });
 
-			const content = response.content[0];
-			if (content.type !== 'text') {
-				throw new Error('Unexpected response type from Claude');
-			}
+                        const cleanedText = responseText
+                                .replace(/```json\n?/g, '')
+                                .replace(/```\n?/g, '')
+                                .trim();
 
-			const cleanedText = content.text
-				.replace(/```json\n?/g, '')
-				.replace(/```\n?/g, '')
-				.trim();
-
-			return JSON.parse(cleanedText);
+                        return JSON.parse(cleanedText);
 		} catch (error) {
 			throw new Error(`Failed to prioritize actions: ${error.message}`);
 		}
@@ -605,21 +594,16 @@ Sort by suggestedOrder (1 being highest priority).`;
 	 * Make a simple AI call with a prompt and get text response
 	 */
 	async callAI(prompt: string): Promise<string> {
-		try {
-                        const response = await this.client.createMessage({
+                try {
+                        const responseText = await this.client.sendMessage({
                                 model: this.model,
-                                max_tokens: 500,
+                                maxTokens: 500,
                                 messages: [{ role: 'user', content: prompt }]
                         });
 
-			const content = response.content[0];
-			if (content.type !== 'text') {
-				throw new Error('Unexpected response type from Claude');
-			}
-
-			return content.text;
-		} catch (error) {
-			throw new Error(`AI call failed: ${error.message}`);
-		}
-	}
+                        return responseText;
+                } catch (error) {
+                        throw new Error(`AI call failed: ${error.message}`);
+                }
+        }
 }
