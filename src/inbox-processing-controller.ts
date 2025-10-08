@@ -1,8 +1,9 @@
 import { App } from 'obsidian';
 import { GTDProcessor } from './gtd-processor';
 import { FlowProjectScanner } from './flow-scanner';
+import { PersonScanner } from './person-scanner';
 import { FileWriter } from './file-writer';
-import { FlowProject, GTDProcessingResult, PluginSettings, ProcessingAction } from './types';
+import { FlowProject, GTDProcessingResult, PluginSettings, ProcessingAction, PersonNote } from './types';
 import { InboxItem, InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
 
@@ -12,6 +13,7 @@ export interface EditableItem {
         isAIProcessed: boolean;
         result?: GTDProcessingResult;
         selectedProject?: FlowProject;
+        selectedPerson?: PersonNote;
         selectedAction: ProcessingAction;
         selectedSpheres: string[];
         editedName?: string;
@@ -30,6 +32,7 @@ export interface ProcessingOutcome {
 interface ControllerDependencies {
         processor?: GTDProcessor;
         scanner?: FlowProjectScanner;
+        personScanner?: PersonScanner;
         writer?: FileWriter;
         inboxScanner?: Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>;
 }
@@ -37,6 +40,7 @@ interface ControllerDependencies {
 export class InboxProcessingController {
         private processor: GTDProcessor;
         private scanner: FlowProjectScanner;
+        private personScanner: PersonScanner;
         private writer: FileWriter;
         private inboxScanner: InboxScanner;
 
@@ -49,6 +53,7 @@ export class InboxProcessingController {
                                 settings.anthropicModel
                         );
                 this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
+                this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
                 this.writer = dependencies.writer ?? new FileWriter(app, settings);
                 this.inboxScanner = (dependencies.inboxScanner
                         ? Object.assign(new InboxScanner(app, settings), dependencies.inboxScanner)
@@ -57,6 +62,10 @@ export class InboxProcessingController {
 
         async loadExistingProjects(): Promise<FlowProject[]> {
                 return this.scanner.scanProjects();
+        }
+
+        async loadExistingPersons(): Promise<PersonNote[]> {
+                return this.personScanner.scanPersons();
         }
 
         async loadInboxEditableItems(): Promise<EditableItem[]> {
@@ -95,8 +104,8 @@ export class InboxProcessingController {
                 }));
         }
 
-        async refineItem(item: EditableItem, existingProjects: FlowProject[]): Promise<EditableItem> {
-                const result = await this.processor.processInboxItem(item.original, existingProjects);
+        async refineItem(item: EditableItem, existingProjects: FlowProject[], existingPersons: PersonNote[] = []): Promise<EditableItem> {
+                const result = await this.processor.processInboxItem(item.original, existingProjects, existingPersons);
 
                 // Initialize editedNames with AI-recommended next actions if multiple were provided
                 const editedNames = result.nextActions && result.nextActions.length > 1
@@ -117,10 +126,10 @@ export class InboxProcessingController {
                 };
         }
 
-        async refineItems(items: EditableItem[], existingProjects: FlowProject[]): Promise<ProcessingOutcome[]> {
+        async refineItems(items: EditableItem[], existingProjects: FlowProject[], existingPersons: PersonNote[] = []): Promise<ProcessingOutcome[]> {
                 const promises = items.map(async item => {
                         try {
-                                const updatedItem = await this.refineItem(item, existingProjects);
+                                const updatedItem = await this.refineItem(item, existingProjects, existingPersons);
                                 return { item, updatedItem } as ProcessingOutcome;
                         } catch (error) {
                                 return { item, error: error instanceof Error ? error : new Error(String(error)) };
@@ -211,6 +220,15 @@ export class InboxProcessingController {
                                         }
                                 } else {
                                         throw new Error('No project selected for reference item');
+                                }
+                                break;
+                        case 'person':
+                                if (item.selectedPerson) {
+                                        // Use the first final next action or original item for person discussion
+                                        const discussionItem = finalNextActions.length > 0 ? finalNextActions[0] : item.original;
+                                        await this.writer.addToPersonDiscussNext(item.selectedPerson, discussionItem);
+                                } else {
+                                        throw new Error('No person selected for person item');
                                 }
                                 break;
                         case 'trash':

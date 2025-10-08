@@ -1,5 +1,5 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
-import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
+import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction, PersonNote } from './types';
 import { InboxProcessingController, EditableItem } from './inbox-processing-controller';
 import { InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
@@ -16,6 +16,7 @@ export class InboxProcessingModal extends Modal {
 
         private controller: InboxProcessingController;
         private existingProjects: FlowProject[] = [];
+        private existingPersons: PersonNote[] = [];
 
 	constructor(
 		app: App,
@@ -43,11 +44,12 @@ export class InboxProcessingModal extends Modal {
 		contentEl.empty();
 		contentEl.addClass('flow-gtd-inbox-modal');
 
-		// Load existing projects
+		// Load existing projects and persons
 		try {
 			this.existingProjects = await this.controller.loadExistingProjects();
+			this.existingPersons = await this.controller.loadExistingPersons();
 		} catch (error) {
-			new Notice('Failed to load existing projects');
+			new Notice('Failed to load existing projects and persons');
 			console.error(error);
 		}
 
@@ -468,6 +470,10 @@ export class InboxProcessingModal extends Modal {
 						badge.style.backgroundColor = 'var(--color-purple)';
 						badge.style.color = 'white';
 						break;
+					case 'person':
+						badge.style.backgroundColor = 'var(--color-pink)';
+						badge.style.color = 'white';
+						break;
 					case 'trash':
 						badge.style.backgroundColor = 'var(--color-red)';
 						badge.style.color = 'white';
@@ -640,6 +646,7 @@ export class InboxProcessingModal extends Modal {
 					.addOption('next-actions-file', '✅ Next Actions File')
 					.addOption('someday-file', '💭 Someday/Maybe File')
 					.addOption('reference', '📚 Reference (Not Actionable)')
+					.addOption('person', '👤 Discuss with Person')
 					.addOption('trash', '🗑️ Trash (Delete)');
 
 				dropdown.setValue(item.selectedAction);
@@ -709,7 +716,19 @@ export class InboxProcessingModal extends Modal {
 						dropdown.addOption(project.file, project.title);
 					});
 
-					dropdown.setValue(item.selectedProject?.file || '');
+					// Auto-select high confidence AI suggestion if not already selected
+					let selectedValue = item.selectedProject?.file || '';
+					if (!selectedValue && item.isAIProcessed && item.result?.suggestedProjects) {
+						const highConfidenceSuggestion = item.result.suggestedProjects.find(
+							suggestion => suggestion.confidence === 'high'
+						);
+						if (highConfidenceSuggestion) {
+							selectedValue = highConfidenceSuggestion.project.file;
+							item.selectedProject = highConfidenceSuggestion.project;
+						}
+					}
+
+					dropdown.setValue(selectedValue);
 					dropdown.onChange((value) => {
 						item.selectedProject = this.existingProjects.find(
 							p => p.file === value
@@ -747,6 +766,78 @@ export class InboxProcessingModal extends Modal {
 
 					suggestionEl.addEventListener('click', () => {
 						item.selectedProject = suggestion.project;
+						// Re-render to update the dropdown
+						this.renderEditableItemsList();
+					});
+				});
+			}
+		}
+
+		// Person selector (only show if action is person)
+		if (item.selectedAction === 'person') {
+			const personSelectorEl = itemEl.createDiv('flow-gtd-person-selector');
+			personSelectorEl.createEl('p', { text: 'Select person to discuss with:', cls: 'flow-gtd-label' });
+
+			new Setting(personSelectorEl)
+				.addDropdown(dropdown => {
+					// Add default empty option
+					dropdown.addOption('', '-- Select a person --');
+
+					// Add all existing person notes to the dropdown
+					this.existingPersons.forEach(person => {
+						dropdown.addOption(person.file, person.title);
+					});
+
+					// Auto-select high confidence AI suggestion if not already selected
+					let selectedValue = item.selectedPerson?.file || '';
+					if (!selectedValue && item.isAIProcessed && item.result?.suggestedPersons) {
+						const highConfidenceSuggestion = item.result.suggestedPersons.find(
+							suggestion => suggestion.confidence === 'high'
+						);
+						if (highConfidenceSuggestion) {
+							selectedValue = highConfidenceSuggestion.person.file;
+							item.selectedPerson = highConfidenceSuggestion.person;
+						}
+					}
+
+					dropdown.setValue(selectedValue);
+					dropdown.onChange((value) => {
+						item.selectedPerson = this.existingPersons.find(
+							p => p.file === value
+						) || undefined;
+					});
+				});
+
+			// Show AI suggested persons
+			if (item.isAIProcessed && item.result?.suggestedPersons && item.result.suggestedPersons.length > 0) {
+				const suggestionsEl = personSelectorEl.createDiv('flow-gtd-person-suggestions');
+				suggestionsEl.createEl('p', {
+					text: '✨ AI Suggested Persons:',
+					cls: 'flow-gtd-label flow-gtd-suggestions-label'
+				});
+
+				item.result.suggestedPersons.forEach(suggestion => {
+					const suggestionEl = suggestionsEl.createDiv('flow-gtd-suggestion-item');
+					suggestionEl.style.padding = '8px';
+					suggestionEl.style.margin = '4px 0';
+					suggestionEl.style.border = '1px solid var(--background-modifier-border)';
+					suggestionEl.style.borderRadius = '4px';
+					suggestionEl.style.cursor = 'pointer';
+
+					suggestionEl.createEl('strong', { text: suggestion.person.title });
+					suggestionEl.createEl('br');
+					suggestionEl.createEl('span', {
+						text: suggestion.relevance,
+						cls: 'flow-gtd-suggestion-relevance'
+					});
+					suggestionEl.createEl('br');
+					suggestionEl.createEl('span', {
+						text: `Confidence: ${suggestion.confidence}`,
+						cls: 'flow-gtd-suggestion-confidence'
+					});
+
+					suggestionEl.addEventListener('click', () => {
+						item.selectedPerson = suggestion.person;
 						// Re-render to update the dropdown
 						this.renderEditableItemsList();
 					});
@@ -872,6 +963,7 @@ export class InboxProcessingModal extends Modal {
 			'next-actions-file': 'Next Actions File',
 			'someday-file': 'Someday/Maybe File',
 			'reference': 'Reference (Not Actionable)',
+			'person': 'Discuss with Person',
 			'trash': 'Trash (Delete)'
 		};
 		return labels[action] || action;
@@ -922,7 +1014,8 @@ export class InboxProcessingModal extends Modal {
                         try {
                                 const updatedItem = await this.controller.refineItem(
                                         this.editableItems[index],
-                                        this.existingProjects
+                                        this.existingProjects,
+                                        this.existingPersons
                                 );
                                 this.editableItems[index] = {
                                         ...updatedItem,
@@ -979,7 +1072,7 @@ export class InboxProcessingModal extends Modal {
                 this.scheduleRender();
 
                 try {
-                        const updatedItem = await this.controller.refineItem(item, this.existingProjects);
+                        const updatedItem = await this.controller.refineItem(item, this.existingProjects, this.existingPersons);
                         const index = this.editableItems.indexOf(item);
 
                         if (index !== -1) {

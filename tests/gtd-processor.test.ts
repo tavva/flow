@@ -520,7 +520,7 @@ describe('GTDProcessor', () => {
                         await expect(
                                 processor.processInboxItem('test', [])
                         ).rejects.toThrow(
-                                'Failed to process inbox item: Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/trash'
+                                'Failed to process inbox item: Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash'
                         );
                 });
 

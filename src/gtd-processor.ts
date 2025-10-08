@@ -1,5 +1,5 @@
 import { RateLimitedAnthropicClient, getAnthropicClient } from './anthropic-client';
-import { FlowProject, GTDProcessingResult, ProjectSuggestion } from './types';
+import { FlowProject, GTDProcessingResult, ProjectSuggestion, PersonNote, PersonSuggestion } from './types';
 import { GTDResponseValidationError } from './errors';
 
 export class GTDProcessor {
@@ -19,13 +19,14 @@ export class GTDProcessor {
         }
 
 	/**
-	 * Process an inbox item with context from existing Flow projects
+	 * Process an inbox item with context from existing Flow projects and person notes
 	 */
 	async processInboxItem(
 		item: string,
-		existingProjects: FlowProject[]
+		existingProjects: FlowProject[],
+		existingPersons: PersonNote[] = []
 	): Promise<GTDProcessingResult> {
-		const prompt = this.buildProcessingPrompt(item, existingProjects);
+		const prompt = this.buildProcessingPrompt(item, existingProjects, existingPersons);
 
 		try {
                         const response = await this.client.createMessage({
@@ -39,7 +40,7 @@ export class GTDProcessor {
 				throw new Error('Unexpected response type from Claude');
 			}
 
-			return this.parseResponse(content.text, existingProjects);
+			return this.parseResponse(content.text, existingProjects, existingPersons);
 		} catch (error) {
 			const err = error instanceof Error ? error : new Error(String(error));
 			throw new Error(`Failed to process inbox item: ${err.message}`);
@@ -47,10 +48,11 @@ export class GTDProcessor {
 	}
 
 	/**
-	 * Build the Claude prompt with project context
+	 * Build the Claude prompt with project and person context
 	 */
-	private buildProcessingPrompt(item: string, projects: FlowProject[]): string {
+	private buildProcessingPrompt(item: string, projects: FlowProject[], persons: PersonNote[] = []): string {
 		const projectContext = this.buildProjectContext(projects);
+		const personContext = this.buildPersonContext(persons);
 		const spheresContext = this.availableSpheres.length > 0
 			? `\n\nThe user organises their work using these spheres: ${this.availableSpheres.join(', ')}.`
 			: '';
@@ -59,7 +61,7 @@ export class GTDProcessor {
 
 "${item}"
 
-${projectContext}${spheresContext}
+${projectContext}${personContext}${spheresContext}
 
 Analyze this item according to GTD principles:
 
@@ -69,14 +71,18 @@ Analyze this item according to GTD principles:
 
 **REFERENCE**: Information to store for later (no action needed). Reference items must be added to an existing project for context.
 
+**PERSON**: Something to discuss with a specific person. This should be added to the person's "## Discuss next" section.
+
 **SOMEDAY/MAYBE**: Something you might want to do in the future but not now.
 
 Rules:
 - If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action.
 - If it's a single completable action → It's a NEXT ACTION.
+- If it's something to discuss with a specific person → It's a PERSON item.
 - A quality next action must: start with a verb, be specific, be completable in one sitting, include context.
 - Projects should be stated as outcomes (e.g., "Website redesign complete" not "Redesign website").
 - If this item relates to an existing project, suggest which project(s) it belongs to.
+- If this item relates to a specific person, suggest which person note(s) it belongs to.
 - ALWAYS provide the option to create a new project, even if suggesting existing ones.
 - If a complex item could be broken into multiple discrete next actions (not requiring dependencies), you may provide multiple next actions in the "nextActions" array.
 - For reference items, suggest which existing project(s) should contain this reference and provide the content that should be added.
@@ -84,7 +90,7 @@ Rules:
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
 {
   "isActionable": true/false,
-  "category": "next-action/project/reference/someday",
+  "category": "next-action/project/reference/person/someday",
   "projectOutcome": "the desired outcome (only if project)",
   "nextAction": "the primary/first next action to take",
   "nextActions": ["optional array of multiple discrete next actions if the item can be broken down into independent actions"],
@@ -97,7 +103,14 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
       "confidence": "high/medium/low"
     }
   ],
-  "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/trash",
+  "suggestedPersons": [
+    {
+      "personName": "name of existing person",
+      "relevance": "why this person is relevant",
+      "confidence": "high/medium/low"
+    }
+  ],
+  "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/person/trash",
   "recommendedActionReasoning": "brief explanation of where this should go and why",
   "recommendedSpheres": ["array of recommended spheres from the available list"],
   "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item",
@@ -110,6 +123,7 @@ Where to route items:
 - "next-actions-file": Standalone next action that doesn't belong to a project
 - "someday-file": Something to do someday/maybe, not now
 - "reference": Information to store in an existing project, not actionable
+- "person": Something to discuss with a specific person (use this if suggestedPersons has high confidence matches)
 - "trash": Not useful, can be discarded
 
 For spheres: Recommend one or more spheres that best categorise this item. Consider the item's content and context.
@@ -140,6 +154,26 @@ Examples:
 			.join('\n');
 
 		return `The user has the following existing projects in their Flow system:\n\n${projectSummaries}\n\nConsider if this inbox item relates to any of these projects. If it does, suggest the relevant project(s).`;
+	}
+
+	/**
+	 * Build context description of existing person notes
+	 */
+	private buildPersonContext(persons: PersonNote[]): string {
+		if (persons.length === 0) {
+			return '';
+		}
+
+		const personSummaries = persons
+			.slice(0, 20) // Limit to prevent token overflow
+			.map(p => {
+				const tags = p.tags.filter(tag => tag !== 'person').join(', ');
+				const tagsDisplay = tags ? ` [${tags}]` : '';
+				return `- "${p.title}"${tagsDisplay}`;
+			})
+			.join('\n');
+
+		return `\n\nThe user has the following person notes:\n\n${personSummaries}\n\nConsider if this inbox item relates to discussing something with any of these people. If it does, suggest the relevant person(s).`;
 	}
 
 	/**
@@ -224,11 +258,45 @@ Examples:
 	}
 
 	/**
+	 * Find the best matching person using fuzzy matching
+	 */
+	private findMatchingPerson(
+		suggestedName: string,
+		existingPersons: PersonNote[]
+	): PersonNote | null {
+		// First try exact match (case-insensitive)
+		const exactMatch = existingPersons.find(
+			p => p.title.toLowerCase() === suggestedName.toLowerCase()
+		);
+		if (exactMatch) return exactMatch;
+
+		// Try fuzzy matching with similarity threshold
+		const SIMILARITY_THRESHOLD = 0.6; // 60% similarity required
+		let bestMatch: PersonNote | null = null;
+		let bestScore = 0;
+
+		for (const person of existingPersons) {
+			const similarity = this.calculateSimilarity(
+				suggestedName,
+				person.title
+			);
+
+			if (similarity > bestScore && similarity >= SIMILARITY_THRESHOLD) {
+				bestScore = similarity;
+				bestMatch = person;
+			}
+		}
+
+		return bestMatch;
+	}
+
+	/**
 	 * Parse Claude's response into structured result
 	 */
         private parseResponse(
                 responseText: string,
-                existingProjects: FlowProject[]
+                existingProjects: FlowProject[],
+                existingPersons: PersonNote[] = []
         ): GTDProcessingResult {
                 // Strip markdown code blocks if present
                 let cleanedText = responseText
@@ -263,6 +331,23 @@ Examples:
                         }
                 }
 
+                const suggestedPersons: PersonSuggestion[] = [];
+                if (parsed.suggestedPersons && Array.isArray(parsed.suggestedPersons)) {
+                        for (const suggestion of parsed.suggestedPersons) {
+                                const person = this.findMatchingPerson(
+                                        suggestion.personName,
+                                        existingPersons
+                                );
+                                if (person) {
+                                        suggestedPersons.push({
+                                                person,
+                                                relevance: suggestion.relevance,
+                                                confidence: suggestion.confidence
+                                        });
+                                }
+                        }
+                }
+
                 return {
                         isActionable: parsed.isActionable,
                         category: parsed.category,
@@ -272,6 +357,7 @@ Examples:
                         reasoning: parsed.reasoning,
                         futureActions: Array.isArray(parsed.futureActions) ? parsed.futureActions : [],
                         suggestedProjects,
+                        suggestedPersons,
                         recommendedAction: parsed.recommendedAction || (parsed.isActionable ? 'next-actions-file' : 'reference'),
                         recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
                         recommendedSpheres: Array.isArray(parsed.recommendedSpheres) ? parsed.recommendedSpheres : [],
@@ -282,7 +368,7 @@ Examples:
 
         private validateParsedResponse(parsed: any): asserts parsed is {
                 isActionable: boolean;
-                category: 'next-action' | 'project' | 'reference' | 'someday';
+                category: 'next-action' | 'project' | 'reference' | 'person' | 'someday';
                 projectOutcome?: string;
                 nextAction?: string;
                 nextActions?: string[];
@@ -293,12 +379,18 @@ Examples:
                         relevance: string;
                         confidence: 'high' | 'medium' | 'low';
                 }>;
+                suggestedPersons?: Array<{
+                        personName: string;
+                        relevance: string;
+                        confidence: 'high' | 'medium' | 'low';
+                }>;
                 recommendedAction?:
                         | 'create-project'
                         | 'add-to-project'
                         | 'next-actions-file'
                         | 'someday-file'
                         | 'reference'
+                        | 'person'
                         | 'trash';
                 recommendedActionReasoning?: string;
                 recommendedSpheres?: string[];
@@ -313,9 +405,9 @@ Examples:
                         throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "isActionable" (expected boolean)');
                 }
 
-                const validCategories = new Set(['next-action', 'project', 'reference', 'someday']);
+                const validCategories = new Set(['next-action', 'project', 'reference', 'person', 'someday']);
                 if (typeof parsed.category !== 'string' || !validCategories.has(parsed.category)) {
-                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "category" (expected one of next-action/project/reference/someday)');
+                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)');
                 }
 
                 if (parsed.isActionable) {
@@ -383,18 +475,42 @@ Examples:
                         }
                 }
 
+                if (parsed.suggestedPersons !== undefined) {
+                        if (!Array.isArray(parsed.suggestedPersons)) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "suggestedPersons" must be an array when provided');
+                        }
+
+                        for (const [index, suggestion] of parsed.suggestedPersons.entries()) {
+                                if (
+                                        typeof suggestion !== 'object' ||
+                                        suggestion === null ||
+                                        typeof suggestion.personName !== 'string' ||
+                                        typeof suggestion.relevance !== 'string' ||
+                                        typeof suggestion.confidence !== 'string'
+                                ) {
+                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedPersons[${index}] must include string "personName", "relevance", and "confidence"`);
+                                }
+
+                                const validConfidence = new Set(['high', 'medium', 'low']);
+                                if (!validConfidence.has(suggestion.confidence)) {
+                                        throw new GTDResponseValidationError(`Invalid Claude response: suggestedPersons[${index}].confidence must be one of high/medium/low`);
+                                }
+                        }
+                }
+
                 const validRecommendedActions = new Set([
                         'create-project',
                         'add-to-project',
                         'next-actions-file',
                         'someday-file',
                         'reference',
+                        'person',
                         'trash'
                 ]);
 
                 if (parsed.recommendedAction !== undefined) {
                         if (typeof parsed.recommendedAction !== 'string' || !validRecommendedActions.has(parsed.recommendedAction)) {
-                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/trash');
+                                throw new GTDResponseValidationError('Invalid Claude response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash');
                         }
                 }
 

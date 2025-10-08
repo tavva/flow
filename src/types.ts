@@ -9,23 +9,33 @@ export interface FlowProject {
 	futureNextActions: string[];
 }
 
+export interface PersonNote {
+	file: string;
+	title: string;
+	tags: string[];
+	status?: string;
+	creationDate?: string;
+}
+
 export type ProcessingAction =
 	| 'create-project'
 	| 'add-to-project'
 	| 'next-actions-file'
 	| 'someday-file'
 	| 'reference'
+	| 'person'
 	| 'trash';
 
 export interface GTDProcessingResult {
 	isActionable: boolean;
-	category: 'next-action' | 'project' | 'reference' | 'someday';
+	category: 'next-action' | 'project' | 'reference' | 'someday' | 'person';
 	projectOutcome?: string;
 	nextAction?: string; // Optional for non-actionable items
 	nextActions?: string[]; // Support multiple next actions
 	reasoning: string;
 	futureActions?: string[];
 	suggestedProjects?: ProjectSuggestion[];
+	suggestedPersons?: PersonSuggestion[];
 	recommendedAction: ProcessingAction;
 	recommendedActionReasoning: string;
 	recommendedSpheres?: string[];
@@ -35,6 +45,12 @@ export interface GTDProcessingResult {
 
 export interface ProjectSuggestion {
 	project: FlowProject;
+	relevance: string;
+	confidence: 'high' | 'medium' | 'low';
+}
+
+export interface PersonSuggestion {
+	person: PersonNote;
 	relevance: string;
 	confidence: 'high' | 'medium' | 'low';
 }
