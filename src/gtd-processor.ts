@@ -553,7 +553,9 @@ Examples:
                         }
                 }
 
-                if (parsed.referenceContent !== undefined) {
+                if (parsed.referenceContent === null) {
+                        parsed.referenceContent = undefined;
+                } else if (parsed.referenceContent !== undefined) {
                         if (typeof parsed.referenceContent !== 'string') {
                                 throw new GTDResponseValidationError('Invalid model response: "referenceContent" must be a string when provided');
                         }

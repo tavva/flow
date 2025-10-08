@@ -30,6 +30,7 @@ describe('GTDProcessor', () => {
 		recommendedActionReasoning?: string;
 		recommendedSpheres?: string[];
 		recommendedSpheresReasoning?: string;
+		referenceContent?: string | null;
 	};
 
 	const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
@@ -200,6 +201,22 @@ describe('GTDProcessor', () => {
 			expect(result.suggestedProjects![0].project.title).toBe(
 				'Create a 3-day office counter argument'
 			);
+		});
+
+		it('should treat null reference content as absent', async () => {
+			const mockResponse = buildClaudeResponse({
+				referenceContent: null,
+				nextAction: 'Email Stuart to schedule a chat about AI stuff'
+			});
+
+			mockClient.sendMessage.mockResolvedValue(mockResponse);
+
+			const result = await processor.processInboxItem(
+				'Email Stuart to schedule a chat about AI stuff',
+				[]
+			);
+
+			expect(result.referenceContent).toBeUndefined();
 		});
 
 		it('should match projects ignoring punctuation differences', async () => {
