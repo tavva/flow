@@ -1,6 +1,6 @@
 import { App, Modal, Setting, Notice } from 'obsidian';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction } from './types';
-import { InboxProcessingController, EditableItem, ProcessingOutcome } from './inbox-processing-controller';
+import { InboxProcessingController, EditableItem } from './inbox-processing-controller';
 import { InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
 
@@ -263,18 +263,58 @@ export class InboxProcessingModal extends Modal {
 		});
 
 		// Batch AI processing button
-		if (this.editableItems.length > 0) {
-			const batchContainer = contentEl.createDiv('flow-gtd-batch-actions');
-			const unprocessedCount = this.editableItems.filter(item => !item.isAIProcessed).length;
+                if (this.editableItems.length > 0) {
+                        const batchContainer = contentEl.createDiv('flow-gtd-batch-actions');
+                        const totalCount = this.editableItems.length;
+                        const completedCount = this.editableItems.filter(item => item.isAIProcessed).length;
+                        const inFlightCount = this.editableItems.filter(item => item.isProcessing && !item.isAIProcessed).length;
+                        const pendingCount = Math.max(totalCount - completedCount - inFlightCount, 0);
 
-			if (unprocessedCount > 0) {
-				new Setting(batchContainer)
-					.addButton(button => button
-						.setButtonText(`✨ Refine All ${unprocessedCount} Items with AI`)
-						.setCta()
-						.onClick(() => this.refineAllWithAI()));
-			}
-		}
+                        const progressContainer = batchContainer.createDiv('flow-gtd-progress');
+                        const progressText = progressContainer.createDiv('flow-gtd-progress-text');
+                        progressText.setText(
+                                `AI refinement: ${completedCount} complete · ${inFlightCount} in flight · ${pendingCount} yet to send`
+                        );
+
+                        const progressBar = progressContainer.createDiv('flow-gtd-progress-bar');
+                        const segments: Array<{ width: number; cls: string; label: string }> = [
+                                { width: completedCount / totalCount, cls: 'flow-gtd-progress-segment-complete', label: `${completedCount} complete` },
+                                { width: inFlightCount / totalCount, cls: 'flow-gtd-progress-segment-in-flight', label: `${inFlightCount} in flight` },
+                                { width: pendingCount / totalCount, cls: 'flow-gtd-progress-segment-pending', label: `${pendingCount} yet to send` }
+                        ];
+
+                        segments
+                                .filter(segment => segment.width > 0)
+                                .forEach(segment => {
+                                        const segmentEl = progressBar.createDiv({ cls: `flow-gtd-progress-segment ${segment.cls}` });
+                                        segmentEl.style.width = `${(segment.width * 100).toFixed(2)}%`;
+                                        segmentEl.setAttr('aria-label', segment.label);
+                                });
+
+                        const legend = progressContainer.createDiv('flow-gtd-progress-legend');
+                        [
+                                { label: 'Complete', count: completedCount, cls: 'flow-gtd-progress-swatch-complete' },
+                                { label: 'In Flight', count: inFlightCount, cls: 'flow-gtd-progress-swatch-in-flight' },
+                                { label: 'Yet to Send', count: pendingCount, cls: 'flow-gtd-progress-swatch-pending' }
+                        ].forEach(({ label, count, cls }) => {
+                                const legendItem = legend.createDiv('flow-gtd-progress-legend-item');
+                                legendItem.createSpan({ cls: `flow-gtd-progress-swatch ${cls}` });
+                                legendItem.createSpan({
+                                        cls: 'flow-gtd-progress-legend-label',
+                                        text: `${count} ${label}`
+                                });
+                        });
+
+                        const unprocessedCount = this.editableItems.filter(item => !item.isAIProcessed).length;
+
+                        if (unprocessedCount > 0) {
+                                new Setting(batchContainer)
+                                        .addButton(button => button
+                                                .setButtonText(`✨ Refine All ${unprocessedCount} Items with AI`)
+                                                .setCta()
+                                                .onClick(() => this.refineAllWithAI()));
+                        }
+                }
 
 		// Render each item
 		this.renderIndividualEditableItems(contentEl);
@@ -799,44 +839,82 @@ export class InboxProcessingModal extends Modal {
 
 
 	private async refineAllWithAI() {
-		const unprocessedItems = this.editableItems.filter(item => !item.isAIProcessed);
+                const unprocessedIndexes = this.editableItems.reduce<number[]>((indexes, item, index) => {
+                        if (!item.isAIProcessed) {
+                                indexes.push(index);
+                        }
+                        return indexes;
+                }, []);
 
-		if (unprocessedItems.length === 0) {
-			new Notice('No items to process');
-			return;
-		}
+                if (unprocessedIndexes.length === 0) {
+                        new Notice('No items to process');
+                        return;
+                }
 
-		new Notice(`Processing ${unprocessedItems.length} items with AI...`);
+                new Notice(`Processing ${unprocessedIndexes.length} items with AI...`);
 
-		unprocessedItems.forEach(item => {
-			item.isProcessing = true;
-		});
-		this.renderEditableItemsList();
+                unprocessedIndexes.forEach(index => {
+                        const current = this.editableItems[index];
+                        if (!current) {
+                                return;
+                        }
+                        this.editableItems[index] = {
+                                ...current,
+                                hasAIRequest: true
+                        };
+                });
+                this.renderEditableItemsList();
 
-		const outcomes: ProcessingOutcome[] = await this.controller.refineItems(
-			unprocessedItems,
-			this.existingProjects
-		);
+                let successCount = 0;
 
-		let successCount = 0;
-		outcomes.forEach(({ item, updatedItem, error }) => {
-			const index = this.editableItems.indexOf(item);
+                const processItem = async (index: number) => {
+                        const item = this.editableItems[index];
+                        if (!item) {
+                                return;
+                        }
 
-			if (updatedItem && index !== -1) {
-				this.editableItems[index] = { ...updatedItem };
-				successCount += 1;
-			} else if (error) {
-				if (index !== -1) {
-					this.editableItems[index] = { ...item, isProcessing: false };
-				}
-				new Notice(`Error processing "${item.original}": ${error.message}`);
-				console.error(error);
-			}
-		});
+                        this.editableItems[index] = {
+                                ...item,
+                                isProcessing: true
+                        };
+                        this.scheduleRender();
 
-		new Notice(`✅ Processed ${successCount} of ${unprocessedItems.length} items`);
-		this.renderEditableItemsList();
-	}
+                        try {
+                                const updatedItem = await this.controller.refineItem(
+                                        this.editableItems[index],
+                                        this.existingProjects
+                                );
+                                this.editableItems[index] = {
+                                        ...updatedItem,
+                                        hasAIRequest: true
+                                };
+                                successCount += 1;
+                        } catch (error) {
+                                const message = error instanceof Error ? error.message : String(error);
+                                this.editableItems[index] = {
+                                        ...this.editableItems[index],
+                                        isProcessing: false,
+                                        hasAIRequest: false
+                                };
+                                new Notice(`Error processing "${item.original}": ${message}`);
+                                console.error(error);
+                        } finally {
+                                const current = this.editableItems[index];
+                                if (current) {
+                                        this.editableItems[index] = {
+                                                ...current,
+                                                isProcessing: false
+                                        };
+                                }
+                                this.scheduleRender();
+                        }
+                };
+
+                await Promise.all(unprocessedIndexes.map(index => processItem(index)));
+
+                this.renderEditableItemsList();
+                new Notice(`✅ Processed ${successCount} of ${unprocessedIndexes.length} items`);
+        }
 
 	private renderTimeout?: NodeJS.Timeout;
 
@@ -856,25 +934,27 @@ export class InboxProcessingModal extends Modal {
 			return;
 		}
 
-		item.isProcessing = true;
-		this.scheduleRender();
+                item.hasAIRequest = true;
+                item.isProcessing = true;
+                this.scheduleRender();
 
-		try {
-			const updatedItem = await this.controller.refineItem(item, this.existingProjects);
-			const index = this.editableItems.indexOf(item);
+                try {
+                        const updatedItem = await this.controller.refineItem(item, this.existingProjects);
+                        const index = this.editableItems.indexOf(item);
 
-			if (index !== -1) {
-				this.editableItems[index] = { ...updatedItem };
-			}
+                        if (index !== -1) {
+                                this.editableItems[index] = { ...updatedItem, hasAIRequest: true };
+                        }
 
-			new Notice(`✅ Refined: "${item.original}"`);
-		} catch (error) {
-			item.isProcessing = false;
-			const message = error instanceof Error ? error.message : String(error);
-			new Notice(`Error processing "${item.original}": ${message}`);
-			console.error(error);
-		} finally {
-			item.isProcessing = false;
+                        new Notice(`✅ Refined: "${item.original}"`);
+                } catch (error) {
+                        item.isProcessing = false;
+                        item.hasAIRequest = false;
+                        const message = error instanceof Error ? error.message : String(error);
+                        new Notice(`Error processing "${item.original}": ${message}`);
+                        console.error(error);
+                } finally {
+                        item.isProcessing = false;
 			this.scheduleRender();
 		}
 	}

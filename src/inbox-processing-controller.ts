@@ -18,6 +18,7 @@ export interface EditableItem {
         editedNames?: string[]; // Support multiple edited next actions
         editedProjectTitle?: string;
         isProcessing?: boolean;
+        hasAIRequest?: boolean;
 }
 
 export interface ProcessingOutcome {
@@ -78,6 +79,7 @@ export class InboxProcessingController {
                         original: item.content,
                         inboxItem: item,
                         isAIProcessed: false,
+                        hasAIRequest: false,
                         selectedAction: 'next-actions-file',
                         selectedSpheres: []
                 }));
@@ -87,6 +89,7 @@ export class InboxProcessingController {
                 return items.map(item => ({
                         original: item,
                         isAIProcessed: false,
+                        hasAIRequest: false,
                         selectedAction: 'next-actions-file',
                         selectedSpheres: []
                 }));
