@@ -470,7 +470,7 @@ describe('GTDProcessor', () => {
                         await expect(
                                 processor.processInboxItem('test', [])
                         ).rejects.toThrow(
-                                'Failed to process inbox item: Invalid Claude response: missing or invalid "nextAction" (expected string)'
+                                'Failed to process inbox item: Invalid Claude response: missing or invalid "nextAction" (expected string for actionable items)'
                         );
                 });
 

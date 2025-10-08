@@ -125,6 +125,25 @@ export class FileWriter {
 	}
 
 	/**
+	 * Add reference content to an existing project
+	 */
+	async addReferenceToProject(
+		project: FlowProject,
+		referenceContent: string
+	): Promise<void> {
+		const file = this.app.vault.getAbstractFileByPath(project.file);
+		if (!(file instanceof TFile)) {
+			throw new Error(`Project file not found: ${project.file}`);
+		}
+
+		let content = await this.app.vault.read(file);
+		const sectionName = '## Reference';
+		content = this.addContentToSection(content, sectionName, referenceContent);
+
+		await this.app.vault.modify(file, content);
+	}
+
+	/**
 	 * Generate a clean file name from project title
 	 */
 	private generateFileName(title: string): string {
@@ -216,6 +235,37 @@ ${result.reasoning}
 	}
 
 	/**
+	 * Add content to a specific section
+	 */
+	private addContentToSection(
+		content: string,
+		sectionHeading: string,
+		newContent: string
+	): string {
+		const lines = content.split('\n');
+		const sectionIndex = this.findSectionIndex(lines, sectionHeading);
+
+		if (sectionIndex === -1) {
+			// Section doesn't exist, create it at the end
+			return this.createSectionWithContent(content, sectionHeading, newContent);
+		}
+
+		// Find where to insert the content (after the heading, before next section)
+		let insertIndex = sectionIndex + 1;
+
+		// Skip any empty lines after the heading
+		while (insertIndex < lines.length && lines[insertIndex].trim() === '') {
+			insertIndex++;
+		}
+
+		// Insert the content (split into lines if it contains newlines)
+		const contentLines = newContent.split('\n');
+		lines.splice(insertIndex, 0, ...contentLines);
+
+		return lines.join('\n');
+	}
+
+	/**
 	 * Find the index of a section heading
 	 */
 	private findSectionIndex(lines: string[], heading: string): number {
@@ -249,6 +299,26 @@ ${result.reasoning}
 		newContent += `\n${sectionHeading}\n- [ ] ${action}\n`;
 
 		return newContent;
+	}
+
+	/**
+	 * Create a new section with content when section doesn't exist
+	 */
+	private createSectionWithContent(
+		content: string,
+		sectionHeading: string,
+		newContent: string
+	): string {
+		// Add section at the end of the file
+		let fileContent = content.trim();
+
+		if (!fileContent.endsWith('\n')) {
+			fileContent += '\n';
+		}
+
+		fileContent += `\n${sectionHeading}\n${newContent}\n`;
+
+		return fileContent;
 	}
 
 	/**

@@ -693,13 +693,17 @@ export class InboxProcessingModal extends Modal {
 					}));
 		}
 
-		// Project selector (only show if action is add-to-project)
-		if (item.selectedAction === 'add-to-project') {
+		// Project selector (only show if action is add-to-project or reference)
+		if (item.selectedAction === 'add-to-project' || item.selectedAction === 'reference') {
 			const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
-			projectSelectorEl.createEl('p', { text: 'Select project:', cls: 'flow-gtd-label' });
+			const labelText = item.selectedAction === 'reference' ? 'Select project to add reference to:' : 'Select project:';
+			projectSelectorEl.createEl('p', { text: labelText, cls: 'flow-gtd-label' });
 
 			new Setting(projectSelectorEl)
 				.addDropdown(dropdown => {
+					// Add default empty option
+					dropdown.addOption('', '-- Select a project --');
+
 					// Add all existing projects to the dropdown
 					this.existingProjects.forEach(project => {
 						dropdown.addOption(project.file, project.title);
@@ -709,9 +713,45 @@ export class InboxProcessingModal extends Modal {
 					dropdown.onChange((value) => {
 						item.selectedProject = this.existingProjects.find(
 							p => p.file === value
-						);
+						) || undefined;
 					});
 				});
+
+			// Show AI suggested projects for reference items
+			if (item.selectedAction === 'reference' && item.isAIProcessed && item.result?.suggestedProjects && item.result.suggestedProjects.length > 0) {
+				const suggestionsEl = projectSelectorEl.createDiv('flow-gtd-reference-suggestions');
+				suggestionsEl.createEl('p', {
+					text: '✨ AI Suggested Projects:',
+					cls: 'flow-gtd-label flow-gtd-suggestions-label'
+				});
+
+				item.result.suggestedProjects.forEach(suggestion => {
+					const suggestionEl = suggestionsEl.createDiv('flow-gtd-suggestion-item');
+					suggestionEl.style.padding = '8px';
+					suggestionEl.style.margin = '4px 0';
+					suggestionEl.style.border = '1px solid var(--background-modifier-border)';
+					suggestionEl.style.borderRadius = '4px';
+					suggestionEl.style.cursor = 'pointer';
+
+					suggestionEl.createEl('strong', { text: suggestion.project.title });
+					suggestionEl.createEl('br');
+					suggestionEl.createEl('span', {
+						text: suggestion.relevance,
+						cls: 'flow-gtd-suggestion-relevance'
+					});
+					suggestionEl.createEl('br');
+					suggestionEl.createEl('span', {
+						text: `Confidence: ${suggestion.confidence}`,
+						cls: 'flow-gtd-suggestion-confidence'
+					});
+
+					suggestionEl.addEventListener('click', () => {
+						item.selectedProject = suggestion.project;
+						// Re-render to update the dropdown
+						this.renderEditableItemsList();
+					});
+				});
+			}
 		}
 
 		// Sphere selector
@@ -962,9 +1002,6 @@ export class InboxProcessingModal extends Modal {
 	private async saveAndRemoveItem(item: EditableItem) {
 		try {
 			await this.controller.saveItem(item, this.deletionOffsets);
-			if (item.selectedAction === 'reference') {
-				new Notice(`Reference item not saved: ${item.original}`);
-			}
 			this.editableItems = this.editableItems.filter(current => current !== item);
 			const actionLabel = this.getActionLabel(item.selectedAction);
 			new Notice(`✅ Saved: ${actionLabel}`);

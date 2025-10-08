@@ -204,6 +204,15 @@ export class InboxProcessingController {
                                 break;
 
                         case 'reference':
+                                if (item.selectedProject) {
+                                        const referenceContent = (item.result?.referenceContent || item.original).trim();
+                                        if (referenceContent) {
+                                                await this.writer.addReferenceToProject(item.selectedProject, referenceContent);
+                                        }
+                                } else {
+                                        throw new Error('No project selected for reference item');
+                                }
+                                break;
                         case 'trash':
                                 break;
                 }

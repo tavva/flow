@@ -67,7 +67,7 @@ Analyze this item according to GTD principles:
 
 **NEXT ACTION**: A single, physical, visible action that can be done in one sitting. Must start with an action verb and be completely clear about what to do.
 
-**REFERENCE**: Information to store for later (no action needed).
+**REFERENCE**: Information to store for later (no action needed). Reference items must be added to an existing project for context.
 
 **SOMEDAY/MAYBE**: Something you might want to do in the future but not now.
 
@@ -79,6 +79,7 @@ Rules:
 - If this item relates to an existing project, suggest which project(s) it belongs to.
 - ALWAYS provide the option to create a new project, even if suggesting existing ones.
 - If a complex item could be broken into multiple discrete next actions (not requiring dependencies), you may provide multiple next actions in the "nextActions" array.
+- For reference items, suggest which existing project(s) should contain this reference and provide the content that should be added.
 
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
 {
@@ -99,7 +100,8 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
   "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/trash",
   "recommendedActionReasoning": "brief explanation of where this should go and why",
   "recommendedSpheres": ["array of recommended spheres from the available list"],
-  "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item"
+  "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item",
+  "referenceContent": "formatted content to add to project (only if reference)"
 }
 
 Where to route items:
@@ -107,7 +109,7 @@ Where to route items:
 - "add-to-project": Item should be added to an existing project (use this if suggestedProjects has high confidence matches)
 - "next-actions-file": Standalone next action that doesn't belong to a project
 - "someday-file": Something to do someday/maybe, not now
-- "reference": Information to store, not actionable
+- "reference": Information to store in an existing project, not actionable
 - "trash": Not useful, can be discarded
 
 For spheres: Recommend one or more spheres that best categorise this item. Consider the item's content and context.
@@ -265,15 +267,16 @@ Examples:
                         isActionable: parsed.isActionable,
                         category: parsed.category,
                         projectOutcome: parsed.projectOutcome,
-                        nextAction: parsed.nextAction,
+                        nextAction: parsed.nextAction || '',
                         nextActions: Array.isArray(parsed.nextActions) ? parsed.nextActions : [],
                         reasoning: parsed.reasoning,
                         futureActions: Array.isArray(parsed.futureActions) ? parsed.futureActions : [],
                         suggestedProjects,
-                        recommendedAction: parsed.recommendedAction || 'next-actions-file',
+                        recommendedAction: parsed.recommendedAction || (parsed.isActionable ? 'next-actions-file' : 'reference'),
                         recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
                         recommendedSpheres: Array.isArray(parsed.recommendedSpheres) ? parsed.recommendedSpheres : [],
-                        recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || ''
+                        recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || '',
+                        referenceContent: parsed.referenceContent
                 };
         }
 
@@ -281,7 +284,7 @@ Examples:
                 isActionable: boolean;
                 category: 'next-action' | 'project' | 'reference' | 'someday';
                 projectOutcome?: string;
-                nextAction: string;
+                nextAction?: string;
                 nextActions?: string[];
                 reasoning: string;
                 futureActions?: string[];
@@ -300,6 +303,7 @@ Examples:
                 recommendedActionReasoning?: string;
                 recommendedSpheres?: string[];
                 recommendedSpheresReasoning?: string;
+                referenceContent?: string;
         } {
                 if (typeof parsed !== 'object' || parsed === null) {
                         throw new GTDResponseValidationError('Invalid Claude response: expected an object');
@@ -314,12 +318,18 @@ Examples:
                         throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "category" (expected one of next-action/project/reference/someday)');
                 }
 
-                if (typeof parsed.nextAction !== 'string') {
-                        throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "nextAction" (expected string)');
-                }
-
-                if (parsed.isActionable && parsed.nextAction.trim().length === 0) {
-                        throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a non-empty string for actionable items');
+                if (parsed.isActionable) {
+                        if (typeof parsed.nextAction !== 'string') {
+                                throw new GTDResponseValidationError('Invalid Claude response: missing or invalid "nextAction" (expected string for actionable items)');
+                        }
+                        if (parsed.nextAction.trim().length === 0) {
+                                throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a non-empty string for actionable items');
+                        }
+                } else {
+                        // For non-actionable items, nextAction can be undefined or empty
+                        if (parsed.nextAction !== undefined && typeof parsed.nextAction !== 'string') {
+                                throw new GTDResponseValidationError('Invalid Claude response: "nextAction" must be a string when provided');
+                        }
                 }
 
                 if (typeof parsed.reasoning !== 'string' || parsed.reasoning.trim().length === 0) {
@@ -412,6 +422,12 @@ Examples:
                 if (parsed.recommendedSpheresReasoning !== undefined) {
                         if (typeof parsed.recommendedSpheresReasoning !== 'string') {
                                 throw new GTDResponseValidationError('Invalid Claude response: "recommendedSpheresReasoning" must be a string when provided');
+                        }
+                }
+
+                if (parsed.referenceContent !== undefined) {
+                        if (typeof parsed.referenceContent !== 'string') {
+                                throw new GTDResponseValidationError('Invalid Claude response: "referenceContent" must be a string when provided');
                         }
                 }
         }

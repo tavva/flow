@@ -78,19 +78,33 @@ export class GTDEvaluator {
 				);
 			}
 
-			// Evaluate action quality
-			const actionQuality = this.evaluateActionQuality(output.nextAction);
+			// Evaluate action quality (only for actionable items)
+			let actionQuality = 0;
+			let verbUsage = false;
+			let specificityScore = 0;
 
-			// Check if starts with verb
-			const verbUsage = this.startsWithActionVerb(output.nextAction);
-			if (testCase.expectedAttributes.startsWithVerb && !verbUsage) {
-				warnings.push('Next action does not start with an action verb');
-			}
+			if (output.isActionable && output.nextAction) {
+				actionQuality = this.evaluateActionQuality(output.nextAction);
 
-			// Evaluate specificity
-			const specificityScore = this.evaluateSpecificity(output.nextAction);
-			if (testCase.expectedAttributes.isSpecific && specificityScore < 0.7) {
-				warnings.push('Next action lacks specificity');
+				// Check if starts with verb
+				verbUsage = this.startsWithActionVerb(output.nextAction);
+				if (testCase.expectedAttributes.startsWithVerb && !verbUsage) {
+					warnings.push('Next action does not start with an action verb');
+				}
+
+				// Evaluate specificity
+				specificityScore = this.evaluateSpecificity(output.nextAction);
+				if (testCase.expectedAttributes.isSpecific && specificityScore < 0.7) {
+					warnings.push('Next action lacks specificity');
+				}
+			} else if (!output.isActionable) {
+				// For non-actionable items, we don't evaluate action quality
+				actionQuality = 1; // Full score since no action is expected
+				verbUsage = true; // N/A for non-actionable
+				specificityScore = 1; // N/A for non-actionable
+			} else if (output.isActionable && !output.nextAction) {
+				// Actionable item missing nextAction - this should be caught by validation
+				warnings.push('Actionable item is missing nextAction');
 			}
 
 			// Check project-specific attributes

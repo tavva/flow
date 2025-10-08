@@ -21,7 +21,7 @@ export interface GTDProcessingResult {
 	isActionable: boolean;
 	category: 'next-action' | 'project' | 'reference' | 'someday';
 	projectOutcome?: string;
-	nextAction: string;
+	nextAction?: string; // Optional for non-actionable items
 	nextActions?: string[]; // Support multiple next actions
 	reasoning: string;
 	futureActions?: string[];
@@ -30,6 +30,7 @@ export interface GTDProcessingResult {
 	recommendedActionReasoning: string;
 	recommendedSpheres?: string[];
 	recommendedSpheresReasoning?: string;
+	referenceContent?: string; // Content to add as reference to a project
 }
 
 export interface ProjectSuggestion {
