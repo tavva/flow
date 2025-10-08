@@ -1,4 +1,4 @@
-import { App, Modal, Setting, Notice } from 'obsidian';
+import { App, Modal, Setting, Notice, DropdownComponent } from 'obsidian';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction, PersonNote } from './types';
 import { InboxProcessingController, EditableItem } from './inbox-processing-controller';
 import { InboxScanner } from './inbox-scanner';
@@ -13,10 +13,10 @@ export class InboxProcessingModal extends Modal {
 	private bulkInput: string = '';
 	private inputMode: InputMode = 'single';
 	private deletionOffsets = new Map<string, number>();
-
-        private controller: InboxProcessingController;
-        private existingProjects: FlowProject[] = [];
-        private existingPersons: PersonNote[] = [];
+	private controller: InboxProcessingController;
+	private existingProjects: FlowProject[] = [];
+	private existingPersons: PersonNote[] = [];
+	private uniqueIdCounter = 0;
 
 	constructor(
 		app: App,
@@ -35,9 +35,14 @@ export class InboxProcessingModal extends Modal {
                 return this.controller.getInboxScanner();
         }
 
-        set inboxScanner(scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>) {
-                this.controller.setInboxScanner(scanner);
-        }
+	set inboxScanner(scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>) {
+		this.controller.setInboxScanner(scanner);
+	}
+
+	private getUniqueId(prefix: string): string {
+		this.uniqueIdCounter += 1;
+		return `${prefix}-${this.uniqueIdCounter}`;
+	}
 
 	async onOpen() {
 		const { contentEl } = this;
@@ -367,149 +372,65 @@ export class InboxProcessingModal extends Modal {
 		this.editableItems.forEach((item, index) => {
 			const itemEl = listContainer.createDiv('flow-gtd-editable-item');
 
-			// Add visual separation and distinct styling
-			itemEl.style.marginBottom = '24px';
-			itemEl.style.padding = '16px';
-			itemEl.style.border = '2px solid var(--background-modifier-border)';
-			itemEl.style.borderRadius = '8px';
-			itemEl.style.backgroundColor = 'var(--background-primary-alt)';
-
-			// Add alternating background colors for better distinction
-			if (index % 2 === 1) {
-				itemEl.style.backgroundColor = 'var(--background-secondary)';
+			const metaRow = itemEl.createDiv('flow-gtd-item-meta');
+			let hasMeta = false;
+			const showIndex = this.editableItems.length > 1;
+			if (showIndex) {
+				metaRow.createSpan({
+					text: `#${index + 1}`,
+					cls: 'flow-gtd-item-index'
+				});
+				hasMeta = true;
 			}
 
-			// Item header with enhanced styling
-			const headerEl = itemEl.createDiv('flow-gtd-item-header');
-			headerEl.style.display = 'flex';
-			headerEl.style.alignItems = 'center';
-			headerEl.style.marginBottom = '12px';
-			headerEl.style.paddingBottom = '8px';
-			headerEl.style.borderBottom = '1px solid var(--background-modifier-border)';
-
-			const itemNumberEl = headerEl.createEl('h4', {
-				text: `Item ${index + 1}`,
-				cls: 'flow-gtd-item-number'
-			});
-			itemNumberEl.style.margin = '0';
-			itemNumberEl.style.padding = '4px 12px';
-			itemNumberEl.style.backgroundColor = 'var(--interactive-accent)';
-			itemNumberEl.style.color = 'var(--text-on-accent)';
-			itemNumberEl.style.borderRadius = '12px';
-			itemNumberEl.style.fontSize = '0.9em';
-			itemNumberEl.style.fontWeight = 'bold';
-			itemNumberEl.style.marginRight = '12px';
-
-			// AI status badge with enhanced styling
 			if (item.isAIProcessed) {
-				const aiBadge = headerEl.createSpan({
-					text: '✨ AI Refined',
-					cls: 'flow-gtd-ai-badge'
+				metaRow.createSpan({
+					text: 'AI refined',
+					cls: 'flow-gtd-item-pill flow-gtd-item-pill-success'
 				});
-				aiBadge.style.padding = '4px 8px';
-				aiBadge.style.backgroundColor = 'var(--color-green)';
-				aiBadge.style.color = 'var(--text-on-accent)';
-				aiBadge.style.borderRadius = '6px';
-				aiBadge.style.fontSize = '0.8em';
-				aiBadge.style.fontWeight = 'bold';
-				aiBadge.style.marginRight = '8px';
+				hasMeta = true;
 			}
 
 			if (item.isProcessing === true) {
-				const processingBadge = headerEl.createSpan({
-					text: '⏳ Processing...',
-					cls: 'flow-gtd-processing-badge'
+				metaRow.createSpan({
+					text: 'Processing…',
+					cls: 'flow-gtd-item-pill flow-gtd-item-pill-warn'
 				});
-				processingBadge.style.padding = '4px 8px';
-				processingBadge.style.backgroundColor = 'var(--color-orange)';
-				processingBadge.style.color = 'var(--text-on-accent)';
-				processingBadge.style.borderRadius = '6px';
-				processingBadge.style.fontSize = '0.8em';
-				processingBadge.style.fontWeight = 'bold';
-				processingBadge.style.marginRight = '8px';
-				processingBadge.style.animation = 'pulse 1.5s infinite';
+				hasMeta = true;
 			}
 
-			// Category badge (if AI processed) - positioned after header
 			if (item.isAIProcessed && item.result) {
-				const categoryContainer = itemEl.createDiv('flow-gtd-category-container');
-				categoryContainer.style.marginBottom = '12px';
-
-				// Show the recommended action instead of just the category
-				const recommendedActionText = this.getActionLabel(item.result.recommendedAction).toUpperCase();
-				const badge = categoryContainer.createSpan({
-					text: recommendedActionText,
-					cls: `flow-gtd-badge flow-gtd-badge-${item.result.recommendedAction}`
+				metaRow.createSpan({
+					text: this.getActionLabel(item.result.recommendedAction),
+					cls: `flow-gtd-item-pill flow-gtd-item-pill-${item.result.recommendedAction}`
 				});
-				badge.style.padding = '6px 12px';
-				badge.style.borderRadius = '16px';
-				badge.style.fontSize = '0.85em';
-				badge.style.fontWeight = 'bold';
-				badge.style.textTransform = 'uppercase';
-				badge.style.letterSpacing = '0.5px';
-
-				// Action-specific colors
-				switch (item.result.recommendedAction) {
-					case 'create-project':
-						badge.style.backgroundColor = 'var(--color-blue)';
-						badge.style.color = 'white';
-						break;
-					case 'add-to-project':
-						badge.style.backgroundColor = 'var(--color-cyan)';
-						badge.style.color = 'white';
-						break;
-					case 'next-actions-file':
-						badge.style.backgroundColor = 'var(--color-green)';
-						badge.style.color = 'white';
-						break;
-					case 'someday-file':
-						badge.style.backgroundColor = 'var(--color-yellow)';
-						badge.style.color = 'var(--text-normal)';
-						break;
-					case 'reference':
-						badge.style.backgroundColor = 'var(--color-purple)';
-						badge.style.color = 'white';
-						break;
-					case 'person':
-						badge.style.backgroundColor = 'var(--color-pink)';
-						badge.style.color = 'white';
-						break;
-					case 'trash':
-						badge.style.backgroundColor = 'var(--color-red)';
-						badge.style.color = 'white';
-						break;
-					default:
-						badge.style.backgroundColor = 'var(--background-modifier-border)';
-						badge.style.color = 'var(--text-normal)';
-				}
+				hasMeta = true;
 			}
 
-			// Original item - enhanced styling for better visibility
-			const originalEl = itemEl.createEl('div', {
-				cls: 'flow-gtd-original-container'
+			if (!hasMeta) {
+				metaRow.remove();
+			}
+
+			const originalLabel = itemEl.createSpan({
+				text: 'Original',
+				cls: 'flow-gtd-section-label'
 			});
-			originalEl.style.marginBottom = '16px';
-			originalEl.style.padding = '12px';
-			originalEl.style.backgroundColor = 'var(--background-modifier-hover)';
-			originalEl.style.borderRadius = '6px';
-			originalEl.style.borderLeft = '4px solid var(--interactive-accent)';
 
-			originalEl.createEl('p', {
-				text: `Original: "${item.original}"`,
-				cls: 'flow-gtd-original'
-			}).style.fontWeight = 'bold';
+			const originalRow = itemEl.createDiv('flow-gtd-original-row');
+			originalRow.createSpan({
+				text: item.original,
+				cls: 'flow-gtd-original-text'
+			});
 
-			// Individual refine button (if not processed and not processing)
 			if (!item.isAIProcessed && !item.isProcessing) {
-				const refineContainer = itemEl.createDiv('flow-gtd-refine-action');
-				refineContainer.style.marginBottom = '16px';
-				refineContainer.style.textAlign = 'center';
-
-				new Setting(refineContainer)
-					.addButton(button => button
-						.setButtonText('✨ Refine with AI')
-						.setClass('mod-warning')
-						.onClick(() => this.refineIndividualItem(item)));
+				const refineBtn = originalRow.createEl('button', {
+					type: 'button',
+					cls: 'flow-gtd-refine-button'
+				});
+				refineBtn.setAttribute('aria-label', 'Refine with AI');
+				refineBtn.setAttribute('title', 'Refine with AI');
+				refineBtn.setText('✨');
+				refineBtn.addEventListener('click', () => this.refineIndividualItem(item));
 			}
 
 			// Editable content
@@ -634,27 +555,33 @@ export class InboxProcessingModal extends Modal {
 			});
 		}
 
-		// Action selector
-		const actionSelectorEl = itemEl.createDiv('flow-gtd-action-selector');
-		actionSelectorEl.createEl('p', { text: 'Where should this go?', cls: 'flow-gtd-label' });
+			// Action selector
+			const actionSelectorEl = itemEl.createDiv('flow-gtd-action-selector');
+			const actionRow = actionSelectorEl.createDiv('flow-gtd-inline-field');
+			const actionSelectId = this.getUniqueId('flow-gtd-action');
+			const actionLabel = actionRow.createEl('label', {
+				text: 'Where should this go?',
+				cls: 'flow-gtd-inline-label flow-gtd-label'
+			});
+			actionLabel.setAttribute('for', actionSelectId);
 
-		new Setting(actionSelectorEl)
-			.addDropdown(dropdown => {
-				dropdown
-					.addOption('create-project', '📁 Create New Project')
-					.addOption('add-to-project', '➕ Add to Existing Project')
-					.addOption('next-actions-file', '✅ Next Actions File')
-					.addOption('someday-file', '💭 Someday/Maybe File')
-					.addOption('reference', '📚 Reference (Not Actionable)')
-					.addOption('person', '👤 Discuss with Person')
-					.addOption('trash', '🗑️ Trash (Delete)');
-
-				dropdown.setValue(item.selectedAction);
-				dropdown.onChange((value) => {
-					item.selectedAction = value as ProcessingAction;
-					// Re-render the entire list to update conditional fields
-					this.renderEditableItemsList();
-				});
+			const actionControl = actionRow.createDiv('flow-gtd-inline-control');
+			const actionDropdown = new DropdownComponent(actionControl);
+			actionDropdown.selectEl.id = actionSelectId;
+			actionDropdown.selectEl.addClass('flow-gtd-inline-select');
+			actionDropdown.selectEl.setAttribute('aria-label', 'Where should this go?');
+			actionDropdown.addOption('create-project', '📁 Create New Project');
+			actionDropdown.addOption('add-to-project', '➕ Add to Existing Project');
+			actionDropdown.addOption('next-actions-file', '✅ Next Actions File');
+			actionDropdown.addOption('someday-file', '💭 Someday/Maybe File');
+			actionDropdown.addOption('reference', '📚 Reference (Not Actionable)');
+			actionDropdown.addOption('person', '👤 Discuss with Person');
+			actionDropdown.addOption('trash', '🗑️ Trash (Delete)');
+			actionDropdown.setValue(item.selectedAction);
+			actionDropdown.onChange((value) => {
+				item.selectedAction = value as ProcessingAction;
+				// Re-render the entire list to update conditional fields
+				this.renderEditableItemsList();
 			});
 
 		// Editable project title (only show if action is create-project)
@@ -700,44 +627,52 @@ export class InboxProcessingModal extends Modal {
 					}));
 		}
 
-		// Project selector (only show if action is add-to-project or reference)
-		if (item.selectedAction === 'add-to-project' || item.selectedAction === 'reference') {
-			const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
-			const labelText = item.selectedAction === 'reference' ? 'Select project to add reference to:' : 'Select project:';
-			projectSelectorEl.createEl('p', { text: labelText, cls: 'flow-gtd-label' });
+			// Project selector (only show if action is add-to-project or reference)
+			if (item.selectedAction === 'add-to-project' || item.selectedAction === 'reference') {
+				const projectSelectorEl = itemEl.createDiv('flow-gtd-project-selector');
+				const labelText = item.selectedAction === 'reference' ? 'Select project to add reference to:' : 'Select project:';
+				const projectRow = projectSelectorEl.createDiv('flow-gtd-inline-field');
+				const projectSelectId = this.getUniqueId('flow-gtd-project');
+				const projectLabel = projectRow.createEl('label', {
+					text: labelText,
+					cls: 'flow-gtd-inline-label flow-gtd-label'
+				});
+				projectLabel.setAttribute('for', projectSelectId);
 
-			new Setting(projectSelectorEl)
-				.addDropdown(dropdown => {
-					// Add default empty option
-					dropdown.addOption('', '-- Select a project --');
-
-					// Add all existing projects to the dropdown
-					this.existingProjects.forEach(project => {
-						dropdown.addOption(project.file, project.title);
-					});
-
-					// Auto-select high confidence AI suggestion if not already selected
-					let selectedValue = item.selectedProject?.file || '';
-					if (!selectedValue && item.isAIProcessed && item.result?.suggestedProjects) {
-						const highConfidenceSuggestion = item.result.suggestedProjects.find(
-							suggestion => suggestion.confidence === 'high'
-						);
-						if (highConfidenceSuggestion) {
-							selectedValue = highConfidenceSuggestion.project.file;
-							item.selectedProject = highConfidenceSuggestion.project;
-						}
-					}
-
-					dropdown.setValue(selectedValue);
-					dropdown.onChange((value) => {
-						item.selectedProject = this.existingProjects.find(
-							p => p.file === value
-						) || undefined;
-					});
+				const projectControl = projectRow.createDiv('flow-gtd-inline-control');
+				const projectDropdown = new DropdownComponent(projectControl);
+				projectDropdown.selectEl.id = projectSelectId;
+				projectDropdown.selectEl.addClass('flow-gtd-inline-select');
+				projectDropdown.selectEl.setAttribute('aria-label', labelText);
+				projectDropdown.addOption('', '-- Select a project --');
+				this.existingProjects.forEach(project => {
+					projectDropdown.addOption(project.file, project.title);
 				});
 
-			// Show AI suggested projects for reference items
-			if (item.selectedAction === 'reference' && item.isAIProcessed && item.result?.suggestedProjects && item.result.suggestedProjects.length > 0) {
+				let selectedValue = item.selectedProject?.file || '';
+				if (!selectedValue && item.isAIProcessed && item.result?.suggestedProjects) {
+					const highConfidenceSuggestion = item.result.suggestedProjects.find(
+						suggestion => suggestion.confidence === 'high'
+					);
+					if (highConfidenceSuggestion) {
+						selectedValue = highConfidenceSuggestion.project.file;
+						item.selectedProject = highConfidenceSuggestion.project;
+					}
+				}
+
+				if (selectedValue && !this.existingProjects.find(project => project.file === selectedValue)) {
+					projectDropdown.addOption(selectedValue, item.selectedProject?.title || selectedValue);
+				}
+
+				projectDropdown.setValue(selectedValue);
+				projectDropdown.onChange((value) => {
+					item.selectedProject = this.existingProjects.find(
+						p => p.file === value
+					) || undefined;
+				});
+
+				// Show AI suggested projects for reference items
+				if (item.selectedAction === 'reference' && item.isAIProcessed && item.result?.suggestedProjects && item.result.suggestedProjects.length > 0) {
 				const suggestionsEl = projectSelectorEl.createDiv('flow-gtd-reference-suggestions');
 				suggestionsEl.createEl('p', {
 					text: '✨ AI Suggested Projects:',
@@ -773,42 +708,51 @@ export class InboxProcessingModal extends Modal {
 			}
 		}
 
-		// Person selector (only show if action is person)
-		if (item.selectedAction === 'person') {
-			const personSelectorEl = itemEl.createDiv('flow-gtd-person-selector');
-			personSelectorEl.createEl('p', { text: 'Select person to discuss with:', cls: 'flow-gtd-label' });
+			// Person selector (only show if action is person)
+			if (item.selectedAction === 'person') {
+				const personSelectorEl = itemEl.createDiv('flow-gtd-person-selector');
+				const personRow = personSelectorEl.createDiv('flow-gtd-inline-field');
+				const personSelectId = this.getUniqueId('flow-gtd-person');
+				const personLabelText = 'Select person to discuss with:';
+				const personLabel = personRow.createEl('label', {
+					text: personLabelText,
+					cls: 'flow-gtd-inline-label flow-gtd-label'
+				});
+				personLabel.setAttribute('for', personSelectId);
 
-			new Setting(personSelectorEl)
-				.addDropdown(dropdown => {
-					// Add default empty option
-					dropdown.addOption('', '-- Select a person --');
-
-					// Add all existing person notes to the dropdown
-					this.existingPersons.forEach(person => {
-						dropdown.addOption(person.file, person.title);
-					});
-
-					// Auto-select high confidence AI suggestion if not already selected
-					let selectedValue = item.selectedPerson?.file || '';
-					if (!selectedValue && item.isAIProcessed && item.result?.suggestedPersons) {
-						const highConfidenceSuggestion = item.result.suggestedPersons.find(
-							suggestion => suggestion.confidence === 'high'
-						);
-						if (highConfidenceSuggestion) {
-							selectedValue = highConfidenceSuggestion.person.file;
-							item.selectedPerson = highConfidenceSuggestion.person;
-						}
-					}
-
-					dropdown.setValue(selectedValue);
-					dropdown.onChange((value) => {
-						item.selectedPerson = this.existingPersons.find(
-							p => p.file === value
-						) || undefined;
-					});
+				const personControl = personRow.createDiv('flow-gtd-inline-control');
+				const personDropdown = new DropdownComponent(personControl);
+				personDropdown.selectEl.id = personSelectId;
+				personDropdown.selectEl.addClass('flow-gtd-inline-select');
+				personDropdown.selectEl.setAttribute('aria-label', personLabelText);
+				personDropdown.addOption('', '-- Select a person --');
+				this.existingPersons.forEach(person => {
+					personDropdown.addOption(person.file, person.title);
 				});
 
-			// Show AI suggested persons
+				let selectedValue = item.selectedPerson?.file || '';
+				if (!selectedValue && item.isAIProcessed && item.result?.suggestedPersons) {
+					const highConfidenceSuggestion = item.result.suggestedPersons.find(
+						suggestion => suggestion.confidence === 'high'
+					);
+					if (highConfidenceSuggestion) {
+						selectedValue = highConfidenceSuggestion.person.file;
+						item.selectedPerson = highConfidenceSuggestion.person;
+					}
+				}
+
+				if (selectedValue && !this.existingPersons.find(person => person.file === selectedValue)) {
+					personDropdown.addOption(selectedValue, item.selectedPerson?.title || selectedValue);
+				}
+
+				personDropdown.setValue(selectedValue);
+				personDropdown.onChange((value) => {
+					item.selectedPerson = this.existingPersons.find(
+						p => p.file === value
+					) || undefined;
+				});
+
+				// Show AI suggested persons
 			if (item.isAIProcessed && item.result?.suggestedPersons && item.result.suggestedPersons.length > 0) {
 				const suggestionsEl = personSelectorEl.createDiv('flow-gtd-person-suggestions');
 				suggestionsEl.createEl('p', {
