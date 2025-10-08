@@ -342,11 +342,18 @@ Examples:
                         }
                 }
 
+                const primaryNextAction =
+                        typeof parsed.nextAction === 'string' && parsed.nextAction.trim().length > 0
+                                ? parsed.nextAction
+                                : Array.isArray(parsed.nextActions) && parsed.nextActions.length > 0
+                                        ? parsed.nextActions[0]
+                                        : undefined;
+
                 return {
                         isActionable: parsed.isActionable,
                         category: parsed.category,
                         projectOutcome: parsed.projectOutcome,
-                        nextAction: parsed.nextAction || '',
+                        nextAction: primaryNextAction ?? '',
                         nextActions: Array.isArray(parsed.nextActions) ? parsed.nextActions : [],
                         reasoning: parsed.reasoning,
                         futureActions: Array.isArray(parsed.futureActions) ? parsed.futureActions : [],
@@ -404,16 +411,36 @@ Examples:
                         throw new GTDResponseValidationError('Invalid model response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)');
                 }
 
-                if (parsed.isActionable) {
-                        if (typeof parsed.nextAction !== 'string') {
-                                throw new GTDResponseValidationError('Invalid model response: missing or invalid "nextAction" (expected string for actionable items)');
+                let hasValidNextActions = false;
+                if (parsed.nextActions !== undefined && parsed.nextActions !== null) {
+                        if (!Array.isArray(parsed.nextActions)) {
+                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`);
                         }
-                        if (parsed.nextAction.trim().length === 0) {
-                                throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a non-empty string for actionable items');
+                        if (!parsed.nextActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
+                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`);
+                        }
+                        hasValidNextActions = parsed.nextActions.length > 0;
+                }
+
+                const nextActionValue = parsed.nextAction;
+
+                if (parsed.isActionable) {
+                        if (typeof nextActionValue === 'string') {
+                                if (nextActionValue.trim().length === 0) {
+                                        throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a non-empty string for actionable items');
+                                }
+                        } else {
+                                if (nextActionValue !== undefined && nextActionValue !== null) {
+                                        throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a string when provided');
+                                }
+
+                                if (!hasValidNextActions) {
+                                        throw new GTDResponseValidationError('Invalid model response: actionable items must include a non-empty "nextAction" string or a "nextActions" array of non-empty strings');
+                                }
                         }
                 } else {
                         // For non-actionable items, nextAction can be undefined or empty
-                        if (parsed.nextAction !== undefined && typeof parsed.nextAction !== 'string') {
+                        if (nextActionValue !== undefined && nextActionValue !== null && typeof nextActionValue !== 'string') {
                                 throw new GTDResponseValidationError('Invalid model response: "nextAction" must be a string when provided');
                         }
                 }
@@ -425,15 +452,6 @@ Examples:
                 if (parsed.category === 'project') {
                         if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
                                 throw new GTDResponseValidationError('Invalid model response: "projectOutcome" must be provided for project items');
-                        }
-                }
-
-                if (parsed.nextActions !== undefined && parsed.nextActions !== null) {
-                        if (!Array.isArray(parsed.nextActions)) {
-                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`);
-                        }
-                        if (!parsed.nextActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
-                                throw new GTDResponseValidationError(`Invalid model response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`);
                         }
                 }
 

@@ -12,6 +12,7 @@ describe('GTDProcessor', () => {
 		category: 'next-action' | 'project' | 'reference' | 'someday';
 		projectOutcome?: string;
 		nextAction: string;
+		nextActions?: string[];
 		reasoning: string;
 		futureActions?: string[];
 		suggestedProjects?: Array<{
@@ -36,6 +37,7 @@ describe('GTDProcessor', () => {
 			isActionable: true,
 			category: 'next-action',
 			nextAction: 'Default next action',
+			nextActions: [],
 			reasoning: 'Default reasoning',
 			futureActions: [],
 			suggestedProjects: [],
@@ -371,6 +373,27 @@ describe('GTDProcessor', () => {
 			expect(result.nextAction).toBe('Test action');
 		});
 
+		it('should derive nextAction from nextActions when primary value is missing', async () => {
+			const mockResponse = JSON.stringify({
+				isActionable: true,
+				category: 'person',
+				nextAction: null,
+				nextActions: ['Discuss AI stuff with Stuart'],
+				reasoning: 'Discuss this topic directly with Stuart.',
+				suggestedProjects: [],
+				suggestedPersons: [],
+				recommendedAction: 'person',
+				recommendedActionReasoning: 'Track this against the relevant person note.'
+			});
+
+			mockClient.sendMessage.mockResolvedValue(mockResponse);
+
+			const result = await processor.processInboxItem('Chase Stuart on AI stuff', []);
+
+			expect(result.nextAction).toBe('Discuss AI stuff with Stuart');
+			expect(result.nextActions).toEqual(['Discuss AI stuff with Stuart']);
+		});
+
 		it('should throw error on API failure', async () => {
 			mockClient.sendMessage.mockRejectedValue(new Error('API Error'));
 
@@ -404,7 +427,7 @@ describe('GTDProcessor', () => {
                         await expect(
                                 processor.processInboxItem('test', [])
                         ).rejects.toThrow(
-                                'Failed to process inbox item: Invalid model response: missing or invalid "nextAction" (expected string for actionable items)'
+                                'Failed to process inbox item: Invalid model response: actionable items must include a non-empty "nextAction" string or a "nextActions" array of non-empty strings'
                         );
                 });
 
