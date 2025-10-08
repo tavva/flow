@@ -4,14 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for Flow-based vaults. The plugin uses Claude AI to intelligently process inbox items into well-formed projects and quality next actions according to GTD principles.
+This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for Flow-based vaults. The plugin uses AI to intelligently process inbox items into well-formed projects and quality next actions according to GTD principles.
 
 **Key Capabilities:**
-- AI-powered analysis of inbox items using Claude Sonnet 4
-- Context-aware processing with knowledge of existing Flow projects
+- AI-powered analysis of inbox items using Claude Sonnet 4 or OpenAI-compatible models
+- Context-aware processing with knowledge of existing Flow projects and person notes
 - Automatic creation and updating of Flow project files
 - GTD-compliant next action generation
-- Project suggestion based on existing vault contents
+- Project and person suggestion based on existing vault contents
+- Multiple LLM provider support (Anthropic, OpenAI-compatible/OpenRouter)
 
 ## Common Commands
 
@@ -50,12 +51,17 @@ The evaluation framework tests the AI processor against 15 curated test cases an
 ### Core Processing Flow
 
 1. **Flow Scanner** (`src/flow-scanner.ts`) - Scans the Obsidian vault for Flow projects (files with `project/*` tags in frontmatter)
-2. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans designated inbox folders for files to process
-3. **GTD Processor** (`src/gtd-processor.ts`) - Uses Claude AI to analyze inbox items with context from existing projects
-4. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
-5. **Inbox Modal** (`src/inbox-modal.ts`) - Main UI component for the inbox processing workflow
-6. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
-7. **Validation** (`src/validation.ts`) - Input validation and error handling
+2. **Person Scanner** (`src/person-scanner.ts`) - Scans the vault for person notes (files with `person` tag)
+3. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans designated inbox folders for files to process
+4. **GTD Processor** (`src/gtd-processor.ts`) - Uses AI to analyze inbox items with context from existing projects and people
+5. **LLM Factory** (`src/llm-factory.ts`) - Factory pattern for creating language model clients (Anthropic/OpenAI-compatible)
+6. **Language Model Clients** (`src/anthropic-client.ts`, `src/openai-compatible-client.ts`) - Provider-specific AI integrations
+7. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
+8. **Inbox Processing Controller** (`src/inbox-processing-controller.ts`) - Orchestrates the processing workflow
+9. **Inbox Modal** (`src/inbox-modal.ts`) - Main UI component for the inbox processing workflow
+10. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
+11. **Validation** (`src/validation.ts`) - Input validation and error handling
+12. **Errors** (`src/errors.ts`) - Custom error types and handling
 
 ### Flow Project Structure
 
@@ -93,14 +99,23 @@ The processor categorizes items into:
 - **project**: Multi-step outcomes (requires outcome + next action + future actions)
 - **reference**: Information to store (not actionable)
 - **someday**: Future aspirations (not currently committed)
+- **person**: People-related items to be added to person notes
 
 ### API Integration
 
-The plugin uses Anthropic's SDK with:
-- Model: `claude-sonnet-4-20250514`
+The plugin supports multiple LLM providers through a factory pattern:
+
+**Anthropic Integration:**
+- Model: `claude-sonnet-4-20250514` (default)
 - `dangerouslyAllowBrowser: true` (safe - Obsidian plugins run in Electron)
 - British English for all AI responses
 - Structured JSON output from Claude
+
+**OpenAI-Compatible Integration:**
+- Default endpoint: OpenRouter (`https://openrouter.ai/api/v1`)
+- Default model: `openrouter/anthropic/claude-3.5-sonnet`
+- Supports any OpenAI-compatible API (OpenRouter, local providers, etc.)
+- Same British English and structured JSON requirements
 
 ## Testing
 
@@ -112,10 +127,12 @@ The plugin uses Anthropic's SDK with:
 
 ### Test Files
 - `flow-scanner.test.ts` - Vault scanning and project parsing
-- `gtd-processor.test.ts` - AI processing logic
-- `file-writer.test.ts` - File creation and updates
+- `gtd-processor.test.ts` - AI processing logic (if exists)
+- `file-writer.test.ts` - File creation and updates (if exists)
 - `validation.test.ts` - Input validation
-- `inbox-scanner.test.ts` - Inbox folder scanning functionality
+- `inbox-scanner.test.ts` - Inbox folder scanning functionality (if exists)
+
+**Note:** Test coverage may vary - check `tests/` directory for current test files.
 
 ### Running Single Tests
 ```bash
@@ -203,9 +220,10 @@ Examples:
 
 ### Development
 - `obsidian`: Obsidian API types
-- `esbuild`: Fast bundler
+- `esbuild`: Fast bundler via `esbuild.config.mjs`
 - `typescript`: Type checking
-- `jest` + `ts-jest`: Testing framework
+- `jest` + `ts-jest`: Testing framework with 80% coverage requirements
+- `ts-node`: For running evaluation scripts
 
 ## Prompt Engineering
 
@@ -224,8 +242,12 @@ When modifying prompts, ALWAYS run the evaluation suite afterward to measure imp
 The plugin supports several configurable settings accessible via Settings → Flow GTD Coach:
 
 ### Core Settings
-- **Anthropic API Key**: Required for AI processing
-- **Model**: Default is `claude-sonnet-4-20250514`
+- **LLM Provider**: Choose between 'anthropic' or 'openai-compatible'
+- **Anthropic API Key**: Required when using Anthropic provider
+- **Anthropic Model**: Default is `claude-sonnet-4-20250514`
+- **OpenAI API Key**: Required when using OpenAI-compatible provider
+- **OpenAI Base URL**: Default is `https://openrouter.ai/api/v1`
+- **OpenAI Model**: Default is `openrouter/anthropic/claude-3.5-sonnet`
 - **Default Priority**: Priority level for new projects (1-3)
 - **Default Status**: Status for new projects (e.g., "live", "planning")
 
