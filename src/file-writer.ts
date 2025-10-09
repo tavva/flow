@@ -276,16 +276,18 @@ export class FileWriter {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
 
-    // Format sphere tags (e.g., "project/personal project/work")
-    const sphereTags =
+    // Format sphere tags for YAML list format
+    const sphereTagsList =
       spheres.length > 0
-        ? spheres.map((s) => `project/${s}`).join(" ")
-        : "project/personal";
+        ? spheres.map((s) => `  - project/${s}`).join("\n")
+        : "  - project/personal";
 
     let content = `---
 creation-date: ${date}
-priority: ${this.settings.defaultPriority}
-tags: ${sphereTags}
+priority:
+  ${this.settings.defaultPriority}
+tags:
+${sphereTagsList}
 status: ${this.settings.defaultStatus}
 ---
 
