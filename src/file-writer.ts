@@ -219,8 +219,6 @@ status: ${this.settings.defaultStatus}
 
 # ${title}
 
-${result.reasoning}
-
 ## Next actions
 `;
 

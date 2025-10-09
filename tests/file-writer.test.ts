@@ -97,6 +97,7 @@ describe("FileWriter", () => {
       expect(content).toContain("status: live");
       expect(content).toContain("tags: project/personal");
       expect(content).toContain("## Next actions");
+      expect(content).not.toContain(result.reasoning);
       expect(content).toContain(
         "- [ ] Meet with designer to discuss requirements",
       );
