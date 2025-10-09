@@ -4,18 +4,14 @@ import { InboxProcessingController } from './inbox-processing-controller';
 import { EditableItem } from './inbox-types';
 import { InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
-import { getActionLabel, InputMode } from './inbox-modal-utils';
+import { getActionLabel } from './inbox-modal-utils';
 
-export type RenderTarget = 'mindsweep' | 'editable' | 'processing';
+export type RenderTarget = 'inbox' | 'editable';
 
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
 
 export class InboxModalState {
-        public mindsweepItems: string[] = [];
         public editableItems: EditableItem[] = [];
-        public currentInput = '';
-        public bulkInput = '';
-        public inputMode: InputMode = 'single';
         public deletionOffsets = new Map<string, number>();
         public existingProjects: FlowProject[] = [];
         public existingPersons: PersonNote[] = [];
@@ -25,12 +21,8 @@ export class InboxModalState {
         constructor(
                 private readonly controller: InboxProcessingController,
                 private readonly settings: PluginSettings,
-                private readonly startWithInbox: boolean,
                 private readonly requestRender: RenderCallback
         ) {
-                if (startWithInbox) {
-                        this.inputMode = 'inbox';
-                }
         }
 
         get inboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
@@ -58,17 +50,6 @@ export class InboxModalState {
                 this.requestRender(target);
         }
 
-        setInputMode(mode: InputMode) {
-                this.inputMode = mode;
-        }
-
-        updateCurrentInput(value: string) {
-                this.currentInput = value;
-        }
-
-        updateBulkInput(value: string) {
-                this.bulkInput = value;
-        }
 
         async loadReferenceData() {
                 try {
@@ -80,35 +61,6 @@ export class InboxModalState {
                 }
         }
 
-        addMindsweepItem() {
-                if (this.currentInput.trim().length === 0) {
-                        return;
-                }
-
-                this.mindsweepItems.push(this.currentInput.trim());
-                this.currentInput = '';
-                this.requestRender('mindsweep');
-        }
-
-        addBulkItems() {
-                if (this.bulkInput.trim().length === 0) {
-                        return;
-                }
-
-                const items = this.bulkInput
-                        .split('\n')
-                        .map(item => item.trim())
-                        .filter(item => item.length > 0);
-
-                if (items.length === 0) {
-                        return;
-                }
-
-                this.mindsweepItems.push(...items);
-                this.bulkInput = '';
-                this.inputMode = 'single';
-                this.requestRender('mindsweep');
-        }
 
         async loadInboxItems() {
                 try {
@@ -116,8 +68,7 @@ export class InboxModalState {
 
                         if (inboxEditableItems.length === 0) {
                                 new Notice('No items found in inbox folders');
-                                this.inputMode = 'single';
-                                this.requestRender('mindsweep');
+                                this.requestRender('inbox');
                                 return;
                         }
 
@@ -127,21 +78,8 @@ export class InboxModalState {
                 } catch (error) {
                         new Notice('Error loading inbox items');
                         console.error(error);
-                        this.inputMode = 'single';
-                        this.requestRender('mindsweep');
+                        this.requestRender('inbox');
                 }
-        }
-
-        startProcessing() {
-                if (this.mindsweepItems.length === 0) {
-                        new Notice('No items to process');
-                        return;
-                }
-
-                this.editableItems = this.controller.createEditableItemsFromMindsweep(this.mindsweepItems);
-
-                new Notice(`Loaded ${this.mindsweepItems.length} items`);
-                this.requestRender('editable');
         }
 
         async refineAllWithAI() {

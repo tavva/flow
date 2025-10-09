@@ -6,7 +6,6 @@ import { InboxProcessingModal } from './src/inbox-modal';
 type InboxCommandConfig = {
 	id: string;
 	name: string;
-	includeDefaultInbox?: boolean;
 };
 
 export default class FlowGTDCoachPlugin extends Plugin {
@@ -21,9 +20,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 		});
 
 		const inboxCommands: InboxCommandConfig[] = [
-			{ id: 'process-inbox', name: 'Process Inbox' },
-			{ id: 'quick-capture', name: 'Quick Capture' },
-			{ id: 'process-inbox-folders', name: 'Process Inbox Folders', includeDefaultInbox: true }
+			{ id: 'process-inbox', name: 'Process Inbox Files' }
 		];
 
 		inboxCommands.forEach(config => this.registerInboxCommand(config));
@@ -51,18 +48,18 @@ export default class FlowGTDCoachPlugin extends Plugin {
 			id: config.id,
 			name: config.name,
 			callback: () => {
-				this.openInboxModal(config.includeDefaultInbox);
+				this.openInboxModal();
 			}
 		});
 	}
 
-	private openInboxModal(includeDefaultInbox: boolean = false) {
+	private openInboxModal() {
 		if (!this.hasRequiredApiKey()) {
 			new Notice(this.getMissingApiKeyMessage());
 			return;
 		}
 
-		const modal = new InboxProcessingModal(this.app, this.settings, includeDefaultInbox);
+		const modal = new InboxProcessingModal(this.app, this.settings);
 		modal.open();
 	}
 

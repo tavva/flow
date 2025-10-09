@@ -3,21 +3,20 @@ import { InboxProcessingController } from './inbox-processing-controller';
 import { EditableItem } from './inbox-types';
 import { PluginSettings } from './types';
 import { InboxModalState, RenderTarget } from './inbox-modal-state';
-import { renderEditableItemsView, renderMindsweepView } from './inbox-modal-views';
+import { renderEditableItemsView, renderInboxView } from './inbox-modal-views';
 import { InboxScanner } from './inbox-scanner';
 
 export class InboxProcessingModal extends Modal {
         private readonly state: InboxModalState;
         private renderTimeout?: NodeJS.Timeout;
-        private pendingTarget: RenderTarget = 'mindsweep';
+        private pendingTarget: RenderTarget = 'inbox';
 
-        constructor(app: App, settings: PluginSettings, private readonly startWithInbox: boolean = false) {
+        constructor(app: App, settings: PluginSettings) {
                 super(app);
                 const controller = new InboxProcessingController(app, settings);
                 this.state = new InboxModalState(
                         controller,
                         settings,
-                        startWithInbox,
                         (target, options) => this.requestRender(target, options?.immediate === true)
                 );
         }
@@ -38,13 +37,6 @@ export class InboxProcessingModal extends Modal {
                 this.state.editableItems = items;
         }
 
-        get mindsweepItems(): string[] {
-                return this.state.mindsweepItems;
-        }
-
-        set mindsweepItems(items: string[]) {
-                this.state.mindsweepItems = items;
-        }
 
         get deletionOffsets(): Map<string, number> {
                 return this.state.deletionOffsets;
@@ -57,14 +49,8 @@ export class InboxProcessingModal extends Modal {
 
                 await this.state.loadReferenceData();
 
-                if (this.startWithInbox) {
-                        this.state.setInputMode('inbox');
-                        renderMindsweepView(contentEl, this.state);
-                        await this.state.loadInboxItems();
-                        return;
-                }
-
-                this.renderCurrentView('mindsweep');
+                renderInboxView(contentEl, this.state);
+                await this.state.loadInboxItems();
         }
 
         onClose() {
@@ -106,7 +92,7 @@ export class InboxProcessingModal extends Modal {
                         return;
                 }
 
-                renderMindsweepView(contentEl, this.state);
+                renderInboxView(contentEl, this.state);
         }
 
         private saveAllItems() {

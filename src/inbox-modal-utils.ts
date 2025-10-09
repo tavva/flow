@@ -1,6 +1,5 @@
 import { ProcessingAction } from './types';
 
-export type InputMode = 'single' | 'bulk' | 'inbox';
 
 const ACTION_LABELS: Record<ProcessingAction, string> = {
         'create-project': 'Create New Project',

@@ -91,15 +91,6 @@ export class InboxProcessingController {
 		}));
 	}
 
-	createEditableItemsFromMindsweep(items: string[]): EditableItem[] {
-		return items.map(item => ({
-			original: item,
-			isAIProcessed: false,
-			hasAIRequest: false,
-			selectedAction: 'next-actions-file',
-			selectedSpheres: []
-		}));
-	}
 
 	async refineItem(
 		item: EditableItem,

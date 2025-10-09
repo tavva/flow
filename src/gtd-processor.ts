@@ -51,7 +51,7 @@ export class GTDProcessor {
 			? `\n\nThe user organises their work using these spheres: ${this.availableSpheres.join(', ')}.`
 			: '';
 
-		return `You are a GTD (Getting Things Done) coach. You must use British English spelling and grammar in all responses. A user has captured this item during their mindsweep:
+		return `You are a GTD (Getting Things Done) coach. You must use British English spelling and grammar in all responses. A user has captured this item in their inbox:
 
 "${item}"
 
