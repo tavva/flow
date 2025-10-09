@@ -62,6 +62,15 @@ npm run dev
 4. **Review**: Check the AI's suggestions and make adjustments
 5. **Save**: Save processed items to your vault
 
+### Interpreting AI Recommendations
+
+The AI response includes two distinct signals:
+
+- **Recommended Action** – the model's primary instruction for how to handle the item. The plugin applies this directly (e.g. *Create New Project*, *Add to Project*, *File to Reference*).
+- **Suggested Projects/People** – optional matches to existing notes, each with a confidence level. These are surfaced for convenience, but they do not override the recommended action. For example, the model may recommend creating a new project while still surfacing a low-confidence related project so you can manually redirect the item if appropriate.
+
+When you see a recommended action of "Create New Project" alongside suggested projects, that's the model signalling "treat this as new work" while still providing nearby matches you might want to reuse. No additional override logic is applied by the plugin beyond displaying those suggestions.
+
 ### How It Works
 
 The plugin follows GTD principles:
