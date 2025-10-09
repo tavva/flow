@@ -34,16 +34,15 @@ export class FlowProjectScanner {
 		const content = await this.app.vault.read(file);
 		const frontmatter = metadata.frontmatter || {};
 
-		return {
-			file: file.path,
-			title: file.basename,
-			tags: this.extractProjectTags(frontmatter.tags),
-			priority: frontmatter.priority,
-			status: frontmatter.status,
-			creationDate: frontmatter['creation-date'],
-			nextActions: this.extractSection(content, '## Next actions'),
-			futureNextActions: this.extractSection(content, '## Future next actions')
-		};
+return {
+file: file.path,
+title: file.basename,
+tags: this.extractProjectTags(frontmatter.tags),
+priority: frontmatter.priority,
+status: frontmatter.status,
+creationDate: frontmatter['creation-date'],
+nextActions: this.extractSection(content, '## Next actions')
+};
 	}
 
 	/**

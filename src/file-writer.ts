@@ -122,7 +122,6 @@ export class FileWriter {
   async addNextActionToProject(
     project: FlowProject,
     actions: string | string[],
-    isFuture: boolean = false,
   ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
@@ -133,10 +132,7 @@ export class FileWriter {
     let content = await this.app.vault.read(file);
 
     for (const action of actionsArray) {
-      const sectionName = isFuture
-        ? "## Future next actions"
-        : "## Next actions";
-      content = this.addActionToSection(content, sectionName, action);
+      content = this.addActionToSection(content, "## Next actions", action);
     }
 
     await this.app.vault.modify(file, content);
@@ -230,16 +226,6 @@ ${result.reasoning}
         result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
     } else {
       content += `- [ ] ${result.nextAction}\n`;
-    }
-
-    content += `
-## Future next actions
-`;
-
-    if (result.futureActions && result.futureActions.length > 0) {
-      content += result.futureActions
-        .map((action) => `- [ ] ${action}`)
-        .join("\n");
     }
 
     return content;

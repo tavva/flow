@@ -16,14 +16,13 @@ interface EvaluationResult {
 	input: string;
 	passed: boolean;
 	score: number;
-	metrics: {
-		categoryCorrect: boolean;
-		actionQuality: number;
-		specificityScore: number;
-		verbUsage: boolean;
-		outcomeClarity?: number;
-		futureActionsPresent?: boolean;
-	};
+metrics: {
+categoryCorrect: boolean;
+actionQuality: number;
+specificityScore: number;
+verbUsage: boolean;
+outcomeClarity?: number;
+};
 	output: GTDProcessingResult;
 	errors: string[];
 	warnings: string[];
@@ -113,8 +112,7 @@ export class GTDEvaluator {
 			}
 
 			// Check project-specific attributes
-			let outcomeClarity: number | undefined;
-			let futureActionsPresent: boolean | undefined;
+let outcomeClarity: number | undefined;
 
 			if (testCase.expectedCategory === 'project') {
 				if (!output.projectOutcome) {
@@ -127,36 +125,30 @@ export class GTDEvaluator {
 					}
 				}
 
-				futureActionsPresent = (output.futureActions?.length ?? 0) > 0;
-				if (testCase.expectedAttributes.hasFutureActions && !futureActionsPresent) {
-					warnings.push('Project should include future actions');
-				}
-			}
+}
 
 			// Calculate overall score
-			const score = this.calculateScore({
-				categoryCorrect,
-				actionQuality,
-				specificityScore,
-				verbUsage,
-				outcomeClarity,
-				futureActionsPresent,
-				testCase
-			});
+const score = this.calculateScore({
+categoryCorrect,
+actionQuality,
+specificityScore,
+verbUsage,
+outcomeClarity,
+testCase
+});
 
 			return {
 				testCaseId: testCase.id,
 				input: testCase.input,
 				passed: categoryCorrect && errors.length === 0,
 				score,
-				metrics: {
-					categoryCorrect,
-					actionQuality,
-					specificityScore,
-					verbUsage,
-					outcomeClarity,
-					futureActionsPresent
-				},
+metrics: {
+categoryCorrect,
+actionQuality,
+specificityScore,
+verbUsage,
+outcomeClarity
+},
 				output,
 				errors,
 				warnings
@@ -267,15 +259,14 @@ export class GTDEvaluator {
 	/**
 	 * Calculate overall score for a test case
 	 */
-	private calculateScore(params: {
-		categoryCorrect: boolean;
-		actionQuality: number;
-		specificityScore: number;
-		verbUsage: boolean;
-		outcomeClarity?: number;
-		futureActionsPresent?: boolean;
-		testCase: TestCase;
-	}): number {
+private calculateScore(params: {
+categoryCorrect: boolean;
+actionQuality: number;
+specificityScore: number;
+verbUsage: boolean;
+outcomeClarity?: number;
+testCase: TestCase;
+}): number {
 		let score = 0;
 		let maxScore = 0;
 

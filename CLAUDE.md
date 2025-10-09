@@ -81,22 +81,18 @@ Project description and context.
 
 ## Next actions
 - [ ] GTD-quality actions ready to do now
-
-## Future next actions
-- [ ] Actions dependent on other things completing first
 ```
 
 **Important:**
 - Projects are identified by `project/*` tags in frontmatter
 - All next actions MUST be Markdown checkboxes (`- [ ]`)
 - Next actions section contains immediately actionable items
-- Future next actions contains items blocked by dependencies
 
 ### GTD Categories
 
 The processor categorizes items into:
 - **next-action**: Single completable actions (enhanced for specificity)
-- **project**: Multi-step outcomes (requires outcome + next action + future actions)
+- **project**: Multi-step outcomes (requires outcome + clear next actions)
 - **reference**: Information to store (not actionable)
 - **someday**: Future aspirations (not currently committed)
 - **person**: People-related items to be added to person notes

@@ -1,12 +1,11 @@
 export interface FlowProject {
-	file: string;
-	title: string;
-	tags: string[];
-	priority?: number;
-	status?: string;
-	creationDate?: string;
-	nextActions: string[];
-	futureNextActions: string[];
+file: string;
+title: string;
+tags: string[];
+priority?: number;
+status?: string;
+creationDate?: string;
+nextActions: string[];
 }
 
 export interface PersonNote {
@@ -28,14 +27,13 @@ export type ProcessingAction =
 	| 'discard';
 
 export interface GTDProcessingResult {
-	isActionable: boolean;
-	category: 'next-action' | 'project' | 'reference' | 'someday' | 'person';
-	projectOutcome?: string;
-	nextAction?: string; // Optional for non-actionable items
-	nextActions?: string[]; // Support multiple next actions
-	reasoning: string;
-	futureActions?: string[];
-	suggestedProjects?: ProjectSuggestion[];
+isActionable: boolean;
+category: 'next-action' | 'project' | 'reference' | 'someday' | 'person';
+projectOutcome?: string;
+nextAction?: string; // Optional for non-actionable items
+nextActions?: string[]; // Support multiple next actions
+reasoning: string;
+suggestedProjects?: ProjectSuggestion[];
 	suggestedPersons?: PersonSuggestion[];
 	recommendedAction: ProcessingAction;
 	recommendedActionReasoning: string;
