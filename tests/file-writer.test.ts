@@ -92,11 +92,12 @@ describe("FileWriter", () => {
       const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
       expect(filePath).toBe("Projects/Website Redesign Complete.md");
-      expect(content).toContain("# Website Redesign Complete");
-      expect(content).toContain("priority: 2");
+      expect(content).toContain("# Description");
+      expect(content).toContain("priority:\n  2");
       expect(content).toContain("status: live");
-      expect(content).toContain("tags: project/personal");
+      expect(content).toContain("tags:\n  - project/personal");
       expect(content).toContain("## Next actions");
+      // Description should be blank now
       expect(content).not.toContain(result.reasoning);
       expect(content).toContain(
         "- [ ] Meet with designer to discuss requirements",
@@ -260,7 +261,9 @@ describe("FileWriter", () => {
       await fileWriter.createProject(result, "My Original Item");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      expect(content).toContain("# My Original Item");
+      expect(content).toContain("# Description");
+      // Description should be blank now, not contain original item
+      expect(content).not.toContain("My Original Item");
     });
 
     it("should include creation date in proper format", async () => {
