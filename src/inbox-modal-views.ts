@@ -419,20 +419,27 @@ function renderProjectCreationSection(container: HTMLElement, item: EditableItem
                 cls: 'flow-gtd-label'
         });
 
-        const projectInput = projectEl.createEl('input', {
+        const inputRow = projectEl.createDiv('flow-gtd-project-input-row');
+        inputRow.style.display = 'flex';
+        inputRow.style.gap = '8px';
+        inputRow.style.alignItems = 'center';
+
+        const projectInput = inputRow.createEl('input', {
                 type: 'text',
                 cls: 'flow-gtd-project-input'
         });
+        projectInput.style.flex = '1';
         projectInput.placeholder = 'e.g., Vacation planned and booked';
         projectInput.value = item.editedProjectTitle || item.result?.projectOutcome || '';
         projectInput.addEventListener('input', (e) => {
                 item.editedProjectTitle = (e.target as HTMLInputElement).value;
         });
 
-        const suggestBtn = projectEl.createEl('button', {
+        const suggestBtn = inputRow.createEl('button', {
                 text: '✨ Suggest Project Name',
                 cls: 'flow-gtd-suggest-project-btn'
         });
+        suggestBtn.style.flexShrink = '0';
         suggestBtn.addEventListener('click', async () => {
                 try {
                         const suggestedName = await state.suggestProjectName(item.original);
