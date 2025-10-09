@@ -29,6 +29,7 @@ describe("FileWriter", () => {
     nextActionsFilePath: "Next actions.md",
     somedayFilePath: "Someday.md",
     projectsFolderPath: "Projects",
+    projectTemplateFilePath: "Templates/Project.md",
     spheres: ["personal", "work"],
   };
 
@@ -97,8 +98,7 @@ describe("FileWriter", () => {
       expect(content).toContain("status: live");
       expect(content).toContain("tags:\n  - project/personal");
       expect(content).toContain("## Next actions");
-      // Description should be blank now
-      expect(content).not.toContain(result.reasoning);
+      expect(content).toContain("Original inbox item: redesign website");
       expect(content).toContain(
         "- [ ] Meet with designer to discuss requirements",
       );
@@ -137,6 +137,64 @@ describe("FileWriter", () => {
 
       const [filePath] = (mockVault.create as jest.Mock).mock.calls[0];
       expect(filePath).toBe("Projects/My Cool Project! (v2.0).md");
+    });
+
+    it("should include sanitized original inbox description when using template", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Template Based Project",
+        nextAction: "Draft plan",
+        reasoning: "Requires planning",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Needs structure",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: <% tp.date.now("YYYY-MM-DD HH:mm") %>
+priority:
+  {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
+        (path: string) => {
+          if (path === "Projects") {
+            return {};
+          }
+
+          if (path === "Templates/Project.md") {
+            return templateFile;
+          }
+
+          return null;
+        },
+      );
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue(
+        new TFile("Projects/Template Based Project.md", "Template Based Project"),
+      );
+
+      await fileWriter.createProject(
+        result,
+        "Call   Bob\nabout the   new contract",
+      );
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain(
+        "Original inbox item: Call Bob about the new contract",
+      );
     });
 
     it("should keep spaces while stripping disallowed filename characters", async () => {
@@ -261,8 +319,7 @@ describe("FileWriter", () => {
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
       expect(content).toContain("# Description");
-      // Description should be blank now, not contain original item
-      expect(content).not.toContain("My Original Item");
+      expect(content).toContain("Original inbox item: My Original Item");
     });
 
     it("should include creation date in proper format", async () => {

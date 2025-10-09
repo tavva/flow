@@ -189,6 +189,13 @@ export class FileWriter {
     return cleaned.length > 0 ? cleaned : "Project";
   }
 
+  private formatOriginalInboxItem(originalItem: string): string {
+    const normalized = originalItem.replace(/\s+/g, " ").trim();
+    return normalized.length > 0
+      ? `Original inbox item: ${normalized}`
+      : "Original inbox item:";
+  }
+
   /**
    * Build the content for a new project file using template
    */
@@ -219,7 +226,10 @@ export class FileWriter {
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, this.settings.defaultPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, "");
+      .replace(
+        /{{\s*description\s*}}/g,
+        this.formatOriginalInboxItem(originalItem),
+      );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
@@ -258,6 +268,7 @@ export class FileWriter {
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
+    const originalItemDescription = this.formatOriginalInboxItem(originalItem);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
@@ -275,6 +286,8 @@ status: ${this.settings.defaultStatus}
 ---
 
 # Description
+
+${originalItemDescription}
 
 ## Focus areas
 
