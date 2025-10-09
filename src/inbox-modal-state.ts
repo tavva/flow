@@ -201,6 +201,12 @@ export class InboxModalState {
                 }
         }
 
+        discardItem(item: EditableItem) {
+                this.editableItems = this.editableItems.filter(current => current !== item);
+                new Notice(`🗑️ Discarded item`);
+                this.requestRender('editable');
+        }
+
         async saveAllItems() {
                 if (this.editableItems.length === 0) {
                         new Notice('No items to save');

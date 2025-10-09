@@ -230,9 +230,33 @@ function renderIndividualEditableItems(
     actionButtons.style.paddingTop = "16px";
     actionButtons.style.borderTop =
       "1px solid var(--background-modifier-border)";
-    actionButtons.style.textAlign = "center";
+    actionButtons.style.display = "flex";
+    actionButtons.style.justifyContent = "space-between";
+    actionButtons.style.alignItems = "center";
 
-    new Setting(actionButtons).addButton((button) =>
+    // Discard button on the left
+    const discardButton = actionButtons.createEl("button", {
+      text: "🗑️ Discard",
+      cls: "flow-gtd-discard-button",
+    });
+    discardButton.style.backgroundColor = "var(--color-red)";
+    discardButton.style.color = "var(--text-on-accent)";
+    discardButton.style.border = "none";
+    discardButton.style.padding = "8px 16px";
+    discardButton.style.borderRadius = "var(--radius-s)";
+    discardButton.style.cursor = "pointer";
+    discardButton.style.fontSize = "var(--font-ui-small)";
+    discardButton.addEventListener("click", () => {
+      // Show confirmation dialog
+      const confirmed = confirm("Are you sure you want to discard this item? This action cannot be undone.");
+      if (confirmed) {
+        state.discardItem(item);
+      }
+    });
+
+    // Save button on the right
+    const saveButtonContainer = actionButtons.createDiv();
+    new Setting(saveButtonContainer).addButton((button) =>
       button
         .setButtonText("💾 Save to Vault")
         .setCta()
@@ -362,7 +386,6 @@ function renderEditableItemContent(
     { value: "reference", label: "Reference (Not Actionable)" },
     { value: "person", label: "Discuss with Person" },
     { value: "trash", label: "Trash (Delete)" },
-    { value: "discard", label: "Discard (Ignore)" },
   ];
   actions.forEach(({ value, label }) => actionDropdown.addOption(value, label));
   actionDropdown.setValue(item.selectedAction ?? "next-actions-file");
