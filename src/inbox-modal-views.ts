@@ -35,7 +35,7 @@ export function renderEditableItemsView(
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
-  contentEl.createEl("h2", { text: "📝 Edit and Save Items" });
+  contentEl.createEl("h2", { text: "Flow inbox processing" });
   contentEl.createEl("p", {
     text: "Review your inbox items. You can edit them manually or refine with AI, then save them to your vault.",
     cls: "flow-gtd-description",
