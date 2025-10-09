@@ -76,4 +76,21 @@ describe("InboxItemPersistenceService", () => {
       expect(mockFn).not.toHaveBeenCalled();
     });
   });
+
+  it("throws when creating project with no spheres selected", async () => {
+    const item: EditableItem = {
+      original: "Plan something",
+      isAIProcessed: false,
+      selectedAction: "create-project",
+      selectedSpheres: [], // No spheres selected
+      editedNames: ["Do the thing"],
+    };
+
+    await expect(service.persist(item)).rejects.toThrow(
+      GTDResponseValidationError
+    );
+    await expect(service.persist(item)).rejects.toThrow(
+      "At least one sphere must be selected when creating a project."
+    );
+  });
 });

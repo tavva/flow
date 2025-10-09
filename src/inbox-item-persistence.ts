@@ -9,12 +9,17 @@ const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
 	'next-actions-file'
 ];
 
+const ACTIONS_REQUIRING_SPHERES: readonly string[] = [
+	'create-project'
+];
+
 export class InboxItemPersistenceService {
 	constructor(private readonly writer: FileWriter) {}
 
 	async persist(item: EditableItem): Promise<void> {
 		const finalNextActions = this.resolveFinalNextActions(item);
 		this.validateFinalNextActions(item, finalNextActions);
+		this.validateSphereSelection(item);
 		const result = this.buildResultForSaving(item, finalNextActions);
 		await this.writeResult(item, finalNextActions, result);
 	}
@@ -47,6 +52,15 @@ export class InboxItemPersistenceService {
 			finalNextActions.every(action => action.trim().length === 0)
 		) {
 			throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
+		}
+	}
+
+	private validateSphereSelection(item: EditableItem): void {
+		if (
+			ACTIONS_REQUIRING_SPHERES.includes(item.selectedAction) &&
+			(!item.selectedSpheres || item.selectedSpheres.length === 0)
+		) {
+			throw new GTDResponseValidationError('At least one sphere must be selected when creating a project.');
 		}
 	}
 
