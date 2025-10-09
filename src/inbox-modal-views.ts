@@ -657,9 +657,17 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
                 }
         }
 
-        sphereSelectorEl.createEl('p', { text: 'Select spheres:', cls: 'flow-gtd-label' });
+        const sphereRow = sphereSelectorEl.createDiv('flow-gtd-sphere-row');
+        sphereRow.style.display = 'flex';
+        sphereRow.style.alignItems = 'center';
+        sphereRow.style.gap = '12px';
 
-        const buttonContainer = sphereSelectorEl.createDiv('flow-gtd-sphere-buttons');
+        const sphereLabel = sphereRow.createEl('span', { text: 'Select spheres:', cls: 'flow-gtd-label' });
+        sphereLabel.style.marginBottom = '0';
+
+        const buttonContainer = sphereRow.createDiv('flow-gtd-sphere-buttons');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '8px';
         spheres.forEach(sphere => {
                 const button = buttonContainer.createEl('button', {
                         text: sphere,

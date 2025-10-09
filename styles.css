@@ -483,7 +483,7 @@
 
 .flow-gtd-original-row {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 12px;
 	padding: 8px 12px;
 	border: 1px solid var(--background-modifier-border);
