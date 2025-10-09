@@ -362,6 +362,7 @@ function renderEditableItemContent(
     { value: "reference", label: "Reference (Not Actionable)" },
     { value: "person", label: "Discuss with Person" },
     { value: "trash", label: "Trash (Delete)" },
+    { value: "discard", label: "Discard (Ignore)" },
   ];
   actions.forEach(({ value, label }) => actionDropdown.addOption(value, label));
   actionDropdown.setValue(item.selectedAction ?? "next-actions-file");
