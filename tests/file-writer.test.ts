@@ -61,10 +61,10 @@ describe("FileWriter", () => {
         projectOutcome: "Website Redesign Complete",
         nextAction: "Meet with designer to discuss requirements",
         reasoning: "This is a multi-step project requiring coordination",
-        futureActions: [
+        nextActions: [
+          "Meet with designer to discuss requirements",
           "Review mockups",
           "Implement design",
-          "Deploy to production",
         ],
         suggestedProjects: [],
         recommendedAction: "create-project",
@@ -102,9 +102,9 @@ describe("FileWriter", () => {
       expect(content).toContain(
         "- [ ] Meet with designer to discuss requirements",
       );
-      expect(content).toContain("## Future next actions");
       expect(content).toContain("- [ ] Review mockups");
       expect(content).toContain("- [ ] Implement design");
+      expect(content).not.toContain("Future next actions");
       expect(file).toBe(mockFile);
     });
 
@@ -205,14 +205,13 @@ describe("FileWriter", () => {
       );
     });
 
-    it("should handle empty future actions", async () => {
+    it("should handle missing additional next actions", async () => {
       const result: GTDProcessingResult = {
         isActionable: true,
         category: "project",
         projectOutcome: "Simple Project",
         nextAction: "First action",
         reasoning: "Test",
-        futureActions: [],
         suggestedProjects: [],
         recommendedAction: "create-project",
         recommendedActionReasoning: "Test",
@@ -232,8 +231,8 @@ describe("FileWriter", () => {
       await fileWriter.createProject(result, "test");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      expect(content).toContain("## Future next actions\n");
-      expect(content).not.toContain("- undefined");
+      expect(content).toContain("## Next actions\n- [ ] First action");
+      expect(content).not.toContain("Future next actions");
     });
 
     it("should use original item as title if projectOutcome is missing", async () => {
@@ -331,7 +330,6 @@ describe("FileWriter", () => {
       title: "Test Project",
       tags: ["project/personal"],
       nextActions: ["Existing action"],
-      futureNextActions: [],
     };
 
     it("should add action to existing Next actions section", async () => {
@@ -344,45 +342,18 @@ tags: project/personal
 
 ## Next actions
 - Existing action
-
-## Future next actions
 `;
 
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addNextActionToProject(mockProject, "New action", false);
+      await fileWriter.addNextActionToProject(mockProject, "New action");
 
       expect(mockVault.modify).toHaveBeenCalled();
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
       expect(newContent).toContain("- [ ] New action");
       expect(newContent).toContain("- Existing action");
-    });
-
-    it("should add action to Future next actions section when isFuture is true", async () => {
-      const mockFile = new TFile("project.md", "Test Project");
-      const existingContent = `## Next actions
-- Current action
-
-## Future next actions
-- Future action 1
-`;
-
-      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
-      (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
-
-      await fileWriter.addNextActionToProject(
-        mockProject,
-        "New future action",
-        true,
-      );
-
-      const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
-
-      expect(newContent).toContain("## Future next actions");
-      expect(newContent).toContain("- [ ] New future action");
-      expect(newContent).toContain("- Future action 1");
     });
 
     it("should create section if it does not exist", async () => {
@@ -402,7 +373,6 @@ Some content here.
       await fileWriter.addNextActionToProject(
         mockProject,
         "First action",
-        false,
       );
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
@@ -423,14 +393,12 @@ Some content here.
       const mockFile = new TFile("project.md", "Test Project");
       const existingContent = `## Next actions
 
-## Future next actions
-- Future action
 `;
 
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addNextActionToProject(mockProject, "New action", false);
+      await fileWriter.addNextActionToProject(mockProject, "New action");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -447,15 +415,12 @@ Some content here.
 
 ## Notes
 Some notes here
-
-## Future next actions
-- Future 1
 `;
 
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addNextActionToProject(mockProject, "New action", false);
+      await fileWriter.addNextActionToProject(mockProject, "New action");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -472,7 +437,6 @@ Some notes here
       title: "Test Project",
       tags: ["project/personal"],
       nextActions: [],
-      futureNextActions: [],
     };
 
     it("should update project tags using processFrontMatter", async () => {

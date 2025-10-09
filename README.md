@@ -12,7 +12,7 @@ An Obsidian plugin that helps you implement the GTD (Getting Things Done) method
 ### 📁 Flow Integration
 - **Automatic Project Detection**: Scans your vault for Flow projects (files with `project/*` tags)
 - **Smart File Creation**: Creates new project files with proper Flow frontmatter
-- **Section Management**: Intelligently updates "Next actions" and "Future next actions" sections
+- **Section Management**: Intelligently updates "Next actions" sections
 
 ### ✨ User-Friendly Interface
 - **Guided Workflow**: Step-by-step process for capturing, clarifying, and organizing
@@ -70,8 +70,7 @@ The plugin follows GTD principles:
 - **Project**: Multi-step outcomes are created as new Flow project files with:
   - Proper frontmatter (tags, priority, status, creation date)
   - Project description (the "why")
-  - Next action (the first physical step)
-  - Future actions (what comes after)
+  - Immediate next actions that can be worked on now
 - **Reference**: Information items are identified (you can file these manually)
 - **Someday/Maybe**: Ideas for the future are flagged
 
@@ -83,7 +82,6 @@ The plugin follows GTD principles:
 - Category: Project
 - Outcome: "Italy vacation fully planned and booked"
 - Next Action: "Research best time to visit Italy and check Sarah's availability"
-- Future Actions: ["Book flights", "Reserve hotels", "Plan itinerary", "Apply for any necessary travel documents"]
 
 **Result:** New project file created at `Italy-vacation-fully-planned-and-booked.md` with all the details
 
@@ -106,8 +104,6 @@ Project description and context.
 ## Next actions
 - [ ] Specific, actionable items ready to do now
 
-## Future next actions
-- [ ] Actions that depend on other things completing first
 ```
 
 **Note:** All actions are created as Markdown checkboxes (`- [ ]`) so you can easily track completion status.

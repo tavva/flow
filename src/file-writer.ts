@@ -122,7 +122,6 @@ export class FileWriter {
   async addNextActionToProject(
     project: FlowProject,
     actions: string | string[],
-    isFuture: boolean = false,
   ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
@@ -133,10 +132,7 @@ export class FileWriter {
     let content = await this.app.vault.read(file);
 
     for (const action of actionsArray) {
-      const sectionName = isFuture
-        ? "## Future next actions"
-        : "## Next actions";
-      content = this.addActionToSection(content, sectionName, action);
+      content = this.addActionToSection(content, "## Next actions", action);
     }
 
     await this.app.vault.modify(file, content);
@@ -249,19 +245,6 @@ export class FileWriter {
       content = content.replace(nextActionsRegex, `$1${actionsText}`);
     }
 
-    // Add future actions if any
-    if (result.futureActions && result.futureActions.length > 0) {
-      const futureActionsRegex = /(## Future next actions\s*\n)/;
-      const futureMatch = content.match(futureActionsRegex);
-
-      if (futureMatch) {
-        const futureActionsText = result.futureActions
-          .map((action) => `- [ ] ${action}`)
-          .join("\n") + "\n";
-        content = content.replace(futureActionsRegex, `$1${futureActionsText}`);
-      }
-    }
-
     return content;
   }
 
@@ -307,16 +290,6 @@ status: ${this.settings.defaultStatus}
     }
 
     content += `
-## Future next actions
-`;
-
-    if (result.futureActions && result.futureActions.length > 0) {
-      content += result.futureActions
-        .map((action) => `- [ ] ${action}`)
-        .join("\n");
-    }
-
-    content += `
 
 ## Notes + resources
 
@@ -324,7 +297,6 @@ status: ${this.settings.defaultStatus}
 
 ## Log
 `;
-
     return content;
   }
 

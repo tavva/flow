@@ -87,6 +87,7 @@ Rules:
 - If it's a single completable action → It's a NEXT ACTION.
 - A quality next action must: start with a verb, be specific, be completable in one sitting, include context.
 - Projects should be stated as outcomes (e.g., "Website redesign complete" not "Redesign website").
+- Focus only on immediate next actions. Do not list future or dependent actions—only include actions that can be started now.
 
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
 {
@@ -94,8 +95,7 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
   "category": "next-action/project/reference/someday",
   "projectOutcome": "the desired outcome (only if project)",
   "nextAction": "the specific next action to take",
-  "reasoning": "brief explanation of your analysis",
-  "futureActions": ["array of other actions that will be needed (only if project)"]
+  "reasoning": "brief explanation of your analysis"
 }
 
 Examples:
@@ -544,19 +544,6 @@ Sort by suggestedOrder (1 being highest priority).`
                       
                       <p className="text-xs text-gray-500 italic mb-2">{item.reasoning}</p>
                       
-                      {item.futureActions && item.futureActions.length > 0 && (
-                        <div className="mt-3 bg-gray-100 rounded p-3">
-                          <p className="text-xs text-gray-700 font-medium mb-1">Future actions for this project:</p>
-                          <ul className="text-xs text-gray-600 space-y-1">
-                            {item.futureActions.map((action, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="text-gray-400 mt-0.5">•</span>
-                                <span>{action}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>

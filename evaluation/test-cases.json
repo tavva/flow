@@ -68,9 +68,7 @@
     "expectedAttributes": {
       "isActionable": true,
       "hasOutcome": true,
-      "hasNextAction": true,
-      "hasFutureActions": true,
-      "futureActionsCount": ">=3"
+      "hasNextAction": true
     },
     "notes": "Large project with many steps"
   },

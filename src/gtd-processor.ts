@@ -79,6 +79,7 @@ Rules:
 - If this item relates to a specific person, suggest which person note(s) it belongs to.
 - ALWAYS provide the option to create a new project, even if suggesting existing ones.
 - If a complex item could be broken into multiple discrete next actions (not requiring dependencies), you may provide multiple next actions in the "nextActions" array.
+- Focus only on immediate next actions. Do not list future or dependent actions—only include actions that can be started now. If helpful, provide multiple independent next actions in the "nextActions" array.
 - For reference items, suggest which existing project(s) should contain this reference and provide the content that should be added.
 
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
@@ -89,7 +90,6 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
   "nextAction": "the primary/first next action to take",
   "nextActions": ["optional array of multiple discrete next actions if the item can be broken down into independent actions"],
   "reasoning": "brief explanation of your analysis",
-  "futureActions": ["array of other actions that will be needed (only if project)"],
   "suggestedProjects": [
     {
       "projectTitle": "title of existing project",
@@ -357,8 +357,7 @@ Examples:
                         nextAction: primaryNextAction ?? '',
                         nextActions: Array.isArray(parsed.nextActions) ? parsed.nextActions : [],
                         reasoning: parsed.reasoning,
-                        futureActions: Array.isArray(parsed.futureActions) ? parsed.futureActions : [],
-                        suggestedProjects,
+suggestedProjects,
                         suggestedPersons,
                         recommendedAction: parsed.recommendedAction || (parsed.isActionable ? 'next-actions-file' : 'reference'),
                         recommendedActionReasoning: parsed.recommendedActionReasoning || 'No specific recommendation provided',
@@ -375,8 +374,7 @@ Examples:
                 nextAction?: string;
                 nextActions?: string[];
                 reasoning: string;
-                futureActions?: string[];
-                suggestedProjects?: Array<{
+suggestedProjects?: Array<{
                         projectTitle: string;
                         relevance: string;
                         confidence: 'high' | 'medium' | 'low';
@@ -454,15 +452,6 @@ Examples:
                 if (parsed.category === 'project') {
                         if (typeof parsed.projectOutcome !== 'string' || parsed.projectOutcome.trim().length === 0) {
                                 throw new GTDResponseValidationError('Invalid model response: "projectOutcome" must be provided for project items');
-                        }
-                }
-
-                if (parsed.futureActions !== undefined && parsed.futureActions !== null) {
-                        if (!Array.isArray(parsed.futureActions)) {
-                                throw new GTDResponseValidationError(`Invalid model response: "futureActions" must be an array when provided, got ${typeof parsed.futureActions}: ${JSON.stringify(parsed.futureActions)}`);
-                        }
-                        if (!parsed.futureActions.every((action: unknown) => typeof action === 'string' && action.trim().length > 0)) {
-                                throw new GTDResponseValidationError(`Invalid model response: "futureActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.futureActions)}`);
                         }
                 }
 

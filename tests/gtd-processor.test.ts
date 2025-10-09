@@ -7,15 +7,14 @@ describe('GTDProcessor', () => {
         let mockClient: jest.Mocked<LanguageModelClient>;
         const mockModel = 'claude-test-model';
 
-	type MockClaudeResponse = {
-		isActionable: boolean;
-		category: 'next-action' | 'project' | 'reference' | 'someday';
-		projectOutcome?: string;
-		nextAction: string;
-		nextActions?: string[];
-		reasoning: string;
-		futureActions?: string[];
-		suggestedProjects?: Array<{
+type MockClaudeResponse = {
+isActionable: boolean;
+category: 'next-action' | 'project' | 'reference' | 'someday';
+projectOutcome?: string;
+nextAction: string;
+nextActions?: string[];
+reasoning: string;
+suggestedProjects?: Array<{
 			projectTitle: string;
 			relevance: string;
 			confidence: 'high' | 'medium' | 'low';
@@ -33,15 +32,14 @@ describe('GTDProcessor', () => {
 		referenceContent?: string | null;
 	};
 
-	const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
-		JSON.stringify({
-			isActionable: true,
-			category: 'next-action',
-			nextAction: 'Default next action',
-			nextActions: [],
-			reasoning: 'Default reasoning',
-			futureActions: [],
-			suggestedProjects: [],
+const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
+JSON.stringify({
+isActionable: true,
+category: 'next-action',
+nextAction: 'Default next action',
+nextActions: [],
+reasoning: 'Default reasoning',
+suggestedProjects: [],
 			recommendedAction: 'next-actions-file',
 			recommendedActionReasoning: 'Default recommended action reasoning',
 			recommendedSpheres: [],
@@ -62,22 +60,20 @@ describe('GTDProcessor', () => {
 	});
 
 	describe('processInboxItem', () => {
-		const mockProjects: FlowProject[] = [
-			{
-				file: 'health.md',
-				title: 'Health and Fitness',
-				tags: ['project/personal', 'project/health'],
-				nextActions: ['Book gym membership'],
-				futureNextActions: []
-			},
-			{
-				file: 'website.md',
-				title: 'Website Redesign',
-				tags: ['project/work'],
-				nextActions: ['Meet with designer'],
-				futureNextActions: ['Deploy to production']
-			}
-		];
+const mockProjects: FlowProject[] = [
+{
+file: 'health.md',
+title: 'Health and Fitness',
+tags: ['project/personal', 'project/health'],
+nextActions: ['Book gym membership']
+},
+{
+file: 'website.md',
+title: 'Website Redesign',
+tags: ['project/work'],
+nextActions: ['Meet with designer']
+}
+];
 
 		it('should process a simple next action', async () => {
                         const mockResponse = buildClaudeResponse({
@@ -104,37 +100,37 @@ describe('GTDProcessor', () => {
                         );
 		});
 
-		it('should process a project with outcome and future actions', async () => {
-			const mockResponse = buildClaudeResponse({
-						category: 'project',
-						projectOutcome: 'Summer vacation fully planned and booked',
-						nextAction: 'Email Sarah to discuss preferred vacation dates',
-						reasoning: 'Planning a vacation requires multiple steps',
-						futureActions: [
-							'Research destinations',
-							'Book flights',
-							'Reserve accommodation'
-						],
-						recommendedAction: 'create-project',
-						recommendedActionReasoning: 'This item requires a dedicated project with multiple follow-up steps.'
-					});
+it('should process a project with outcome and multiple next actions', async () => {
+const mockResponse = buildClaudeResponse({
+category: 'project',
+projectOutcome: 'Summer vacation fully planned and booked',
+nextAction: 'Email Sarah to discuss preferred vacation dates',
+reasoning: 'Planning a vacation requires multiple steps',
+nextActions: [
+'Email Sarah to discuss preferred vacation dates',
+'Research destinations',
+'Book flights'
+],
+recommendedAction: 'create-project',
+recommendedActionReasoning: 'This item requires a dedicated project with multiple follow-up steps.'
+});
 
 			mockClient.sendMessage.mockResolvedValue(mockResponse);
 
 			const result = await processor.processInboxItem('plan vacation', []);
 
-			expect(result).toMatchObject({
-				isActionable: true,
-				category: 'project',
-				projectOutcome: 'Summer vacation fully planned and booked',
-				nextAction: 'Email Sarah to discuss preferred vacation dates',
-				futureActions: expect.arrayContaining([
-					'Research destinations',
-					'Book flights',
-					'Reserve accommodation'
-				])
-			});
-		});
+expect(result).toMatchObject({
+isActionable: true,
+category: 'project',
+projectOutcome: 'Summer vacation fully planned and booked',
+nextAction: 'Email Sarah to discuss preferred vacation dates'
+});
+expect(result.nextActions).toEqual([
+'Email Sarah to discuss preferred vacation dates',
+'Research destinations',
+'Book flights'
+]);
+});
 
 		it('should suggest existing projects when relevant', async () => {
                         const mockResponse = buildClaudeResponse({
@@ -172,7 +168,6 @@ describe('GTDProcessor', () => {
 					title: 'Create a 3-day office counter argument',
 					tags: ['project/work'],
 					nextActions: ['Draft initial outline'],
-					futureNextActions: []
 				}
 			];
 
@@ -226,7 +221,6 @@ describe('GTDProcessor', () => {
 					title: 'Health & Fitness Goals',
 					tags: ['project/personal'],
 					nextActions: [],
-					futureNextActions: []
 				}
 			];
 
@@ -283,14 +277,12 @@ describe('GTDProcessor', () => {
 					title: 'Website Redesign',
 					tags: ['project/work'],
 					nextActions: [],
-					futureNextActions: []
 				},
 				{
 					file: 'website2.md',
 					title: 'Website',
 					tags: ['project/work'],
 					nextActions: [],
-					futureNextActions: []
 				}
 			];
 
@@ -511,7 +503,6 @@ describe('GTDProcessor', () => {
 				title: `Project ${i}`,
 				tags: [`project/test${i}`],
 				nextActions: [`Action ${i}`],
-				futureNextActions: []
 			}));
 
                         const mockResponse = buildClaudeResponse({
