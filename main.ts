@@ -3,6 +3,12 @@ import { PluginSettings, DEFAULT_SETTINGS } from './src/types';
 import { FlowGTDSettingTab } from './src/settings-tab';
 import { InboxProcessingModal } from './src/inbox-modal';
 
+type InboxCommandConfig = {
+	id: string;
+	name: string;
+	includeDefaultInbox?: boolean;
+};
+
 export default class FlowGTDCoachPlugin extends Plugin {
 	settings: PluginSettings;
 
@@ -14,32 +20,13 @@ export default class FlowGTDCoachPlugin extends Plugin {
 			this.openInboxModal();
 		});
 
-		// Add command for inbox processing
-		this.addCommand({
-			id: 'process-inbox',
-			name: 'Process Inbox',
-			callback: () => {
-				this.openInboxModal();
-			}
-		});
+		const inboxCommands: InboxCommandConfig[] = [
+			{ id: 'process-inbox', name: 'Process Inbox' },
+			{ id: 'quick-capture', name: 'Quick Capture' },
+			{ id: 'process-inbox-folders', name: 'Process Inbox Folders', includeDefaultInbox: true }
+		];
 
-		// Add command for quick capture
-		this.addCommand({
-			id: 'quick-capture',
-			name: 'Quick Capture',
-			callback: () => {
-				this.openInboxModal();
-			}
-		});
-
-		// Add command for processing inbox folders
-		this.addCommand({
-			id: 'process-inbox-folders',
-			name: 'Process Inbox Folders',
-			callback: () => {
-				this.openInboxModalWithInbox();
-			}
-		});
+		inboxCommands.forEach(config => this.registerInboxCommand(config));
 
 		// Add settings tab
 		this.addSettingTab(new FlowGTDSettingTab(this.app, this));
@@ -59,25 +46,25 @@ export default class FlowGTDCoachPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-        private openInboxModal() {
-                if (!this.hasRequiredApiKey()) {
-                        new Notice(this.getMissingApiKeyMessage());
-                        return;
-                }
+	private registerInboxCommand(config: InboxCommandConfig) {
+		this.addCommand({
+			id: config.id,
+			name: config.name,
+			callback: () => {
+				this.openInboxModal(config.includeDefaultInbox);
+			}
+		});
+	}
 
-                const modal = new InboxProcessingModal(this.app, this.settings);
-                modal.open();
-        }
+	private openInboxModal(includeDefaultInbox: boolean = false) {
+		if (!this.hasRequiredApiKey()) {
+			new Notice(this.getMissingApiKeyMessage());
+			return;
+		}
 
-        private openInboxModalWithInbox() {
-                if (!this.hasRequiredApiKey()) {
-                        new Notice(this.getMissingApiKeyMessage());
-                        return;
-                }
-
-                const modal = new InboxProcessingModal(this.app, this.settings, true);
-                modal.open();
-        }
+		const modal = new InboxProcessingModal(this.app, this.settings, includeDefaultInbox);
+		modal.open();
+	}
 
         private hasRequiredApiKey(): boolean {
                 if (this.settings.llmProvider === 'openai-compatible') {
