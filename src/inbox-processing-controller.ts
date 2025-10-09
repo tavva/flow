@@ -3,284 +3,167 @@ import { GTDProcessor } from './gtd-processor';
 import { FlowProjectScanner } from './flow-scanner';
 import { PersonScanner } from './person-scanner';
 import { FileWriter } from './file-writer';
-import { FlowProject, GTDProcessingResult, PluginSettings, ProcessingAction, PersonNote } from './types';
+import { FlowProject, PluginSettings, PersonNote } from './types';
 import { InboxItem, InboxScanner } from './inbox-scanner';
-import { GTDResponseValidationError } from './errors';
 import { LanguageModelClient } from './language-model';
 import { createLanguageModelClient, getModelForSettings } from './llm-factory';
-
-export interface EditableItem {
-        original: string;
-        inboxItem?: InboxItem;
-        isAIProcessed: boolean;
-        result?: GTDProcessingResult;
-        selectedProject?: FlowProject;
-        selectedPerson?: PersonNote;
-        selectedAction: ProcessingAction;
-        selectedSpheres: string[];
-        editedName?: string;
-        editedNames?: string[]; // Support multiple edited next actions
-        editedProjectTitle?: string;
-        isProcessing?: boolean;
-        hasAIRequest?: boolean;
-}
-
-export interface ProcessingOutcome {
-        item: EditableItem;
-        updatedItem?: EditableItem;
-        error?: Error;
-}
+import { InboxItemPersistenceService } from './inbox-item-persistence';
+import { DeletionOffsetManager } from './deletion-offset-manager';
+import { buildProjectTitlePrompt as defaultProjectTitlePromptBuilder } from './project-title-prompt';
+import { EditableItem, ProcessingOutcome } from './inbox-types';
 
 interface ControllerDependencies {
-        processor?: GTDProcessor;
-        client?: LanguageModelClient;
-        scanner?: FlowProjectScanner;
-        personScanner?: PersonScanner;
-        writer?: FileWriter;
-        inboxScanner?: Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>;
+	processor?: GTDProcessor;
+	client?: LanguageModelClient;
+	scanner?: FlowProjectScanner;
+	personScanner?: PersonScanner;
+	writer?: FileWriter;
+	inboxScanner?: Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>;
+	persistenceService?: InboxItemPersistenceService;
+	deletionOffsetManagerFactory?: (offsets: Map<string, number>) => DeletionOffsetManager;
+	projectTitlePromptBuilder?: (originalItem: string) => string;
 }
 
 export class InboxProcessingController {
-        private processor: GTDProcessor;
-        private scanner: FlowProjectScanner;
-        private personScanner: PersonScanner;
-        private writer: FileWriter;
-        private inboxScanner: InboxScanner;
+	private processor: GTDProcessor;
+	private scanner: FlowProjectScanner;
+	private personScanner: PersonScanner;
+	private writer: FileWriter;
+	private inboxScanner: InboxScanner;
+	private persistence: InboxItemPersistenceService;
+	private createDeletionManager: (offsets: Map<string, number>) => DeletionOffsetManager;
+	private projectTitlePromptBuilder: (originalItem: string) => string;
 
-        constructor(app: App, settings: PluginSettings, dependencies: ControllerDependencies = {}) {
-                this.processor =
-                        dependencies.processor ??
-                        new GTDProcessor(
-                                dependencies.client ?? createLanguageModelClient(settings),
-                                settings.spheres,
-                                getModelForSettings(settings)
-                        );
-                this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
-                this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
-                this.writer = dependencies.writer ?? new FileWriter(app, settings);
-                this.inboxScanner = (dependencies.inboxScanner
-                        ? Object.assign(new InboxScanner(app, settings), dependencies.inboxScanner)
-                        : new InboxScanner(app, settings)) as InboxScanner;
-        }
+	constructor(app: App, settings: PluginSettings, dependencies: ControllerDependencies = {}) {
+		this.processor =
+			dependencies.processor ??
+			new GTDProcessor(
+				dependencies.client ?? createLanguageModelClient(settings),
+				settings.spheres,
+				getModelForSettings(settings)
+			);
+		this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
+		this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
+		this.writer = dependencies.writer ?? new FileWriter(app, settings);
+		this.inboxScanner = (dependencies.inboxScanner
+			? Object.assign(new InboxScanner(app, settings), dependencies.inboxScanner)
+			: new InboxScanner(app, settings)) as InboxScanner;
+		this.persistence =
+			dependencies.persistenceService ?? new InboxItemPersistenceService(this.writer);
+		this.createDeletionManager =
+			dependencies.deletionOffsetManagerFactory ??
+			(offsets => new DeletionOffsetManager(offsets));
+		this.projectTitlePromptBuilder =
+			dependencies.projectTitlePromptBuilder ?? defaultProjectTitlePromptBuilder;
+	}
 
-        async loadExistingProjects(): Promise<FlowProject[]> {
-                return this.scanner.scanProjects();
-        }
+	async loadExistingProjects(): Promise<FlowProject[]> {
+		return this.scanner.scanProjects();
+	}
 
-        async loadExistingPersons(): Promise<PersonNote[]> {
-                return this.personScanner.scanPersons();
-        }
+	async loadExistingPersons(): Promise<PersonNote[]> {
+		return this.personScanner.scanPersons();
+	}
 
-        async loadInboxEditableItems(): Promise<EditableItem[]> {
-                const inboxItems = await this.inboxScanner.getAllInboxItems();
-                return this.createEditableItemsFromInbox(inboxItems);
-        }
+	async loadInboxEditableItems(): Promise<EditableItem[]> {
+		const inboxItems = await this.inboxScanner.getAllInboxItems();
+		return this.createEditableItemsFromInbox(inboxItems);
+	}
 
-        setInboxScanner(
-                scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>
-        ) {
-                this.inboxScanner = Object.assign(this.inboxScanner, scanner);
-        }
+	setInboxScanner(
+		scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>
+	) {
+		this.inboxScanner = Object.assign(this.inboxScanner, scanner);
+	}
 
-        getInboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
-                return this.inboxScanner;
-        }
+	getInboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
+		return this.inboxScanner;
+	}
 
-        createEditableItemsFromInbox(inboxItems: InboxItem[]): EditableItem[] {
-                return inboxItems.map(item => ({
-                        original: item.content,
-                        inboxItem: item,
-                        isAIProcessed: false,
-                        hasAIRequest: false,
-                        selectedAction: 'next-actions-file',
-                        selectedSpheres: []
-                }));
-        }
+	createEditableItemsFromInbox(inboxItems: InboxItem[]): EditableItem[] {
+		return inboxItems.map(item => ({
+			original: item.content,
+			inboxItem: item,
+			isAIProcessed: false,
+			hasAIRequest: false,
+			selectedAction: 'next-actions-file',
+			selectedSpheres: []
+		}));
+	}
 
-        createEditableItemsFromMindsweep(items: string[]): EditableItem[] {
-                return items.map(item => ({
-                        original: item,
-                        isAIProcessed: false,
-                        hasAIRequest: false,
-                        selectedAction: 'next-actions-file',
-                        selectedSpheres: []
-                }));
-        }
+	createEditableItemsFromMindsweep(items: string[]): EditableItem[] {
+		return items.map(item => ({
+			original: item,
+			isAIProcessed: false,
+			hasAIRequest: false,
+			selectedAction: 'next-actions-file',
+			selectedSpheres: []
+		}));
+	}
 
-        async refineItem(item: EditableItem, existingProjects: FlowProject[], existingPersons: PersonNote[] = []): Promise<EditableItem> {
-                const result = await this.processor.processInboxItem(item.original, existingProjects, existingPersons);
+	async refineItem(
+		item: EditableItem,
+		existingProjects: FlowProject[],
+		existingPersons: PersonNote[] = []
+	): Promise<EditableItem> {
+		const result = await this.processor.processInboxItem(
+			item.original,
+			existingProjects,
+			existingPersons
+		);
 
-                // Initialize editedNames with AI-recommended next actions if multiple were provided
-                const editedNames = result.nextActions && result.nextActions.length > 1
-                        ? [...result.nextActions]
-                        : undefined;
+		const editedNames = result.nextActions && result.nextActions.length > 1
+			? [...result.nextActions]
+			: undefined;
 
-                return {
-                        ...item,
-                        result,
-                        isAIProcessed: true,
-                        isProcessing: false,
-                        selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
-                                ? result.suggestedProjects[0].project
-                                : undefined,
-                        selectedAction: result.recommendedAction,
-                        selectedSpheres: result.recommendedSpheres || [],
-                        editedNames
-                };
-        }
+		return {
+			...item,
+			result,
+			isAIProcessed: true,
+			isProcessing: false,
+			selectedProject: result.suggestedProjects && result.suggestedProjects.length > 0
+				? result.suggestedProjects[0].project
+				: undefined,
+			selectedAction: result.recommendedAction,
+			selectedSpheres: result.recommendedSpheres || [],
+			editedNames
+		};
+	}
 
-        async refineItems(items: EditableItem[], existingProjects: FlowProject[], existingPersons: PersonNote[] = []): Promise<ProcessingOutcome[]> {
-                const promises = items.map(async item => {
-                        try {
-                                const updatedItem = await this.refineItem(item, existingProjects, existingPersons);
-                                return { item, updatedItem } as ProcessingOutcome;
-                        } catch (error) {
-                                return { item, error: error instanceof Error ? error : new Error(String(error)) };
-                        }
-                });
+	async refineItems(
+		items: EditableItem[],
+		existingProjects: FlowProject[],
+		existingPersons: PersonNote[] = []
+	): Promise<ProcessingOutcome[]> {
+		const promises = items.map(async item => {
+			try {
+				const updatedItem = await this.refineItem(item, existingProjects, existingPersons);
+				return { item, updatedItem } as ProcessingOutcome;
+			} catch (error) {
+				return { item, error: error instanceof Error ? error : new Error(String(error)) };
+			}
+		});
 
-                const outcomes = await Promise.all(promises);
-                console.log(`Completed processing ${items.length} items.`);
-                return outcomes;
-        }
+		const outcomes = await Promise.all(promises);
+		console.log(`Completed processing ${items.length} items.`);
+		return outcomes;
+	}
 
-        async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
-                // Determine final next actions - prioritize edited names, then AI results, then original
-                let finalNextActions: string[] = [];
+	async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
+		await this.persistence.persist(item);
 
-                if (item.editedNames && item.editedNames.length > 0) {
-                        finalNextActions = item.editedNames.filter(action => action.trim().length > 0);
-                } else if (item.editedName && item.editedName.trim().length > 0) {
-                        finalNextActions = [item.editedName.trim()];
-                } else if (item.isAIProcessed && item.result) {
-                        if (item.result.nextActions && item.result.nextActions.length > 0) {
-                                finalNextActions = item.result.nextActions.filter(action => action.trim().length > 0);
-                        } else if (item.result.nextAction && item.result.nextAction.trim().length > 0) {
-                                finalNextActions = [item.result.nextAction.trim()];
-                        }
-                }
+		if (item.inboxItem) {
+			const deletionManager = this.createDeletionManager(deletionOffsets);
+			const inboxItemToDelete = deletionManager.prepareForDeletion(item.inboxItem);
+			await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+			deletionManager.recordDeletion(item.inboxItem);
+		}
+	}
 
-                // Fallback to original item if nothing else available
-                if (finalNextActions.length === 0) {
-                        finalNextActions = [item.original];
-                }
-
-                if (
-                        ['create-project', 'add-to-project', 'next-actions-file'].includes(item.selectedAction) &&
-                        finalNextActions.every(action => action.trim().length === 0)
-                ) {
-                        throw new GTDResponseValidationError('Next action cannot be empty when saving this item.');
-                }
-
-                const primaryNextAction = finalNextActions[0] || item.original;
-
-                const resultForSaving: GTDProcessingResult = item.result || {
-                        isActionable: true,
-                        category: 'next-action',
-                        nextAction: primaryNextAction,
-                        nextActions: finalNextActions,
-                        reasoning: 'User input',
-                        suggestedProjects: [],
-                        recommendedAction: item.selectedAction,
-                        recommendedActionReasoning: 'User selection',
-                        recommendedSpheres: item.selectedSpheres,
-                        recommendedSpheresReasoning: ''
-                };
-
-                resultForSaving.nextAction = primaryNextAction;
-                resultForSaving.nextActions = finalNextActions;
-                resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
-
-                switch (item.selectedAction) {
-                        case 'create-project':
-                                await this.writer.createProject(resultForSaving, item.original, item.selectedSpheres);
-                                break;
-
-                        case 'add-to-project':
-                                if (item.selectedProject) {
-                                        await this.writer.addNextActionToProject(
-                                                item.selectedProject,
-                                                finalNextActions
-                                        );
-                                } else {
-                                        throw new Error('No project selected');
-                                }
-                                break;
-
-                        case 'next-actions-file':
-                                await this.writer.addToNextActionsFile(finalNextActions, item.selectedSpheres);
-                                break;
-
-                        case 'someday-file':
-                                await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
-                                break;
-
-                        case 'reference':
-                                if (item.selectedProject) {
-                                        const referenceContent = (item.result?.referenceContent || item.original).trim();
-                                        if (referenceContent) {
-                                                await this.writer.addReferenceToProject(item.selectedProject, referenceContent);
-                                        }
-                                } else {
-                                        throw new Error('No project selected for reference item');
-                                }
-                                break;
-                        case 'person':
-                                if (item.selectedPerson) {
-                                        // Use the first final next action or original item for person discussion
-                                        const discussionItem = finalNextActions.length > 0 ? finalNextActions[0] : item.original;
-                                        await this.writer.addToPersonDiscussNext(item.selectedPerson, discussionItem);
-                                } else {
-                                        throw new Error('No person selected for person item');
-                                }
-                                break;
-                        case 'trash':
-                                break;
-                }
-
-                if (item.inboxItem) {
-                        let inboxItemToDelete = item.inboxItem;
-
-                        if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-                                const filePath = item.inboxItem.sourceFile.path;
-                                const priorDeletions = deletionOffsets.get(filePath) ?? 0;
-                                const originalLineNumber = item.inboxItem.lineNumber ?? 0;
-                                const adjustedLineNumber = Math.max(1, originalLineNumber - priorDeletions);
-
-                                inboxItemToDelete = {
-                                        ...item.inboxItem,
-                                        lineNumber: adjustedLineNumber
-                                };
-                        }
-
-                        await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-
-                        if (item.inboxItem.type === 'line' && item.inboxItem.sourceFile?.path) {
-                                const filePath = item.inboxItem.sourceFile.path;
-                                const priorDeletions = deletionOffsets.get(filePath) ?? 0;
-                                deletionOffsets.set(filePath, priorDeletions + 1);
-                        }
-                }
-        }
-
-        async suggestProjectName(originalItem: string): Promise<string> {
-                const prompt = `Given this inbox item: "${originalItem}"
-
-The user wants to create a project for this. Suggest a clear, concise project title that:
-- States the desired outcome (not just the topic)
-- Is specific and measurable
-- Defines what "done" looks like
-- Uses past tense or completion-oriented language when appropriate
-
-Examples:
-- Good: "Website redesign complete and deployed"
-- Bad: "Website project"
-- Good: "Kitchen renovation finished"
-- Bad: "Kitchen stuff"
-
-Respond with ONLY the project title, nothing else.`;
-
-                const response = await this.processor.callAI(prompt);
-                return response.trim();
-        }
+	async suggestProjectName(originalItem: string): Promise<string> {
+		const prompt = this.projectTitlePromptBuilder(originalItem);
+		const response = await this.processor.callAI(prompt);
+		return response.trim();
+	}
 }
+

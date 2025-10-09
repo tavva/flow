@@ -1,6 +1,7 @@
 import { App, Modal, Setting, Notice, DropdownComponent } from 'obsidian';
 import { GTDProcessingResult, FlowProject, PluginSettings, ProcessingAction, PersonNote } from './types';
-import { InboxProcessingController, EditableItem } from './inbox-processing-controller';
+import { InboxProcessingController } from './inbox-processing-controller';
+import { EditableItem } from './inbox-types';
 import { InboxScanner } from './inbox-scanner';
 import { GTDResponseValidationError } from './errors';
 
