@@ -353,9 +353,12 @@ function renderEditableItemContent(itemEl: HTMLElement, item: EditableItem, stat
                 });
 
                 const removeBtn = actionItem.createEl('button', {
-                        text: 'Remove',
                         cls: 'flow-gtd-remove-action-btn'
                 });
+                removeBtn.setAttribute('type', 'button');
+                removeBtn.setAttribute('aria-label', 'Remove action');
+                removeBtn.setAttribute('title', 'Remove action');
+                removeBtn.setText('✕');
                 removeBtn.addEventListener('click', () => {
                         currentNextActions.splice(index, 1);
                         item.editedNames = [...currentNextActions];
