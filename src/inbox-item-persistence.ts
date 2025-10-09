@@ -119,6 +119,7 @@ export class InboxItemPersistenceService {
 				break;
 
 			case 'trash':
+			case 'discard':
 				break;
 		}
 	}

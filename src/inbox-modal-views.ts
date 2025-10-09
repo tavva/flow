@@ -401,15 +401,16 @@ function renderEditableItemContent(itemEl: HTMLElement, item: EditableItem, stat
         actionDropdown.selectEl.id = actionSelectId;
         actionDropdown.selectEl.addClass('flow-gtd-inline-select');
         actionDropdown.selectEl.setAttribute('aria-label', 'Choose how to process');
-        const actions: Array<{ value: EditableItem['selectedAction']; label: string }> = [
-                { value: 'create-project', label: 'Create New Project' },
-                { value: 'add-to-project', label: 'Add to Existing Project' },
-                { value: 'next-actions-file', label: 'Next Actions File' },
-                { value: 'someday-file', label: 'Someday/Maybe File' },
-                { value: 'reference', label: 'Reference (Not Actionable)' },
-                { value: 'person', label: 'Discuss with Person' },
-                { value: 'trash', label: 'Trash (Delete)' }
-        ];
+	const actions: Array<{ value: EditableItem['selectedAction']; label: string }> = [
+		{ value: 'create-project', label: 'Create New Project' },
+		{ value: 'add-to-project', label: 'Add to Existing Project' },
+		{ value: 'next-actions-file', label: 'Next Actions File' },
+		{ value: 'someday-file', label: 'Someday/Maybe File' },
+		{ value: 'reference', label: 'Reference (Not Actionable)' },
+		{ value: 'person', label: 'Discuss with Person' },
+		{ value: 'trash', label: 'Trash (Delete)' },
+		{ value: 'discard', label: 'Discard (Ignore)' }
+	];
         actions.forEach(({ value, label }) => actionDropdown.addOption(value, label));
         actionDropdown.setValue(item.selectedAction ?? 'next-actions-file');
         actionDropdown.onChange((value) => {

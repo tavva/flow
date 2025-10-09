@@ -104,7 +104,7 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
       "confidence": "high/medium/low"
     }
   ],
-  "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/person/trash",
+"recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard",
   "recommendedActionReasoning": "brief explanation of where this should go and why",
   "recommendedSpheres": ["array of recommended spheres from the available list"],
   "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item",
@@ -118,7 +118,8 @@ Where to route items:
 - "someday-file": Something to do someday/maybe, not now
 - "reference": Information to store in an existing project, not actionable
 - "person": Something to discuss with a specific person (use this if suggestedPersons has high confidence matches)
-- "trash": Not useful, can be discarded
+- "trash": Not useful, remove from inbox
+- "discard": Drop this item from processing without saving it elsewhere
 
 For spheres: Recommend one or more spheres that best categorise this item. Consider the item's content and context.
 
@@ -385,14 +386,15 @@ Examples:
                         relevance: string;
                         confidence: 'high' | 'medium' | 'low';
                 }>;
-                recommendedAction?:
-                        | 'create-project'
-                        | 'add-to-project'
-                        | 'next-actions-file'
-                        | 'someday-file'
-                        | 'reference'
-                        | 'person'
-                        | 'trash';
+			recommendedAction?:
+				| 'create-project'
+				| 'add-to-project'
+				| 'next-actions-file'
+				| 'someday-file'
+				| 'reference'
+				| 'person'
+				| 'trash'
+				| 'discard';
                 recommendedActionReasoning?: string;
                 recommendedSpheres?: string[];
                 recommendedSpheresReasoning?: string;
@@ -510,21 +512,22 @@ Examples:
                         }
                 }
 
-                const validRecommendedActions = new Set([
-                        'create-project',
-                        'add-to-project',
-                        'next-actions-file',
-                        'someday-file',
-                        'reference',
-                        'person',
-                        'trash'
-                ]);
+			const validRecommendedActions = new Set([
+				'create-project',
+				'add-to-project',
+				'next-actions-file',
+				'someday-file',
+				'reference',
+				'person',
+				'trash',
+				'discard'
+			]);
 
-                if (parsed.recommendedAction !== undefined) {
-                        if (typeof parsed.recommendedAction !== 'string' || !validRecommendedActions.has(parsed.recommendedAction)) {
-                                throw new GTDResponseValidationError('Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash');
-                        }
-                }
+			if (parsed.recommendedAction !== undefined) {
+				if (typeof parsed.recommendedAction !== 'string' || !validRecommendedActions.has(parsed.recommendedAction)) {
+					throw new GTDResponseValidationError('Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard');
+				}
+			}
 
                 if (parsed.recommendedActionReasoning !== undefined) {
                         if (typeof parsed.recommendedActionReasoning !== 'string' || parsed.recommendedActionReasoning.trim().length === 0) {

@@ -24,7 +24,8 @@ export type ProcessingAction =
 	| 'someday-file'
 	| 'reference'
 	| 'person'
-	| 'trash';
+	| 'trash'
+	| 'discard';
 
 export interface GTDProcessingResult {
 	isActionable: boolean;

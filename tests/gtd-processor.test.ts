@@ -484,7 +484,7 @@ describe('GTDProcessor', () => {
                         await expect(
                                 processor.processInboxItem('test', [])
                         ).rejects.toThrow(
-                                'Failed to process inbox item: Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash'
+                                'Failed to process inbox item: Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard'
                         );
                 });
 
