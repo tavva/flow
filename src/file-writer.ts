@@ -214,24 +214,22 @@ export class FileWriter {
 
     // Parse template variables
     const date = this.formatDate(new Date());
-    const sphereTags =
+    const sphereTagsForTemplate =
       spheres.length > 0
-        ? spheres.map((s) => `project/${s}`).join(" ")
+        ? spheres.map((s) => `project/${s}`).join("\n  - ")
         : "project/personal";
 
     // Replace template variables
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, this.settings.defaultPriority.toString())
-      .replace(/{{\s*sphere\s*}}/g, sphereTags)
-      .replace(/{{\s*description\s*}}/g, result.reasoning || originalItem);
+      .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
+      .replace(/{{\s*description\s*}}/g, result.projectOutcome ? result.reasoning : originalItem);
 
-    // Handle Templater syntax for creation date (if Templater is not available, use our date)
-    if (templateContent.includes('<% tp.date.now("YYYY-MM-DD HH:mm") %>')) {
-      templateContent = templateContent.replace(
-        /<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g,
-        date
-      );
-    }
+    // Process Templater date syntax if present, since we're not using Templater's create_new function
+    // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
+    templateContent = templateContent
+      .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, date)
+      .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, date);
 
     // Add next actions to the template
     let content = templateContent;
