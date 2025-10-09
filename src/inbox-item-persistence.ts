@@ -79,12 +79,15 @@ export class InboxItemPersistenceService {
 			recommendedSpheresReasoning: ''
 		};
 
-		resultForSaving.nextAction = primaryNextAction;
-		resultForSaving.nextActions = finalNextActions;
-		resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
+                resultForSaving.nextAction = primaryNextAction;
+                resultForSaving.nextActions = finalNextActions;
+                resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
+                if (item.projectPriority !== undefined) {
+                        resultForSaving.projectPriority = item.projectPriority;
+                }
 
-		return resultForSaving;
-	}
+                return resultForSaving;
+        }
 
 	private async writeResult(
 		item: EditableItem,
