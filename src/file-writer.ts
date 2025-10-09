@@ -46,7 +46,7 @@ export class FileWriter {
       throw new Error(`File ${filePath} already exists`);
     }
 
-    const content = this.buildProjectContent(result, originalItem, spheres);
+    const content = await this.buildProjectContent(result, originalItem, spheres);
     const file = await this.app.vault.create(filePath, content);
 
     return file;
@@ -155,7 +155,7 @@ export class FileWriter {
     }
 
     let content = await this.app.vault.read(file);
-    const sectionName = "## Reference";
+    const sectionName = "## Notes + resources";
     content = this.addContentToSection(content, sectionName, referenceContent);
 
     await this.app.vault.modify(file, content);
@@ -194,9 +194,83 @@ export class FileWriter {
   }
 
   /**
-   * Build the content for a new project file
+   * Build the content for a new project file using template
    */
-  private buildProjectContent(
+  private async buildProjectContent(
+    result: GTDProcessingResult,
+    originalItem: string,
+    spheres: string[] = [],
+  ): Promise<string> {
+    const templateFile = this.app.vault.getAbstractFileByPath(
+      this.settings.projectTemplateFilePath,
+    );
+
+    if (!templateFile || !(templateFile instanceof TFile)) {
+      // Fallback to hardcoded template if template file doesn't exist
+      return this.buildProjectContentFallback(result, originalItem, spheres);
+    }
+
+    let templateContent = await this.app.vault.read(templateFile);
+
+    // Parse template variables
+    const date = this.formatDate(new Date());
+    const sphereTags =
+      spheres.length > 0
+        ? spheres.map((s) => `project/${s}`).join(" ")
+        : "project/personal";
+
+    // Replace template variables
+    templateContent = templateContent
+      .replace(/{{\s*priority\s*}}/g, this.settings.defaultPriority.toString())
+      .replace(/{{\s*sphere\s*}}/g, sphereTags)
+      .replace(/{{\s*description\s*}}/g, result.reasoning || originalItem);
+
+    // Handle Templater syntax for creation date (if Templater is not available, use our date)
+    if (templateContent.includes('<% tp.date.now("YYYY-MM-DD HH:mm") %>')) {
+      templateContent = templateContent.replace(
+        /<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g,
+        date
+      );
+    }
+
+    // Add next actions to the template
+    let content = templateContent;
+
+    // Find the "## Next actions" section and add the actions
+    const nextActionsRegex = /(## Next actions\s*\n)/;
+    const match = content.match(nextActionsRegex);
+
+    if (match) {
+      let actionsText = "";
+      if (result.nextActions && result.nextActions.length > 0) {
+        actionsText = result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
+      } else if (result.nextAction) {
+        actionsText = `- [ ] ${result.nextAction}\n`;
+      }
+
+      content = content.replace(nextActionsRegex, `$1${actionsText}`);
+    }
+
+    // Add future actions if any
+    if (result.futureActions && result.futureActions.length > 0) {
+      const futureActionsRegex = /(## Future next actions\s*\n)/;
+      const futureMatch = content.match(futureActionsRegex);
+
+      if (futureMatch) {
+        const futureActionsText = result.futureActions
+          .map((action) => `- [ ] ${action}`)
+          .join("\n") + "\n";
+        content = content.replace(futureActionsRegex, `$1${futureActionsText}`);
+      }
+    }
+
+    return content;
+  }
+
+  /**
+   * Fallback method for building project content when template file is not available
+   */
+  private buildProjectContentFallback(
     result: GTDProcessingResult,
     originalItem: string,
     spheres: string[] = [],
@@ -217,7 +291,11 @@ tags: ${sphereTags}
 status: ${this.settings.defaultStatus}
 ---
 
-# ${title}
+# Description
+
+${result.reasoning}
+
+## Focus areas
 
 ## Next actions
 `;
@@ -239,6 +317,15 @@ status: ${this.settings.defaultStatus}
         .map((action) => `- [ ] ${action}`)
         .join("\n");
     }
+
+    content += `
+
+## Notes + resources
+
+## Focus areas detail
+
+## Log
+`;
 
     return content;
   }

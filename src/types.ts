@@ -72,6 +72,7 @@ export interface PluginSettings {
         nextActionsFilePath: string;
 	somedayFilePath: string;
 	projectsFolderPath: string;
+	projectTemplateFilePath: string;
 	spheres: string[];
 }
 
@@ -89,5 +90,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
         nextActionsFilePath: 'Next actions.md',
 	somedayFilePath: 'Someday.md',
 	projectsFolderPath: 'Projects',
+	projectTemplateFilePath: 'Templates/Project.md',
 	spheres: ['personal', 'work']
 };

@@ -222,6 +222,18 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		// Project Template File
+		new Setting(containerEl)
+			.setName('Project Template File')
+			.setDesc('Template file used when creating new projects. Supports {{priority}}, {{sphere}}, and {{description}} variables.')
+			.addText(text => text
+				.setPlaceholder('Templates/Project.md')
+				.setValue(this.plugin.settings.projectTemplateFilePath)
+				.onChange(async (value) => {
+					this.plugin.settings.projectTemplateFilePath = value;
+					await this.plugin.saveSettings();
+				}));
+
 		// Spheres
 		containerEl.createEl('h3', { text: 'Spheres' });
 		containerEl.createDiv('setting-item-description').innerHTML = `
