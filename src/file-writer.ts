@@ -223,7 +223,7 @@ export class FileWriter {
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, this.settings.defaultPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, result.projectOutcome ? result.reasoning : originalItem);
+      .replace(/{{\s*description\s*}}/g, "");
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
@@ -292,8 +292,6 @@ status: ${this.settings.defaultStatus}
 ---
 
 # Description
-
-${result.reasoning}
 
 ## Focus areas
 

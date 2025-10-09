@@ -57,7 +57,7 @@ export class InboxItemPersistenceService {
 			category: 'next-action',
 			nextAction: primaryNextAction,
 			nextActions: finalNextActions,
-			reasoning: 'User input',
+			reasoning: item.original,
 			suggestedProjects: [],
 			recommendedAction: item.selectedAction,
 			recommendedActionReasoning: 'User selection',
