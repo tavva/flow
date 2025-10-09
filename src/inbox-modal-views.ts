@@ -315,15 +315,28 @@ function renderEditableItemContent(itemEl: HTMLElement, item: EditableItem, stat
 
         const actionsContainer = itemEl.createDiv('flow-gtd-actions-editor');
         const actionsHeader = actionsContainer.createDiv('flow-gtd-actions-header');
-        actionsHeader.createEl('label', {
+        actionsHeader.style.display = 'flex';
+        actionsHeader.style.alignItems = 'center';
+        actionsHeader.style.gap = '8px';
+        actionsHeader.style.justifyContent = 'flex-start';
+
+        const actionsLabel = actionsHeader.createEl('label', {
                 text: 'Next Actions:',
                 cls: 'flow-gtd-label'
         });
+        actionsLabel.style.marginBottom = '0';
 
         const addActionBtn = actionsHeader.createEl('button', {
-                text: '+ Add Action',
                 cls: 'flow-gtd-add-action-btn'
         });
+        addActionBtn.setAttribute('type', 'button');
+        addActionBtn.setAttribute('aria-label', 'Add action');
+        addActionBtn.setAttribute('title', 'Add action');
+        addActionBtn.setText('+');
+        addActionBtn.style.padding = '2px 6px';
+        addActionBtn.style.fontSize = '12px';
+        addActionBtn.style.lineHeight = '1';
+        addActionBtn.style.minWidth = 'auto';
         addActionBtn.addEventListener('click', () => {
                 currentNextActions.push('');
                 item.editedNames = [...currentNextActions];
