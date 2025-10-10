@@ -1,42 +1,45 @@
 {
-	"name": "flow-gtd-coach",
-	"version": "0.1.0",
-	"description": "GTD coach for Flow-based Obsidian vaults",
-	"main": "main.js",
-	"scripts": {
-		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"lint": "tsc -noEmit -skipLibCheck",
-		"test": "jest",
-		"test:watch": "jest --watch",
-		"test:coverage": "jest --coverage",
-		"evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
-		"version": "node version-bump.mjs && git add manifest.json versions.json"
-	},
-	"keywords": [
-		"obsidian",
-		"obsidian-plugin",
-		"gtd",
-		"flow",
-		"productivity"
-	],
-	"author": "Ben",
-	"license": "MIT",
-	"devDependencies": {
-		"@types/jest": "^29.5.12",
-		"@types/node": "^20.11.19",
-		"@typescript-eslint/eslint-plugin": "^6.21.0",
-		"@typescript-eslint/parser": "^6.21.0",
-		"builtin-modules": "^3.3.0",
-		"esbuild": "^0.25.0",
-		"jest": "^29.7.0",
-		"obsidian": "latest",
-		"ts-jest": "^29.1.2",
-		"ts-node": "^10.9.2",
-		"tslib": "^2.6.2",
-		"typescript": "^5.3.3"
-	},
-	"dependencies": {
-		"@anthropic-ai/sdk": "^0.32.1"
-	}
+  "name": "flow-gtd-coach",
+  "version": "0.1.0",
+  "description": "GTD coach for Flow-based Obsidian vaults",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "lint": "tsc -noEmit -skipLibCheck",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
+    "version": "node version-bump.mjs && git add manifest.json versions.json"
+  },
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "gtd",
+    "flow",
+    "productivity"
+  ],
+  "author": "Ben",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.19",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0",
+    "obsidian": "latest",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1"
+  }
 }

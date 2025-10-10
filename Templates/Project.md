@@ -1,9 +1,8 @@
 ---
 creation-date: <% tp.date.now("YYYY-MM-DD HH:mm") %>
-priority:
-  {{ priority }}
+priority: { { priority } }
 tags:
-  - {{ sphere }}
+  - { { sphere } }
 status: live
 ---
 

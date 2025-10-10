@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for Flow-based vaults. The plugin uses AI to intelligently process inbox items into well-formed projects and quality next actions according to GTD principles.
 
 **Key Capabilities:**
+
 - AI-powered analysis of inbox items using Claude Sonnet 4 or OpenAI-compatible models
 - Context-aware processing with knowledge of existing Flow projects and person notes
 - Automatic creation and updating of Flow project files
@@ -17,6 +18,7 @@ This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for
 ## Common Commands
 
 ### Development
+
 ```bash
 # Development mode with auto-rebuild on file changes
 npm run dev
@@ -26,6 +28,7 @@ npm run build
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 npm test
@@ -38,6 +41,7 @@ npm run test:coverage
 ```
 
 ### Evaluation Framework
+
 ```bash
 # Run the GTD quality evaluation suite (requires ANTHROPIC_API_KEY)
 export ANTHROPIC_API_KEY=your-key
@@ -80,10 +84,12 @@ status: live
 Project description and context.
 
 ## Next actions
+
 - [ ] GTD-quality actions ready to do now
 ```
 
 **Important:**
+
 - Projects are identified by `project/*` tags in frontmatter
 - All next actions MUST be Markdown checkboxes (`- [ ]`)
 - Next actions section contains immediately actionable items
@@ -91,6 +97,7 @@ Project description and context.
 ### GTD Categories
 
 The processor categorizes items into:
+
 - **next-action**: Single completable actions (enhanced for specificity)
 - **project**: Multi-step outcomes (requires outcome + clear next actions)
 - **reference**: Information to store (not actionable)
@@ -102,12 +109,14 @@ The processor categorizes items into:
 The plugin supports multiple LLM providers through a factory pattern:
 
 **Anthropic Integration:**
+
 - Model: `claude-sonnet-4-20250514` (default)
 - `dangerouslyAllowBrowser: true` (safe - Obsidian plugins run in Electron)
 - British English for all AI responses
 - Structured JSON output from Claude
 
 **OpenAI-Compatible Integration:**
+
 - Default endpoint: OpenRouter (`https://openrouter.ai/api/v1`)
 - Default model: `openrouter/anthropic/claude-3.5-sonnet`
 - Supports any OpenAI-compatible API (OpenRouter, local providers, etc.)
@@ -116,12 +125,14 @@ The plugin supports multiple LLM providers through a factory pattern:
 ## Testing
 
 ### Unit Tests
+
 - Located in `tests/` directory
 - Use Jest with ts-jest preset
 - Mock Obsidian API via `tests/__mocks__/obsidian.ts`
 - Coverage thresholds: 80% for branches, functions, lines, statements
 
 ### Test Files
+
 - `flow-scanner.test.ts` - Vault scanning and project parsing
 - `gtd-processor.test.ts` - AI processing logic (if exists)
 - `file-writer.test.ts` - File creation and updates (if exists)
@@ -131,6 +142,7 @@ The plugin supports multiple LLM providers through a factory pattern:
 **Note:** Test coverage may vary - check `tests/` directory for current test files.
 
 ### Running Single Tests
+
 ```bash
 # Run a specific test file
 npm test -- flow-scanner.test
@@ -142,6 +154,7 @@ npm test -- --testNamePattern="should scan vault"
 ## Build System
 
 Uses esbuild for fast compilation:
+
 - Entry point: `main.ts`
 - Output: `main.js` (bundled)
 - Development: `esbuild.config.mjs` runs in watch mode
@@ -150,18 +163,21 @@ Uses esbuild for fast compilation:
 ## Important Patterns
 
 ### Adding a New GTD Category
+
 1. Update `GTDProcessingResult` type in `src/types.ts`
 2. Modify prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
 3. Update response parsing in `parseResponse()`
 4. Add test cases to `evaluation/test-cases.json`
 
 ### Modifying Project Frontmatter
+
 1. Update `FlowProject` interface in `src/types.ts`
 2. Modify parsing in `src/flow-scanner.ts` `parseProjectFile()`
 3. Update file writing in `src/file-writer.ts` `createProjectFile()`
 4. Add validation in `src/validation.ts` if needed
 
 ### Changing AI Behavior
+
 1. Edit the prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
 2. Run evaluation suite to measure impact: `npm run evaluate`
 3. Compare results in `evaluation/results/` to ensure quality doesn't regress
@@ -170,7 +186,9 @@ Uses esbuild for fast compilation:
 ## Code Quality Standards
 
 ### GTD Next Action Quality
+
 Next actions MUST:
+
 - Start with an action verb
 - Be specific and completable in one sitting
 - Include context (who, where, what specifically)
@@ -178,33 +196,41 @@ Next actions MUST:
 - Avoid vague terms ("something", "maybe", "stuff")
 
 Examples:
+
 - Good: "Call Dr. Smith's office at 555-0123 to schedule cleaning"
 - Bad: "dentist"
 
 ### Project Outcomes
+
 Project outcomes MUST:
+
 - Be stated as completed outcomes (past tense ideal)
 - Be clear and measurable
 - Define "done"
 
 Examples:
+
 - Good: "Website redesign complete and deployed"
 - Bad: "Work on website"
 
 ## Obsidian Plugin Specifics
 
 ### Plugin Entry Point
+
 `main.ts` - Extends Obsidian's `Plugin` class:
+
 - `onload()`: Registers ribbon icon, commands, settings tab
 - `onunload()`: Cleanup
 - Settings stored via `loadData()`/`saveData()`
 
 ### Commands
+
 - `process-inbox`: Opens the inbox processing modal
 - `quick-capture`: Same as process-inbox (alias for discoverability)
 - `process-inbox-folders`: Opens the modal with inbox folder scanning enabled
 
 ### UI Components
+
 - Ribbon icon: 'inbox' icon for quick access
 - Settings tab: API key and default project settings
 - Modal: Multi-step inbox processing workflow
@@ -212,9 +238,11 @@ Examples:
 ## Dependencies
 
 ### Production
+
 - `@anthropic-ai/sdk`: Claude AI integration
 
 ### Development
+
 - `obsidian`: Obsidian API types
 - `esbuild`: Fast bundler via `esbuild.config.mjs`
 - `typescript`: Type checking
@@ -224,6 +252,7 @@ Examples:
 ## Prompt Engineering
 
 The main AI prompt is in `src/gtd-processor.ts` `buildProcessingPrompt()`. It:
+
 - Uses British English
 - Provides clear category definitions
 - Includes examples
@@ -238,6 +267,7 @@ When modifying prompts, ALWAYS run the evaluation suite afterward to measure imp
 The plugin supports several configurable settings accessible via Settings → Flow GTD Coach:
 
 ### Core Settings
+
 - **LLM Provider**: Choose between 'anthropic' or 'openai-compatible'
 - **Anthropic API Key**: Required when using Anthropic provider
 - **Anthropic Model**: Default is `claude-sonnet-4-20250514`
@@ -248,6 +278,7 @@ The plugin supports several configurable settings accessible via Settings → Fl
 - **Default Status**: Status for new projects (e.g., "live", "planning")
 
 ### File Paths
+
 - **Inbox Files Folder**: Path for files to be processed (default: "Flow Inbox Files")
 - **Inbox Folder**: Path for general inbox items (default: "Flow Inbox Folder")
 - **Next Actions File**: Path to central next actions file (default: "Next actions.md")
@@ -255,11 +286,13 @@ The plugin supports several configurable settings accessible via Settings → Fl
 - **Projects Folder**: Where new project files are created (default: "Projects")
 
 ### Spheres
+
 - **Available Spheres**: Life areas for categorizing projects (default: ["personal", "work"])
 
 ## Error Handling
 
 The plugin includes comprehensive error handling:
+
 - `src/errors.ts` defines custom error types
 - API failures are gracefully handled with user-friendly messages
 - Validation errors prevent malformed data from being processed

@@ -43,11 +43,9 @@ describe("InboxItemPersistenceService", () => {
       nextActions: ["Finalize venue", "Publish agenda"],
       recommendedAction: "create-project",
     });
-    expect(writerMocks.createProject).toHaveBeenCalledWith(
-      expect.any(Object),
-      "Plan offsite",
-      ["work"],
-    );
+    expect(writerMocks.createProject).toHaveBeenCalledWith(expect.any(Object), "Plan offsite", [
+      "work",
+    ]);
   });
 
   it("propagates the selected project priority when creating a project", async () => {
@@ -90,7 +88,7 @@ describe("InboxItemPersistenceService", () => {
 
     await service.persist(item);
 
-    Object.values(writerMocks).forEach(mockFn => {
+    Object.values(writerMocks).forEach((mockFn) => {
       expect(mockFn).not.toHaveBeenCalled();
     });
   });
@@ -104,9 +102,7 @@ describe("InboxItemPersistenceService", () => {
       editedNames: ["Do the thing"],
     };
 
-    await expect(service.persist(item)).rejects.toThrow(
-      GTDResponseValidationError
-    );
+    await expect(service.persist(item)).rejects.toThrow(GTDResponseValidationError);
     await expect(service.persist(item)).rejects.toThrow(
       "At least one sphere must be selected when creating a project."
     );

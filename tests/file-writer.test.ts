@@ -1,10 +1,5 @@
 import { FileWriter } from "../src/file-writer";
-import {
-  GTDProcessingResult,
-  PluginSettings,
-  FlowProject,
-  PersonNote,
-} from "../src/types";
+import { GTDProcessingResult, PluginSettings, FlowProject, PersonNote } from "../src/types";
 
 // Import mocked obsidian
 jest.mock("obsidian");
@@ -72,19 +67,14 @@ describe("FileWriter", () => {
         recommendedActionReasoning: "Multi-step project",
       };
 
-      const mockFile = new TFile(
-        "Website-Redesign-Complete.md",
-        "Website Redesign Complete",
-      );
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      const mockFile = new TFile("Website-Redesign-Complete.md", "Website Redesign Complete");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
 
       const file = await fileWriter.createProject(result, "redesign website");
@@ -99,9 +89,7 @@ describe("FileWriter", () => {
       expect(content).toContain("tags:\n  - project/personal");
       expect(content).toContain("## Next actions");
       expect(content).toContain("Original inbox item: redesign website");
-      expect(content).toContain(
-        "- [ ] Meet with designer to discuss requirements",
-      );
+      expect(content).toContain("- [ ] Meet with designer to discuss requirements");
       expect(content).toContain("- [ ] Review mockups");
       expect(content).toContain("- [ ] Implement design");
       expect(content).not.toContain("Future next actions");
@@ -126,19 +114,14 @@ describe("FileWriter", () => {
         projectPriority: 4,
       };
 
-      const mockFile = new TFile(
-        "Website-Redesign-Complete.md",
-        "Website Redesign Complete",
-      );
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      const mockFile = new TFile("Website-Redesign-Complete.md", "Website Redesign Complete");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
 
       await fileWriter.createProject(result, "redesign website");
@@ -159,18 +142,14 @@ describe("FileWriter", () => {
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
-      (mockVault.create as jest.Mock).mockResolvedValue(
-        new TFile("test.md", "test"),
-      );
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue(new TFile("test.md", "test"));
 
       await fileWriter.createProject(result, "test");
 
@@ -207,33 +186,26 @@ status: live
 ## Next actions
 `;
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          if (path === "Templates/Project.md") {
-            return templateFile;
-          }
+        if (path === "Templates/Project.md") {
+          return templateFile;
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
       (mockVault.create as jest.Mock).mockResolvedValue(
-        new TFile("Projects/Template Based Project.md", "Template Based Project"),
+        new TFile("Projects/Template Based Project.md", "Template Based Project")
       );
 
-      await fileWriter.createProject(
-        result,
-        "Call   Bob\nabout the   new contract",
-      );
+      await fileWriter.createProject(result, "Call   Bob\nabout the   new contract");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      expect(content).toContain(
-        "Original inbox item: Call Bob about the new contract",
-      );
+      expect(content).toContain("Original inbox item: Call Bob about the new contract");
     });
 
     it("should keep spaces while stripping disallowed filename characters", async () => {
@@ -248,18 +220,14 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
-      (mockVault.create as jest.Mock).mockResolvedValue(
-        new TFile("test.md", "test"),
-      );
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue(new TFile("test.md", "test"));
 
       await fileWriter.createProject(result, "fallback");
 
@@ -279,26 +247,21 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      const existingFile = new TFile(
-        "Projects/Existing Project.md",
-        "Existing Project",
-      );
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      const existingFile = new TFile("Projects/Existing Project.md", "Existing Project");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          if (path === "Projects/Existing Project.md") {
-            return existingFile;
-          }
+        if (path === "Projects/Existing Project.md") {
+          return existingFile;
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
 
       await expect(fileWriter.createProject(result, "test")).rejects.toThrow(
-        "File Projects/Existing Project.md already exists",
+        "File Projects/Existing Project.md already exists"
       );
     });
 
@@ -314,15 +277,13 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
 
       await fileWriter.createProject(result, "test");
@@ -343,15 +304,13 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
 
       await fileWriter.createProject(result, "My Original Item");
@@ -373,15 +332,13 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return {};
-          }
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
 
-          return null;
-        },
-      );
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
 
       await fileWriter.createProject(result, "test");
@@ -403,15 +360,13 @@ status: live
         recommendedActionReasoning: "Test",
       };
 
-      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
-        (path: string) => {
-          if (path === "Projects") {
-            return null;
-          }
-
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
           return null;
-        },
-      );
+        }
+
+        return null;
+      });
       (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
 
       await fileWriter.createProject(result, "test");
@@ -466,10 +421,7 @@ Some content here.
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addNextActionToProject(
-        mockProject,
-        "First action",
-      );
+      await fileWriter.addNextActionToProject(mockProject, "First action");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -480,9 +432,9 @@ Some content here.
     it("should throw error if project file not found", async () => {
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
-      await expect(
-        fileWriter.addNextActionToProject(mockProject, "New action"),
-      ).rejects.toThrow("Project file not found: project.md");
+      await expect(fileWriter.addNextActionToProject(mockProject, "New action")).rejects.toThrow(
+        "Project file not found: project.md"
+      );
     });
 
     it("should handle empty sections correctly", async () => {
@@ -540,14 +492,12 @@ Some notes here
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
 
       let frontmatterCallback: any;
-      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation(
-        (file, callback) => {
-          frontmatterCallback = callback;
-          const mockFrontmatter = { tags: ["project/personal", "urgent"] };
-          callback(mockFrontmatter);
-          return Promise.resolve();
-        },
-      );
+      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation((file, callback) => {
+        frontmatterCallback = callback;
+        const mockFrontmatter = { tags: ["project/personal", "urgent"] };
+        callback(mockFrontmatter);
+        return Promise.resolve();
+      });
 
       await fileWriter.updateProjectTags(mockProject, ["project/work"]);
 
@@ -559,16 +509,14 @@ Some notes here
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
 
       let resultTags: string[] = [];
-      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation(
-        (file, callback) => {
-          const mockFrontmatter = {
-            tags: ["project/personal", "project/health", "urgent"],
-          };
-          callback(mockFrontmatter);
-          resultTags = mockFrontmatter.tags;
-          return Promise.resolve();
-        },
-      );
+      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation((file, callback) => {
+        const mockFrontmatter = {
+          tags: ["project/personal", "project/health", "urgent"],
+        };
+        callback(mockFrontmatter);
+        resultTags = mockFrontmatter.tags;
+        return Promise.resolve();
+      });
 
       await fileWriter.updateProjectTags(mockProject, ["important"]);
 
@@ -581,14 +529,12 @@ Some notes here
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
 
       let resultTags: string[] = [];
-      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation(
-        (file, callback) => {
-          const mockFrontmatter = { tags: "project/personal" };
-          callback(mockFrontmatter);
-          resultTags = mockFrontmatter.tags;
-          return Promise.resolve();
-        },
-      );
+      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation((file, callback) => {
+        const mockFrontmatter = { tags: "project/personal" };
+        callback(mockFrontmatter);
+        resultTags = mockFrontmatter.tags;
+        return Promise.resolve();
+      });
 
       await fileWriter.updateProjectTags(mockProject, ["urgent"]);
 
@@ -599,9 +545,9 @@ Some notes here
     it("should throw error if project file not found", async () => {
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
-      await expect(
-        fileWriter.updateProjectTags(mockProject, ["new-tag"]),
-      ).rejects.toThrow("Project file not found: project.md");
+      await expect(fileWriter.updateProjectTags(mockProject, ["new-tag"])).rejects.toThrow(
+        "Project file not found: project.md"
+      );
     });
   });
 
@@ -630,10 +576,7 @@ Some notes here`;
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addToPersonDiscussNext(
-        mockPerson,
-        "New discussion topic",
-      );
+      await fileWriter.addToPersonDiscussNext(mockPerson, "New discussion topic");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -658,10 +601,7 @@ Some notes here`;
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addToPersonDiscussNext(
-        mockPerson,
-        "First discussion topic",
-      );
+      await fileWriter.addToPersonDiscussNext(mockPerson, "First discussion topic");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -684,10 +624,7 @@ Basic person note content.`;
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addToPersonDiscussNext(
-        mockPerson,
-        "New topic to discuss",
-      );
+      await fileWriter.addToPersonDiscussNext(mockPerson, "New topic to discuss");
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
@@ -699,9 +636,9 @@ Basic person note content.`;
     it("should throw error if person file not found", async () => {
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
-      await expect(
-        fileWriter.addToPersonDiscussNext(mockPerson, "Some topic"),
-      ).rejects.toThrow("Person file not found: people/John Doe.md");
+      await expect(fileWriter.addToPersonDiscussNext(mockPerson, "Some topic")).rejects.toThrow(
+        "Person file not found: people/John Doe.md"
+      );
     });
 
     it("should insert item at the beginning of the section", async () => {

@@ -5,16 +5,19 @@ An Obsidian plugin that helps you implement the GTD (Getting Things Done) method
 ## Features
 
 ### 🧠 Intelligent Inbox Processing
+
 - **AI-Powered Analysis**: Uses Claude AI to analyze inbox items and determine if they're projects, next actions, reference material, or someday/maybe items
 - **Context-Aware**: Scans your existing Flow projects to suggest relevant projects for new actions
 - **GTD-Quality Actions**: Ensures next actions are specific, actionable, and completable
 
 ### 📁 Flow Integration
+
 - **Automatic Project Detection**: Scans your vault for Flow projects (files with `project/*` tags)
 - **Smart File Creation**: Creates new project files with proper Flow frontmatter
 - **Section Management**: Intelligently updates "Next actions" sections
 
 ### ✨ User-Friendly Interface
+
 - **Guided Workflow**: Step-by-step process for capturing, clarifying, and organizing
 - **Bulk Processing**: Process multiple inbox items at once
 - **Project Suggestions**: Get AI suggestions for which existing projects items belong to
@@ -66,7 +69,7 @@ npm run dev
 
 The AI response includes two distinct signals:
 
-- **Recommended Action** – the model's primary instruction for how to handle the item. The plugin applies this directly (e.g. *Create New Project*, *Add to Project*, *File to Reference*).
+- **Recommended Action** – the model's primary instruction for how to handle the item. The plugin applies this directly (e.g. _Create New Project_, _Add to Project_, _File to Reference_).
 - **Suggested Projects/People** – optional matches to existing notes, each with a confidence level. These are surfaced for convenience, but they do not override the recommended action. For example, the model may recommend creating a new project while still surfacing a low-confidence related project so you can manually redirect the item if appropriate.
 
 When you see a recommended action of "Create New Project" alongside suggested projects, that's the model signalling "treat this as new work" while still providing nearby matches you might want to reuse. No additional override logic is applied by the plugin beyond displaying those suggestions.
@@ -88,6 +91,7 @@ The plugin follows GTD principles:
 **Input:** "plan vacation to Italy"
 
 **AI Analysis:**
+
 - Category: Project
 - Outcome: "Italy vacation fully planned and booked"
 - Next Action: "Research best time to visit Italy and check Sarah's availability"
@@ -111,8 +115,8 @@ status: live
 Project description and context.
 
 ## Next actions
-- [ ] Specific, actionable items ready to do now
 
+- [ ] Specific, actionable items ready to do now
 ```
 
 **Note:** All actions are created as Markdown checkboxes (`- [ ]`) so you can easily track completion status.
@@ -143,6 +147,7 @@ npm run evaluate
 ```
 
 The evaluation tests against 15 curated test cases, measuring:
+
 - Category accuracy (project vs. action identification)
 - Action quality (GTD compliance)
 - Specificity and verb usage

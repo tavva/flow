@@ -3,16 +3,19 @@
 ## Running Your First Evaluation
 
 1. **Set your API key**:
+
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
 2. **Run the evaluation**:
+
 ```bash
 npm run evaluate
 ```
 
 3. **View the results**:
+
 ```
 ═══════════════════════════════════════════════════════════
               GTD COACH EVALUATION RESULTS
@@ -68,6 +71,7 @@ Detailed Results:
 Let's break down what each test shows:
 
 ### ✓ PASS: Well-Formed Action
+
 ```
 ✓ PASS [92.5%] simple-next-action-1
   Input: "call dentist"
@@ -76,6 +80,7 @@ Let's break down what each test shows:
 ```
 
 **What happened:**
+
 - AI correctly identified this as a simple next action (not a project)
 - Enhanced vague "call dentist" with specificity
 - Added context: "dentist's office", "schedule", "annual check-up"
@@ -83,6 +88,7 @@ Let's break down what each test shows:
 - Score: 92.5% - excellent!
 
 ### ✓ PASS: Good Project
+
 ```
 ✓ PASS [95.0%] simple-project-1
   Input: "plan vacation to Italy"
@@ -92,6 +98,7 @@ Let's break down what each test shows:
 ```
 
 **What happened:**
+
 - Correctly identified as multi-step project
 - Clear outcome stated as completion: "vacation fully planned and booked"
 - Good first action: research and checking
@@ -99,6 +106,7 @@ Let's break down what each test shows:
 - Score: 95.0% - nearly perfect!
 
 ### ✗ FAIL: Needs Improvement
+
 ```
 ✗ FAIL [65.0%] vague-action-1
   Input: "do something about the project"
@@ -109,6 +117,7 @@ Let's break down what each test shows:
 ```
 
 **What happened:**
+
 - Correctly identified as actionable (not reference/someday)
 - Tried to clarify vague input
 - But result still not specific enough for GTD
@@ -126,6 +135,7 @@ Let's break down what each test shows:
 **Output:** "Create shopping list and buy groceries at Tesco this afternoon"
 
 The AI adds:
+
 - ✓ Specific action (create list)
 - ✓ Location context (Tesco)
 - ✓ Time context (this afternoon)
@@ -138,6 +148,7 @@ The AI adds:
 **Next Action:** "Inspect sink to diagnose the problem and determine needed parts"
 
 The AI recognises:
+
 - ✓ Appears simple but needs multiple steps
 - ✓ First step is diagnosis, not repair
 - ✓ Future actions would include buying parts, doing repair
@@ -148,6 +159,7 @@ The AI recognises:
 **Output:** Same (or minor British English spelling adjustments)
 
 The AI preserves:
+
 - ✓ Already starts with verb
 - ✓ Already specific
 - ✓ Has all context needed
@@ -158,6 +170,7 @@ The AI preserves:
 ### Category Accuracy: 93.3%
 
 This means:
+
 - Out of 15 test cases, 14 were categorised correctly
 - 1 was miscategorised (e.g., called a project when it's a simple action)
 - **Goal:** > 90% ✓
@@ -165,6 +178,7 @@ This means:
 ### Action Quality: 84.2%
 
 Average score measuring:
+
 - Proper verb usage
 - Appropriate length
 - Specific details
@@ -174,6 +188,7 @@ Average score measuring:
 ### Specificity: 75.0%
 
 How specific and actionable:
+
 - Names, times, places included?
 - Contact info present?
 - Clear context?
@@ -182,24 +197,28 @@ How specific and actionable:
 ## What Makes a Good Score?
 
 ### Excellent (90-100%)
+
 - Category spot-on
 - Action clear and specific
 - Follows all GTD principles
 - Ready to execute
 
 ### Good (80-89%)
+
 - Category correct
 - Action mostly clear
 - Minor improvements possible
 - Generally usable
 
 ### Needs Work (70-79%)
+
 - May have category issues
 - Action needs more specificity
 - Missing key GTD elements
 - Requires editing
 
 ### Poor (<70%)
+
 - Wrong category
 - Vague or unclear action
 - Not GTD-compliant
@@ -210,6 +229,7 @@ How specific and actionable:
 ### If Category Accuracy is Low
 
 Update the prompt in `src/gtd-processor.ts`:
+
 - Add more examples
 - Clarify definitions
 - Emphasise key distinctions
@@ -217,6 +237,7 @@ Update the prompt in `src/gtd-processor.ts`:
 ### If Action Quality is Low
 
 Improve action generation:
+
 - Require specific verbs
 - Ask for context
 - Push for details
@@ -225,6 +246,7 @@ Improve action generation:
 ### If Specificity is Low
 
 Enhance prompts to request:
+
 - Who, what, when, where
 - Specific names/places
 - Time commitments

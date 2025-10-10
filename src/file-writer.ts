@@ -1,16 +1,11 @@
 import { App, TFile, normalizePath } from "obsidian";
-import {
-  FlowProject,
-  GTDProcessingResult,
-  PluginSettings,
-  PersonNote,
-} from "./types";
+import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError } from "./errors";
 
 export class FileWriter {
   constructor(
     private app: App,
-    private settings: PluginSettings,
+    private settings: PluginSettings
   ) {}
 
   /**
@@ -19,23 +14,19 @@ export class FileWriter {
   async createProject(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = [],
+    spheres: string[] = []
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
-        "Cannot create a project without a defined next action.",
+        "Cannot create a project without a defined next action."
       );
     }
 
     if (!result.reasoning || result.reasoning.trim().length === 0) {
-      throw new GTDResponseValidationError(
-        "Cannot create a project without supporting reasoning.",
-      );
+      throw new GTDResponseValidationError("Cannot create a project without supporting reasoning.");
     }
 
-    const fileName = this.generateFileName(
-      result.projectOutcome || originalItem,
-    );
+    const fileName = this.generateFileName(result.projectOutcome || originalItem);
     const folderPath = normalizePath(this.settings.projectsFolderPath);
     await this.ensureFolderExists(folderPath);
     const filePath = normalizePath(`${folderPath}/${fileName}.md`);
@@ -72,17 +63,12 @@ export class FileWriter {
   /**
    * Add an action to the Next Actions file
    */
-  async addToNextActionsFile(
-    actions: string | string[],
-    spheres: string[] = [],
-  ): Promise<void> {
+  async addToNextActionsFile(actions: string | string[], spheres: string[] = []): Promise<void> {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
 
     for (const action of actionsArray) {
-      const content = sphereTags
-        ? `- [ ] ${action} ${sphereTags}`
-        : `- [ ] ${action}`;
+      const content = sphereTags ? `- [ ] ${action} ${sphereTags}` : `- [ ] ${action}`;
       await this.appendToFile(this.settings.nextActionsFilePath, content);
     }
   }
@@ -119,10 +105,7 @@ export class FileWriter {
   /**
    * Add a next action to an existing project
    */
-  async addNextActionToProject(
-    project: FlowProject,
-    actions: string | string[],
-  ): Promise<void> {
+  async addNextActionToProject(project: FlowProject, actions: string | string[]): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
       throw new Error(`Project file not found: ${project.file}`);
@@ -141,10 +124,7 @@ export class FileWriter {
   /**
    * Add reference content to an existing project
    */
-  async addReferenceToProject(
-    project: FlowProject,
-    referenceContent: string,
-  ): Promise<void> {
+  async addReferenceToProject(project: FlowProject, referenceContent: string): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
       throw new Error(`Project file not found: ${project.file}`);
@@ -160,10 +140,7 @@ export class FileWriter {
   /**
    * Add an item to the "## Discuss next" section of a person note
    */
-  async addToPersonDiscussNext(
-    person: PersonNote,
-    item: string,
-  ): Promise<void> {
+  async addToPersonDiscussNext(person: PersonNote, item: string): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(person.file);
     if (!(file instanceof TFile)) {
       throw new Error(`Person file not found: ${person.file}`);
@@ -191,9 +168,7 @@ export class FileWriter {
 
   private formatOriginalInboxItem(originalItem: string): string {
     const normalized = originalItem.replace(/\s+/g, " ").trim();
-    return normalized.length > 0
-      ? `Original inbox item: ${normalized}`
-      : "Original inbox item:";
+    return normalized.length > 0 ? `Original inbox item: ${normalized}` : "Original inbox item:";
   }
 
   /**
@@ -202,10 +177,10 @@ export class FileWriter {
   private async buildProjectContent(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = [],
+    spheres: string[] = []
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
-      this.settings.projectTemplateFilePath,
+      this.settings.projectTemplateFilePath
     );
 
     if (!templateFile || !(templateFile instanceof TFile)) {
@@ -218,9 +193,7 @@ export class FileWriter {
     // Parse template variables
     const date = this.formatDate(new Date());
     const sphereTagsForTemplate =
-      spheres.length > 0
-        ? spheres.map((s) => `project/${s}`).join("\n  - ")
-        : "project/personal";
+      spheres.length > 0 ? spheres.map((s) => `project/${s}`).join("\n  - ") : "project/personal";
 
     const projectPriority =
       typeof result.projectPriority === "number" &&
@@ -234,10 +207,7 @@ export class FileWriter {
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(
-        /{{\s*description\s*}}/g,
-        this.formatOriginalInboxItem(originalItem),
-      );
+      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem));
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
@@ -272,7 +242,7 @@ export class FileWriter {
   private buildProjectContentFallback(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = [],
+    spheres: string[] = []
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
@@ -312,8 +282,7 @@ ${originalItemDescription}
 
     // Handle multiple next actions or single next action
     if (result.nextActions && result.nextActions.length > 0) {
-      content +=
-        result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
+      content += result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
     } else {
       content += `- [ ] ${result.nextAction}\n`;
     }
@@ -332,11 +301,7 @@ ${originalItemDescription}
   /**
    * Add an action item to a specific section
    */
-  private addActionToSection(
-    content: string,
-    sectionHeading: string,
-    action: string,
-  ): string {
+  private addActionToSection(content: string, sectionHeading: string, action: string): string {
     const lines = content.split("\n");
     const sectionIndex = this.findSectionIndex(lines, sectionHeading);
 
@@ -362,11 +327,7 @@ ${originalItemDescription}
   /**
    * Add content to a specific section
    */
-  private addContentToSection(
-    content: string,
-    sectionHeading: string,
-    newContent: string,
-  ): string {
+  private addContentToSection(content: string, sectionHeading: string, newContent: string): string {
     const lines = content.split("\n");
     const sectionIndex = this.findSectionIndex(lines, sectionHeading);
 
@@ -409,11 +370,7 @@ ${originalItemDescription}
   /**
    * Create a new section with an action when section doesn't exist
    */
-  private createSectionWithAction(
-    content: string,
-    sectionHeading: string,
-    action: string,
-  ): string {
+  private createSectionWithAction(content: string, sectionHeading: string, action: string): string {
     // Add section at the end of the file
     let newContent = content.trim();
 
@@ -429,11 +386,7 @@ ${originalItemDescription}
   /**
    * Create a new section with an item when section doesn't exist
    */
-  private createSectionWithItem(
-    content: string,
-    sectionHeading: string,
-    item: string,
-  ): string {
+  private createSectionWithItem(content: string, sectionHeading: string, item: string): string {
     // Add section at the end of the file
     let newContent = content.trim();
 
@@ -452,7 +405,7 @@ ${originalItemDescription}
   private createSectionWithContent(
     content: string,
     sectionHeading: string,
-    newContent: string,
+    newContent: string
   ): string {
     // Add section at the end of the file
     let fileContent = content.trim();
@@ -482,10 +435,7 @@ ${originalItemDescription}
   /**
    * Update project frontmatter tags
    */
-  async updateProjectTags(
-    project: FlowProject,
-    newTags: string[],
-  ): Promise<void> {
+  async updateProjectTags(project: FlowProject, newTags: string[]): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
       throw new Error(`Project file not found: ${project.file}`);
@@ -493,20 +443,12 @@ ${originalItemDescription}
 
     await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
       // Ensure all project tags are preserved
-      const existingTags = Array.isArray(frontmatter.tags)
-        ? frontmatter.tags
-        : [frontmatter.tags];
+      const existingTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
 
-      const projectTags = existingTags.filter((tag: string) =>
-        tag.startsWith("project/"),
-      );
-      const otherTags = existingTags.filter(
-        (tag: string) => !tag.startsWith("project/"),
-      );
+      const projectTags = existingTags.filter((tag: string) => tag.startsWith("project/"));
+      const otherTags = existingTags.filter((tag: string) => !tag.startsWith("project/"));
 
-      frontmatter.tags = [
-        ...new Set([...projectTags, ...newTags, ...otherTags]),
-      ];
+      frontmatter.tags = [...new Set([...projectTags, ...newTags, ...otherTags])];
     });
   }
 }

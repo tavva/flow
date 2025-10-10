@@ -7,10 +7,7 @@ export interface EditableItemsViewOptions {
   onClose: () => void;
 }
 
-export function renderInboxView(
-  contentEl: HTMLElement,
-  state: InboxModalState,
-) {
+export function renderInboxView(contentEl: HTMLElement, state: InboxModalState) {
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
@@ -30,7 +27,7 @@ export function renderInboxView(
 export function renderEditableItemsView(
   contentEl: HTMLElement,
   state: InboxModalState,
-  { onClose }: EditableItemsViewOptions,
+  { onClose }: EditableItemsViewOptions
 ) {
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
@@ -44,21 +41,16 @@ export function renderEditableItemsView(
   if (state.editableItems.length > 0) {
     const batchContainer = contentEl.createDiv("flow-gtd-batch-actions");
     const totalCount = state.editableItems.length;
-    const completedCount = state.editableItems.filter(
-      (item) => item.isAIProcessed,
-    ).length;
+    const completedCount = state.editableItems.filter((item) => item.isAIProcessed).length;
     const inFlightCount = state.editableItems.filter(
-      (item) => item.isProcessing && !item.isAIProcessed,
+      (item) => item.isProcessing && !item.isAIProcessed
     ).length;
-    const pendingCount = Math.max(
-      totalCount - completedCount - inFlightCount,
-      0,
-    );
+    const pendingCount = Math.max(totalCount - completedCount - inFlightCount, 0);
 
     const progressContainer = batchContainer.createDiv("flow-gtd-progress");
     const progressText = progressContainer.createDiv("flow-gtd-progress-text");
     progressText.setText(
-      `AI refinement: ${completedCount} complete · ${inFlightCount} in flight · ${pendingCount} yet to send`,
+      `AI refinement: ${completedCount} complete · ${inFlightCount} in flight · ${pendingCount} yet to send`
     );
 
     const progressBar = progressContainer.createDiv("flow-gtd-progress-bar");
@@ -116,16 +108,14 @@ export function renderEditableItemsView(
       });
     });
 
-    const unprocessedCount = state.editableItems.filter(
-      (item) => !item.isAIProcessed,
-    ).length;
+    const unprocessedCount = state.editableItems.filter((item) => !item.isAIProcessed).length;
 
     if (unprocessedCount > 0) {
       new Setting(batchContainer).addButton((button) =>
         button
           .setButtonText(`✨ Refine All ${unprocessedCount} Items with AI`)
           .setCta()
-          .onClick(() => state.refineAllWithAI()),
+          .onClick(() => state.refineAllWithAI())
       );
     }
   }
@@ -138,15 +128,12 @@ export function renderEditableItemsView(
     completionEl.createEl("p", { text: "Your inbox is now empty." });
 
     new Setting(completionEl).addButton((button) =>
-      button.setButtonText("Close").setCta().onClick(onClose),
+      button.setButtonText("Close").setCta().onClick(onClose)
     );
   }
 }
 
-function renderIndividualEditableItems(
-  container: HTMLElement,
-  state: InboxModalState,
-) {
+function renderIndividualEditableItems(container: HTMLElement, state: InboxModalState) {
   const listContainer = container.createDiv("flow-gtd-items-list");
 
   if (state.editableItems.length === 0) {
@@ -218,9 +205,7 @@ function renderIndividualEditableItems(
       refineBtn.setAttribute("aria-label", "Refine with AI");
       refineBtn.setAttribute("title", "Refine with AI");
       refineBtn.setText("✨");
-      refineBtn.addEventListener("click", () =>
-        state.refineIndividualItem(item),
-      );
+      refineBtn.addEventListener("click", () => state.refineIndividualItem(item));
     }
 
     renderEditableItemContent(itemEl, item, state);
@@ -228,8 +213,7 @@ function renderIndividualEditableItems(
     const actionButtons = itemEl.createDiv("flow-gtd-item-actions");
     actionButtons.style.marginTop = "20px";
     actionButtons.style.paddingTop = "16px";
-    actionButtons.style.borderTop =
-      "1px solid var(--background-modifier-border)";
+    actionButtons.style.borderTop = "1px solid var(--background-modifier-border)";
     actionButtons.style.display = "flex";
     actionButtons.style.justifyContent = "space-between";
     actionButtons.style.alignItems = "center";
@@ -248,7 +232,9 @@ function renderIndividualEditableItems(
     discardButton.style.fontSize = "var(--font-ui-small)";
     discardButton.addEventListener("click", () => {
       // Show confirmation dialog
-      const confirmed = confirm("Are you sure you want to discard this item? This action cannot be undone.");
+      const confirmed = confirm(
+        "Are you sure you want to discard this item? This action cannot be undone."
+      );
       if (confirmed) {
         state.discardItem(item);
       }
@@ -261,7 +247,7 @@ function renderIndividualEditableItems(
         .setButtonText("Save")
         .setCta()
         .setDisabled(item.isProcessing === true)
-        .onClick(() => state.saveAndRemoveItem(item)),
+        .onClick(() => state.saveAndRemoveItem(item))
     );
   });
 }
@@ -269,7 +255,7 @@ function renderIndividualEditableItems(
 function renderEditableItemContent(
   itemEl: HTMLElement,
   item: EditableItem,
-  state: InboxModalState,
+  state: InboxModalState
 ) {
   let currentNextActions: string[] = [];
 
@@ -404,7 +390,7 @@ function renderEditableItemContent(
 function renderProjectCreationSection(
   container: HTMLElement,
   item: EditableItem,
-  state: InboxModalState,
+  state: InboxModalState
 ) {
   const projectEl = container.createDiv("flow-gtd-project-section");
   projectEl.createEl("p", {
@@ -423,8 +409,7 @@ function renderProjectCreationSection(
   });
   projectInput.style.flex = "1";
   projectInput.placeholder = "e.g., Vacation planned and booked";
-  projectInput.value =
-    item.editedProjectTitle || item.result?.projectOutcome || "";
+  projectInput.value = item.editedProjectTitle || item.result?.projectOutcome || "";
   projectInput.addEventListener("input", (e) => {
     item.editedProjectTitle = (e.target as HTMLInputElement).value;
   });
@@ -491,9 +476,7 @@ function renderProjectCreationSection(
     .setName("Project priority")
     .setDesc("1 (highest) to 5 (lowest)");
   prioritySetting.addDropdown((dropdown) => {
-    ["1", "2", "3", "4", "5"].forEach((value) =>
-      dropdown.addOption(value, value),
-    );
+    ["1", "2", "3", "4", "5"].forEach((value) => dropdown.addOption(value, value));
     dropdown.setValue(String(item.projectPriority));
     dropdown.onChange((value) => {
       const parsed = Number.parseInt(value, 10);
@@ -507,7 +490,7 @@ function renderProjectCreationSection(
 function renderProjectSelectionSection(
   container: HTMLElement,
   item: EditableItem,
-  state: InboxModalState,
+  state: InboxModalState
 ) {
   const projectSelectorEl = container.createDiv("flow-gtd-project-selector");
   const projectRow = projectSelectorEl.createDiv("flow-gtd-inline-field");
@@ -538,9 +521,7 @@ function renderProjectSelectionSection(
   }
 
   projectDropdown.onChange((value) => {
-    item.selectedProject = state.existingProjects.find(
-      (project) => project.file === value,
-    );
+    item.selectedProject = state.existingProjects.find((project) => project.file === value);
   });
 
   if (
@@ -548,9 +529,7 @@ function renderProjectSelectionSection(
     item.result?.suggestedProjects &&
     item.result.suggestedProjects.length > 0
   ) {
-    const suggestionsEl = projectSelectorEl.createDiv(
-      "flow-gtd-project-suggestions",
-    );
+    const suggestionsEl = projectSelectorEl.createDiv("flow-gtd-project-suggestions");
     suggestionsEl.createEl("p", {
       text: "✨ AI Suggested Projects:",
       cls: "flow-gtd-label flow-gtd-suggestions-label",
@@ -587,7 +566,7 @@ function renderProjectSelectionSection(
 function renderPersonSelectionSection(
   container: HTMLElement,
   item: EditableItem,
-  state: InboxModalState,
+  state: InboxModalState
 ) {
   const personSelectorEl = container.createDiv("flow-gtd-person-selector");
   const personRow = personSelectorEl.createDiv("flow-gtd-inline-field");
@@ -612,7 +591,7 @@ function renderPersonSelectionSection(
   let selectedValue = item.selectedPerson?.file || "";
   if (!selectedValue && item.isAIProcessed && item.result?.suggestedPersons) {
     const highConfidenceSuggestion = item.result.suggestedPersons.find(
-      (suggestion) => suggestion.confidence === "high",
+      (suggestion) => suggestion.confidence === "high"
     );
     if (highConfidenceSuggestion) {
       selectedValue = highConfidenceSuggestion.person.file;
@@ -620,20 +599,13 @@ function renderPersonSelectionSection(
     }
   }
 
-  if (
-    selectedValue &&
-    !state.existingPersons.find((person) => person.file === selectedValue)
-  ) {
-    personDropdown.addOption(
-      selectedValue,
-      item.selectedPerson?.title || selectedValue,
-    );
+  if (selectedValue && !state.existingPersons.find((person) => person.file === selectedValue)) {
+    personDropdown.addOption(selectedValue, item.selectedPerson?.title || selectedValue);
   }
 
   personDropdown.setValue(selectedValue);
   personDropdown.onChange((value) => {
-    item.selectedPerson =
-      state.existingPersons.find((p) => p.file === value) || undefined;
+    item.selectedPerson = state.existingPersons.find((p) => p.file === value) || undefined;
   });
 
   if (
@@ -641,9 +613,7 @@ function renderPersonSelectionSection(
     item.result?.suggestedPersons &&
     item.result.suggestedPersons.length > 0
   ) {
-    const suggestionsEl = personSelectorEl.createDiv(
-      "flow-gtd-person-suggestions",
-    );
+    const suggestionsEl = personSelectorEl.createDiv("flow-gtd-person-suggestions");
     suggestionsEl.createEl("p", {
       text: "✨ AI Suggested Persons:",
       cls: "flow-gtd-label flow-gtd-suggestions-label",
@@ -677,11 +647,7 @@ function renderPersonSelectionSection(
   }
 }
 
-function renderSphereSelector(
-  container: HTMLElement,
-  item: EditableItem,
-  state: InboxModalState,
-) {
+function renderSphereSelector(container: HTMLElement, item: EditableItem, state: InboxModalState) {
   const spheres = state.settingsSnapshot.spheres;
   if (spheres.length === 0) {
     return;
@@ -694,9 +660,7 @@ function renderSphereSelector(
     item.result?.recommendedSpheres &&
     item.result.recommendedSpheres.length > 0
   ) {
-    const recommendationEl = sphereSelectorEl.createDiv(
-      "flow-gtd-sphere-recommendation",
-    );
+    const recommendationEl = sphereSelectorEl.createDiv("flow-gtd-sphere-recommendation");
     recommendationEl.createEl("p", {
       text: `✨ Recommended: ${item.result.recommendedSpheres.join(", ")}`,
       cls: "flow-gtd-sphere-recommendation-text",

@@ -3,7 +3,11 @@ import { InboxItem } from "../src/inbox-scanner";
 import { TFile } from "obsidian";
 
 describe("DeletionOffsetManager", () => {
-  const createLineItem = (lineNumber: number, path: string, offsets?: Map<string, number>): InboxItem => {
+  const createLineItem = (
+    lineNumber: number,
+    path: string,
+    offsets?: Map<string, number>
+  ): InboxItem => {
     const item: InboxItem = {
       type: "line",
       content: "Example",

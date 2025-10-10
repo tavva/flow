@@ -1,4 +1,6 @@
-export const buildProjectTitlePrompt = (originalItem: string): string => `Given this inbox item: "${originalItem}"
+export const buildProjectTitlePrompt = (
+  originalItem: string
+): string => `Given this inbox item: "${originalItem}"
 
 The user wants to create a project for this. Suggest a clear, concise project title that:
 - States the desired outcome (not just the topic)

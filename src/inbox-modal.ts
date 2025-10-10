@@ -1,117 +1,114 @@
-import { App, Modal } from 'obsidian';
-import { InboxProcessingController } from './inbox-processing-controller';
-import { EditableItem } from './inbox-types';
-import { PluginSettings } from './types';
-import { InboxModalState, RenderTarget } from './inbox-modal-state';
-import { renderEditableItemsView, renderInboxView } from './inbox-modal-views';
-import { InboxScanner } from './inbox-scanner';
+import { App, Modal } from "obsidian";
+import { InboxProcessingController } from "./inbox-processing-controller";
+import { EditableItem } from "./inbox-types";
+import { PluginSettings } from "./types";
+import { InboxModalState, RenderTarget } from "./inbox-modal-state";
+import { renderEditableItemsView, renderInboxView } from "./inbox-modal-views";
+import { InboxScanner } from "./inbox-scanner";
 
 export class InboxProcessingModal extends Modal {
-        private readonly state: InboxModalState;
-        private renderTimeout?: NodeJS.Timeout;
-        private pendingTarget: RenderTarget = 'inbox';
+  private readonly state: InboxModalState;
+  private renderTimeout?: NodeJS.Timeout;
+  private pendingTarget: RenderTarget = "inbox";
 
-        constructor(app: App, settings: PluginSettings) {
-                super(app);
-                const controller = new InboxProcessingController(app, settings);
-                this.state = new InboxModalState(
-                        controller,
-                        settings,
-                        (target, options) => this.requestRender(target, options?.immediate === true)
-                );
-        }
+  constructor(app: App, settings: PluginSettings) {
+    super(app);
+    const controller = new InboxProcessingController(app, settings);
+    this.state = new InboxModalState(controller, settings, (target, options) =>
+      this.requestRender(target, options?.immediate === true)
+    );
+  }
 
-        get inboxScanner(): Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'> {
-                return this.state.inboxScanner;
-        }
+  get inboxScanner(): Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem"> {
+    return this.state.inboxScanner;
+  }
 
-        set inboxScanner(scanner: Partial<Pick<InboxScanner, 'getAllInboxItems' | 'deleteInboxItem'>>) {
-                this.state.inboxScanner = scanner;
-        }
+  set inboxScanner(scanner: Partial<Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem">>) {
+    this.state.inboxScanner = scanner;
+  }
 
-        get editableItems(): EditableItem[] {
-                return this.state.editableItems;
-        }
+  get editableItems(): EditableItem[] {
+    return this.state.editableItems;
+  }
 
-        set editableItems(items: EditableItem[]) {
-                this.state.editableItems = items;
-        }
+  set editableItems(items: EditableItem[]) {
+    this.state.editableItems = items;
+  }
 
+  get deletionOffsets(): Map<string, number> {
+    return this.state.deletionOffsets;
+  }
 
-        get deletionOffsets(): Map<string, number> {
-                return this.state.deletionOffsets;
-        }
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("flow-gtd-inbox-modal");
 
-        async onOpen() {
-                const { contentEl } = this;
-                contentEl.empty();
-                contentEl.addClass('flow-gtd-inbox-modal');
+    await this.state.loadReferenceData();
 
-                await this.state.loadReferenceData();
+    renderInboxView(contentEl, this.state);
+    await this.state.loadInboxItems();
+  }
 
-                renderInboxView(contentEl, this.state);
-                await this.state.loadInboxItems();
-        }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
 
-        onClose() {
-                const { contentEl } = this;
-                contentEl.empty();
+    if (this.renderTimeout) {
+      clearTimeout(this.renderTimeout);
+      this.renderTimeout = undefined;
+    }
+  }
 
-                if (this.renderTimeout) {
-                        clearTimeout(this.renderTimeout);
-                        this.renderTimeout = undefined;
-                }
-        }
+  private requestRender(target: RenderTarget, immediate = false) {
+    if (immediate) {
+      this.renderCurrentView(target);
+      return;
+    }
 
-        private requestRender(target: RenderTarget, immediate = false) {
-                if (immediate) {
-                        this.renderCurrentView(target);
-                        return;
-                }
+    this.pendingTarget = target;
 
-                this.pendingTarget = target;
+    if (this.renderTimeout) {
+      clearTimeout(this.renderTimeout);
+    }
 
-                if (this.renderTimeout) {
-                        clearTimeout(this.renderTimeout);
-                }
+    this.renderTimeout = setTimeout(() => {
+      this.renderCurrentView(this.pendingTarget);
+      this.renderTimeout = undefined;
+    }, 50);
+  }
 
-                this.renderTimeout = setTimeout(() => {
-                        this.renderCurrentView(this.pendingTarget);
-                        this.renderTimeout = undefined;
-                }, 50);
-        }
+  private renderCurrentView(target: RenderTarget) {
+    const { contentEl } = this;
+    if (!contentEl) {
+      return;
+    }
 
-        private renderCurrentView(target: RenderTarget) {
-                const { contentEl } = this;
-                if (!contentEl) {
-                        return;
-                }
+    if (target === "editable") {
+      renderEditableItemsView(contentEl, this.state, { onClose: () => this.close() });
+      return;
+    }
 
-                if (target === 'editable') {
-                        renderEditableItemsView(contentEl, this.state, { onClose: () => this.close() });
-                        return;
-                }
+    renderInboxView(contentEl, this.state);
+  }
 
-                renderInboxView(contentEl, this.state);
-        }
+  private saveAllItems() {
+    return this.state.saveAllItems();
+  }
 
-        private saveAllItems() {
-                return this.state.saveAllItems();
-        }
+  private saveAndRemoveItem(item: EditableItem) {
+    return this.state.saveAndRemoveItem(item);
+  }
 
-        private saveAndRemoveItem(item: EditableItem) {
-                return this.state.saveAndRemoveItem(item);
-        }
+  private refineAllWithAI() {
+    return this.state.refineAllWithAI();
+  }
 
-        private refineAllWithAI() {
-                return this.state.refineAllWithAI();
-        }
+  private refineIndividualItem(item: EditableItem) {
+    return this.state.refineIndividualItem(item);
+  }
 
-        private refineIndividualItem(item: EditableItem) {
-                return this.state.refineIndividualItem(item);
-        }
-
-        private suggestProjectName(originalItem: string) {
-                return this.state.suggestProjectName(originalItem);
-        }
+  private suggestProjectName(originalItem: string) {
+    return this.state.suggestProjectName(originalItem);
+  }
 }
