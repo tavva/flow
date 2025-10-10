@@ -236,7 +236,7 @@ function renderIndividualEditableItems(
 
     // Discard button on the left
     const discardButton = actionButtons.createEl("button", {
-      text: "🗑️ Discard",
+      text: "Discard",
       cls: "flow-gtd-discard-button",
     });
     discardButton.style.backgroundColor = "var(--color-red)";
@@ -258,7 +258,7 @@ function renderIndividualEditableItems(
     const saveButtonContainer = actionButtons.createDiv();
     new Setting(saveButtonContainer).addButton((button) =>
       button
-        .setButtonText("💾 Save to Vault")
+        .setButtonText("Save")
         .setCta()
         .setDisabled(item.isProcessing === true)
         .onClick(() => state.saveAndRemoveItem(item)),
