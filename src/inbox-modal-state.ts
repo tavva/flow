@@ -201,7 +201,18 @@ export class InboxModalState {
                 }
         }
 
-        discardItem(item: EditableItem) {
+        async discardItem(item: EditableItem) {
+                if (item.inboxItem) {
+                        try {
+                                await this.controller.discardInboxItem(item, this.deletionOffsets);
+                        } catch (error) {
+                                const message = error instanceof Error ? error.message : String(error);
+                                new Notice(`Error discarding item: ${message}`);
+                                console.error(error);
+                                return;
+                        }
+                }
+
                 this.editableItems = this.editableItems.filter(current => current !== item);
                 new Notice(`🗑️ Discarded item`);
                 this.requestRender('editable');

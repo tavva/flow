@@ -140,21 +140,36 @@ export class InboxProcessingController {
 		return outcomes;
 	}
 
-	async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
-		await this.persistence.persist(item);
+        async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
+                await this.persistence.persist(item);
 
-		if (item.inboxItem) {
-			const deletionManager = this.createDeletionManager(deletionOffsets);
-			const inboxItemToDelete = deletionManager.prepareForDeletion(item.inboxItem);
-			await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-			deletionManager.recordDeletion(item.inboxItem);
-		}
-	}
+                if (item.inboxItem) {
+                        await this.removeInboxItem(item.inboxItem, deletionOffsets);
+                }
+        }
 
-	async suggestProjectName(originalItem: string): Promise<string> {
-		const prompt = this.projectTitlePromptBuilder(originalItem);
-		const response = await this.processor.callAI(prompt);
-		return response.trim();
-	}
+        async discardInboxItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
+                if (!item.inboxItem) {
+                        return;
+                }
+
+                await this.removeInboxItem(item.inboxItem, deletionOffsets);
+        }
+
+        async suggestProjectName(originalItem: string): Promise<string> {
+                const prompt = this.projectTitlePromptBuilder(originalItem);
+                const response = await this.processor.callAI(prompt);
+                return response.trim();
+        }
+
+        private async removeInboxItem(
+                inboxItem: InboxItem,
+                deletionOffsets: Map<string, number>
+        ): Promise<void> {
+                const deletionManager = this.createDeletionManager(deletionOffsets);
+                const inboxItemToDelete = deletionManager.prepareForDeletion(inboxItem);
+                await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+                deletionManager.recordDeletion(inboxItem);
+        }
 }
 
