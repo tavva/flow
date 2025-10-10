@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+main.js
+*.js.map
+
+# Test coverage
+coverage/
+
+# Evaluation results
+evaluation/results/
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Obsidian plugin files
+manifest.json
+versions.json
