@@ -76,12 +76,12 @@ export interface PluginSettings {
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
-        llmProvider: 'anthropic',
-        anthropicApiKey: '',
-        anthropicModel: 'claude-sonnet-4-20250514',
+        llmProvider: 'openai-compatible',
         openaiApiKey: '',
         openaiBaseUrl: 'https://openrouter.ai/api/v1',
         openaiModel: 'openrouter/anthropic/claude-3.5-sonnet',
+        anthropicApiKey: '',
+        anthropicModel: 'google/gemini-2.5-flash',
         defaultPriority: 2,
         defaultStatus: 'live',
         inboxFilesFolderPath: 'Flow Inbox Files',

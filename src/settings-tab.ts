@@ -22,8 +22,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                         .setDesc('Choose which language model to use for GTD processing.')
                         .addDropdown(dropdown => dropdown
                                 .addOptions({
-                                        'anthropic': 'Anthropic Messages API',
-                                        'openai-compatible': 'OpenAI-compatible (e.g. OpenRouter)'
+                                        'openai-compatible': 'OpenAI-compatible (e.g. OpenRouter)',
+                                        'anthropic': 'Anthropic Messages API'
                                 })
                                 .setValue(this.plugin.settings.llmProvider)
                                 .onChange(async (value) => {
