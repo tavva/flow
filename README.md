@@ -146,7 +146,7 @@ npm run format
 npm run format:check
 ```
 
-The project uses Prettier with 2-space indentation. Always run `npm run format` before committing changes.
+The project uses Prettier with 2-space indentation. Always run `npm run format` before committing changes. The CI pipeline automatically checks formatting on all pull requests.
 
 ### Evaluation Framework
 

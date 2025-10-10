@@ -178,7 +178,7 @@ The project uses Prettier for consistent code formatting:
 - **EditorConfig**: `.editorconfig` ensures editor consistency
 - **Style**: 2-space indentation, 100-character line width, semicolons, double quotes
 - **Auto-format**: Run `npm run format` before committing
-- **CI Check**: Use `npm run format:check` to verify formatting
+- **CI Check**: GitHub Actions automatically runs `npm run format:check` on all PRs and pushes
 
 ## Important Patterns
 

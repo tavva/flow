@@ -16,7 +16,7 @@ Flow GTD Coach is an Obsidian plugin written in TypeScript. Core services live i
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. Avoid introducing Unicode unless already present.
+Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. The CI pipeline will fail if code is not properly formatted. Avoid introducing Unicode unless already present.
 
 ## Testing Guidelines
 
