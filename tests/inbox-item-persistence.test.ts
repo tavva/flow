@@ -50,6 +50,24 @@ describe("InboxItemPersistenceService", () => {
     );
   });
 
+  it("propagates the selected project priority when creating a project", async () => {
+    const item: EditableItem = {
+      original: "Plan offsite",
+      isAIProcessed: false,
+      selectedAction: "create-project",
+      selectedSpheres: ["work"],
+      editedNames: ["Finalize venue"],
+      projectPriority: 5,
+    };
+
+    await service.persist(item);
+
+    expect(writerMocks.createProject).toHaveBeenCalledTimes(1);
+    expect(writerMocks.createProject.mock.calls[0][0]).toMatchObject({
+      projectPriority: 5,
+    });
+  });
+
   it("throws when required next actions are empty", async () => {
     const item: EditableItem = {
       original: "   ",

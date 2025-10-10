@@ -486,6 +486,26 @@ function renderProjectCreationSection(
       });
     });
   }
+
+  if (item.projectPriority === undefined) {
+    item.projectPriority = state.settingsSnapshot.defaultPriority;
+  }
+
+  const prioritySetting = new Setting(projectEl)
+    .setName("Project priority")
+    .setDesc("1 (highest) to 5 (lowest)");
+  prioritySetting.addDropdown((dropdown) => {
+    ["1", "2", "3", "4", "5"].forEach((value) =>
+      dropdown.addOption(value, value),
+    );
+    dropdown.setValue(String(item.projectPriority));
+    dropdown.onChange((value) => {
+      const parsed = Number.parseInt(value, 10);
+      if (!Number.isNaN(parsed)) {
+        item.projectPriority = parsed;
+      }
+    });
+  });
 }
 
 function renderProjectSelectionSection(

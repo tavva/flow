@@ -30,11 +30,12 @@ export interface GTDProcessingResult {
 isActionable: boolean;
 category: 'next-action' | 'project' | 'reference' | 'someday' | 'person';
 projectOutcome?: string;
+projectPriority?: number;
 nextAction?: string; // Optional for non-actionable items
 nextActions?: string[]; // Support multiple next actions
 reasoning: string;
 suggestedProjects?: ProjectSuggestion[];
-	suggestedPersons?: PersonSuggestion[];
+        suggestedPersons?: PersonSuggestion[];
 	recommendedAction: ProcessingAction;
 	recommendedActionReasoning: string;
 	recommendedSpheres?: string[];

@@ -108,6 +108,45 @@ describe("FileWriter", () => {
       expect(file).toBe(mockFile);
     });
 
+    it("applies a custom project priority when provided", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Website Redesign Complete",
+        nextAction: "Meet with designer to discuss requirements",
+        reasoning: "This is a multi-step project requiring coordination",
+        nextActions: [
+          "Meet with designer to discuss requirements",
+          "Review mockups",
+          "Implement design",
+        ],
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Multi-step project",
+        projectPriority: 4,
+      };
+
+      const mockFile = new TFile(
+        "Website-Redesign-Complete.md",
+        "Website Redesign Complete",
+      );
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation(
+        (path: string) => {
+          if (path === "Projects") {
+            return {};
+          }
+
+          return null;
+        },
+      );
+      (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
+
+      await fileWriter.createProject(result, "redesign website");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("priority:\n  4");
+    });
+
     it("should strip only disallowed characters while preserving spaces", async () => {
       const result: GTDProcessingResult = {
         isActionable: true,

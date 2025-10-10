@@ -222,9 +222,17 @@ export class FileWriter {
         ? spheres.map((s) => `project/${s}`).join("\n  - ")
         : "project/personal";
 
+    const projectPriority =
+      typeof result.projectPriority === "number" &&
+      Number.isInteger(result.projectPriority) &&
+      result.projectPriority >= 1 &&
+      result.projectPriority <= 5
+        ? result.projectPriority
+        : this.settings.defaultPriority;
+
     // Replace template variables
     templateContent = templateContent
-      .replace(/{{\s*priority\s*}}/g, this.settings.defaultPriority.toString())
+      .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
       .replace(
         /{{\s*description\s*}}/g,
@@ -276,10 +284,18 @@ export class FileWriter {
         ? spheres.map((s) => `  - project/${s}`).join("\n")
         : "  - project/personal";
 
+    const projectPriorityFallback =
+      typeof result.projectPriority === "number" &&
+      Number.isInteger(result.projectPriority) &&
+      result.projectPriority >= 1 &&
+      result.projectPriority <= 5
+        ? result.projectPriority
+        : this.settings.defaultPriority;
+
     let content = `---
 creation-date: ${date}
 priority:
-  ${this.settings.defaultPriority}
+  ${projectPriorityFallback}
 tags:
 ${sphereTagsList}
 status: ${this.settings.defaultStatus}
