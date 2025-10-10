@@ -301,16 +301,12 @@ function renderEditableItemContent(
   actionsLabel.style.marginBottom = "0";
 
   const addActionBtn = actionsHeader.createEl("button", {
-    cls: "flow-gtd-add-action-btn",
+    cls: "flow-gtd-action-btn",
   });
   addActionBtn.setAttribute("type", "button");
   addActionBtn.setAttribute("aria-label", "Add action");
   addActionBtn.setAttribute("title", "Add action");
   addActionBtn.setText("+");
-  addActionBtn.style.padding = "2px 6px";
-  addActionBtn.style.fontSize = "12px";
-  addActionBtn.style.lineHeight = "1";
-  addActionBtn.style.minWidth = "auto";
   addActionBtn.addEventListener("click", () => {
     currentNextActions.push("");
     item.editedNames = [...currentNextActions];
@@ -340,7 +336,7 @@ function renderEditableItemContent(
     });
 
     const removeBtn = actionItem.createEl("button", {
-      cls: "flow-gtd-remove-action-btn",
+      cls: "flow-gtd-action-btn",
     });
     removeBtn.setAttribute("type", "button");
     removeBtn.setAttribute("aria-label", "Remove action");
