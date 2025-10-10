@@ -72,10 +72,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
         }
 
         private getMissingApiKeyMessage(): string {
-                if (this.settings.llmProvider === 'openai-compatible') {
-                        return 'Please set your OpenAI-compatible API key in the plugin settings first';
-                }
-
-                return 'Please set your Anthropic API key in the plugin settings first';
+                return 'Please set your API key in the plugin settings first';
         }
 }
