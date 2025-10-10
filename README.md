@@ -136,6 +136,18 @@ npm run test:watch
 npm run test:coverage
 ```
 
+### Code Formatting
+
+```bash
+# Format all code with Prettier
+npm run format
+
+# Check if code is formatted (useful for CI)
+npm run format:check
+```
+
+The project uses Prettier with 2-space indentation. Always run `npm run format` before committing changes.
+
 ### Evaluation Framework
 
 The plugin includes a comprehensive evaluation framework to measure GTD processing quality:

@@ -8,13 +8,15 @@ Flow GTD Coach is an Obsidian plugin written in TypeScript. Core services live i
 
 - `npm run dev` — build bundle with esbuild in watch mode; keep it running during active development.
 - `npm run build` — perform a type check via `tsc` then emit the production bundle to `dist/`.
+- `npm run format` — auto-format all code with Prettier (run before committing).
+- `npm run format:check` — verify code formatting without modifying files.
 - `npm test` / `npm run test:watch` / `npm run test:coverage` — execute Jest suites; coverage thresholds are enforced at 80% across metrics.
 - `npm run evaluate` — launch scripted AI evaluations (requires Anthropic credentials).
 - `npm run version` — bump manifest metadata and stage `manifest.json` plus `versions.json` for release.
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript with the surrounding indentation (tabs in most files). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Avoid introducing Unicode unless already present.
+Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. Avoid introducing Unicode unless already present.
 
 ## Testing Guidelines
 
@@ -22,7 +24,7 @@ Tests reside in `tests/` alongside the mirrored file name (e.g., `tests/flow-sca
 
 ## Commit & Pull Request Guidelines
 
-Write imperative commit subjects such as “Add inbox batching.” Group related changes, avoid committing build artifacts, and run `npm run build` before requesting review. Pull requests should summarize scope, note manual testing, attach UI screenshots when relevant, and link issues using `Fixes #123` syntax.
+Write imperative commit subjects such as "Add inbox batching." Group related changes, avoid committing build artifacts, and run `npm run format` and `npm run build` before requesting review. Pull requests should summarize scope, note manual testing, attach UI screenshots when relevant, and link issues using `Fixes #123` syntax.
 
 ## Security & Configuration Tips
 

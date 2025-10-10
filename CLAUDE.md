@@ -40,6 +40,16 @@ npm run test:watch
 npm run test:coverage
 ```
 
+### Formatting
+
+```bash
+# Format all code with Prettier
+npm run format
+
+# Check if code is formatted without modifying
+npm run format:check
+```
+
 ### Evaluation Framework
 
 ```bash
@@ -159,6 +169,16 @@ Uses esbuild for fast compilation:
 - Output: `main.js` (bundled)
 - Development: `esbuild.config.mjs` runs in watch mode
 - Production: Includes minification and type checking
+
+## Code Formatting
+
+The project uses Prettier for consistent code formatting:
+
+- **Configuration**: `.prettierrc.json` defines formatting rules
+- **EditorConfig**: `.editorconfig` ensures editor consistency
+- **Style**: 2-space indentation, 100-character line width, semicolons, double quotes
+- **Auto-format**: Run `npm run format` before committing
+- **CI Check**: Use `npm run format:check` to verify formatting
 
 ## Important Patterns
 
