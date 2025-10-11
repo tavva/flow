@@ -32,7 +32,8 @@ export class GTDProcessor {
     existingProjects: FlowProject[],
     existingPersons: PersonNote[] = []
   ): Promise<GTDProcessingResult> {
-    const prompt = this.buildProcessingPrompt(item, existingProjects, existingPersons);
+    const liveProjects = this.filterLiveProjects(existingProjects);
+    const prompt = this.buildProcessingPrompt(item, liveProjects, existingPersons);
 
     try {
       const responseText = await this.client.sendMessage({
@@ -41,7 +42,7 @@ export class GTDProcessor {
         messages: [{ role: "user", content: prompt }],
       });
 
-      return this.parseResponse(responseText, existingProjects, existingPersons);
+      return this.parseResponse(responseText, liveProjects, existingPersons);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       throw new Error(`Failed to process inbox item: ${err.message}`);
@@ -147,11 +148,13 @@ Examples:
    * Build context description of existing projects
    */
   private buildProjectContext(projects: FlowProject[]): string {
-    if (projects.length === 0) {
-      return "The user currently has no existing projects.";
+    const liveProjects = this.filterLiveProjects(projects);
+
+    if (liveProjects.length === 0) {
+      return "The user currently has no existing live projects.";
     }
 
-    const projectSummaries = projects
+    const projectSummaries = liveProjects
       .slice(0, 20) // Limit to prevent token overflow
       .map((p) => {
         const tags = p.tags.join(", ");
@@ -163,7 +166,7 @@ Examples:
       })
       .join("\n");
 
-    return `The user has the following existing projects in their Flow system:\n\n${projectSummaries}\n\nConsider if this inbox item relates to any of these projects. If it does, suggest the relevant project(s).`;
+    return `The user has the following existing live projects in their Flow system:\n\n${projectSummaries}\n\nConsider if this inbox item relates to any of these projects. If it does, suggest the relevant project(s).`;
   }
 
   /**
@@ -184,6 +187,13 @@ Examples:
       .join("\n");
 
     return `\n\nThe user has the following person notes:\n\n${personSummaries}\n\nConsider if this inbox item relates to discussing something with any of these people. If it does, suggest the relevant person(s).`;
+  }
+
+  private filterLiveProjects(projects: FlowProject[]): FlowProject[] {
+    return projects.filter((project) => {
+      const status = typeof project.status === "string" ? project.status.trim().toLowerCase() : "";
+      return status === "" || status === "live";
+    });
   }
 
   /**

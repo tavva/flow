@@ -539,7 +539,7 @@ Clarify what it refers to before proceeding.",
       const callArgs = mockClient.sendMessage.mock.calls[0][0];
       const prompt = callArgs.messages[0].content;
 
-      expect(prompt).toContain("The user currently has no existing projects");
+      expect(prompt).toContain("The user currently has no existing live projects");
     });
 
     it("should limit project context to prevent token overflow", async () => {
@@ -568,6 +568,62 @@ Clarify what it refers to before proceeding.",
       expect(prompt).toContain("Project 19");
       // Should not include projects beyond 20
       expect(prompt).not.toContain("Project 20");
+    });
+
+    it("should exclude non-live projects from prompt context and suggestions", async () => {
+      const projects: FlowProject[] = [
+        {
+          file: "live.md",
+          title: "Live Project",
+          tags: ["project/personal"],
+          status: "live",
+          nextActions: ["Do live thing"],
+        },
+        {
+          file: "paused.md",
+          title: "Paused Project",
+          tags: ["project/work"],
+          status: "paused",
+          nextActions: ["Do paused thing"],
+        },
+        {
+          file: "nostatus.md",
+          title: "No Status Project",
+          tags: ["project/work"],
+          nextActions: ["Do no status"],
+        },
+      ];
+
+      const mockResponse = buildClaudeResponse({
+        nextAction: "Test action",
+        reasoning: "Test",
+        suggestedProjects: [
+          {
+            projectTitle: "Live Project",
+            relevance: "This is the active project",
+            confidence: "high",
+          },
+          {
+            projectTitle: "Paused Project",
+            relevance: "This project is on hold",
+            confidence: "medium",
+          },
+        ],
+        recommendedAction: "add-to-project",
+      });
+
+      mockClient.sendMessage.mockImplementation(async (request) => {
+        const prompt = request.messages[0].content;
+        expect(prompt).toContain("Live Project");
+        expect(prompt).toContain("No Status Project");
+        expect(prompt).not.toContain("Paused Project");
+        return mockResponse;
+      });
+
+      const result = await processor.processInboxItem("test", projects);
+
+      expect(result.suggestedProjects).toHaveLength(1);
+      expect(result.suggestedProjects?.[0].project.title).toBe("Live Project");
     });
   });
 

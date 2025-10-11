@@ -60,7 +60,11 @@ export class InboxProcessingController {
   }
 
   async loadExistingProjects(): Promise<FlowProject[]> {
-    return this.scanner.scanProjects();
+    const projects = await this.scanner.scanProjects();
+    return projects.filter((project) => {
+      const status = typeof project.status === "string" ? project.status.trim().toLowerCase() : "";
+      return status === "" || status === "live";
+    });
   }
 
   async loadExistingPersons(): Promise<PersonNote[]> {
