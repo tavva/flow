@@ -315,7 +315,7 @@ Examples:
       );
     }
 
-    this.validateParsedResponse(parsed);
+    this.validateParsedResponse(parsed, cleanedText);
 
     const suggestedProjects: ProjectSuggestion[] = [];
     if (parsed.suggestedProjects && Array.isArray(parsed.suggestedProjects)) {
@@ -371,7 +371,10 @@ Examples:
     };
   }
 
-  private validateParsedResponse(parsed: any): asserts parsed is {
+  private validateParsedResponse(
+    parsed: any,
+    rawResponse: string
+  ): asserts parsed is {
     isActionable: boolean;
     category: "next-action" | "project" | "reference" | "person" | "someday";
     projectOutcome?: string;
@@ -402,8 +405,15 @@ Examples:
     recommendedSpheresReasoning?: string;
     referenceContent?: string;
   } {
+    // Helper to append raw response to error messages
+    const withResponse = (message: string): string => {
+      return `${message}\n\nRaw model response:\n${rawResponse}`;
+    };
+
     if (typeof parsed !== "object" || parsed === null) {
-      throw new GTDResponseValidationError("Invalid model response: expected an object");
+      throw new GTDResponseValidationError(
+        withResponse("Invalid model response: expected an object")
+      );
     }
 
     if (typeof parsed.isActionable !== "boolean") {
@@ -482,7 +492,9 @@ Examples:
     if (parsed.category === "project") {
       if (typeof parsed.projectOutcome !== "string" || parsed.projectOutcome.trim().length === 0) {
         throw new GTDResponseValidationError(
-          'Invalid model response: "projectOutcome" must be provided for project items'
+          withResponse(
+            'Invalid model response: "projectOutcome" must be provided for project items'
+          )
         );
       }
       // If category is "project", recommendedAction should typically be "create-project" or "add-to-project"
@@ -492,7 +504,9 @@ Examples:
         parsed.recommendedAction !== "add-to-project"
       ) {
         throw new GTDResponseValidationError(
-          `Invalid model response: category "project" with recommendedAction "${parsed.recommendedAction}" is inconsistent - expected "create-project" or "add-to-project"`
+          withResponse(
+            `Invalid model response: category "project" with recommendedAction "${parsed.recommendedAction}" is inconsistent - expected "create-project" or "add-to-project"`
+          )
         );
       }
     }
@@ -591,7 +605,9 @@ Examples:
     if (parsed.recommendedAction && parsed.recommendedAction === "create-project") {
       if (typeof parsed.projectOutcome !== "string" || parsed.projectOutcome.trim().length === 0) {
         throw new GTDResponseValidationError(
-          `Invalid model response: "projectOutcome" must accompany a "create-project" recommendation - got projectOutcome: ${JSON.stringify(parsed.projectOutcome)}, category: ${parsed.category}`
+          withResponse(
+            `Invalid model response: "projectOutcome" must accompany a "create-project" recommendation - got projectOutcome: ${JSON.stringify(parsed.projectOutcome)}, category: ${parsed.category}`
+          )
         );
       }
     }
