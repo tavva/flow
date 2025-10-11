@@ -9,8 +9,8 @@ describe("GTDProcessor", () => {
 
   type MockClaudeResponse = {
     isActionable: boolean;
-    category: "next-action" | "project" | "reference" | "someday";
-    projectOutcome?: string;
+    category: "next-action" | "project" | "reference" | "someday" | "person";
+    projectOutcome?: string | null;
     nextAction: string;
     nextActions?: string[];
     reasoning: string;
@@ -25,7 +25,9 @@ describe("GTDProcessor", () => {
       | "next-actions-file"
       | "someday-file"
       | "reference"
-      | "trash";
+      | "person"
+      | "trash"
+      | "discard";
     recommendedActionReasoning?: string;
     recommendedSpheres?: string[];
     recommendedSpheresReasoning?: string;
@@ -404,6 +406,53 @@ describe("GTDProcessor", () => {
 
       expect(result.nextAction).toBe("Discuss AI stuff with Stuart");
       expect(result.nextActions).toEqual(["Discuss AI stuff with Stuart"]);
+    });
+
+    it("sanitizes unescaped newlines within JSON strings", async () => {
+      const mockResponse = `{
+  "isActionable": true,
+  "category": "next-action",
+  "projectOutcome": null,
+  "nextAction": "Clarify the meaning of '15:28'",
+  "nextActions": [
+    "Clarify the meaning of '15:28'"
+  ],
+  "reasoning": "The item '15:28' is ambiguous.
+Clarify what it refers to before proceeding.",
+  "suggestedProjects": [],
+  "suggestedPersons": [],
+  "recommendedAction": "next-actions-file",
+  "recommendedActionReasoning": "Clarify the item so it can be handled appropriately.",
+  "recommendedSpheres": [],
+  "recommendedSpheresReasoning": "No context is available yet.",
+  "referenceContent": null
+}`;
+
+      mockClient.sendMessage.mockResolvedValue(mockResponse);
+
+      const result = await processor.processInboxItem("15:28", []);
+
+      expect(result.nextAction).toBe("Clarify the meaning of '15:28'");
+      expect(result.reasoning).toContain("ambiguous.\nClarify what it refers to");
+    });
+
+    it("falls back to a category-aligned action when project outcome is missing", async () => {
+      const mockResponse = buildClaudeResponse({
+        category: "person",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "This should be tracked as a project.",
+        projectOutcome: null,
+        nextAction: "Discuss current AI initiatives with Stuart",
+        reasoning: "The item is clearly about following up with a specific person.",
+      });
+
+      mockClient.sendMessage.mockResolvedValue(mockResponse);
+
+      const result = await processor.processInboxItem("Chase Stuart on AI stuff", []);
+
+      expect(result.recommendedAction).toBe("person");
+      expect(result.projectOutcome).toBeUndefined();
+      expect(result.recommendedActionReasoning).toContain('Adjusted to "person"');
     });
 
     it("should throw error on API failure", async () => {

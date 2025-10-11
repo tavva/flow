@@ -5,6 +5,7 @@ import {
   ProjectSuggestion,
   PersonNote,
   PersonSuggestion,
+  ProcessingAction,
 } from "./types";
 import { GTDResponseValidationError } from "./errors";
 
@@ -305,10 +306,12 @@ Examples:
       .replace(/```\n?/g, "")
       .trim();
 
+    const sanitizedText = this.sanitizeModelResponse(cleanedText);
+
     let parsed: unknown;
 
     try {
-      parsed = JSON.parse(cleanedText);
+      parsed = JSON.parse(sanitizedText);
     } catch (error) {
       throw new Error(
         `Failed to parse model response: ${error.message}\n\nResponse: ${cleanedText}`
@@ -603,12 +606,38 @@ Examples:
     }
 
     if (parsed.recommendedAction && parsed.recommendedAction === "create-project") {
-      if (typeof parsed.projectOutcome !== "string" || parsed.projectOutcome.trim().length === 0) {
-        throw new GTDResponseValidationError(
-          withResponse(
-            `Invalid model response: "projectOutcome" must accompany a "create-project" recommendation - got projectOutcome: ${JSON.stringify(parsed.projectOutcome)}, category: ${parsed.category}`
-          )
-        );
+      const hasProjectOutcome =
+        typeof parsed.projectOutcome === "string" && parsed.projectOutcome.trim().length > 0;
+
+      if (!hasProjectOutcome) {
+        const fallbackActionMap: Partial<Record<string, ProcessingAction>> = {
+          "next-action": "next-actions-file",
+          reference: "reference",
+          someday: "someday-file",
+          person: "person",
+        };
+        const fallbackAction = fallbackActionMap[parsed.category];
+
+        if (fallbackAction) {
+          const adjustmentNote = `Adjusted to "${fallbackAction}" because the model omitted a project outcome for category "${parsed.category}"`;
+
+          parsed.recommendedAction = fallbackAction;
+          parsed.projectOutcome = undefined;
+          if (
+            typeof parsed.recommendedActionReasoning !== "string" ||
+            parsed.recommendedActionReasoning.trim().length === 0
+          ) {
+            parsed.recommendedActionReasoning = adjustmentNote;
+          } else {
+            parsed.recommendedActionReasoning = `${parsed.recommendedActionReasoning.trim()} (${adjustmentNote})`;
+          }
+        } else {
+          throw new GTDResponseValidationError(
+            withResponse(
+              `Invalid model response: "projectOutcome" must accompany a "create-project" recommendation - got projectOutcome: ${JSON.stringify(parsed.projectOutcome)}, category: ${parsed.category}`
+            )
+          );
+        }
       }
     }
 
@@ -711,5 +740,33 @@ Sort by suggestedOrder (1 being highest priority).`;
     } catch (error) {
       throw new Error(`AI call failed: ${error.message}`);
     }
+  }
+
+  private sanitizeModelResponse(raw: string): string {
+    let sanitized = "";
+    let inString = false;
+    let prevChar = "";
+
+    for (let i = 0; i < raw.length; i++) {
+      const char = raw[i];
+
+      if (char === '"' && prevChar !== "\\") {
+        inString = !inString;
+      }
+
+      if (inString && (char === "\n" || char === "\r")) {
+        sanitized += "\\n";
+        if (char === "\r" && raw[i + 1] === "\n") {
+          i += 1;
+        }
+        prevChar = "n";
+        continue;
+      }
+
+      sanitized += char;
+      prevChar = char;
+    }
+
+    return sanitized;
   }
 }
