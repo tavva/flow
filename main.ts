@@ -3,6 +3,7 @@ import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { InboxProcessingModal } from "./src/inbox-modal";
 import { SphereViewModal } from "./src/sphere-view-modal";
+import { ReviewModal } from "./src/review-modal";
 
 type InboxCommandConfig = {
   id: string;
@@ -26,6 +27,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     inboxCommands.forEach((config) => this.registerInboxCommand(config));
     this.registerSphereCommands();
+
+    // Add project review command
+    this.addCommand({
+      id: "flow-review-projects",
+      name: "Review Projects",
+      callback: () => {
+        this.openReviewModal();
+      },
+    });
 
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
@@ -108,5 +118,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   private getMissingApiKeyMessage(): string {
     return "Please set your API key in the plugin settings first";
+  }
+
+  private openReviewModal() {
+    if (!this.hasRequiredApiKey()) {
+      new Notice(this.getMissingApiKeyMessage());
+      return;
+    }
+
+    const modal = new ReviewModal(this.app, this.settings);
+    modal.open();
   }
 }

@@ -92,3 +92,40 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectTemplateFilePath: "Templates/Project.md",
   spheres: ["personal", "work"],
 };
+
+// Project Review Types
+export interface NextActionImprovement {
+  current: string;
+  suggested: string;
+}
+
+export interface ProjectImprovement {
+  projectPath: string;
+  currentName: string;
+  suggestedName?: string;
+  currentDescription: string;
+  suggestedDescription?: string;
+  nextActionImprovements?: NextActionImprovement[];
+  rationale: string;
+}
+
+export interface ProjectMerge {
+  primaryProject: string;
+  projectsToMerge: string[];
+  combinedNextActions: string[];
+  rationale: string;
+}
+
+export interface ProjectStatusChange {
+  projectPath: string;
+  currentStatus: string;
+  suggestedStatus: "complete" | "archived" | "paused";
+  rationale: string;
+}
+
+export interface ProjectReviewResponse {
+  projectsOk: string[];
+  improvements: ProjectImprovement[];
+  merges: ProjectMerge[];
+  statusChanges: ProjectStatusChange[];
+}
