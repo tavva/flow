@@ -45,21 +45,66 @@
 .flow-gtd-editable-item {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 16px;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 10px;
+	gap: 16px;
+	padding: 24px;
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 12px;
 	background-color: var(--background-primary);
-	box-shadow: none;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	transition: box-shadow 0.2s ease;
+	margin-bottom: 24px;
+}
+
+.flow-gtd-editable-item:hover {
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .flow-gtd-item-meta {
 	display: flex;
-	gap: 8px;
-	flex-wrap: wrap;
+	justify-content: space-between;
 	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
 	font-size: 12px;
 	color: var(--text-muted);
+}
+
+.flow-gtd-ai-refine-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 16px;
+	background-color: var(--interactive-accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.flow-gtd-ai-refine-button:hover {
+	opacity: 0.9;
+}
+
+.flow-gtd-refine-all-button {
+	padding: 8px 20px;
+	background-color: var(--interactive-accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-refine-all-button:hover {
+	opacity: 0.9;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
 .flow-gtd-item-index {
@@ -70,20 +115,21 @@
 }
 
 .flow-gtd-item-pill {
-	padding: 2px 10px;
+	padding: 4px 12px;
 	border-radius: 999px;
 	font-size: 11px;
 	font-weight: 600;
-	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	background-color: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
-	color: var(--text-muted);
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .flow-gtd-item-pill-success {
+	background-color: rgba(76, 175, 80, 0.1);
 	color: var(--color-green);
-	border-color: var(--color-green);
+	border-color: rgba(76, 175, 80, 0.3);
 }
 
 .flow-gtd-item-pill-warn {
@@ -384,21 +430,24 @@
 }
 
 .flow-gtd-add-action-btn {
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	background-color: var(--background-secondary);
-	color: var(--text-normal);
-	padding: 4px 10px;
-	font-size: 12px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	width: 100%;
+	padding: 12px;
+	border: 2px dashed var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: transparent;
+	color: var(--text-muted);
+	font-size: 14px;
 	cursor: pointer;
-	transition: background-color 0.2s ease;
+	transition: border-color 0.2s ease, color 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 }
 
 .flow-gtd-add-action-btn:hover {
-	background-color: var(--background-modifier-hover);
+	border-color: var(--background-modifier-border-hover);
+	color: var(--text-normal);
 }
 
 .flow-gtd-actions-list {
@@ -409,10 +458,63 @@
 
 .flow-gtd-action-item {
 	display: flex;
-	gap: 8px;
-	align-items: center;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary);
+	transition: border-color 0.2s ease;
+	position: relative;
 }
 
+.flow-gtd-action-item:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+
+.flow-gtd-action-item:hover .flow-gtd-action-remove {
+	opacity: 1;
+}
+
+.flow-gtd-action-number {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(33, 150, 243, 0.1);
+	color: var(--color-blue);
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	margin-top: 2px;
+}
+
+.flow-gtd-action-remove {
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	color: var(--text-faint);
+	border-radius: 4px;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.flow-gtd-action-remove:hover {
+	background: rgba(244, 67, 54, 0.1);
+	color: var(--color-red);
+}
+
+/* Legacy class for backwards compatibility */
 .flow-gtd-remove-action-btn {
 	border: none;
 	background: var(--background-modifier-border);
@@ -434,23 +536,25 @@
 }
 
 .flow-gtd-action-input,
-.flow-gtd-project-title-input {
+.flow-gtd-project-title-input,
+.flow-gtd-project-input {
 	width: 100%;
-	padding: 6px 10px;
+	padding: 12px;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
+	border-radius: 8px;
 	background-color: var(--background-primary);
 	color: var(--text-normal);
-	font-size: 13px;
+	font-size: 14px;
 	font-family: var(--font-text);
-	margin-top: 2px;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .flow-gtd-action-input:focus,
-.flow-gtd-project-title-input:focus {
+.flow-gtd-project-title-input:focus,
+.flow-gtd-project-input:focus {
 	outline: none;
 	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+	box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
 }
 
 .flow-gtd-project-title-editor {
@@ -481,19 +585,21 @@
 	text-transform: uppercase;
 }
 
-.flow-gtd-original-row {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	padding: 8px 12px;
-	border: 1px solid var(--background-modifier-border);
+.flow-gtd-original-box {
+	padding: 16px;
 	border-radius: 8px;
-	background-color: var(--background-secondary);
+	background-color: rgba(33, 150, 243, 0.05);
+	border: 1px solid rgba(33, 150, 243, 0.15);
+}
+
+.theme-dark .flow-gtd-original-box {
+	background-color: rgba(33, 150, 243, 0.08);
+	border-color: rgba(33, 150, 243, 0.2);
 }
 
 .flow-gtd-original-text {
-	flex: 1;
 	margin: 0;
+	padding: 0;
 	font-size: 14px;
 	line-height: 1.45;
 	color: var(--text-normal);
@@ -563,20 +669,88 @@
 	min-width: 160px;
 }
 
-.flow-gtd-inline-select {
+.flow-gtd-inline-select,
+.flow-gtd-inline-select select,
+select.flow-gtd-inline-select,
+.flow-gtd-action-selector select,
+.flow-gtd-project-selector select,
+.flow-gtd-person-selector select {
 	width: 100%;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	background-color: var(--background-primary);
-	color: var(--text-normal);
-	padding: 6px 10px;
-	font-size: 13px;
+	border-radius: 8px;
+	background-color: var(--background-primary) !important;
+	color: var(--text-normal) !important;
+	padding: 10px 12px !important;
+	font-size: 14px !important;
+	font-family: var(--font-interface) !important;
+	line-height: 1.5 !important;
+	height: auto !important;
+	min-height: 44px !important;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	-webkit-text-fill-color: var(--text-normal) !important;
+	opacity: 1 !important;
+	box-sizing: border-box !important;
 }
 
-.flow-gtd-inline-select:focus {
+.flow-gtd-inline-select:focus,
+.flow-gtd-inline-select select:focus,
+select.flow-gtd-inline-select:focus,
+.flow-gtd-action-selector select:focus,
+.flow-gtd-project-selector select:focus,
+.flow-gtd-person-selector select:focus {
 	outline: none;
 	border-color: var(--interactive-accent);
-	box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+	box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.flow-gtd-inline-select option,
+.flow-gtd-inline-select select option,
+select.flow-gtd-inline-select option,
+.flow-gtd-action-selector select option,
+.flow-gtd-project-selector select option,
+.flow-gtd-person-selector select option {
+	color: var(--text-normal) !important;
+	background-color: var(--background-primary) !important;
+	padding: 8px;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+/* Dark theme overrides */
+.theme-dark .flow-gtd-inline-select,
+.theme-dark .flow-gtd-inline-select select,
+.theme-dark select.flow-gtd-inline-select,
+.theme-dark .flow-gtd-action-selector select,
+.theme-dark .flow-gtd-project-selector select,
+.theme-dark .flow-gtd-person-selector select {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+.theme-dark .flow-gtd-inline-select option,
+.theme-dark .flow-gtd-inline-select select option,
+.theme-dark select.flow-gtd-inline-select option,
+.theme-dark .flow-gtd-action-selector select option,
+.theme-dark .flow-gtd-project-selector select option,
+.theme-dark .flow-gtd-person-selector select option {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+/* Ultra-specific overrides for select visibility */
+.flow-gtd-editable-item select,
+.flow-gtd-action-selector > div > select,
+.flow-gtd-project-selector > div > select,
+.flow-gtd-person-selector > div > select,
+.flow-gtd-project-section select {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+	opacity: 1 !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
+	padding: 10px 12px !important;
+	height: auto !important;
+	min-height: 44px !important;
+	box-sizing: border-box !important;
 }
 
 @media (max-width: 600px) {
@@ -615,22 +789,36 @@
 }
 
 .flow-gtd-sphere-button {
-	padding: 6px 12px;
+	padding: 8px 24px;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	background-color: var(--background-secondary);
-	color: var(--text-normal);
+	border-radius: 8px;
+	background-color: rgba(0, 0, 0, 0.05);
+	color: var(--text-muted);
 	cursor: pointer;
-	font-size: 13px;
+	font-size: 14px;
+	font-weight: 500;
 	transition: all 0.2s ease;
 }
 
 .flow-gtd-sphere-button:hover {
-	background-color: var(--background-modifier-hover);
+	background-color: rgba(0, 0, 0, 0.08);
 }
 
 .flow-gtd-sphere-button.selected {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border-color: var(--interactive-accent);
+	background-color: var(--text-normal);
+	color: var(--background-primary);
+	border-color: var(--text-normal);
+}
+
+.theme-dark .flow-gtd-sphere-button {
+	background-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .flow-gtd-sphere-button:hover {
+	background-color: rgba(255, 255, 255, 0.12);
+}
+
+.theme-dark .flow-gtd-sphere-button.selected {
+	background-color: var(--text-normal);
+	color: var(--background-primary);
 }

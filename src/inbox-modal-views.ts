@@ -32,91 +32,37 @@ export function renderEditableItemsView(
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
-  contentEl.createEl("h2", { text: "Flow inbox processing" });
-  contentEl.createEl("p", {
+  // Header section with title, description, and refine all button
+  const headerSection = contentEl.createDiv("flow-gtd-header-section");
+  headerSection.style.display = "flex";
+  headerSection.style.justifyContent = "space-between";
+  headerSection.style.alignItems = "flex-start";
+  headerSection.style.gap = "24px";
+  headerSection.style.marginBottom = "24px";
+
+  const headerLeft = headerSection.createDiv();
+  headerLeft.style.flex = "1";
+
+  headerLeft.createEl("h2", { text: "Flow inbox processing" });
+  headerLeft.createEl("p", {
     text: "Review your inbox items. You can edit them manually or refine with AI, then save them to your vault.",
     cls: "flow-gtd-description",
   });
 
+  // Refine all button (right-aligned)
   if (state.editableItems.length > 0) {
-    const batchContainer = contentEl.createDiv("flow-gtd-batch-actions");
-    const totalCount = state.editableItems.length;
-    const completedCount = state.editableItems.filter((item) => item.isAIProcessed).length;
-    const inFlightCount = state.editableItems.filter(
-      (item) => item.isProcessing && !item.isAIProcessed
-    ).length;
-    const pendingCount = Math.max(totalCount - completedCount - inFlightCount, 0);
-
-    const progressContainer = batchContainer.createDiv("flow-gtd-progress");
-    const progressText = progressContainer.createDiv("flow-gtd-progress-text");
-    progressText.setText(
-      `AI refinement: ${completedCount} complete · ${inFlightCount} in flight · ${pendingCount} yet to send`
-    );
-
-    const progressBar = progressContainer.createDiv("flow-gtd-progress-bar");
-    const segments: Array<{ width: number; cls: string; label: string }> = [
-      {
-        width: completedCount / totalCount,
-        cls: "flow-gtd-progress-segment-complete",
-        label: `${completedCount} complete`,
-      },
-      {
-        width: inFlightCount / totalCount,
-        cls: "flow-gtd-progress-segment-in-flight",
-        label: `${inFlightCount} in flight`,
-      },
-      {
-        width: pendingCount / totalCount,
-        cls: "flow-gtd-progress-segment-pending",
-        label: `${pendingCount} yet to send`,
-      },
-    ];
-
-    segments
-      .filter((segment) => segment.width > 0)
-      .forEach((segment) => {
-        const segmentEl = progressBar.createDiv({
-          cls: `flow-gtd-progress-segment ${segment.cls}`,
-        });
-        segmentEl.style.width = `${(segment.width * 100).toFixed(2)}%`;
-        segmentEl.setAttr("aria-label", segment.label);
-      });
-
-    const legend = progressContainer.createDiv("flow-gtd-progress-legend");
-    [
-      {
-        label: "Complete",
-        count: completedCount,
-        cls: "flow-gtd-progress-swatch-complete",
-      },
-      {
-        label: "In Flight",
-        count: inFlightCount,
-        cls: "flow-gtd-progress-swatch-in-flight",
-      },
-      {
-        label: "Yet to Send",
-        count: pendingCount,
-        cls: "flow-gtd-progress-swatch-pending",
-      },
-    ].forEach(({ label, count, cls }) => {
-      const legendItem = legend.createDiv("flow-gtd-progress-legend-item");
-      legendItem.createSpan({ cls: `flow-gtd-progress-swatch ${cls}` });
-      legendItem.createSpan({
-        cls: "flow-gtd-progress-legend-label",
-        text: `${count} ${label}`,
-      });
-    });
-
     const unprocessedCount = state.editableItems.filter((item) => !item.isAIProcessed).length;
 
     if (unprocessedCount > 0) {
-      new Setting(batchContainer).addButton((button) =>
-        button
-          .setButtonText(`✨ Refine All ${unprocessedCount} Items with AI`)
-          .setCta()
-          .onClick(() => state.refineAllWithAI())
-      );
+      const headerRight = headerSection.createDiv();
+      headerRight.style.flexShrink = "0";
+
+      const refineAllBtn = headerRight.createEl("button", {
+        text: `✨ Refine all (${unprocessedCount})`,
+        cls: "flow-gtd-refine-all-button",
+      });
+      refineAllBtn.setAttribute("type", "button");
+      refineAllBtn.addEventListener("click", () => state.refineAllWithAI());
     }
   }
 
@@ -147,71 +93,82 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   state.editableItems.forEach((item, index) => {
     const itemEl = listContainer.createDiv("flow-gtd-editable-item");
 
+    // Header with item number and AI badge/button
     const metaRow = itemEl.createDiv("flow-gtd-item-meta");
-    let hasMeta = false;
     const showIndex = state.editableItems.length > 1;
+
+    const leftSide = metaRow.createDiv();
+    leftSide.style.display = "flex";
+    leftSide.style.alignItems = "center";
+    leftSide.style.gap = "12px";
+
     if (showIndex) {
-      metaRow.createSpan({
+      leftSide.createSpan({
         text: `#${index + 1}`,
         cls: "flow-gtd-item-index",
       });
-      hasMeta = true;
     }
 
     if (item.isAIProcessed) {
-      metaRow.createSpan({
-        text: "AI refined",
+      const aiBadge = leftSide.createSpan({
         cls: "flow-gtd-item-pill flow-gtd-item-pill-success",
       });
-      hasMeta = true;
-    }
-
-    if (item.isProcessing === true) {
-      metaRow.createSpan({
+      aiBadge.createSpan({ text: "✨ " });
+      aiBadge.createSpan({ text: "AI Refined" });
+    } else if (item.isProcessing === true) {
+      leftSide.createSpan({
         text: "Processing…",
         cls: "flow-gtd-item-pill flow-gtd-item-pill-warn",
       });
-      hasMeta = true;
-    }
-
-    if (item.isAIProcessed && item.result) {
-      metaRow.createSpan({
-        text: getActionLabel(item.result.recommendedAction),
-        cls: `flow-gtd-item-pill flow-gtd-item-pill-${item.result.recommendedAction}`,
-      });
-      hasMeta = true;
-    }
-
-    if (!hasMeta) {
-      metaRow.remove();
-    }
-
-    itemEl.createSpan({
-      text: "Original",
-      cls: "flow-gtd-section-label",
-    });
-
-    const originalRow = itemEl.createDiv("flow-gtd-original-row");
-    originalRow.createSpan({
-      text: item.original,
-      cls: "flow-gtd-original-text",
-    });
-
-    if (!item.isAIProcessed && !item.isProcessing) {
-      const refineBtn = originalRow.createEl("button", {
+    } else {
+      // AI Refine button (only if not processed and not processing) - on the left
+      const refineBtn = leftSide.createEl("button", {
         type: "button",
-        cls: "flow-gtd-refine-button",
+        cls: "flow-gtd-ai-refine-button",
       });
       refineBtn.setAttribute("aria-label", "Refine with AI");
-      refineBtn.setAttribute("title", "Refine with AI");
-      refineBtn.setText("✨");
+      refineBtn.innerHTML = "✨ AI Refine";
       refineBtn.addEventListener("click", () => state.refineIndividualItem(item));
+    }
+
+    // Original Text - different display based on refined status
+    if (item.isAIProcessed) {
+      // Simple original text display for refined items
+      const originalBox = itemEl.createDiv("flow-gtd-original-box");
+
+      const label = originalBox.createDiv();
+      label.addClass("flow-gtd-section-label");
+      label.style.marginBottom = "8px";
+      label.setText("Original");
+
+      const textDiv = originalBox.createDiv();
+      textDiv.addClass("flow-gtd-original-text");
+      textDiv.setText(item.original);
+    } else {
+      // Prominent box for non-refined items
+      const originalBox = itemEl.createDiv("flow-gtd-original-unprocessed");
+      originalBox.style.padding = "16px";
+      originalBox.style.backgroundColor = "rgba(33, 150, 243, 0.05)";
+      originalBox.style.border = "2px solid rgba(33, 150, 243, 0.2)";
+      originalBox.style.borderRadius = "8px";
+
+      const label = originalBox.createDiv();
+      label.style.fontSize = "14px";
+      label.style.fontWeight = "600";
+      label.style.marginBottom = "8px";
+      label.style.color = "var(--text-normal)";
+      label.setText("Item to Process:");
+
+      const textDiv = originalBox.createDiv();
+      textDiv.style.color = "var(--text-normal)";
+      textDiv.style.lineHeight = "1.6";
+      textDiv.setText(item.original);
     }
 
     renderEditableItemContent(itemEl, item, state);
 
     const actionButtons = itemEl.createDiv("flow-gtd-item-actions");
-    actionButtons.style.marginTop = "20px";
+    actionButtons.style.marginTop = "16px";
     actionButtons.style.paddingTop = "16px";
     actionButtons.style.borderTop = "1px solid var(--background-modifier-border)";
     actionButtons.style.display = "flex";
@@ -223,15 +180,23 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       text: "Discard",
       cls: "flow-gtd-discard-button",
     });
-    discardButton.style.backgroundColor = "var(--color-red)";
-    discardButton.style.color = "var(--text-on-accent)";
+    discardButton.setAttribute("type", "button");
+    discardButton.style.backgroundColor = "transparent";
+    discardButton.style.color = "var(--text-muted)";
     discardButton.style.border = "none";
-    discardButton.style.padding = "8px 16px";
-    discardButton.style.borderRadius = "var(--radius-s)";
+    discardButton.style.padding = "8px 20px";
+    discardButton.style.borderRadius = "8px";
     discardButton.style.cursor = "pointer";
-    discardButton.style.fontSize = "var(--font-ui-small)";
+    discardButton.style.fontSize = "14px";
+    discardButton.style.fontWeight = "500";
+    discardButton.style.transition = "color 0.2s ease";
+    discardButton.addEventListener("mouseenter", () => {
+      discardButton.style.color = "var(--text-normal)";
+    });
+    discardButton.addEventListener("mouseleave", () => {
+      discardButton.style.color = "var(--text-muted)";
+    });
     discardButton.addEventListener("click", () => {
-      // Show confirmation dialog
       const confirmed = confirm(
         "Are you sure you want to discard this item? This action cannot be undone."
       );
@@ -240,15 +205,52 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       }
     });
 
-    // Save button on the right
-    const saveButtonContainer = actionButtons.createDiv();
-    new Setting(saveButtonContainer).addButton((button) =>
-      button
-        .setButtonText("Save")
-        .setCta()
-        .setDisabled(item.isProcessing === true)
-        .onClick(() => state.saveAndRemoveItem(item))
-    );
+    // Save or Delete button on the right
+    const primaryButton = actionButtons.createEl("button", {
+      text: item.selectedAction === "trash" ? "Delete" : "Save",
+      cls: "flow-gtd-save-button",
+    });
+    primaryButton.setAttribute("type", "button");
+    primaryButton.disabled = item.isProcessing === true;
+
+    if (item.selectedAction === "trash") {
+      primaryButton.style.backgroundColor = "var(--color-red)";
+      primaryButton.style.color = "white";
+    } else {
+      primaryButton.style.backgroundColor = "var(--interactive-accent)";
+      primaryButton.style.color = "white";
+    }
+
+    primaryButton.style.border = "none";
+    primaryButton.style.padding = "10px 32px";
+    primaryButton.style.borderRadius = "8px";
+    primaryButton.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
+    primaryButton.style.fontSize = "14px";
+    primaryButton.style.fontWeight = "500";
+    primaryButton.style.transition = "background-color 0.2s ease";
+    primaryButton.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
+
+    if (!item.isProcessing) {
+      primaryButton.addEventListener("mouseenter", () => {
+        if (item.selectedAction === "trash") {
+          primaryButton.style.backgroundColor = "var(--color-red)";
+          primaryButton.style.opacity = "0.9";
+        } else {
+          primaryButton.style.opacity = "0.9";
+        }
+      });
+      primaryButton.addEventListener("mouseleave", () => {
+        primaryButton.style.opacity = "1";
+      });
+    } else {
+      primaryButton.style.opacity = "0.6";
+    }
+
+    primaryButton.addEventListener("click", () => {
+      if (!item.isProcessing) {
+        state.saveAndRemoveItem(item);
+      }
+    });
   });
 }
 
@@ -257,106 +259,139 @@ function renderEditableItemContent(
   item: EditableItem,
   state: InboxModalState
 ) {
-  let currentNextActions: string[] = [];
+  // Only show Next Actions if item is AI processed
+  if (item.isAIProcessed) {
+    let currentNextActions: string[] = [];
 
-  if (item.editedNames && item.editedNames.length > 0) {
-    currentNextActions = [...item.editedNames];
-  } else if (item.editedName) {
-    currentNextActions = [item.editedName];
-  } else if (item.isAIProcessed && item.result) {
-    if (item.result.nextActions && item.result.nextActions.length > 0) {
-      currentNextActions = [...item.result.nextActions];
-    } else if (item.result.nextAction) {
-      currentNextActions = [item.result.nextAction];
+    if (item.editedNames && item.editedNames.length > 0) {
+      currentNextActions = [...item.editedNames];
+    } else if (item.editedName) {
+      currentNextActions = [item.editedName];
+    } else if (item.result) {
+      if (item.result.nextActions && item.result.nextActions.length > 0) {
+        currentNextActions = [...item.result.nextActions];
+      } else if (item.result.nextAction) {
+        currentNextActions = [item.result.nextAction];
+      }
+    } else {
+      currentNextActions = [item.original];
     }
-  } else {
-    currentNextActions = [item.original];
-  }
 
-  const actionsContainer = itemEl.createDiv("flow-gtd-actions-editor");
-  const actionsHeader = actionsContainer.createDiv("flow-gtd-actions-header");
-  actionsHeader.style.display = "flex";
-  actionsHeader.style.alignItems = "center";
-  actionsHeader.style.gap = "8px";
-  actionsHeader.style.justifyContent = "flex-start";
+    const actionsContainer = itemEl.createDiv("flow-gtd-actions-editor");
+    const actionsHeader = actionsContainer.createDiv("flow-gtd-actions-header");
+    actionsHeader.style.display = "flex";
+    actionsHeader.style.alignItems = "center";
+    actionsHeader.style.gap = "8px";
+    actionsHeader.style.justifyContent = "flex-start";
 
-  const actionsLabel = actionsHeader.createEl("label", {
-    text: "Next Actions:",
-    cls: "flow-gtd-label",
-  });
-  actionsLabel.style.marginBottom = "0";
-
-  const addActionBtn = actionsHeader.createEl("button", {
-    cls: "flow-gtd-action-btn",
-  });
-  addActionBtn.setAttribute("type", "button");
-  addActionBtn.setAttribute("aria-label", "Add action");
-  addActionBtn.setAttribute("title", "Add action");
-  addActionBtn.setText("+");
-  addActionBtn.addEventListener("click", () => {
-    currentNextActions.push("");
-    item.editedNames = [...currentNextActions];
-    state.queueRender("editable");
-  });
-
-  const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
-  currentNextActions.forEach((action, index) => {
-    const actionItem = actionsList.createDiv("flow-gtd-action-item");
-
-    const actionInput = actionItem.createEl("input", {
-      type: "text",
-      cls: "flow-gtd-action-input",
+    const actionsLabel = actionsHeader.createEl("label", {
+      text: "Next Actions",
+      cls: "flow-gtd-label",
     });
-    actionInput.value = action;
-    actionInput.placeholder = `Next action ${index + 1}`;
+    actionsLabel.style.marginBottom = "0";
+    actionsLabel.style.fontSize = "14px";
+    actionsLabel.style.fontWeight = "600";
+    actionsLabel.style.color = "var(--text-normal)";
+    actionsLabel.style.textTransform = "none";
 
-    actionInput.addEventListener("input", (e) => {
-      const value = (e.target as HTMLInputElement).value;
-      currentNextActions[index] = value;
+    const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
+    currentNextActions.forEach((action, index) => {
+      const actionItem = actionsList.createDiv("flow-gtd-action-item");
+
+      // Numbered badge
+      const numberBadge = actionItem.createDiv("flow-gtd-action-number");
+      numberBadge.setText(String(index + 1));
+
+      // Input container
+      const inputContainer = actionItem.createDiv();
+      inputContainer.style.flex = "1";
+      inputContainer.style.minWidth = "0";
+
+      const actionInput = inputContainer.createEl("input", {
+        type: "text",
+        cls: "flow-gtd-action-input",
+      });
+      actionInput.value = action;
+      actionInput.placeholder = `Enter action ${index + 1}...`;
+      actionInput.style.border = "none";
+      actionInput.style.padding = "0";
+      actionInput.style.backgroundColor = "transparent";
+      actionInput.style.fontSize = "14px";
+
+      actionInput.addEventListener("input", (e) => {
+        const value = (e.target as HTMLInputElement).value;
+        currentNextActions[index] = value;
+        item.editedNames = [...currentNextActions];
+        if (currentNextActions.length > 1) {
+          item.editedName = undefined;
+        } else {
+          item.editedName = value;
+        }
+      });
+
+      const removeBtn = actionItem.createEl("button", {
+        cls: "flow-gtd-action-remove",
+      });
+      removeBtn.setAttribute("type", "button");
+      removeBtn.setAttribute("aria-label", "Remove action");
+      removeBtn.setAttribute("title", "Remove action");
+      removeBtn.innerHTML = "✕";
+      removeBtn.addEventListener("click", () => {
+        currentNextActions.splice(index, 1);
+        item.editedNames = [...currentNextActions];
+        if (currentNextActions.length === 1) {
+          item.editedName = currentNextActions[0];
+        }
+        state.queueRender("editable");
+      });
+    });
+
+    // Add action button
+    const addActionBtn = actionsList.createEl("button", {
+      cls: "flow-gtd-add-action-btn",
+    });
+    addActionBtn.setAttribute("type", "button");
+    addActionBtn.setAttribute("aria-label", "Add action");
+    addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
+    addActionBtn.addEventListener("click", () => {
+      currentNextActions.push("");
       item.editedNames = [...currentNextActions];
-      if (currentNextActions.length > 1) {
-        item.editedName = undefined;
-      } else {
-        item.editedName = value;
-      }
-    });
-
-    const removeBtn = actionItem.createEl("button", {
-      cls: "flow-gtd-action-btn",
-    });
-    removeBtn.setAttribute("type", "button");
-    removeBtn.setAttribute("aria-label", "Remove action");
-    removeBtn.setAttribute("title", "Remove action");
-    removeBtn.setText("✕");
-    removeBtn.addEventListener("click", () => {
-      currentNextActions.splice(index, 1);
-      item.editedNames = [...currentNextActions];
-      if (currentNextActions.length === 1) {
-        item.editedName = currentNextActions[0];
-      }
       state.queueRender("editable");
     });
-  });
 
-  if (currentNextActions.length === 1) {
-    item.editedName = currentNextActions[0];
-    item.editedNames = undefined;
+    if (currentNextActions.length === 1) {
+      item.editedName = currentNextActions[0];
+      item.editedNames = undefined;
+    }
   }
 
+  // Action selector and other fields - show for all items
   const actionSelectorEl = itemEl.createDiv("flow-gtd-action-selector");
-  const actionRow = actionSelectorEl.createDiv("flow-gtd-inline-field");
-  const actionSelectId = state.getUniqueId("flow-gtd-action");
-  const actionLabel = actionRow.createEl("label", {
-    text: "Choose how to process:",
-    cls: "flow-gtd-inline-label flow-gtd-label",
+  actionSelectorEl.style.marginTop = "12px";
+
+  const actionLabel = actionSelectorEl.createEl("label", {
+    text: "How to Process",
+    cls: "flow-gtd-label",
   });
+  actionLabel.style.display = "block";
+  actionLabel.style.marginBottom = "8px";
+  actionLabel.style.fontSize = "14px";
+  actionLabel.style.fontWeight = "600";
+  actionLabel.style.color = "var(--text-normal)";
+  actionLabel.style.textTransform = "none";
+
+  const actionSelectId = state.getUniqueId("flow-gtd-action");
   actionLabel.setAttribute("for", actionSelectId);
 
-  const actionControl = actionRow.createDiv("flow-gtd-inline-control");
-  const actionDropdown = new DropdownComponent(actionControl);
+  const actionDropdown = new DropdownComponent(actionSelectorEl);
   actionDropdown.selectEl.id = actionSelectId;
   actionDropdown.selectEl.addClass("flow-gtd-inline-select");
-  actionDropdown.selectEl.setAttribute("aria-label", "Choose how to process");
+  actionDropdown.selectEl.setAttribute("aria-label", "How to Process");
+
+  // Force visible text with inline styles
+  actionDropdown.selectEl.style.color = "var(--text-normal)";
+  actionDropdown.selectEl.style.fontSize = "14px";
+
   const actions: Array<{
     value: EditableItem["selectedAction"];
     label: string;
@@ -393,79 +428,59 @@ function renderProjectCreationSection(
   state: InboxModalState
 ) {
   const projectEl = container.createDiv("flow-gtd-project-section");
-  projectEl.createEl("p", {
-    text: "Project Outcome (what done looks like):",
+  projectEl.style.marginTop = "12px";
+
+  const projectLabel = projectEl.createEl("label", {
+    text: "New Project Name",
     cls: "flow-gtd-label",
   });
+  projectLabel.style.display = "block";
+  projectLabel.style.marginBottom = "8px";
+  projectLabel.style.fontSize = "14px";
+  projectLabel.style.fontWeight = "600";
+  projectLabel.style.color = "var(--text-normal)";
+  projectLabel.style.textTransform = "none";
 
-  const inputRow = projectEl.createDiv("flow-gtd-project-input-row");
-  inputRow.style.display = "flex";
-  inputRow.style.gap = "8px";
-  inputRow.style.alignItems = "center";
-
-  const projectInput = inputRow.createEl("input", {
+  const projectInput = projectEl.createEl("input", {
     type: "text",
     cls: "flow-gtd-project-input",
   });
-  projectInput.style.flex = "1";
-  projectInput.placeholder = "e.g., Vacation planned and booked";
+  projectInput.placeholder = "Enter project name...";
   projectInput.value = item.editedProjectTitle || item.result?.projectOutcome || "";
   projectInput.addEventListener("input", (e) => {
     item.editedProjectTitle = (e.target as HTMLInputElement).value;
   });
 
-  const suggestBtn = inputRow.createEl("button", {
-    text: "✨ Suggest Project Name",
-    cls: "flow-gtd-suggest-project-btn",
-  });
-  suggestBtn.style.flexShrink = "0";
-  suggestBtn.addEventListener("click", async () => {
-    try {
-      const suggestedName = await state.suggestProjectName(item.original);
-      item.editedProjectTitle = suggestedName;
-      projectInput.value = suggestedName;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      projectEl.createDiv("flow-gtd-error").setText(message);
-    }
-  });
-
+  // AI Suggestions for existing projects (not for new project creation)
   if (
     item.isAIProcessed &&
     item.result?.suggestedProjects &&
-    item.result.suggestedProjects.length > 0
+    item.result.suggestedProjects.length > 0 &&
+    item.result.suggestedProjects[0].confidence === "high"
   ) {
-    const suggestionsEl = projectEl.createDiv("flow-gtd-project-suggestions");
-    suggestionsEl.createEl("p", {
-      text: "✨ AI Suggested Projects:",
-      cls: "flow-gtd-label flow-gtd-suggestions-label",
-    });
+    const suggestion = item.result.suggestedProjects[0];
+    const aiSuggestionBox = projectEl.createDiv();
+    aiSuggestionBox.style.display = "flex";
+    aiSuggestionBox.style.alignItems = "flex-start";
+    aiSuggestionBox.style.gap = "8px";
+    aiSuggestionBox.style.padding = "12px";
+    aiSuggestionBox.style.backgroundColor = "rgba(255, 193, 7, 0.1)";
+    aiSuggestionBox.style.border = "1px solid rgba(255, 193, 7, 0.3)";
+    aiSuggestionBox.style.borderRadius = "8px";
+    aiSuggestionBox.style.marginTop = "12px";
 
-    item.result.suggestedProjects.forEach((suggestion) => {
-      const suggestionEl = suggestionsEl.createDiv("flow-gtd-suggestion-item");
-      suggestionEl.style.padding = "8px";
-      suggestionEl.style.margin = "4px 0";
-      suggestionEl.style.border = "1px solid var(--background-modifier-border)";
-      suggestionEl.style.borderRadius = "4px";
-      suggestionEl.style.cursor = "pointer";
+    const sparkleIcon = aiSuggestionBox.createSpan();
+    sparkleIcon.setText("✨");
+    sparkleIcon.style.flexShrink = "0";
+    sparkleIcon.style.marginTop = "2px";
 
-      suggestionEl.createEl("strong", { text: suggestion.project.title });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: suggestion.relevance,
-        cls: "flow-gtd-suggestion-relevance",
-      });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: `Confidence: ${suggestion.confidence}`,
-        cls: "flow-gtd-suggestion-confidence",
-      });
+    const suggestionText = aiSuggestionBox.createDiv();
+    suggestionText.style.fontSize = "12px";
+    suggestionText.style.color = "var(--text-normal)";
 
-      suggestionEl.addEventListener("click", () => {
-        item.editedProjectTitle = suggestion.project.title;
-        projectInput.value = suggestion.project.title;
-      });
-    });
+    const strongText = suggestionText.createEl("strong");
+    strongText.setText("AI Suggestion: ");
+    suggestionText.createSpan({ text: suggestion.relevance });
   }
 
   if (item.projectPriority === undefined) {
@@ -476,6 +491,10 @@ function renderProjectCreationSection(
     .setName("Project priority")
     .setDesc("1 (highest) to 5 (lowest)");
   prioritySetting.addDropdown((dropdown) => {
+    // Force visible text with inline styles
+    dropdown.selectEl.style.color = "var(--text-normal)";
+    dropdown.selectEl.style.fontSize = "14px";
+
     ["1", "2", "3", "4", "5"].forEach((value) => dropdown.addOption(value, value));
     dropdown.setValue(String(item.projectPriority));
     dropdown.onChange((value) => {
@@ -493,20 +512,31 @@ function renderProjectSelectionSection(
   state: InboxModalState
 ) {
   const projectSelectorEl = container.createDiv("flow-gtd-project-selector");
-  const projectRow = projectSelectorEl.createDiv("flow-gtd-inline-field");
+  projectSelectorEl.style.marginTop = "12px";
+
   const projectSelectId = state.getUniqueId("flow-gtd-project");
-  const projectLabelText = "Select existing project:";
-  const projectLabel = projectRow.createEl("label", {
+  const projectLabelText = "Select Project";
+  const projectLabel = projectSelectorEl.createEl("label", {
     text: projectLabelText,
-    cls: "flow-gtd-inline-label flow-gtd-label",
+    cls: "flow-gtd-label",
   });
   projectLabel.setAttribute("for", projectSelectId);
+  projectLabel.style.display = "block";
+  projectLabel.style.marginBottom = "8px";
+  projectLabel.style.fontSize = "14px";
+  projectLabel.style.fontWeight = "600";
+  projectLabel.style.color = "var(--text-normal)";
+  projectLabel.style.textTransform = "none";
 
-  const projectControl = projectRow.createDiv("flow-gtd-inline-control");
-  const projectDropdown = new DropdownComponent(projectControl);
+  const projectDropdown = new DropdownComponent(projectSelectorEl);
   projectDropdown.selectEl.id = projectSelectId;
   projectDropdown.selectEl.addClass("flow-gtd-inline-select");
   projectDropdown.selectEl.setAttribute("aria-label", projectLabelText);
+
+  // Force visible text with inline styles
+  projectDropdown.selectEl.style.color = "var(--text-normal)";
+  projectDropdown.selectEl.style.fontSize = "14px";
+
   projectDropdown.addOption("", "-- Select a project --");
   state.existingProjects.forEach((project) => {
     projectDropdown.addOption(project.file, project.title);
@@ -527,38 +557,33 @@ function renderProjectSelectionSection(
   if (
     item.isAIProcessed &&
     item.result?.suggestedProjects &&
-    item.result.suggestedProjects.length > 0
+    item.result.suggestedProjects.length > 0 &&
+    item.result.suggestedProjects[0].confidence === "high"
   ) {
-    const suggestionsEl = projectSelectorEl.createDiv("flow-gtd-project-suggestions");
-    suggestionsEl.createEl("p", {
-      text: "✨ AI Suggested Projects:",
-      cls: "flow-gtd-label flow-gtd-suggestions-label",
-    });
+    const suggestion = item.result.suggestedProjects[0];
+    const aiSuggestionBox = projectSelectorEl.createDiv();
+    aiSuggestionBox.style.display = "flex";
+    aiSuggestionBox.style.alignItems = "flex-start";
+    aiSuggestionBox.style.gap = "8px";
+    aiSuggestionBox.style.padding = "12px";
+    aiSuggestionBox.style.backgroundColor = "rgba(255, 193, 7, 0.1)";
+    aiSuggestionBox.style.border = "1px solid rgba(255, 193, 7, 0.3)";
+    aiSuggestionBox.style.borderRadius = "8px";
+    aiSuggestionBox.style.marginTop = "12px";
 
-    item.result.suggestedProjects.forEach((suggestion) => {
-      const suggestionEl = suggestionsEl.createDiv("flow-gtd-suggestion-item");
-      suggestionEl.style.padding = "8px";
-      suggestionEl.style.margin = "4px 0";
-      suggestionEl.style.border = "1px solid var(--background-modifier-border)";
-      suggestionEl.style.borderRadius = "4px";
-      suggestionEl.style.cursor = "pointer";
+    const sparkleIcon = aiSuggestionBox.createSpan();
+    sparkleIcon.setText("✨");
+    sparkleIcon.style.flexShrink = "0";
+    sparkleIcon.style.marginTop = "2px";
 
-      suggestionEl.createEl("strong", { text: suggestion.project.title });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: suggestion.relevance,
-        cls: "flow-gtd-suggestion-relevance",
-      });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: `Confidence: ${suggestion.confidence}`,
-        cls: "flow-gtd-suggestion-confidence",
-      });
+    const suggestionText = aiSuggestionBox.createDiv();
+    suggestionText.style.fontSize = "12px";
+    suggestionText.style.color = "var(--text-normal)";
 
-      suggestionEl.addEventListener("click", () => {
-        item.selectedProject = suggestion.project;
-        state.queueRender("editable");
-      });
+    const strongText = suggestionText.createEl("strong");
+    strongText.setText("AI Suggestion: ");
+    suggestionText.createSpan({
+      text: `${suggestion.relevance} (${suggestion.confidence} confidence)`,
     });
   }
 }
@@ -569,20 +594,31 @@ function renderPersonSelectionSection(
   state: InboxModalState
 ) {
   const personSelectorEl = container.createDiv("flow-gtd-person-selector");
-  const personRow = personSelectorEl.createDiv("flow-gtd-inline-field");
+  personSelectorEl.style.marginTop = "12px";
+
   const personSelectId = state.getUniqueId("flow-gtd-person");
-  const personLabelText = "Select person to discuss with:";
-  const personLabel = personRow.createEl("label", {
+  const personLabelText = "Discuss With";
+  const personLabel = personSelectorEl.createEl("label", {
     text: personLabelText,
-    cls: "flow-gtd-inline-label flow-gtd-label",
+    cls: "flow-gtd-label",
   });
   personLabel.setAttribute("for", personSelectId);
+  personLabel.style.display = "block";
+  personLabel.style.marginBottom = "8px";
+  personLabel.style.fontSize = "14px";
+  personLabel.style.fontWeight = "600";
+  personLabel.style.color = "var(--text-normal)";
+  personLabel.style.textTransform = "none";
 
-  const personControl = personRow.createDiv("flow-gtd-inline-control");
-  const personDropdown = new DropdownComponent(personControl);
+  const personDropdown = new DropdownComponent(personSelectorEl);
   personDropdown.selectEl.id = personSelectId;
   personDropdown.selectEl.addClass("flow-gtd-inline-select");
   personDropdown.selectEl.setAttribute("aria-label", personLabelText);
+
+  // Force visible text with inline styles
+  personDropdown.selectEl.style.color = "var(--text-normal)";
+  personDropdown.selectEl.style.fontSize = "14px";
+
   personDropdown.addOption("", "-- Select a person --");
   state.existingPersons.forEach((person) => {
     personDropdown.addOption(person.file, person.title);
@@ -608,43 +644,8 @@ function renderPersonSelectionSection(
     item.selectedPerson = state.existingPersons.find((p) => p.file === value) || undefined;
   });
 
-  if (
-    item.isAIProcessed &&
-    item.result?.suggestedPersons &&
-    item.result.suggestedPersons.length > 0
-  ) {
-    const suggestionsEl = personSelectorEl.createDiv("flow-gtd-person-suggestions");
-    suggestionsEl.createEl("p", {
-      text: "✨ AI Suggested Persons:",
-      cls: "flow-gtd-label flow-gtd-suggestions-label",
-    });
-
-    item.result.suggestedPersons.forEach((suggestion) => {
-      const suggestionEl = suggestionsEl.createDiv("flow-gtd-suggestion-item");
-      suggestionEl.style.padding = "8px";
-      suggestionEl.style.margin = "4px 0";
-      suggestionEl.style.border = "1px solid var(--background-modifier-border)";
-      suggestionEl.style.borderRadius = "4px";
-      suggestionEl.style.cursor = "pointer";
-
-      suggestionEl.createEl("strong", { text: suggestion.person.title });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: suggestion.relevance,
-        cls: "flow-gtd-suggestion-relevance",
-      });
-      suggestionEl.createEl("br");
-      suggestionEl.createEl("span", {
-        text: `Confidence: ${suggestion.confidence}`,
-        cls: "flow-gtd-suggestion-confidence",
-      });
-
-      suggestionEl.addEventListener("click", () => {
-        item.selectedPerson = suggestion.person;
-        state.queueRender("editable");
-      });
-    });
-  }
+  // Only show AI suggestion box for high confidence suggestions
+  // (Person dropdown already pre-selects high confidence suggestions above)
 }
 
 function renderSphereSelector(container: HTMLElement, item: EditableItem, state: InboxModalState) {
@@ -654,44 +655,39 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
   }
 
   const sphereSelectorEl = container.createDiv("flow-gtd-sphere-selector");
+  sphereSelectorEl.style.marginTop = "12px";
 
-  if (
-    item.isAIProcessed &&
-    item.result?.recommendedSpheres &&
-    item.result.recommendedSpheres.length > 0
-  ) {
-    const recommendationEl = sphereSelectorEl.createDiv("flow-gtd-sphere-recommendation");
-    recommendationEl.createEl("p", {
-      text: `✨ Recommended: ${item.result.recommendedSpheres.join(", ")}`,
-      cls: "flow-gtd-sphere-recommendation-text",
-    });
-    if (item.result.recommendedSpheresReasoning) {
-      recommendationEl.createEl("p", {
-        text: item.result.recommendedSpheresReasoning,
-        cls: "flow-gtd-recommendation-reason",
-      });
-    }
-  }
-
-  const sphereRow = sphereSelectorEl.createDiv("flow-gtd-sphere-row");
-  sphereRow.style.display = "flex";
-  sphereRow.style.alignItems = "center";
-  sphereRow.style.gap = "12px";
-
-  const sphereLabel = sphereRow.createEl("span", {
-    text: "Select spheres:",
+  const sphereLabel = sphereSelectorEl.createEl("label", {
+    text: "Sphere",
     cls: "flow-gtd-label",
   });
-  sphereLabel.style.marginBottom = "0";
+  sphereLabel.style.display = "block";
+  sphereLabel.style.marginBottom = "8px";
+  sphereLabel.style.fontSize = "14px";
+  sphereLabel.style.fontWeight = "600";
+  sphereLabel.style.color = "var(--text-normal)";
+  sphereLabel.style.textTransform = "none";
 
-  const buttonContainer = sphereRow.createDiv("flow-gtd-sphere-buttons");
+  if (item.selectedSpheres.length > 0) {
+    const countSpan = sphereLabel.createSpan();
+    countSpan.style.fontWeight = "400";
+    countSpan.style.color = "var(--text-muted)";
+    countSpan.setText(` (${item.selectedSpheres.length} selected)`);
+  }
+
+  const buttonContainer = sphereSelectorEl.createDiv("flow-gtd-sphere-buttons");
   buttonContainer.style.display = "flex";
   buttonContainer.style.gap = "8px";
+
   spheres.forEach((sphere) => {
     const button = buttonContainer.createEl("button", {
-      text: sphere,
       cls: "flow-gtd-sphere-button",
     });
+    button.setAttribute("type", "button");
+
+    // Capitalize first letter
+    const displayText = sphere.charAt(0).toUpperCase() + sphere.slice(1);
+    button.setText(displayText);
 
     if (item.selectedSpheres.includes(sphere)) {
       button.addClass("selected");
@@ -705,6 +701,32 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
         item.selectedSpheres.push(sphere);
         button.addClass("selected");
       }
+      // Re-render to update the count
+      state.queueRender("editable");
     });
   });
+
+  // Show AI recommendation if available
+  if (
+    item.isAIProcessed &&
+    item.result?.recommendedSpheres &&
+    item.result.recommendedSpheres.length > 0
+  ) {
+    const recommendedSphere = item.result.recommendedSpheres[0];
+    if (item.selectedSpheres.includes(recommendedSphere)) {
+      const recommendationText = sphereSelectorEl.createDiv();
+      recommendationText.style.display = "flex";
+      recommendationText.style.alignItems = "center";
+      recommendationText.style.gap = "6px";
+      recommendationText.style.marginTop = "8px";
+      recommendationText.style.fontSize = "12px";
+      recommendationText.style.color = "var(--color-green)";
+
+      recommendationText.createSpan({ text: "✓" });
+      const recommendedText = recommendationText.createSpan();
+      const capitalizedRecommended =
+        recommendedSphere.charAt(0).toUpperCase() + recommendedSphere.slice(1);
+      recommendedText.setText(`${capitalizedRecommended} recommended based on context`);
+    }
+  }
 }
