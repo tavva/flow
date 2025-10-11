@@ -97,7 +97,7 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
 {
   "isActionable": true/false,
   "category": "next-action/project/reference/person/someday",
-  "projectOutcome": "the desired outcome (only if project)",
+  "projectOutcome": "the desired outcome - REQUIRED if category is 'project' or recommendedAction is 'create-project', otherwise omit or set to null",
   "nextAction": "the primary/first next action to take",
   "nextActions": ["optional array of multiple discrete next actions if the item can be broken down into independent actions"],
   "reasoning": "brief explanation of your analysis",
@@ -115,12 +115,14 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
       "confidence": "high/medium/low"
     }
   ],
-"recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard",
+  "recommendedAction": "create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard",
   "recommendedActionReasoning": "brief explanation of where this should go and why",
   "recommendedSpheres": ["array of recommended spheres from the available list"],
   "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item",
   "referenceContent": "formatted content to add to project (only if reference)"
 }
+
+IMPORTANT: If recommendedAction is "create-project", you MUST provide a non-empty projectOutcome string. Do not leave it empty or null.
 
 Where to route items:
 - "create-project": Item needs a new project (multi-step outcome)
@@ -483,6 +485,16 @@ Examples:
           'Invalid model response: "projectOutcome" must be provided for project items'
         );
       }
+      // If category is "project", recommendedAction should typically be "create-project" or "add-to-project"
+      if (
+        parsed.recommendedAction &&
+        parsed.recommendedAction !== "create-project" &&
+        parsed.recommendedAction !== "add-to-project"
+      ) {
+        throw new GTDResponseValidationError(
+          `Invalid model response: category "project" with recommendedAction "${parsed.recommendedAction}" is inconsistent - expected "create-project" or "add-to-project"`
+        );
+      }
     }
 
     if (parsed.suggestedProjects !== undefined) {
@@ -579,7 +591,7 @@ Examples:
     if (parsed.recommendedAction && parsed.recommendedAction === "create-project") {
       if (typeof parsed.projectOutcome !== "string" || parsed.projectOutcome.trim().length === 0) {
         throw new GTDResponseValidationError(
-          'Invalid model response: "projectOutcome" must accompany a "create-project" recommendation'
+          `Invalid model response: "projectOutcome" must accompany a "create-project" recommendation - got projectOutcome: ${JSON.stringify(parsed.projectOutcome)}, category: ${parsed.category}`
         );
       }
     }
