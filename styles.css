@@ -819,6 +819,96 @@ select.flow-gtd-inline-select option,
 }
 
 .theme-dark .flow-gtd-sphere-button.selected {
-	background-color: var(--text-normal);
-	color: var(--background-primary);
+        background-color: var(--text-normal);
+        color: var(--background-primary);
+}
+
+.flow-gtd-sphere-modal {
+        padding: 24px;
+        max-height: 80vh;
+        overflow-y: auto;
+}
+
+.flow-gtd-sphere-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 16px;
+}
+
+.flow-gtd-sphere-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        border-radius: 12px;
+        background-color: var(--background-primary-alt);
+        border: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-sphere-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+        color: var(--text-normal);
+}
+
+.flow-gtd-sphere-list {
+        margin: 0;
+        padding-left: 20px;
+}
+
+.flow-gtd-sphere-list-item {
+        margin-bottom: 6px;
+}
+
+.flow-gtd-sphere-project {
+        padding: 12px;
+        border-radius: 10px;
+        background-color: var(--background-primary);
+        border: 1px solid var(--background-modifier-border);
+        margin-bottom: 12px;
+}
+
+.flow-gtd-sphere-project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 8px;
+}
+
+.flow-gtd-sphere-project-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-normal);
+}
+
+.flow-gtd-sphere-project-priority {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+}
+
+.flow-gtd-sphere-next-actions {
+        margin: 0;
+        padding-left: 20px;
+}
+
+.flow-gtd-sphere-next-actions li {
+        margin-bottom: 6px;
+}
+
+.flow-gtd-sphere-empty {
+        font-size: 13px;
+        color: var(--text-muted);
+}
+
+.flow-gtd-sphere-notice {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+}
+
+.flow-gtd-sphere-loading {
+        font-size: 14px;
+        color: var(--text-muted);
 }
