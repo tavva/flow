@@ -2,6 +2,7 @@ import { App, Plugin, Notice } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { InboxProcessingModal } from "./src/inbox-modal";
+import { SphereViewModal } from "./src/sphere-view-modal";
 
 type InboxCommandConfig = {
   id: string;
@@ -24,6 +25,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     ];
 
     inboxCommands.forEach((config) => this.registerInboxCommand(config));
+    this.registerSphereCommands();
 
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
@@ -53,6 +55,25 @@ export default class FlowGTDCoachPlugin extends Plugin {
     });
   }
 
+  private registerSphereCommands() {
+    const spheres = this.settings.spheres;
+    spheres.forEach((sphere) => {
+      const normalizedId = sphere
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      this.addCommand({
+        id: `sphere-view-${normalizedId || "default"}`,
+        name: `Open ${this.getDisplaySphereName(sphere)} sphere`,
+        callback: () => {
+          this.openSphereView(sphere);
+        },
+      });
+    });
+  }
+
   private openInboxModal() {
     if (!this.hasRequiredApiKey()) {
       new Notice(this.getMissingApiKeyMessage());
@@ -61,6 +82,20 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     const modal = new InboxProcessingModal(this.app, this.settings);
     modal.open();
+  }
+
+  private openSphereView(sphere: string) {
+    const modal = new SphereViewModal(this.app, sphere, this.settings);
+    modal.open();
+  }
+
+  private getDisplaySphereName(sphere: string): string {
+    return sphere
+      .split(/[-_\s]+/)
+      .filter((part) => part.length > 0)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+      .trim();
   }
 
   private hasRequiredApiKey(): boolean {
