@@ -1,6 +1,8 @@
-import { App, Modal, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings } from "./types";
+
+export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
 interface SphereProjectSummary {
   project: FlowProject;
@@ -14,45 +16,64 @@ interface SphereViewData {
   generalNextActionsNotice?: string;
 }
 
-export class SphereViewModal extends Modal {
+export class SphereView extends ItemView {
   private readonly scanner: FlowProjectScanner;
+  private sphere: string;
+  private settings: PluginSettings;
 
-  constructor(
-    app: App,
-    private readonly sphere: string,
-    private readonly settings: PluginSettings
-  ) {
-    super(app);
-    this.scanner = new FlowProjectScanner(app);
+  constructor(leaf: WorkspaceLeaf, sphere: string, settings: PluginSettings) {
+    super(leaf);
+    this.sphere = sphere;
+    this.settings = settings;
+    this.scanner = new FlowProjectScanner(this.app);
+  }
+
+  getViewType(): string {
+    return SPHERE_VIEW_TYPE;
+  }
+
+  getDisplayText(): string {
+    return `${this.getDisplaySphereName()} Sphere`;
+  }
+
+  getIcon(): string {
+    return "circle";
   }
 
   async onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass("flow-gtd-sphere-modal");
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.addClass("flow-gtd-sphere-view");
 
-    const loadingEl = contentEl.createDiv({ cls: "flow-gtd-sphere-loading" });
+    const loadingEl = container.createDiv({ cls: "flow-gtd-sphere-loading" });
     loadingEl.setText("Loading sphere view...");
 
     try {
       const data = await this.loadSphereData();
       loadingEl.remove();
-      this.renderContent(data);
+      this.renderContent(container as HTMLElement, data);
     } catch (error) {
       console.error("Failed to load sphere view", error);
       loadingEl.setText("Unable to load sphere details. Check the console for more information.");
     }
   }
 
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
+  async onClose() {
+    // Cleanup if needed
+  }
+
+  // Method to update the sphere and refresh the view
+  async setSphere(sphere: string, settings: PluginSettings) {
+    this.sphere = sphere;
+    this.settings = settings;
+    await this.onOpen();
   }
 
   private async loadSphereData(): Promise<SphereViewData> {
     const allProjects = await this.scanner.scanProjects();
-    const sphereProjects = allProjects.filter((project) =>
-      project.tags.some((tag) => this.matchesSphereTag(tag))
+    const sphereProjects = allProjects.filter(
+      (project) =>
+        project.tags.some((tag) => this.matchesSphereTag(tag)) && project.status === "live"
     );
 
     const projectSummaries = sphereProjects
@@ -76,18 +97,24 @@ export class SphereViewModal extends Modal {
     };
   }
 
-  private renderContent(data: SphereViewData) {
-    const { contentEl } = this;
-    const titleEl = contentEl.createEl("h2", { cls: "flow-gtd-sphere-title" });
+  private renderContent(container: HTMLElement, data: SphereViewData) {
+    const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
-    this.renderProjectsNeedingActionsSection(data.projectsNeedingNextActions);
-    this.renderProjectsSection(data.projects);
-    this.renderGeneralNextActionsSection(data.generalNextActions, data.generalNextActionsNotice);
+    this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
+    this.renderProjectsSection(container, data.projects);
+    this.renderGeneralNextActionsSection(
+      container,
+      data.generalNextActions,
+      data.generalNextActionsNotice
+    );
   }
 
-  private renderProjectsNeedingActionsSection(projects: SphereProjectSummary[]) {
-    const section = this.createSection("Projects needing next actions");
+  private renderProjectsNeedingActionsSection(
+    container: HTMLElement,
+    projects: SphereProjectSummary[]
+  ) {
+    const section = this.createSection(container, "Projects needing next actions");
 
     if (projects.length === 0) {
       this.renderEmptyMessage(section, "All projects have next actions recorded.");
@@ -97,12 +124,20 @@ export class SphereViewModal extends Modal {
     const listEl = section.createEl("ul", { cls: "flow-gtd-sphere-list" });
     projects.forEach(({ project }) => {
       const item = listEl.createEl("li", { cls: "flow-gtd-sphere-list-item" });
-      item.setText(project.title);
+      const link = item.createEl("a", {
+        text: project.title,
+        cls: "flow-gtd-sphere-project-link",
+      });
+      link.style.cursor = "pointer";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openProjectFile(project.file);
+      });
     });
   }
 
-  private renderProjectsSection(projects: SphereProjectSummary[]) {
-    const section = this.createSection("Projects");
+  private renderProjectsSection(container: HTMLElement, projects: SphereProjectSummary[]) {
+    const section = this.createSection(container, "Projects");
 
     if (projects.length === 0) {
       this.renderEmptyMessage(section, "No projects are tagged with this sphere yet.");
@@ -113,7 +148,15 @@ export class SphereViewModal extends Modal {
       const wrapper = section.createDiv({ cls: "flow-gtd-sphere-project" });
       const header = wrapper.createDiv({ cls: "flow-gtd-sphere-project-header" });
 
-      header.createSpan({ cls: "flow-gtd-sphere-project-title", text: project.title });
+      const titleLink = header.createEl("a", {
+        text: project.title,
+        cls: "flow-gtd-sphere-project-title flow-gtd-sphere-project-link",
+      });
+      titleLink.style.cursor = "pointer";
+      titleLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openProjectFile(project.file);
+      });
       if (priority !== null) {
         header.createSpan({
           cls: "flow-gtd-sphere-project-priority",
@@ -132,8 +175,12 @@ export class SphereViewModal extends Modal {
     });
   }
 
-  private renderGeneralNextActionsSection(actions: string[], notice?: string) {
-    const section = this.createSection("General next actions");
+  private renderGeneralNextActionsSection(
+    container: HTMLElement,
+    actions: string[],
+    notice?: string
+  ) {
+    const section = this.createSection(container, "General next actions");
 
     if (notice) {
       const noticeEl = section.createDiv({ cls: "flow-gtd-sphere-notice" });
@@ -151,8 +198,8 @@ export class SphereViewModal extends Modal {
     });
   }
 
-  private createSection(title: string): HTMLElement {
-    const section = this.contentEl.createDiv({ cls: "flow-gtd-sphere-section" });
+  private createSection(container: HTMLElement, title: string): HTMLElement {
+    const section = container.createDiv({ cls: "flow-gtd-sphere-section" });
     section.createEl("h3", { text: title, cls: "flow-gtd-sphere-section-title" });
     return section;
   }
@@ -272,5 +319,22 @@ export class SphereViewModal extends Modal {
       .filter((part) => part.length > 0)
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(" ");
+  }
+
+  private async openProjectFile(filePath: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+
+    if (!(file instanceof TFile)) {
+      console.error(`Project file not found: ${filePath}`);
+      return;
+    }
+
+    try {
+      // Open in a new leaf split to the right
+      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      await leaf.openFile(file);
+    } catch (error) {
+      console.error(`Failed to open project file: ${filePath}`, error);
+    }
   }
 }

@@ -1,8 +1,8 @@
-import { App, Plugin, Notice } from "obsidian";
+import { App, Plugin, Notice, WorkspaceLeaf } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { InboxProcessingModal } from "./src/inbox-modal";
-import { SphereViewModal } from "./src/sphere-view-modal";
+import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { ReviewModal } from "./src/review-modal";
 
 type InboxCommandConfig = {
@@ -15,6 +15,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+
+    // Register the sphere view
+    this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
+      // Create with default sphere - will be updated when opened
+      return new SphereView(leaf, this.settings.spheres[0] || "personal", this.settings);
+    });
 
     // Add ribbon icon
     this.addRibbonIcon("inbox", "Flow GTD: Process Inbox", () => {
@@ -44,6 +50,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   onunload() {
+    // Detach all sphere views
+    this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE);
     console.log("Flow GTD Coach plugin unloaded");
   }
 
@@ -94,9 +102,29 @@ export default class FlowGTDCoachPlugin extends Plugin {
     modal.open();
   }
 
-  private openSphereView(sphere: string) {
-    const modal = new SphereViewModal(this.app, sphere, this.settings);
-    modal.open();
+  private async openSphereView(sphere: string) {
+    // Check if a sphere view is already open for this sphere
+    const existingLeaves = this.app.workspace.getLeavesOfType(SPHERE_VIEW_TYPE);
+    for (const leaf of existingLeaves) {
+      const view = leaf.view as SphereView;
+      // Check if this view is for the same sphere
+      if (view.getDisplayText().toLowerCase().includes(sphere.toLowerCase())) {
+        // Activate the existing view
+        this.app.workspace.revealLeaf(leaf);
+        return;
+      }
+    }
+
+    // No existing view found, create a new one
+    const leaf = this.app.workspace.getLeaf("tab");
+    await leaf.setViewState({
+      type: SPHERE_VIEW_TYPE,
+      active: true,
+    });
+
+    // Update the view with the correct sphere
+    const view = leaf.view as SphereView;
+    await view.setSphere(sphere, this.settings);
   }
 
   private getDisplaySphereName(sphere: string): string {

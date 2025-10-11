@@ -823,10 +823,10 @@ select.flow-gtd-inline-select option,
         color: var(--background-primary);
 }
 
-.flow-gtd-sphere-modal {
+.flow-gtd-sphere-view {
         padding: 24px;
-        max-height: 80vh;
         overflow-y: auto;
+        height: 100%;
 }
 
 .flow-gtd-sphere-title {
@@ -911,4 +911,16 @@ select.flow-gtd-inline-select option,
 .flow-gtd-sphere-loading {
         font-size: 14px;
         color: var(--text-muted);
+}
+
+.flow-gtd-sphere-project-link {
+        color: var(--text-accent);
+        text-decoration: none;
+        cursor: pointer;
+        transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.flow-gtd-sphere-project-link:hover {
+        color: var(--interactive-accent);
+        text-decoration: underline;
 }
