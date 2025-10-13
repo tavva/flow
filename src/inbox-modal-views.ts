@@ -313,10 +313,12 @@ function renderEditableItemContent(
     renderPersonSelectionSection(itemEl, item, state);
   }
 
-  // Show next actions editor for create-project and add-to-project
+  // Show next actions editor for actions that use next actions
   if (
-    (item.selectedAction === "create-project" || item.selectedAction === "add-to-project") &&
-    item.isAIProcessed
+    item.selectedAction === "create-project" ||
+    item.selectedAction === "add-to-project" ||
+    item.selectedAction === "next-actions-file" ||
+    item.selectedAction === "person"
   ) {
     renderNextActionsEditor(itemEl, item, state);
   }
