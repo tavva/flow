@@ -1,9 +1,10 @@
 import { App, Plugin, Notice, WorkspaceLeaf } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
-import { InboxProcessingModal } from "./src/inbox-modal";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
+import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { ReviewModal } from "./src/review-modal";
+import { ConfirmationModal } from "./src/confirmation-modal";
 
 type InboxCommandConfig = {
   id: string;
@@ -22,9 +23,14 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return new SphereView(leaf, this.settings.spheres[0] || "personal", this.settings);
     });
 
+    // Register the inbox processing view
+    this.registerView(INBOX_PROCESSING_VIEW_TYPE, (leaf) => {
+      return new InboxProcessingView(leaf, this.settings);
+    });
+
     // Add ribbon icon
     this.addRibbonIcon("inbox", "Flow GTD: Process Inbox", () => {
-      this.openInboxModal();
+      this.openInboxProcessingView();
     });
 
     const inboxCommands: InboxCommandConfig[] = [
@@ -52,6 +58,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
   onunload() {
     // Detach all sphere views
     this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE);
+    // Detach all inbox processing views
+    this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
     console.log("Flow GTD Coach plugin unloaded");
   }
 
@@ -68,7 +76,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       id: config.id,
       name: config.name,
       callback: () => {
-        this.openInboxModal();
+        this.openInboxProcessingView();
       },
     });
   }
@@ -92,14 +100,55 @@ export default class FlowGTDCoachPlugin extends Plugin {
     });
   }
 
-  private openInboxModal() {
+  private async openInboxProcessingView() {
     if (!this.hasRequiredApiKey()) {
       new Notice(this.getMissingApiKeyMessage());
       return;
     }
 
-    const modal = new InboxProcessingModal(this.app, this.settings);
-    modal.open();
+    // Check if inbox processing view already exists
+    const existingLeaves = this.app.workspace.getLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
+
+    if (existingLeaves.length > 0) {
+      const leaf = existingLeaves[0];
+      const view = leaf.view as InboxProcessingView;
+
+      // Check if view has items in progress
+      if (view.hasItemsInProgress()) {
+        const shouldRestart = await this.confirmRestart();
+        if (!shouldRestart) {
+          // Just reveal the existing view
+          this.app.workspace.revealLeaf(leaf);
+          return;
+        }
+        // User wants to restart - will reuse the leaf
+      }
+
+      // Reveal and refresh the existing view
+      this.app.workspace.revealLeaf(leaf);
+      await view.refresh();
+      return;
+    }
+
+    // No existing view, create new one
+    const leaf = this.app.workspace.getLeaf("tab");
+    await leaf.setViewState({
+      type: INBOX_PROCESSING_VIEW_TYPE,
+      active: true,
+    });
+  }
+
+  private async confirmRestart(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const modal = new ConfirmationModal(
+        this.app,
+        "Restart inbox processing?",
+        "You have items in progress. Starting a new session will discard your current work.",
+        () => resolve(true),
+        () => resolve(false)
+      );
+      modal.open();
+    });
   }
 
   private async openSphereView(sphere: string) {

@@ -1,4 +1,4 @@
-// ABOUTME: Tests for inbox modal view rendering functions
+// ABOUTME: Tests for inbox item persistence service
 // ABOUTME: Ensures next actions are properly persisted for add-to-project actions
 
 import { InboxItemPersistenceService } from "../src/inbox-item-persistence";

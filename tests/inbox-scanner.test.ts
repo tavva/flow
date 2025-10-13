@@ -1,5 +1,6 @@
 import { InboxScanner, InboxItem } from "../src/inbox-scanner";
-import { InboxProcessingModal } from "../src/inbox-modal";
+import { InboxModalState } from "../src/inbox-modal-state";
+import { InboxProcessingController } from "../src/inbox-processing-controller";
 import { GTDProcessingResult, PluginSettings } from "../src/types";
 
 jest.mock("obsidian");
@@ -104,17 +105,17 @@ describe("Inbox deletion handling", () => {
   });
 
   it("tracks per-file deletions when saving multiple processed inbox items", async () => {
-    const modal = new InboxProcessingModal(app as unknown as App, settings, false);
-
-    (modal as any).renderEditableItemsList = jest.fn();
+    const controller = new InboxProcessingController(app as unknown as App, settings);
+    const renderCallback = jest.fn();
+    const state = new InboxModalState(controller, settings, renderCallback);
 
     const deleteMock = jest.fn().mockResolvedValue(undefined);
 
-    (modal as any).inboxScanner = {
+    (state as any).controller.inboxScanner = {
       deleteInboxItem: deleteMock,
     } as Pick<InboxScanner, "deleteInboxItem">;
 
-    (modal as any).writer = {};
+    (state as any).controller.writer = {};
 
     const baseResult: GTDProcessingResult = {
       isActionable: true,
@@ -152,7 +153,7 @@ describe("Inbox deletion handling", () => {
       },
     ] as any;
 
-    // Convert processedItems to editableItems format for the new workflow
+    // Convert processedItems to editableItems format
     const editableItems = processedItems.map((item: any) => ({
       original: item.original,
       inboxItem: item.inboxItem,
@@ -164,9 +165,9 @@ describe("Inbox deletion handling", () => {
       editedName: item.editedName,
       editedProjectTitle: item.editedProjectTitle,
     }));
-    (modal as any).editableItems = editableItems;
+    state.editableItems = editableItems;
 
-    await (modal as any).saveAllItems();
+    await state.saveAllItems();
 
     expect(deleteMock).toHaveBeenCalledTimes(2);
     expect(deleteMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ lineNumber: 2 }));
