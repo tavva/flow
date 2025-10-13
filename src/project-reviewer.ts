@@ -27,7 +27,7 @@ export class ProjectReviewer {
     try {
       const responseText = await this.client.sendMessage({
         model: this.model,
-        maxTokens: 4000,
+        maxTokens: 16000,
         messages: [{ role: "user", content: prompt }],
       });
 
