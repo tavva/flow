@@ -20,6 +20,7 @@ export class SphereView extends ItemView {
   private readonly scanner: FlowProjectScanner;
   private sphere: string;
   private settings: PluginSettings;
+  private rightPaneLeaf: WorkspaceLeaf | null = null;
 
   constructor(leaf: WorkspaceLeaf, sphere: string, settings: PluginSettings) {
     super(leaf);

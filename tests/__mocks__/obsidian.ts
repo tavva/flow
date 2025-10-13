@@ -25,10 +25,20 @@ export class FileManager {
   processFrontMatter = jest.fn();
 }
 
+export class WorkspaceLeaf {
+  openFile = jest.fn();
+}
+
+export class Workspace {
+  getLeaf = jest.fn();
+  activeLeaf: WorkspaceLeaf | null = null;
+}
+
 export class App {
   vault = new Vault();
   metadataCache = new MetadataCache();
   fileManager = new FileManager();
+  workspace = new Workspace();
 }
 
 export class Modal {
@@ -144,4 +154,57 @@ export interface CachedMetadata {
   links?: any[];
   embeds?: any[];
   tags?: any[];
+}
+
+export class ItemView {
+  app: App;
+  leaf: WorkspaceLeaf;
+  containerEl: any;
+
+  constructor(leaf: WorkspaceLeaf) {
+    this.app = new App();
+    this.leaf = leaf;
+    // Create a simple mock container without using DOM
+    this.containerEl = {
+      children: [{}, {}],
+      empty: jest.fn(),
+      createDiv: jest.fn(() => ({
+        setText: jest.fn(),
+        createDiv: jest.fn(() => ({ setText: jest.fn() })),
+        createEl: jest.fn(() => ({
+          setText: jest.fn(),
+          createEl: jest.fn(() => ({
+            setText: jest.fn(),
+            addEventListener: jest.fn(),
+          })),
+        })),
+        addClass: jest.fn(),
+        remove: jest.fn(),
+      })),
+      createEl: jest.fn(() => ({
+        setText: jest.fn(),
+      })),
+      addClass: jest.fn(),
+    };
+  }
+
+  getViewType(): string {
+    return "";
+  }
+
+  getDisplayText(): string {
+    return "";
+  }
+
+  getIcon(): string {
+    return "";
+  }
+
+  onOpen(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  onClose(): Promise<void> {
+    return Promise.resolve();
+  }
 }
