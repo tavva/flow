@@ -326,8 +326,6 @@ export class ReviewModal extends Modal {
 
   private async startReview(sphere: string) {
     this.selectedSphere = sphere;
-    this.currentStep = "loading";
-    this.renderCurrentStep();
 
     try {
       // Scan all projects
@@ -339,6 +337,10 @@ export class ReviewModal extends Modal {
         const hasSphere = p.tags.some((tag) => tag === `project/${sphere}`);
         return isLive && hasSphere;
       });
+
+      // Now render loading screen with correct project count
+      this.currentStep = "loading";
+      this.renderCurrentStep();
 
       if (this.projects.length === 0) {
         this.currentStep = "results";
