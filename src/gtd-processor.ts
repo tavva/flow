@@ -479,7 +479,9 @@ Examples:
 
         if (!hasValidNextActions) {
           throw new GTDResponseValidationError(
-            'Invalid model response: actionable items must include a non-empty "nextAction" string or a "nextActions" array of non-empty strings'
+            withResponse(
+              'Invalid model response: actionable items must include a non-empty "nextAction" string or a "nextActions" array of non-empty strings'
+            )
           );
         }
       }
