@@ -4,10 +4,14 @@ import { App, TFile, CachedMetadata, MetadataCache, Vault } from "obsidian";
 
 // Mock Obsidian types
 class MockTFile implements Partial<TFile> {
+  public stat: { mtime: number };
+
   constructor(
     public path: string,
     public basename: string
-  ) {}
+  ) {
+    this.stat = { mtime: Date.now() };
+  }
 }
 
 describe("FlowProjectScanner", () => {
