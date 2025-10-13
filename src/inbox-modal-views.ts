@@ -259,113 +259,7 @@ function renderEditableItemContent(
   item: EditableItem,
   state: InboxModalState
 ) {
-  // Only show Next Actions if item is AI processed
-  if (item.isAIProcessed) {
-    let currentNextActions: string[] = [];
-
-    if (item.editedNames && item.editedNames.length > 0) {
-      currentNextActions = [...item.editedNames];
-    } else if (item.editedName) {
-      currentNextActions = [item.editedName];
-    } else if (item.result) {
-      if (item.result.nextActions && item.result.nextActions.length > 0) {
-        currentNextActions = [...item.result.nextActions];
-      } else if (item.result.nextAction) {
-        currentNextActions = [item.result.nextAction];
-      }
-    } else {
-      currentNextActions = [item.original];
-    }
-
-    const actionsContainer = itemEl.createDiv("flow-gtd-actions-editor");
-    const actionsHeader = actionsContainer.createDiv("flow-gtd-actions-header");
-    actionsHeader.style.display = "flex";
-    actionsHeader.style.alignItems = "center";
-    actionsHeader.style.gap = "8px";
-    actionsHeader.style.justifyContent = "flex-start";
-
-    const actionsLabel = actionsHeader.createEl("label", {
-      text: "Next Actions",
-      cls: "flow-gtd-label",
-    });
-    actionsLabel.style.marginBottom = "0";
-    actionsLabel.style.fontSize = "14px";
-    actionsLabel.style.fontWeight = "600";
-    actionsLabel.style.color = "var(--text-normal)";
-    actionsLabel.style.textTransform = "none";
-
-    const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
-    currentNextActions.forEach((action, index) => {
-      const actionItem = actionsList.createDiv("flow-gtd-action-item");
-
-      // Numbered badge
-      const numberBadge = actionItem.createDiv("flow-gtd-action-number");
-      numberBadge.setText(String(index + 1));
-
-      // Input container
-      const inputContainer = actionItem.createDiv();
-      inputContainer.style.flex = "1";
-      inputContainer.style.minWidth = "0";
-
-      const actionInput = inputContainer.createEl("input", {
-        type: "text",
-        cls: "flow-gtd-action-input",
-      });
-      actionInput.value = action;
-      actionInput.placeholder = `Enter action ${index + 1}...`;
-      actionInput.style.border = "none";
-      actionInput.style.padding = "0";
-      actionInput.style.backgroundColor = "transparent";
-      actionInput.style.fontSize = "14px";
-
-      actionInput.addEventListener("input", (e) => {
-        const value = (e.target as HTMLInputElement).value;
-        currentNextActions[index] = value;
-        item.editedNames = [...currentNextActions];
-        if (currentNextActions.length > 1) {
-          item.editedName = undefined;
-        } else {
-          item.editedName = value;
-        }
-      });
-
-      const removeBtn = actionItem.createEl("button", {
-        cls: "flow-gtd-action-remove",
-      });
-      removeBtn.setAttribute("type", "button");
-      removeBtn.setAttribute("aria-label", "Remove action");
-      removeBtn.setAttribute("title", "Remove action");
-      removeBtn.innerHTML = "✕";
-      removeBtn.addEventListener("click", () => {
-        currentNextActions.splice(index, 1);
-        item.editedNames = [...currentNextActions];
-        if (currentNextActions.length === 1) {
-          item.editedName = currentNextActions[0];
-        }
-        state.queueRender("editable");
-      });
-    });
-
-    // Add action button
-    const addActionBtn = actionsList.createEl("button", {
-      cls: "flow-gtd-add-action-btn",
-    });
-    addActionBtn.setAttribute("type", "button");
-    addActionBtn.setAttribute("aria-label", "Add action");
-    addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
-    addActionBtn.addEventListener("click", () => {
-      currentNextActions.push("");
-      item.editedNames = [...currentNextActions];
-      state.queueRender("editable");
-    });
-
-    if (currentNextActions.length === 1) {
-      item.editedName = currentNextActions[0];
-      item.editedNames = undefined;
-    }
-  }
-
-  // Action selector and other fields - show for all items
+  // Action selector - show for all items
   const actionSelectorEl = itemEl.createDiv("flow-gtd-action-selector");
   actionSelectorEl.style.marginTop = "12px";
 
@@ -419,7 +313,126 @@ function renderEditableItemContent(
     renderPersonSelectionSection(itemEl, item, state);
   }
 
+  // Show next actions editor for create-project and add-to-project
+  if (
+    (item.selectedAction === "create-project" || item.selectedAction === "add-to-project") &&
+    item.isAIProcessed
+  ) {
+    renderNextActionsEditor(itemEl, item, state);
+  }
+
   renderSphereSelector(itemEl, item, state);
+}
+
+function renderNextActionsEditor(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  let currentNextActions: string[] = [];
+
+  if (item.editedNames && item.editedNames.length > 0) {
+    currentNextActions = [...item.editedNames];
+  } else if (item.editedName) {
+    currentNextActions = [item.editedName];
+  } else if (item.result) {
+    if (item.result.nextActions && item.result.nextActions.length > 0) {
+      currentNextActions = [...item.result.nextActions];
+    } else if (item.result.nextAction) {
+      currentNextActions = [item.result.nextAction];
+    }
+  } else {
+    currentNextActions = [item.original];
+  }
+
+  const actionsContainer = container.createDiv("flow-gtd-actions-editor");
+  actionsContainer.style.marginTop = "12px";
+
+  const actionsHeader = actionsContainer.createDiv("flow-gtd-actions-header");
+  actionsHeader.style.display = "flex";
+  actionsHeader.style.alignItems = "center";
+  actionsHeader.style.gap = "8px";
+  actionsHeader.style.justifyContent = "flex-start";
+
+  const actionsLabel = actionsHeader.createEl("label", {
+    text: "Next Actions",
+    cls: "flow-gtd-label",
+  });
+  actionsLabel.style.marginBottom = "0";
+  actionsLabel.style.fontSize = "14px";
+  actionsLabel.style.fontWeight = "600";
+  actionsLabel.style.color = "var(--text-normal)";
+  actionsLabel.style.textTransform = "none";
+
+  const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
+  currentNextActions.forEach((action, index) => {
+    const actionItem = actionsList.createDiv("flow-gtd-action-item");
+
+    // Numbered badge
+    const numberBadge = actionItem.createDiv("flow-gtd-action-number");
+    numberBadge.setText(String(index + 1));
+
+    // Input container
+    const inputContainer = actionItem.createDiv();
+    inputContainer.style.flex = "1";
+    inputContainer.style.minWidth = "0";
+
+    const actionInput = inputContainer.createEl("input", {
+      type: "text",
+      cls: "flow-gtd-action-input",
+    });
+    actionInput.value = action;
+    actionInput.placeholder = `Enter action ${index + 1}...`;
+    actionInput.style.border = "none";
+    actionInput.style.padding = "0";
+    actionInput.style.backgroundColor = "transparent";
+    actionInput.style.fontSize = "14px";
+
+    actionInput.addEventListener("input", (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      currentNextActions[index] = value;
+      item.editedNames = [...currentNextActions];
+      if (currentNextActions.length > 1) {
+        item.editedName = undefined;
+      } else {
+        item.editedName = value;
+      }
+    });
+
+    const removeBtn = actionItem.createEl("button", {
+      cls: "flow-gtd-action-remove",
+    });
+    removeBtn.setAttribute("type", "button");
+    removeBtn.setAttribute("aria-label", "Remove action");
+    removeBtn.setAttribute("title", "Remove action");
+    removeBtn.innerHTML = "✕";
+    removeBtn.addEventListener("click", () => {
+      currentNextActions.splice(index, 1);
+      item.editedNames = [...currentNextActions];
+      if (currentNextActions.length === 1) {
+        item.editedName = currentNextActions[0];
+      }
+      state.queueRender("editable");
+    });
+  });
+
+  // Add action button
+  const addActionBtn = actionsList.createEl("button", {
+    cls: "flow-gtd-add-action-btn",
+  });
+  addActionBtn.setAttribute("type", "button");
+  addActionBtn.setAttribute("aria-label", "Add action");
+  addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
+  addActionBtn.addEventListener("click", () => {
+    currentNextActions.push("");
+    item.editedNames = [...currentNextActions];
+    state.queueRender("editable");
+  });
+
+  if (currentNextActions.length === 1) {
+    item.editedName = currentNextActions[0];
+    item.editedNames = undefined;
+  }
 }
 
 function renderProjectCreationSection(
