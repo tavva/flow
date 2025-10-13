@@ -47,18 +47,19 @@ export class ProjectReviewer {
         const tags = p.tags.join(", ");
         const status = p.status || "live";
         const priority = p.priority || "not set";
+        const description = p.description || "(no description)";
         const nextActions =
           p.nextActions.length > 0
             ? p.nextActions.map((a) => `    - ${a}`).join("\n")
             : "    (none)";
 
-        // Extract description from the file content
-        // For now, we'll just note it should be reviewed
         return `${idx + 1}. **${p.title}**
    File: ${p.file}
    Tags: ${tags}
    Status: ${status}
    Priority: ${priority}
+   Description:
+${description}
    Next actions:
 ${nextActions}`;
       })
@@ -141,10 +142,9 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
 IMPORTANT:
 - Only suggest improvements when actually needed
 - If a project is perfect, include it in "projectsOk"
-- For "improvements", only include fields that need changing (omit suggestedName/suggestedDescription if not needed)
+- For "improvements", always include currentDescription (the description shown above), and only include suggestedName/suggestedDescription if improvement is needed
 - Be conservative with merges - only suggest when projects are clearly duplicate/overlapping
-- For status changes, only suggest when there's clear evidence (no next actions, seems complete, etc.)
-- Note: You cannot see the full file contents, so you may need to infer descriptions from titles and next actions`;
+- For status changes, only suggest when there's clear evidence (no next actions, seems complete, etc.)`;
   }
 
   /**

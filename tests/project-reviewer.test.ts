@@ -393,7 +393,7 @@ describe("ProjectReviewer", () => {
       expect(mockClient.sendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           model: mockModel,
-          maxTokens: 4000,
+          maxTokens: 16000,
         })
       );
     });

@@ -1,6 +1,7 @@
 export interface FlowProject {
   file: string;
   title: string;
+  description?: string; // Content between frontmatter and ## Next actions
   tags: string[];
   priority?: number;
   status?: string;

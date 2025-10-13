@@ -37,6 +37,7 @@ export class FlowProjectScanner {
     return {
       file: file.path,
       title: file.basename,
+      description: this.extractDescription(content),
       tags: this.extractProjectTags(frontmatter.tags),
       priority: frontmatter.priority,
       status: frontmatter.status,
@@ -118,6 +119,46 @@ export class FlowProjectScanner {
     }
 
     return items;
+  }
+
+  /**
+   * Extracts the description from a project file (content between frontmatter and first heading)
+   */
+  private extractDescription(content: string): string {
+    const lines = content.split("\n");
+    let inFrontmatter = false;
+    let frontmatterEnded = false;
+    const descriptionLines: string[] = [];
+
+    for (const line of lines) {
+      // Track frontmatter boundaries
+      if (line.trim() === "---") {
+        if (!inFrontmatter) {
+          inFrontmatter = true;
+          continue;
+        } else {
+          frontmatterEnded = true;
+          continue;
+        }
+      }
+
+      // Skip frontmatter lines
+      if (inFrontmatter && !frontmatterEnded) {
+        continue;
+      }
+
+      // Stop at first heading (marks start of a section)
+      if (frontmatterEnded && line.match(/^#{1,6}\s+/)) {
+        break;
+      }
+
+      // Collect description lines after frontmatter
+      if (frontmatterEnded) {
+        descriptionLines.push(line);
+      }
+    }
+
+    return descriptionLines.join("\n").trim();
   }
 
   /**
