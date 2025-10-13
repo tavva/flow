@@ -528,30 +528,110 @@ function renderProjectSelectionSection(
   projectLabel.style.color = "var(--text-normal)";
   projectLabel.style.textTransform = "none";
 
-  const projectDropdown = new DropdownComponent(projectSelectorEl);
-  projectDropdown.selectEl.id = projectSelectId;
-  projectDropdown.selectEl.addClass("flow-gtd-inline-select");
-  projectDropdown.selectEl.setAttribute("aria-label", projectLabelText);
+  // Search input
+  const searchInput = projectSelectorEl.createEl("input", {
+    type: "text",
+    placeholder: "Type to search projects...",
+  });
+  searchInput.id = projectSelectId;
+  searchInput.addClass("flow-gtd-project-search");
+  searchInput.value = item.selectedProject?.title || "";
+  searchInput.style.width = "100%";
+  searchInput.style.padding = "8px 12px";
+  searchInput.style.fontSize = "14px";
+  searchInput.style.border = "1px solid var(--background-modifier-border)";
+  searchInput.style.borderRadius = "4px";
+  searchInput.style.backgroundColor = "var(--background-primary)";
+  searchInput.style.color = "var(--text-normal)";
 
-  // Force visible text with inline styles
-  projectDropdown.selectEl.style.color = "var(--text-normal)";
-  projectDropdown.selectEl.style.fontSize = "14px";
+  // Container for filtered projects list
+  const projectListContainer = projectSelectorEl.createDiv("flow-gtd-project-list");
+  projectListContainer.style.maxHeight = "200px";
+  projectListContainer.style.overflowY = "auto";
+  projectListContainer.style.border = "1px solid var(--background-modifier-border)";
+  projectListContainer.style.borderRadius = "4px";
+  projectListContainer.style.marginTop = "8px";
+  projectListContainer.style.display = "none"; // Hidden by default
 
-  projectDropdown.addOption("", "-- Select a project --");
-  state.existingProjects.forEach((project) => {
-    projectDropdown.addOption(project.file, project.title);
+  const updateProjectList = (searchTerm: string) => {
+    projectListContainer.empty();
+
+    const filtered = searchTerm
+      ? state.existingProjects.filter((project) =>
+          project.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : state.existingProjects;
+
+    if (filtered.length === 0) {
+      projectListContainer.createEl("div", {
+        text: "No projects found",
+        cls: "flow-gtd-project-list-empty",
+      });
+      projectListContainer.style.display = "block";
+      return;
+    }
+
+    const sorted = [...filtered].sort((a, b) => {
+      // Sort by modification time, most recent first
+      const mtimeA = a.mtime || 0;
+      const mtimeB = b.mtime || 0;
+      return mtimeB - mtimeA;
+    });
+
+    sorted.forEach((project) => {
+      const projectButton = projectListContainer.createEl("button", {
+        text: project.title,
+        cls: "flow-gtd-project-list-item",
+      });
+      projectButton.setAttribute("type", "button");
+      projectButton.style.width = "100%";
+      projectButton.style.padding = "8px 12px";
+      projectButton.style.textAlign = "left";
+      projectButton.style.border = "none";
+      projectButton.style.backgroundColor = "transparent";
+      projectButton.style.cursor = "pointer";
+      projectButton.style.fontSize = "14px";
+      projectButton.style.color = "var(--text-normal)";
+
+      if (item.selectedProject?.file === project.file) {
+        projectButton.style.backgroundColor = "var(--background-modifier-hover)";
+        projectButton.style.fontWeight = "600";
+      }
+
+      projectButton.addEventListener("mouseenter", () => {
+        projectButton.style.backgroundColor = "var(--background-modifier-hover)";
+      });
+      projectButton.addEventListener("mouseleave", () => {
+        if (item.selectedProject?.file !== project.file) {
+          projectButton.style.backgroundColor = "transparent";
+        }
+      });
+
+      projectButton.addEventListener("click", () => {
+        item.selectedProject = project;
+        searchInput.value = project.title;
+        projectListContainer.style.display = "none";
+        state.queueRender("editable");
+      });
+    });
+
+    projectListContainer.style.display = "block";
+  };
+
+  searchInput.addEventListener("input", (e) => {
+    const value = (e.target as HTMLInputElement).value;
+    updateProjectList(value);
   });
 
-  if (item.selectedProject) {
-    const { file, title } = item.selectedProject;
-    if (!state.existingProjects.find((project) => project.file === file)) {
-      projectDropdown.addOption(file, title);
-    }
-    projectDropdown.setValue(file);
-  }
+  searchInput.addEventListener("focus", () => {
+    updateProjectList(searchInput.value);
+  });
 
-  projectDropdown.onChange((value) => {
-    item.selectedProject = state.existingProjects.find((project) => project.file === value);
+  // Close list when clicking outside
+  searchInput.addEventListener("blur", () => {
+    setTimeout(() => {
+      projectListContainer.style.display = "none";
+    }, 200);
   });
 
   if (

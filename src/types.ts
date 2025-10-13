@@ -5,6 +5,7 @@ export interface FlowProject {
   priority?: number;
   status?: string;
   creationDate?: string;
+  mtime?: number; // File modification time in milliseconds
   nextActions: string[];
 }
 

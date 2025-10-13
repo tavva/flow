@@ -41,6 +41,7 @@ export class FlowProjectScanner {
       priority: frontmatter.priority,
       status: frontmatter.status,
       creationDate: frontmatter["creation-date"],
+      mtime: file.stat.mtime,
       nextActions: this.extractSection(content, "## Next actions"),
     };
   }
