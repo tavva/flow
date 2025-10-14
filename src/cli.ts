@@ -1,5 +1,5 @@
-// ABOUTME: CLI entry point for conversational project prioritization.
-// ABOUTME: Loads Flow projects from vault and provides AI-powered advice via REPL.
+// ABOUTME: CLI entry point for conversational GTD coaching across all GTD aspects.
+// ABOUTME: Loads Flow projects and GTD context from vault and provides AI-powered advice via REPL.
 
 import * as fs from "fs";
 import * as path from "path";
@@ -190,9 +190,7 @@ export async function runREPL(
   console.log(`  ${gtdContext.nextActions.length} next actions`);
   console.log(`  ${gtdContext.somedayItems.length} someday items`);
   console.log(`  ${gtdContext.inboxItems.length} inbox items\n`);
-  console.log(
-    `Type 'exit' to quit, 'reset' to start fresh conversation\n`
-  );
+  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation\n`);
 
   // Initial system message
   messages.push({
@@ -468,7 +466,14 @@ export async function main() {
     const model = getModelForSettings(settings);
 
     // Run REPL
-    await runREPL(languageModelClient, model, systemPrompt, gtdContext, projects.length, args.sphere);
+    await runREPL(
+      languageModelClient,
+      model,
+      systemPrompt,
+      gtdContext,
+      projects.length,
+      args.sphere
+    );
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
