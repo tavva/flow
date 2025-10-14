@@ -144,6 +144,8 @@ import { LanguageModelClient, ChatMessage } from "./language-model";
 import { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
+import { Marked } from "marked";
+import { markedTerminal } from "marked-terminal";
 
 // ANSI color codes
 const colors = {
@@ -162,6 +164,19 @@ export async function runREPL(
   sphere: string
 ): Promise<void> {
   const messages: ChatMessage[] = [];
+
+  // Configure markdown renderer
+  const marked = new Marked();
+  marked.use(
+    markedTerminal({
+      // Use functions for color customization
+      heading: (s: string) => `${colors.assistant}${s}${colors.reset}`,
+      code: (s: string) => `${colors.dim}${s}${colors.reset}`,
+      blockquote: (s: string) => `${colors.dim}${s}${colors.reset}`,
+      strong: (s: string) => `\x1b[1m${s}\x1b[22m`, // Bold
+      em: (s: string) => `\x1b[3m${s}\x1b[23m`, // Italic
+    }) as any
+  );
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -243,7 +258,9 @@ export async function runREPL(
         content: response,
       });
 
-      console.log(`${colors.assistant}Coach:${colors.reset} ${response}\n`);
+      // Render markdown response
+      const rendered = marked.parse(response) as string;
+      console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
     } catch (error) {
       // Clear thinking indicator on error
       readline.clearLine(process.stdout, 0);
