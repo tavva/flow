@@ -29,7 +29,7 @@ export function parseCliArgs(args: string[]): CliArgs {
 }
 
 export function loadPluginSettings(vaultPath: string): PluginSettings {
-  const settingsPath = path.join(vaultPath, ".obsidian", "plugins", "flow-gtd-coach", "data.json");
+  const settingsPath = path.join(vaultPath, ".obsidian", "plugins", "flow-coach", "data.json");
 
   if (!fs.existsSync(settingsPath)) {
     throw new Error(
