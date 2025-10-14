@@ -93,6 +93,9 @@ export function buildSystemPrompt(projects: FlowProject[], sphere: string): stri
 
 import * as readline from "readline";
 import { LanguageModelClient, ChatMessage } from "./language-model";
+import { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
+import { FlowProjectScanner } from "./flow-scanner";
+import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 
 export async function runREPL(
   languageModelClient: LanguageModelClient,
@@ -186,4 +189,179 @@ export async function runREPL(
   rl.on("close", () => {
     process.exit(0);
   });
+}
+
+// Mock Obsidian App for CLI usage
+class MockVault {
+  private vaultPath: string;
+
+  constructor(vaultPath: string) {
+    this.vaultPath = vaultPath;
+  }
+
+  getMarkdownFiles(): TFile[] {
+    const files: TFile[] = [];
+    const walkDir = (dir: string) => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          // Skip .obsidian and other hidden directories
+          if (!entry.name.startsWith(".")) {
+            walkDir(fullPath);
+          }
+        } else if (entry.isFile() && entry.name.endsWith(".md")) {
+          const relativePath = path.relative(this.vaultPath, fullPath);
+          const stats = fs.statSync(fullPath);
+          // Create mock TFile
+          files.push({
+            path: relativePath,
+            basename: entry.name.replace(".md", ""),
+            extension: "md",
+            stat: {
+              mtime: stats.mtimeMs,
+            },
+          } as TFile);
+        }
+      }
+    };
+
+    walkDir(this.vaultPath);
+    return files;
+  }
+
+  async read(file: TFile): Promise<string> {
+    const fullPath = path.join(this.vaultPath, file.path);
+    return fs.readFileSync(fullPath, "utf-8");
+  }
+}
+
+class MockMetadataCache {
+  private vault: MockVault;
+
+  constructor(vault: MockVault) {
+    this.vault = vault;
+  }
+
+  getFileCache(file: TFile): CachedMetadata | null {
+    try {
+      // Read file synchronously to extract frontmatter
+      const fullPath = path.join((this.vault as any).vaultPath, file.path);
+      const content = fs.readFileSync(fullPath, "utf-8");
+      const frontmatter = this.extractFrontmatter(content);
+
+      return {
+        frontmatter: frontmatter || undefined,
+      } as CachedMetadata;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private extractFrontmatter(content: string): Record<string, any> | null {
+    const lines = content.split("\n");
+    if (lines[0] !== "---") {
+      return null;
+    }
+
+    const frontmatterLines: string[] = [];
+    let foundEnd = false;
+
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i] === "---") {
+        foundEnd = true;
+        break;
+      }
+      frontmatterLines.push(lines[i]);
+    }
+
+    if (!foundEnd) {
+      return null;
+    }
+
+    // Parse YAML frontmatter (simple key: value format)
+    const frontmatter: Record<string, any> = {};
+    for (const line of frontmatterLines) {
+      const match = line.match(/^(\w[\w-]*)\s*:\s*(.+)$/);
+      if (match) {
+        const key = match[1];
+        let value: any = match[2].trim();
+
+        // Parse arrays
+        if (value.startsWith("[") && value.endsWith("]")) {
+          value = value
+            .slice(1, -1)
+            .split(",")
+            .map((v: string) => v.trim());
+        }
+        // Parse numbers
+        else if (!isNaN(Number(value))) {
+          value = Number(value);
+        }
+
+        frontmatter[key] = value;
+      }
+    }
+
+    return frontmatter;
+  }
+}
+
+class MockApp {
+  vault: MockVault;
+  metadataCache: MockMetadataCache;
+
+  constructor(vaultPath: string) {
+    this.vault = new MockVault(vaultPath);
+    this.metadataCache = new MockMetadataCache(this.vault);
+  }
+}
+
+export async function main() {
+  try {
+    // Parse arguments
+    const args = parseCliArgs(process.argv.slice(2));
+
+    // Validate vault path exists
+    if (!fs.existsSync(args.vaultPath)) {
+      console.error(`Error: Vault path does not exist: ${args.vaultPath}`);
+      process.exit(1);
+    }
+
+    // Load plugin settings
+    const settings = loadPluginSettings(args.vaultPath);
+
+    // Scan vault for projects
+    const mockApp = new MockApp(args.vaultPath);
+    const scanner = new FlowProjectScanner(mockApp as any);
+    const allProjects = await scanner.scanProjects();
+
+    // Filter by sphere
+    const projects = allProjects.filter((project) =>
+      project.tags.some((tag) => tag === `project/${args.sphere}`)
+    );
+
+    if (projects.length === 0) {
+      console.warn(`Warning: No projects found for sphere "${args.sphere}"`);
+      console.warn("Continuing anyway - you can discuss why projects might be missing.\n");
+    }
+
+    // Build system prompt
+    const systemPrompt = buildSystemPrompt(projects, args.sphere);
+
+    // Create language model
+    const languageModelClient = createLanguageModelClient(settings);
+    const model = getModelForSettings(settings);
+
+    // Run REPL
+    await runREPL(languageModelClient, model, systemPrompt, projects.length, args.sphere);
+  } catch (error) {
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    process.exit(1);
+  }
+}
+
+// Run if executed directly
+if (require.main === module) {
+  main();
 }

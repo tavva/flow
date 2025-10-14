@@ -13,7 +13,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
-    "version": "node version-bump.mjs && git add manifest.json versions.json"
+    "version": "node version-bump.mjs && git add manifest.json versions.json",
+    "priority-coach": "ts-node src/cli.ts"
   },
   "keywords": [
     "obsidian",
