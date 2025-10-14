@@ -234,7 +234,7 @@ export class FileWriter {
     let content = templateContent;
 
     // Find the "## Next actions" section and add the actions
-    const nextActionsRegex = /(## Next actions\s*\n)/;
+    const nextActionsRegex = /(## Next actions\s*\n)(\s*)/;
     const match = content.match(nextActionsRegex);
 
     if (match) {
@@ -254,7 +254,9 @@ export class FileWriter {
         actionsText = `${checkbox} ${result.nextAction}\n`;
       }
 
-      content = content.replace(nextActionsRegex, `$1${actionsText}`);
+      // Replace "## Next actions\n<any whitespace>" with "## Next actions\n<actions>\n"
+      // This ensures proper spacing regardless of template whitespace
+      content = content.replace(nextActionsRegex, `$1${actionsText}\n`);
     }
 
     return content;
