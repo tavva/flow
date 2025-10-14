@@ -47,7 +47,6 @@ tags: project/work
       fileName: "Project A",
       lineNumber: 10,
       text: "Call John after he returns from holiday",
-      isCompleted: false,
     });
   });
 
@@ -72,7 +71,7 @@ tags: project/work
     expect(items[1].text).toBe("Wait for server deployment");
   });
 
-  test("should track completed waiting-for items", async () => {
+  test("should find multiple waiting-for items in a file", async () => {
     const mockFile = {
       path: "Projects/Project B.md",
       basename: "Project B",
@@ -88,8 +87,8 @@ tags: project/work
     const items = await scanner.scanWaitingForItems();
 
     expect(items).toHaveLength(2);
-    expect(items[0].isCompleted).toBe(false);
-    expect(items[1].isCompleted).toBe(false); // Only scan for [w], not [x]
+    expect(items[0].text).toBe("Ongoing wait");
+    expect(items[1].text).toBe("Another waiting item");
   });
 
   test("should handle files with no waiting-for items", async () => {

@@ -8,7 +8,6 @@ export interface WaitingForItem {
   fileName: string;
   lineNumber: number;
   text: string;
-  isCompleted: boolean;
 }
 
 export class WaitingForScanner {
@@ -46,7 +45,6 @@ export class WaitingForScanner {
           fileName: file.basename,
           lineNumber: index + 1,
           text,
-          isCompleted: false,
         });
       }
     });
