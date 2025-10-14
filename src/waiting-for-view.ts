@@ -2,6 +2,7 @@
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
 import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
+import { getAPI } from "obsidian-dataview";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
@@ -16,10 +17,18 @@ export class WaitingForView extends ItemView {
   private modifyEventRef: EventRef | null = null;
   private refreshTimeout: NodeJS.Timeout | null = null;
   private isRefreshing: boolean = false;
+  private hasDataview: boolean = false;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
     this.scanner = new WaitingForScanner(this.app);
+
+    // Check if Dataview is available for fast refreshes
+    try {
+      this.hasDataview = !!getAPI(this.app);
+    } catch {
+      this.hasDataview = false;
+    }
   }
 
   getViewType(): string {
@@ -81,7 +90,9 @@ export class WaitingForView extends ItemView {
   }
 
   private scheduleRefresh() {
-    // Debounce refreshes - only refresh after 15 seconds of no edits
+    // Use short debounce with Dataview (fast), longer without (slow file scanning)
+    const debounceTime = this.hasDataview ? 500 : 15000;
+
     if (this.refreshTimeout) {
       clearTimeout(this.refreshTimeout);
     }
@@ -89,7 +100,7 @@ export class WaitingForView extends ItemView {
     this.refreshTimeout = setTimeout(async () => {
       await this.refresh();
       this.refreshTimeout = null;
-    }, 15000);
+    }, debounceTime);
   }
 
   private async refresh() {
@@ -102,13 +113,19 @@ export class WaitingForView extends ItemView {
 
     try {
       const container = this.containerEl.children[1];
-      container.empty();
 
-      const loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
-      loadingEl.setText("Refreshing...");
+      // Only show loading message for slow manual scans, not for fast Dataview queries
+      let loadingEl: HTMLElement | null = null;
+      if (!this.hasDataview) {
+        container.empty();
+        loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
+        loadingEl.setText("Refreshing...");
+      }
 
       const items = await this.scanner.scanWaitingForItems();
-      loadingEl.remove();
+
+      // Clear and render
+      container.empty();
       this.renderContent(container as HTMLElement, items);
     } catch (error) {
       console.error("Failed to refresh waiting for view", error);
