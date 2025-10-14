@@ -16,11 +16,13 @@ export class HotlistView extends ItemView {
   private settings: PluginSettings;
   private validator: HotlistValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private saveSettings: () => Promise<void>;
 
-  constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
     this.validator = new HotlistValidator(this.app);
+    this.saveSettings = saveSettings;
   }
 
   getViewType(): string {
@@ -272,6 +274,7 @@ export class HotlistView extends ItemView {
     this.settings.hotlist = this.settings.hotlist.filter(
       (i) => !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
+    await this.saveSettings();
     await this.onOpen(); // Re-render
   }
 }

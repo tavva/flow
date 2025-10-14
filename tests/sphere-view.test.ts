@@ -12,10 +12,12 @@ describe("SphereView", () => {
   let app: App;
   let leaf: WorkspaceLeaf;
   let settings: PluginSettings;
+  let mockSaveSettings: jest.Mock;
 
   beforeEach(() => {
     app = new App();
     leaf = new WorkspaceLeaf();
+    mockSaveSettings = jest.fn();
     settings = {
       anthropicApiKey: "",
       anthropicModel: "claude-sonnet-4-20250514",
@@ -54,7 +56,7 @@ describe("SphereView", () => {
         .mockReturnValueOnce(firstProject)
         .mockReturnValueOnce(secondProject);
 
-      const view = new SphereView(leaf, "personal", settings);
+      const view = new SphereView(leaf, "personal", settings, mockSaveSettings);
       // Replace the view's app with our mocked one
       view.app = app;
 
@@ -80,7 +82,7 @@ describe("SphereView", () => {
 
   describe("planning mode", () => {
     it("should toggle planning mode on and off", () => {
-      const view = new SphereView(leaf, "work", settings);
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
       expect((view as any).planningMode).toBe(false);
@@ -94,7 +96,7 @@ describe("SphereView", () => {
 
     it("should add action to hotlist when clicked in planning mode", async () => {
       settings.hotlist = [];
-      const view = new SphereView(leaf, "work", settings);
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
       (view as any).planningMode = true;
 
@@ -124,7 +126,7 @@ describe("SphereView", () => {
           addedAt: Date.now(),
         },
       ];
-      const view = new SphereView(leaf, "work", settings);
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
       (view as any).planningMode = true;
 
@@ -145,7 +147,7 @@ describe("SphereView", () => {
           addedAt: Date.now(),
         },
       ];
-      const view = new SphereView(leaf, "work", settings);
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
       expect((view as any).isOnHotlist("Projects/Test.md", 5)).toBe(true);

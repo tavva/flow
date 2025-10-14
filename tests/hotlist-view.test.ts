@@ -10,6 +10,7 @@ describe("HotlistView", () => {
   let mockLeaf: any;
   let mockApp: any;
   let mockSettings: any;
+  let mockSaveSettings: jest.Mock;
 
   beforeEach(() => {
     mockSettings = {
@@ -28,8 +29,9 @@ describe("HotlistView", () => {
     mockLeaf = {
       view: null,
     } as any;
+    mockSaveSettings = jest.fn();
 
-    view = new HotlistView(mockLeaf, mockSettings);
+    view = new HotlistView(mockLeaf, mockSettings, mockSaveSettings);
     (view as any).app = mockApp;
   });
 
@@ -92,5 +94,23 @@ describe("HotlistView", () => {
     expect(Object.keys(grouped.generalActions)).toHaveLength(2);
     expect(grouped.generalActions["work"]).toHaveLength(1);
     expect(grouped.generalActions["personal"]).toHaveLength(1);
+  });
+
+  it("should call saveSettings when removing item from hotlist", async () => {
+    const item: HotlistItem = {
+      file: "Test.md",
+      lineNumber: 5,
+      lineContent: "- [ ] Test action",
+      text: "Test action",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: 123456,
+    };
+    mockSettings.hotlist = [item];
+
+    await (view as any).removeFromHotlist(item);
+
+    expect(mockSaveSettings).toHaveBeenCalled();
+    expect(mockSettings.hotlist).toHaveLength(0);
   });
 });

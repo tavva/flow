@@ -22,12 +22,19 @@ export class SphereView extends ItemView {
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private planningMode: boolean = false;
+  private saveSettings: () => Promise<void>;
 
-  constructor(leaf: WorkspaceLeaf, sphere: string, settings: PluginSettings) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    sphere: string,
+    settings: PluginSettings,
+    saveSettings: () => Promise<void>
+  ) {
     super(leaf);
     this.sphere = sphere;
     this.settings = settings;
     this.scanner = new FlowProjectScanner(this.app);
+    this.saveSettings = saveSettings;
   }
 
   private togglePlanningMode() {
@@ -70,9 +77,10 @@ export class SphereView extends ItemView {
   }
 
   // Method to update the sphere and refresh the view
-  async setSphere(sphere: string, settings: PluginSettings) {
+  async setSphere(sphere: string, settings: PluginSettings, saveSettings: () => Promise<void>) {
     this.sphere = sphere;
     this.settings = settings;
+    this.saveSettings = saveSettings;
     await this.onOpen();
   }
 
@@ -444,6 +452,7 @@ export class SphereView extends ItemView {
     };
 
     this.settings.hotlist.push(item);
+    await this.saveSettings();
     await this.onOpen();
   }
 
@@ -451,6 +460,7 @@ export class SphereView extends ItemView {
     this.settings.hotlist = this.settings.hotlist.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
+    await this.saveSettings();
     await this.onOpen();
   }
 
