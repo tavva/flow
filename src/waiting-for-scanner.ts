@@ -20,9 +20,13 @@ export class WaitingForScanner {
 
   async scanWaitingForItems(): Promise<WaitingForItem[]> {
     // Try to use Dataview if available (much faster)
-    const dv = getAPI(this.app);
-    if (dv) {
-      return this.scanWithDataview(dv);
+    try {
+      const dv = getAPI(this.app);
+      if (dv) {
+        return this.scanWithDataview(dv);
+      }
+    } catch (error) {
+      // Dataview not available or not properly initialized, fall back to manual scanning
     }
 
     // Fall back to manual scanning
@@ -54,26 +58,23 @@ export class WaitingForScanner {
     const items: WaitingForItem[] = [];
 
     for (const file of files) {
-      const cache = this.app.metadataCache.getFileCache(file);
-      if (!cache?.listItems || cache.listItems.length === 0) {
-        continue;
+      // Use metadata cache to skip files without list items (if available)
+      if (this.app.metadataCache) {
+        const cache = this.app.metadataCache.getFileCache(file);
+        if (cache && (!cache.listItems || cache.listItems.length === 0)) {
+          continue;
+        }
       }
 
-      const fileItems = await this.scanFile(file, cache);
+      const fileItems = await this.scanFile(file);
       items.push(...fileItems);
     }
 
     return items;
   }
 
-  private async scanFile(file: TFile, cache: any): Promise<WaitingForItem[]> {
+  private async scanFile(file: TFile): Promise<WaitingForItem[]> {
     const items: WaitingForItem[] = [];
-
-    // Only read file if it has list items
-    if (!cache.listItems || cache.listItems.length === 0) {
-      return items;
-    }
-
     const content = await this.app.vault.read(file);
     const lines = content.split(/\r?\n/);
 
