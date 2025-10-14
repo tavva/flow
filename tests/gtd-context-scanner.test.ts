@@ -175,4 +175,53 @@ Some paragraph text.
       expect(result).toEqual([]);
     });
   });
+
+  describe("scanContext", () => {
+    it("should scan all GTD context at once", async () => {
+      const nextActionsContent = `- [ ] Action 1\n- [ ] Action 2`;
+      const somedayContent = `- Someday 1\n- Someday 2`;
+
+      (mockVault.read as jest.Mock).mockImplementation((file: TFile) => {
+        if (file.path === "Next actions.md") {
+          return Promise.resolve(nextActionsContent);
+        }
+        if (file.path === "Someday.md") {
+          return Promise.resolve(somedayContent);
+        }
+        return Promise.reject(new Error("File not found"));
+      });
+
+      mockVault.getMarkdownFiles = jest.fn().mockReturnValue([
+        { path: "Flow Inbox Folder/Item 1.md", basename: "Item 1" } as TFile,
+        { path: "Flow Inbox Files/Item 2.md", basename: "Item 2" } as TFile,
+      ]);
+
+      // Need to fix the readFile mock
+      const mockGetAbstractFileByPath = jest.fn((path: string) => {
+        return { path } as TFile;
+      });
+      mockVault.getAbstractFileByPath = mockGetAbstractFileByPath;
+
+      const result = await scanner.scanContext();
+
+      expect(result).toEqual({
+        nextActions: ["Action 1", "Action 2"],
+        somedayItems: ["Someday 1", "Someday 2"],
+        inboxItems: ["Item 1 (Flow Inbox Folder)", "Item 2 (Flow Inbox Files)"],
+      });
+    });
+
+    it("should handle partial failures gracefully", async () => {
+      (mockVault.read as jest.Mock).mockRejectedValue(new Error("File not found"));
+      mockVault.getMarkdownFiles = jest.fn().mockReturnValue([]);
+
+      const result = await scanner.scanContext();
+
+      expect(result).toEqual({
+        nextActions: [],
+        somedayItems: [],
+        inboxItems: [],
+      });
+    });
+  });
 });

@@ -52,6 +52,20 @@ export class GTDContextScanner {
     }
   }
 
+  async scanContext(): Promise<GTDContext> {
+    const [nextActions, somedayItems, inboxItems] = await Promise.all([
+      this.scanNextActions(),
+      this.scanSomedayItems(),
+      this.scanInboxItems(),
+    ]);
+
+    return {
+      nextActions,
+      somedayItems,
+      inboxItems,
+    };
+  }
+
   private async readFile(path: string): Promise<string> {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!file) {
