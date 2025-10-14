@@ -9,6 +9,7 @@ An Obsidian plugin that helps you implement the GTD (Getting Things Done) method
 - **AI-Powered Analysis**: Uses Claude AI to analyze inbox items and determine if they're projects, next actions, reference material, or someday/maybe items
 - **Context-Aware**: Scans your existing Flow projects to suggest relevant projects for new actions
 - **GTD-Quality Actions**: Ensures next actions are specific, actionable, and completable
+- **Waiting For Support**: Automatically detects items that require waiting for others and creates them with `[w]` status
 
 ### 📁 Flow Integration
 
@@ -21,6 +22,8 @@ An Obsidian plugin that helps you implement the GTD (Getting Things Done) method
 - **Guided Workflow**: Step-by-step process for capturing, clarifying, and organizing
 - **Bulk Processing**: Process multiple inbox items at once
 - **Project Suggestions**: Get AI suggestions for which existing projects items belong to
+- **Waiting For View**: Dedicated view showing all items you're waiting on across all projects
+- **Task Status Cycling**: Keyboard shortcut to cycle tasks between todo, waiting-for, and done states
 
 ## Installation
 
@@ -73,6 +76,34 @@ The AI response includes two distinct signals:
 - **Suggested Projects/People** – optional matches to existing notes, each with a confidence level. These are surfaced for convenience, but they do not override the recommended action. For example, the model may recommend creating a new project while still surfacing a low-confidence related project so you can manually redirect the item if appropriate.
 
 When you see a recommended action of "Create New Project" alongside suggested projects, that's the model signalling "treat this as new work" while still providing nearby matches you might want to reuse. No additional override logic is applied by the plugin beyond displaying those suggestions.
+
+### Managing Waiting For Items
+
+The plugin includes full support for GTD "Waiting For" lists using the `[w]` checkbox status:
+
+**Creating Waiting For Items:**
+
+- The AI automatically detects when an inbox item requires waiting for someone else (e.g., "Follow up with John after he reviews the proposal")
+- You can manually mark any action as waiting-for using the toggle button in the inbox modal
+- Use the "Cycle task status" command to change existing tasks to waiting-for status
+
+**Waiting For View:**
+
+- Click the clock icon in the ribbon or use the "Open Waiting For view" command
+- See all `[w]` items aggregated from across your vault, grouped by file
+- Click any item to open its source file
+- Mark items complete with the ✓ button
+- Convert items back to regular actions with the ← button
+
+**Keyboard Workflow:**
+
+Place your cursor on any task checkbox and use "Cycle task status" to cycle through:
+
+- `[ ]` Todo (ready to do)
+- `[w]` Waiting for (blocked by someone/something else)
+- `[x]` Done (completed)
+
+This makes it easy to update task status without leaving your keyboard.
 
 ### How It Works
 

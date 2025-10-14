@@ -14,6 +14,9 @@ This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for
 - GTD-compliant next action generation
 - Project and person suggestion based on existing vault contents
 - Multiple LLM provider support (Anthropic, OpenAI-compatible/OpenRouter)
+- Waiting For list management with `[w]` checkbox status
+- Global view aggregating waiting-for items across all projects
+- Keyboard-driven task status cycling ([ ] → [w] → [x])
 
 ## Common Commands
 
@@ -85,6 +88,15 @@ See `docs/gtd-coach-cli.md` for full CLI documentation.
 10. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
 11. **Validation** (`src/validation.ts`) - Input validation and error handling
 12. **Errors** (`src/errors.ts`) - Custom error types and handling
+
+### Waiting For Support
+
+The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
+
+- **Scanner** (`src/waiting-for-scanner.ts`) - Finds all `[w]` items across vault
+- **View** (`src/waiting-for-view.ts`) - Aggregates waiting-for items in dedicated pane
+- **Status Cycler** (`src/task-status-cycler.ts`) - Cycles checkbox status: [ ] → [w] → [x]
+- **AI Integration** - Processor recognizes waiting-for scenarios during inbox processing
 
 ### Flow Project Structure
 
@@ -257,6 +269,8 @@ Examples:
 - `process-inbox`: Opens the inbox processing modal
 - `quick-capture`: Same as process-inbox (alias for discoverability)
 - `process-inbox-folders`: Opens the modal with inbox folder scanning enabled
+- `cycle-task-status`: Cycles checkbox status on current line
+- `open-waiting-for-view`: Opens the Waiting For view
 
 ### UI Components
 
