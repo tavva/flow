@@ -1,0 +1,72 @@
+import { parseCliArgs, loadPluginSettings } from '../src/cli';
+import * as fs from 'fs';
+
+jest.mock('fs');
+
+describe('CLI argument parsing', () => {
+  it('should parse vault path and sphere', () => {
+    const args = ['--vault', '/path/to/vault', '--sphere', 'work'];
+    const result = parseCliArgs(args);
+
+    expect(result.vaultPath).toBe('/path/to/vault');
+    expect(result.sphere).toBe('work');
+  });
+
+  it('should throw error if vault path missing', () => {
+    const args = ['--sphere', 'work'];
+
+    expect(() => parseCliArgs(args)).toThrow('--vault is required');
+  });
+
+  it('should throw error if sphere missing', () => {
+    const args = ['--vault', '/path/to/vault'];
+
+    expect(() => parseCliArgs(args)).toThrow('--sphere is required');
+  });
+});
+
+describe('Plugin settings loading', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('should load settings from Obsidian plugin data.json', () => {
+    const mockSettings = {
+      llmProvider: 'anthropic',
+      anthropicApiKey: 'test-key',
+      anthropicModel: 'claude-sonnet-4-20250514',
+    };
+
+    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockSettings));
+
+    const result = loadPluginSettings('/path/to/vault');
+
+    expect(fs.readFileSync).toHaveBeenCalledWith(
+      '/path/to/vault/.obsidian/plugins/flow-gtd-coach/data.json',
+      'utf-8'
+    );
+    expect(result.llmProvider).toBe('anthropic');
+    expect(result.anthropicApiKey).toBe('test-key');
+  });
+
+  it('should throw error if settings file does not exist', () => {
+    (fs.existsSync as jest.Mock).mockReturnValue(false);
+
+    expect(() => loadPluginSettings('/path/to/vault')).toThrow(
+      'Plugin settings not found'
+    );
+  });
+
+  it('should throw error if API key is missing', () => {
+    const mockSettings = {
+      llmProvider: 'anthropic',
+      anthropicModel: 'claude-sonnet-4-20250514',
+    };
+
+    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.readFileSync as jest.Mock).mockReturnValue(JSON.stringify(mockSettings));
+
+    expect(() => loadPluginSettings('/path/to/vault')).toThrow('API key not configured');
+  });
+});
