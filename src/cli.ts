@@ -3,7 +3,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { PluginSettings } from "./types";
+import { PluginSettings, FlowProject } from "./types";
 
 export interface CliArgs {
   vaultPath: string;
@@ -50,4 +50,43 @@ export function loadPluginSettings(vaultPath: string): PluginSettings {
   }
 
   return settings;
+}
+
+export function buildSystemPrompt(projects: FlowProject[], sphere: string): string {
+  const projectCount = projects.length;
+
+  let prompt = `You are a prioritisation coach helping with GTD project management for the ${sphere} sphere.\n\n`;
+  prompt += `You have context on ${projectCount} projects. Your role is to:\n`;
+  prompt += `- Help prioritise which projects to focus on based on stated goals and constraints\n`;
+  prompt += `- Ask clarifying questions about urgency, dependencies, and impact\n`;
+  prompt += `- Provide actionable recommendations\n`;
+  prompt += `- Consider project priority levels (1 = highest, 3 = lowest)\n`;
+  prompt += `- Consider the number and nature of next actions (more specific actions = more momentum)\n\n`;
+
+  if (projectCount === 0) {
+    prompt += `No projects found in this sphere.\n`;
+    return prompt;
+  }
+
+  prompt += `## Projects\n\n`;
+
+  for (const project of projects) {
+    prompt += `### ${project.title}\n`;
+    prompt += `Description: ${project.description || "No description"}\n`;
+    prompt += `Priority: ${project.priority}\n`;
+    prompt += `Status: ${project.status}\n`;
+
+    if (project.nextActions && project.nextActions.length > 0) {
+      prompt += `Next Actions:\n`;
+      for (const action of project.nextActions) {
+        prompt += `- ${action}\n`;
+      }
+    } else {
+      prompt += `Next Actions: None defined\n`;
+    }
+
+    prompt += `\n`;
+  }
+
+  return prompt;
 }

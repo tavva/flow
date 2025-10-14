@@ -1,4 +1,5 @@
-import { parseCliArgs, loadPluginSettings } from "../src/cli";
+import { parseCliArgs, loadPluginSettings, buildSystemPrompt } from "../src/cli";
+import { FlowProject } from "../src/types";
 import * as fs from "fs";
 
 jest.mock("fs");
@@ -118,5 +119,46 @@ describe("Plugin settings loading", () => {
     (fs.readFileSync as jest.Mock).mockReturnValue("{ invalid json }");
 
     expect(() => loadPluginSettings("/path/to/vault")).toThrow();
+  });
+});
+
+describe("System prompt generation", () => {
+  it("should build prompt with project context", () => {
+    const projects: FlowProject[] = [
+      {
+        title: "Mobile App",
+        description: "Rebuild mobile app with React Native",
+        priority: 1,
+        status: "live",
+        tags: ["project/work"],
+        nextActions: ["Set up React Native development environment", "Design authentication flow"],
+        file: "Projects/Mobile App.md",
+      },
+      {
+        title: "Hiring",
+        description: "Hire senior designer for product team",
+        priority: 2,
+        status: "live",
+        tags: ["project/work"],
+        nextActions: ["Review candidate portfolios", "Schedule interviews"],
+        file: "Projects/Hiring.md",
+      },
+    ];
+
+    const prompt = buildSystemPrompt(projects, "work");
+
+    expect(prompt).toContain("Mobile App");
+    expect(prompt).toContain("Rebuild mobile app with React Native");
+    expect(prompt).toContain("Priority: 1");
+    expect(prompt).toContain("Set up React Native development environment");
+    expect(prompt).toContain("Hiring");
+    expect(prompt).toContain("2 projects");
+  });
+
+  it("should mention sphere in prompt", () => {
+    const projects: FlowProject[] = [];
+    const prompt = buildSystemPrompt(projects, "work");
+
+    expect(prompt).toContain("work sphere");
   });
 });
