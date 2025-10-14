@@ -35,10 +35,13 @@ export class WaitingForView extends ItemView {
   }
 
   async onOpen() {
-    // Register event listener for file modifications (only markdown files)
-    this.modifyEventRef = this.app.vault.on("modify", (file) => {
+    // Register event listener for file modifications (only markdown files with [w] checkboxes)
+    this.modifyEventRef = this.app.vault.on("modify", async (file) => {
       if (file instanceof TFile && file.extension === "md") {
-        this.scheduleRefresh();
+        const content = await this.app.vault.read(file);
+        if (content.includes("[w]") || content.includes("[W]")) {
+          this.scheduleRefresh();
+        }
       }
     });
 
@@ -79,7 +82,7 @@ export class WaitingForView extends ItemView {
   }
 
   private scheduleRefresh() {
-    // Debounce refreshes to avoid excessive re-scanning
+    // Debounce refreshes - only refresh after 15 seconds of no edits
     if (this.refreshTimeout) {
       clearTimeout(this.refreshTimeout);
     }
@@ -87,7 +90,7 @@ export class WaitingForView extends ItemView {
     this.refreshTimeout = setTimeout(async () => {
       await this.refresh();
       this.refreshTimeout = null;
-    }, 1000);
+    }, 15000);
   }
 
   private async refresh() {
