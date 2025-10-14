@@ -39,16 +39,19 @@ export class WaitingForView extends ItemView {
     const loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
     loadingEl.setText("Loading waiting for items...");
 
-    try {
-      const items = await this.scanner.scanWaitingForItems();
-      loadingEl.remove();
-      this.renderContent(container as HTMLElement, items);
-    } catch (error) {
-      console.error("Failed to load waiting for view", error);
-      loadingEl.setText(
-        "Unable to load waiting for items. Check the console for more information."
-      );
-    }
+    // Load items asynchronously after view is visible
+    setTimeout(async () => {
+      try {
+        const items = await this.scanner.scanWaitingForItems();
+        loadingEl.remove();
+        this.renderContent(container as HTMLElement, items);
+      } catch (error) {
+        console.error("Failed to load waiting for view", error);
+        loadingEl.setText(
+          "Unable to load waiting for items. Check the console for more information."
+        );
+      }
+    }, 0);
   }
 
   async onClose() {
