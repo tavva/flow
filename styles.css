@@ -186,6 +186,9 @@
 .flow-gtd-item-text {
 	flex: 1;
 	margin-right: 10px;
+	min-width: 0;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
 }
 
 .flow-gtd-delete-btn {
