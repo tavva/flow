@@ -323,7 +323,11 @@ function renderEditableItemContent(
     renderNextActionsEditor(itemEl, item, state);
   }
 
-  renderSphereSelector(itemEl, item, state);
+  // Show sphere selector for actions that need sphere selection
+  // Exclude "add-to-project" since existing projects already have spheres
+  if (item.selectedAction !== "add-to-project" && item.selectedAction !== "trash") {
+    renderSphereSelector(itemEl, item, state);
+  }
 }
 
 function renderNextActionsEditor(
