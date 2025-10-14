@@ -97,6 +97,14 @@ import { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 
+// ANSI color codes
+const colors = {
+  reset: "\x1b[0m",
+  user: "\x1b[36m", // Cyan for user
+  assistant: "\x1b[35m", // Magenta for assistant
+  dim: "\x1b[2m", // Dim for thinking indicator
+};
+
 export async function runREPL(
   languageModelClient: LanguageModelClient,
   model: string,
@@ -109,7 +117,7 @@ export async function runREPL(
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: "> ",
+    prompt: `${colors.user}You: ${colors.reset}`,
   });
 
   console.log(`\nFlow Priority Coach - ${sphere} sphere (${projectCount} projects loaded)`);
@@ -163,6 +171,9 @@ export async function runREPL(
     });
 
     try {
+      // Show thinking indicator
+      process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
+
       // Get AI response
       const response = await languageModelClient.sendMessage({
         model,
@@ -170,14 +181,22 @@ export async function runREPL(
         messages,
       });
 
+      // Clear thinking indicator
+      readline.clearLine(process.stdout, 0);
+      readline.cursorTo(process.stdout, 0);
+
       // Add assistant message
       messages.push({
         role: "assistant",
         content: response,
       });
 
-      console.log(`\n${response}\n`);
+      console.log(`${colors.assistant}Coach:${colors.reset} ${response}\n`);
     } catch (error) {
+      // Clear thinking indicator on error
+      readline.clearLine(process.stdout, 0);
+      readline.cursorTo(process.stdout, 0);
+
       console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
       // Remove the user message that caused the error
       messages.pop();
