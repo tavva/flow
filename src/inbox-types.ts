@@ -12,6 +12,7 @@ export interface EditableItem {
   selectedSpheres: string[];
   editedName?: string;
   editedNames?: string[]; // Support multiple edited next actions
+  waitingFor?: boolean[]; // Track waiting-for status for each next action
   editedProjectTitle?: string;
   projectPriority?: number;
   isProcessing?: boolean;

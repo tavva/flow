@@ -14,7 +14,8 @@ export class FileWriter {
   async createProject(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = []
+    spheres: string[] = [],
+    waitingFor: boolean[] = []
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
@@ -37,7 +38,7 @@ export class FileWriter {
       throw new Error(`File ${filePath} already exists`);
     }
 
-    const content = await this.buildProjectContent(result, originalItem, spheres);
+    const content = await this.buildProjectContent(result, originalItem, spheres, waitingFor);
     const file = await this.app.vault.create(filePath, content);
 
     return file;
@@ -63,12 +64,19 @@ export class FileWriter {
   /**
    * Add an action to the Next Actions file
    */
-  async addToNextActionsFile(actions: string | string[], spheres: string[] = []): Promise<void> {
+  async addToNextActionsFile(
+    actions: string | string[],
+    spheres: string[] = [],
+    waitingFor: boolean[] = []
+  ): Promise<void> {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
 
-    for (const action of actionsArray) {
-      const content = sphereTags ? `- [ ] ${action} ${sphereTags}` : `- [ ] ${action}`;
+    for (let i = 0; i < actionsArray.length; i++) {
+      const action = actionsArray[i];
+      const isWaiting = waitingFor[i] || false;
+      const checkbox = isWaiting ? "- [w]" : "- [ ]";
+      const content = sphereTags ? `${checkbox} ${action} ${sphereTags}` : `${checkbox} ${action}`;
       await this.appendToFile(this.settings.nextActionsFilePath, content);
     }
   }
@@ -105,7 +113,11 @@ export class FileWriter {
   /**
    * Add a next action to an existing project
    */
-  async addNextActionToProject(project: FlowProject, actions: string | string[]): Promise<void> {
+  async addNextActionToProject(
+    project: FlowProject,
+    actions: string | string[],
+    waitingFor: boolean[] = []
+  ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
       throw new Error(`Project file not found: ${project.file}`);
@@ -114,8 +126,10 @@ export class FileWriter {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     let content = await this.app.vault.read(file);
 
-    for (const action of actionsArray) {
-      content = this.addActionToSection(content, "## Next actions", action);
+    for (let i = 0; i < actionsArray.length; i++) {
+      const action = actionsArray[i];
+      const isWaiting = waitingFor[i] || false;
+      content = this.addActionToSection(content, "## Next actions", action, isWaiting);
     }
 
     await this.app.vault.modify(file, content);
@@ -177,7 +191,8 @@ export class FileWriter {
   private async buildProjectContent(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = []
+    spheres: string[] = [],
+    waitingFor: boolean[] = []
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
       this.settings.projectTemplateFilePath
@@ -185,7 +200,7 @@ export class FileWriter {
 
     if (!templateFile || !(templateFile instanceof TFile)) {
       // Fallback to hardcoded template if template file doesn't exist
-      return this.buildProjectContentFallback(result, originalItem, spheres);
+      return this.buildProjectContentFallback(result, originalItem, spheres, waitingFor);
     }
 
     let templateContent = await this.app.vault.read(templateFile);
@@ -225,9 +240,18 @@ export class FileWriter {
     if (match) {
       let actionsText = "";
       if (result.nextActions && result.nextActions.length > 0) {
-        actionsText = result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
+        actionsText =
+          result.nextActions
+            .map((action, i) => {
+              const isWaiting = waitingFor[i] || false;
+              const checkbox = isWaiting ? "- [w]" : "- [ ]";
+              return `${checkbox} ${action}`;
+            })
+            .join("\n") + "\n";
       } else if (result.nextAction) {
-        actionsText = `- [ ] ${result.nextAction}\n`;
+        const isWaiting = waitingFor[0] || false;
+        const checkbox = isWaiting ? "- [w]" : "- [ ]";
+        actionsText = `${checkbox} ${result.nextAction}\n`;
       }
 
       content = content.replace(nextActionsRegex, `$1${actionsText}`);
@@ -242,7 +266,8 @@ export class FileWriter {
   private buildProjectContentFallback(
     result: GTDProcessingResult,
     originalItem: string,
-    spheres: string[] = []
+    spheres: string[] = [],
+    waitingFor: boolean[] = []
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
@@ -282,9 +307,18 @@ ${originalItemDescription}
 
     // Handle multiple next actions or single next action
     if (result.nextActions && result.nextActions.length > 0) {
-      content += result.nextActions.map((action) => `- [ ] ${action}`).join("\n") + "\n";
+      content +=
+        result.nextActions
+          .map((action, i) => {
+            const isWaiting = waitingFor[i] || false;
+            const checkbox = isWaiting ? "- [w]" : "- [ ]";
+            return `${checkbox} ${action}`;
+          })
+          .join("\n") + "\n";
     } else {
-      content += `- [ ] ${result.nextAction}\n`;
+      const isWaiting = waitingFor[0] || false;
+      const checkbox = isWaiting ? "- [w]" : "- [ ]";
+      content += `${checkbox} ${result.nextAction}\n`;
     }
 
     content += `
@@ -301,13 +335,18 @@ ${originalItemDescription}
   /**
    * Add an action item to a specific section
    */
-  private addActionToSection(content: string, sectionHeading: string, action: string): string {
+  private addActionToSection(
+    content: string,
+    sectionHeading: string,
+    action: string,
+    isWaiting: boolean = false
+  ): string {
     const lines = content.split("\n");
     const sectionIndex = this.findSectionIndex(lines, sectionHeading);
 
     if (sectionIndex === -1) {
       // Section doesn't exist, create it at the end
-      return this.createSectionWithAction(content, sectionHeading, action);
+      return this.createSectionWithAction(content, sectionHeading, action, isWaiting);
     }
 
     // Find where to insert the action (after the heading, before next section)
@@ -319,7 +358,8 @@ ${originalItemDescription}
     }
 
     // Insert the action
-    lines.splice(insertIndex, 0, `- [ ] ${action}`);
+    const checkbox = isWaiting ? "- [w]" : "- [ ]";
+    lines.splice(insertIndex, 0, `${checkbox} ${action}`);
 
     return lines.join("\n");
   }
@@ -370,7 +410,12 @@ ${originalItemDescription}
   /**
    * Create a new section with an action when section doesn't exist
    */
-  private createSectionWithAction(content: string, sectionHeading: string, action: string): string {
+  private createSectionWithAction(
+    content: string,
+    sectionHeading: string,
+    action: string,
+    isWaiting: boolean = false
+  ): string {
     // Add section at the end of the file
     let newContent = content.trim();
 
@@ -378,7 +423,8 @@ ${originalItemDescription}
       newContent += "\n";
     }
 
-    newContent += `\n${sectionHeading}\n- [ ] ${action}\n`;
+    const checkbox = isWaiting ? "- [w]" : "- [ ]";
+    newContent += `\n${sectionHeading}\n${checkbox} ${action}\n`;
 
     return newContent;
   }

@@ -370,6 +370,22 @@ function renderNextActionsEditor(
   actionsLabel.style.color = "var(--text-normal)";
   actionsLabel.style.textTransform = "none";
 
+  // Initialize waitingFor array if needed
+  if (!item.waitingFor) {
+    item.waitingFor = new Array(currentNextActions.length).fill(false);
+    // Set initial waiting-for state from AI if available
+    if (item.result?.isWaitingFor && item.isAIProcessed) {
+      item.waitingFor = item.waitingFor.map(() => true);
+    }
+  }
+  // Ensure waitingFor array matches actions length
+  while (item.waitingFor.length < currentNextActions.length) {
+    item.waitingFor.push(false);
+  }
+
+  // Store reference to ensure TypeScript knows it's defined
+  const waitingForArray = item.waitingFor;
+
   const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
   currentNextActions.forEach((action, index) => {
     const actionItem = actionsList.createDiv("flow-gtd-action-item");
@@ -405,6 +421,26 @@ function renderNextActionsEditor(
       }
     });
 
+    // Waiting-for toggle button
+    const waitingToggle = actionItem.createEl("button", {
+      cls: "flow-gtd-next-action-waiting-toggle",
+      text: "⏰",
+    });
+    waitingToggle.setAttribute("type", "button");
+    waitingToggle.title = "Toggle waiting for";
+    waitingToggle.style.marginLeft = "8px";
+
+    // Set initial state
+    const isWaiting = waitingForArray[index] || false;
+    if (isWaiting) {
+      waitingToggle.classList.add("active");
+    }
+
+    waitingToggle.addEventListener("click", () => {
+      waitingForArray[index] = !waitingForArray[index];
+      waitingToggle.classList.toggle("active", waitingForArray[index]);
+    });
+
     const removeBtn = actionItem.createEl("button", {
       cls: "flow-gtd-action-remove",
     });
@@ -414,6 +450,7 @@ function renderNextActionsEditor(
     removeBtn.innerHTML = "✕";
     removeBtn.addEventListener("click", () => {
       currentNextActions.splice(index, 1);
+      waitingForArray.splice(index, 1);
       item.editedNames = [...currentNextActions];
       if (currentNextActions.length === 1) {
         item.editedName = currentNextActions[0];
@@ -432,6 +469,7 @@ function renderNextActionsEditor(
   addActionBtn.addEventListener("click", () => {
     currentNextActions.push("");
     item.editedNames = [...currentNextActions];
+    waitingForArray.push(false);
     state.queueRender("editable");
   });
 

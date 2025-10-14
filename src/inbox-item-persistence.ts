@@ -97,21 +97,39 @@ export class InboxItemPersistenceService {
     finalNextActions: string[],
     resultForSaving: GTDProcessingResult
   ): Promise<void> {
+    // Ensure waitingFor array is properly initialized
+    const waitingFor = item.waitingFor || [];
+    // Extend or trim to match finalNextActions length
+    const finalWaitingFor = finalNextActions.map((_, i) => waitingFor[i] || false);
+
     switch (item.selectedAction) {
       case "create-project":
-        await this.writer.createProject(resultForSaving, item.original, item.selectedSpheres);
+        await this.writer.createProject(
+          resultForSaving,
+          item.original,
+          item.selectedSpheres,
+          finalWaitingFor
+        );
         break;
 
       case "add-to-project":
         if (item.selectedProject) {
-          await this.writer.addNextActionToProject(item.selectedProject, finalNextActions);
+          await this.writer.addNextActionToProject(
+            item.selectedProject,
+            finalNextActions,
+            finalWaitingFor
+          );
         } else {
           throw new Error("No project selected");
         }
         break;
 
       case "next-actions-file":
-        await this.writer.addToNextActionsFile(finalNextActions, item.selectedSpheres);
+        await this.writer.addToNextActionsFile(
+          finalNextActions,
+          item.selectedSpheres,
+          finalWaitingFor
+        );
         break;
 
       case "someday-file":

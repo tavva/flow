@@ -924,3 +924,26 @@ select.flow-gtd-inline-select option,
         color: var(--interactive-accent);
         text-decoration: underline;
 }
+
+/* Waiting For Toggle in Inbox Modal */
+.flow-gtd-next-action-waiting-toggle {
+	padding: 4px 8px;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.6;
+	font-size: 16px;
+	transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.flow-gtd-next-action-waiting-toggle:hover {
+	opacity: 1;
+	background: var(--interactive-hover);
+}
+
+.flow-gtd-next-action-waiting-toggle.active {
+	opacity: 1;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
