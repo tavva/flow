@@ -4,6 +4,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { PluginSettings, FlowProject } from "./types";
+import { GTDContext } from "./gtd-context-scanner";
 
 export interface CliArgs {
   vaultPath: string;
@@ -52,39 +53,86 @@ export function loadPluginSettings(vaultPath: string): PluginSettings {
   return settings;
 }
 
-export function buildSystemPrompt(projects: FlowProject[], sphere: string): string {
+export function buildSystemPrompt(
+  projects: FlowProject[],
+  sphere: string,
+  gtdContext: GTDContext
+): string {
   const projectCount = projects.length;
+  const nextActionsCount = gtdContext.nextActions.length;
+  const somedayCount = gtdContext.somedayItems.length;
+  const inboxCount = gtdContext.inboxItems.length;
 
-  let prompt = `You are a prioritisation coach helping with GTD project management for the ${sphere} sphere.\n\n`;
-  prompt += `You have context on ${projectCount} projects. Your role is to:\n`;
-  prompt += `- Help prioritise which projects to focus on based on stated goals and constraints\n`;
-  prompt += `- Ask clarifying questions about urgency, dependencies, and impact\n`;
-  prompt += `- Provide actionable recommendations\n`;
-  prompt += `- Consider project priority levels (1 = highest, 3 = lowest)\n`;
-  prompt += `- Consider the number and nature of next actions (more specific actions = more momentum)\n\n`;
+  let prompt = `You are a GTD (Getting Things Done) coach for the ${sphere} sphere.\n\n`;
+  prompt += `You have context on the user's complete GTD system:\n`;
+  prompt += `- ${projectCount} active projects with their next actions and priorities\n`;
+  prompt += `- ${nextActionsCount} next actions from the central next actions file\n`;
+  prompt += `- ${somedayCount} items in someday/maybe\n`;
+  prompt += `- ${inboxCount} unprocessed inbox items\n\n`;
 
-  if (projectCount === 0) {
-    prompt += `No projects found in this sphere.\n`;
+  prompt += `Your role is to provide expert GTD advice:\n`;
+  prompt += `- Help prioritise projects and actions based on goals, context, energy, and time\n`;
+  prompt += `- Review project quality: Are outcomes clear? Are next actions specific and actionable?\n`;
+  prompt += `- Coach on GTD processes: weekly reviews, inbox processing, project planning\n`;
+  prompt += `- Answer methodology questions about GTD principles and best practices\n`;
+  prompt += `- Identify issues: projects with no next actions, vague actions, unclear outcomes\n\n`;
+
+  prompt += `Important: You are read-only. Provide advice and recommendations, but you cannot edit files.\n\n`;
+
+  prompt += `GTD Quality Standards:\n`;
+  prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
+  prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
+  prompt += `- Projects need at least one next action to maintain momentum\n\n`;
+
+  if (projectCount === 0 && nextActionsCount === 0 && somedayCount === 0 && inboxCount === 0) {
+    prompt += `No GTD data found. You can still answer general GTD methodology questions.\n`;
     return prompt;
   }
 
-  prompt += `## Projects\n\n`;
+  prompt += `---\n\n`;
 
-  for (const project of projects) {
-    prompt += `### ${project.title}\n`;
-    prompt += `Description: ${project.description || "No description"}\n`;
-    prompt += `Priority: ${project.priority}\n`;
-    prompt += `Status: ${project.status}\n`;
+  if (projectCount > 0) {
+    prompt += `## Projects (${projectCount})\n\n`;
+    for (const project of projects) {
+      prompt += `### ${project.title}\n`;
+      prompt += `Description: ${project.description || "No description"}\n`;
+      prompt += `Priority: ${project.priority} (1=highest, 3=lowest)\n`;
+      prompt += `Status: ${project.status}\n`;
 
-    if (project.nextActions && project.nextActions.length > 0) {
-      prompt += `Next Actions:\n`;
-      for (const action of project.nextActions) {
-        prompt += `- ${action}\n`;
+      if (project.nextActions && project.nextActions.length > 0) {
+        prompt += `Next Actions (${project.nextActions.length}):\n`;
+        for (const action of project.nextActions) {
+          prompt += `- ${action}\n`;
+        }
+      } else {
+        prompt += `⚠️ Next Actions: None defined (project may be stalled)\n`;
       }
-    } else {
-      prompt += `Next Actions: None defined\n`;
-    }
 
+      prompt += `\n`;
+    }
+  }
+
+  if (nextActionsCount > 0) {
+    prompt += `## Central Next Actions (${nextActionsCount})\n\n`;
+    for (const action of gtdContext.nextActions) {
+      prompt += `- ${action}\n`;
+    }
+    prompt += `\n`;
+  }
+
+  if (somedayCount > 0) {
+    prompt += `## Someday/Maybe (${somedayCount})\n\n`;
+    for (const item of gtdContext.somedayItems) {
+      prompt += `- ${item}\n`;
+    }
+    prompt += `\n`;
+  }
+
+  if (inboxCount > 0) {
+    prompt += `## Inbox Items (${inboxCount} unprocessed)\n\n`;
+    for (const item of gtdContext.inboxItems) {
+      prompt += `- ${item}\n`;
+    }
     prompt += `\n`;
   }
 
@@ -370,7 +418,13 @@ export async function main() {
     }
 
     // Build system prompt
-    const systemPrompt = buildSystemPrompt(projects, args.sphere);
+    // TODO: Task 8 will add GTDContextScanner here
+    const emptyGtdContext: GTDContext = {
+      nextActions: [],
+      somedayItems: [],
+      inboxItems: [],
+    };
+    const systemPrompt = buildSystemPrompt(projects, args.sphere, emptyGtdContext);
 
     // Create language model
     const languageModelClient = createLanguageModelClient(settings);
