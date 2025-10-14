@@ -43,6 +43,8 @@ export interface GTDProcessingResult {
   recommendedSpheres?: string[];
   recommendedSpheresReasoning?: string;
   referenceContent?: string; // Content to add as reference to a project
+  isWaitingFor?: boolean; // Indicates next actions should use [w] checkbox status
+  waitingForReason?: string; // Explanation of what we're waiting for
 }
 
 export interface ProjectSuggestion {

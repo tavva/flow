@@ -32,6 +32,8 @@ describe("GTDProcessor", () => {
     recommendedSpheres?: string[];
     recommendedSpheresReasoning?: string;
     referenceContent?: string | null;
+    isWaitingFor?: boolean;
+    waitingForReason?: string;
   };
 
   const buildClaudeResponse = (overrides: Partial<MockClaudeResponse> = {}): string =>
@@ -624,6 +626,27 @@ Clarify what it refers to before proceeding.",
 
       expect(result.suggestedProjects).toHaveLength(1);
       expect(result.suggestedProjects?.[0].project.title).toBe("Live Project");
+    });
+
+    test("should recognize waiting-for scenarios and create [w] items", async () => {
+      const inboxText = "Need to follow up with John about the proposal after he reviews it";
+
+      mockClient.sendMessage.mockResolvedValue(
+        buildClaudeResponse({
+          nextAction: "Follow up with John about the proposal",
+          reasoning: "This is waiting for John to complete his review",
+          recommendedAction: "next-actions-file",
+          recommendedActionReasoning: "Standalone waiting-for item",
+          isWaitingFor: true,
+          waitingForReason: "Waiting for John to review the proposal",
+        })
+      );
+
+      const result = await processor.processInboxItem(inboxText, []);
+
+      expect(result.isWaitingFor).toBe(true);
+      expect(result.waitingForReason).toBe("Waiting for John to review the proposal");
+      expect(result.nextAction).toBe("Follow up with John about the proposal");
     });
   });
 

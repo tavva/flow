@@ -82,6 +82,13 @@ Analyze this item according to GTD principles:
 
 **SOMEDAY/MAYBE**: Something you might want to do in the future but not now.
 
+**WAITING FOR**: If the item involves waiting for someone else to do something before you can act, set "isWaitingFor": true and provide "waitingForReason". This signals that next actions should use [w] checkbox status instead of [ ].
+
+Examples:
+- "Follow up with Sarah after she sends the report" → isWaitingFor: true, waitingForReason: "Waiting for Sarah to send the report"
+- "Check if deployment is complete" → isWaitingFor: true, waitingForReason: "Waiting for deployment to complete"
+- "Call dentist to schedule appointment" → isWaitingFor: false (you're taking direct action)
+
 Rules:
 - If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action.
 - If it's a single completable action → It's a NEXT ACTION.
@@ -121,7 +128,9 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
   "recommendedActionReasoning": "brief explanation of where this should go and why",
   "recommendedSpheres": ["array of recommended spheres from the available list"],
   "recommendedSpheresReasoning": "brief explanation of why these spheres fit this item",
-  "referenceContent": "formatted content to add to project (only if reference)"
+  "referenceContent": "formatted content to add to project (only if reference)",
+  "isWaitingFor": true/false (optional - only include if true),
+  "waitingForReason": "explanation of what you're waiting for (only if isWaitingFor is true)"
 }
 
 IMPORTANT: If recommendedAction is "create-project", you MUST provide a non-empty projectOutcome string. Do not leave it empty or null.
@@ -381,6 +390,8 @@ Examples:
       recommendedSpheres: Array.isArray(parsed.recommendedSpheres) ? parsed.recommendedSpheres : [],
       recommendedSpheresReasoning: parsed.recommendedSpheresReasoning || "",
       referenceContent: parsed.referenceContent,
+      isWaitingFor: parsed.isWaitingFor,
+      waitingForReason: parsed.waitingForReason,
     };
   }
 
@@ -417,6 +428,8 @@ Examples:
     recommendedSpheres?: string[];
     recommendedSpheresReasoning?: string;
     referenceContent?: string;
+    isWaitingFor?: boolean;
+    waitingForReason?: string;
   } {
     // Helper to append raw response to error messages
     const withResponse = (message: string): string => {
@@ -712,6 +725,22 @@ Examples:
       if (typeof parsed.referenceContent !== "string") {
         throw new GTDResponseValidationError(
           withResponse('Invalid model response: "referenceContent" must be a string when provided')
+        );
+      }
+    }
+
+    if (parsed.isWaitingFor !== undefined) {
+      if (typeof parsed.isWaitingFor !== "boolean") {
+        throw new GTDResponseValidationError(
+          withResponse('Invalid model response: "isWaitingFor" must be a boolean when provided')
+        );
+      }
+    }
+
+    if (parsed.waitingForReason !== undefined) {
+      if (typeof parsed.waitingForReason !== "string" || parsed.waitingForReason.trim().length === 0) {
+        throw new GTDResponseValidationError(
+          withResponse('Invalid model response: "waitingForReason" must be a non-empty string when provided')
         );
       }
     }
