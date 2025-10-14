@@ -7,21 +7,61 @@ export interface EditableItemsViewOptions {
   onClose: () => void;
 }
 
-export function renderInboxView(contentEl: HTMLElement, state: InboxModalState) {
+export interface InboxViewOptions {
+  isLoading?: boolean;
+}
+
+export function renderInboxView(
+  contentEl: HTMLElement,
+  state: InboxModalState,
+  options: InboxViewOptions = {}
+) {
+  const { isLoading = true } = options;
+
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
   contentEl.createEl("h2", { text: "📥 Inbox Files Processing" });
-  contentEl.createEl("p", {
-    text: "Processing files from your Flow inbox folders...",
-    cls: "flow-gtd-description",
-  });
 
-  const inboxContainer = contentEl.createDiv("flow-gtd-inbox-info");
-  inboxContainer.createEl("p", {
-    text: "Loading items from your Flow inbox folders...",
-    cls: "flow-gtd-description",
-  });
+  if (isLoading) {
+    contentEl.createEl("p", {
+      text: "Processing files from your Flow inbox folders...",
+      cls: "flow-gtd-description",
+    });
+
+    const inboxContainer = contentEl.createDiv("flow-gtd-inbox-info");
+    inboxContainer.createEl("p", {
+      text: "Loading items from your Flow inbox folders...",
+      cls: "flow-gtd-description",
+    });
+  } else {
+    // Empty state
+    const emptyStateContainer = contentEl.createDiv("flow-gtd-empty-state");
+    emptyStateContainer.style.textAlign = "center";
+    emptyStateContainer.style.padding = "48px 24px";
+
+    const emptyIcon = emptyStateContainer.createEl("div", {
+      cls: "flow-gtd-empty-icon",
+    });
+    emptyIcon.style.fontSize = "48px";
+    emptyIcon.style.marginBottom = "16px";
+    emptyIcon.setText("✨");
+
+    emptyStateContainer.createEl("h3", {
+      text: "Your inbox is empty!",
+      cls: "flow-gtd-empty-title",
+    });
+
+    const emptyDescription = emptyStateContainer.createEl("p", {
+      cls: "flow-gtd-empty-description",
+    });
+    emptyDescription.style.color = "var(--text-muted)";
+    emptyDescription.style.marginTop = "12px";
+    emptyDescription.style.lineHeight = "1.6";
+    emptyDescription.setText(
+      "No items found in your Flow inbox folders. Add files to process in your inbox folders, or close this window."
+    );
+  }
 }
 
 export function renderEditableItemsView(

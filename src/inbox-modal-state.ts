@@ -15,6 +15,7 @@ export class InboxModalState {
   public deletionOffsets = new Map<string, number>();
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
+  public isLoadingInbox = true;
 
   private uniqueIdCounter = 0;
 
@@ -63,6 +64,8 @@ export class InboxModalState {
     try {
       const inboxEditableItems = await this.controller.loadInboxEditableItems();
 
+      this.isLoadingInbox = false;
+
       if (inboxEditableItems.length === 0) {
         new Notice("No items found in inbox folders");
         this.requestRender("inbox");
@@ -73,6 +76,7 @@ export class InboxModalState {
       new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
       this.requestRender("editable");
     } catch (error) {
+      this.isLoadingInbox = false;
       new Notice("Error loading inbox items");
       console.error(error);
       this.requestRender("inbox");

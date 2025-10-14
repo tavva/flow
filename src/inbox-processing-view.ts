@@ -42,7 +42,7 @@ export class InboxProcessingView extends ItemView {
 
     await this.state.loadReferenceData();
 
-    renderInboxView(container as HTMLElement, this.state);
+    renderInboxView(container as HTMLElement, this.state, { isLoading: true });
     await this.state.loadInboxItems();
   }
 
@@ -82,7 +82,7 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    renderInboxView(container, this.state);
+    renderInboxView(container, this.state, { isLoading: this.state.isLoadingInbox });
   }
 
   private handleClose() {

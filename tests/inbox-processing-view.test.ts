@@ -311,4 +311,49 @@ describe("InboxProcessingView", () => {
     // Verify detachLeavesOfType was called with correct view type
     expect(detachMock).toHaveBeenCalledWith(INBOX_PROCESSING_VIEW_TYPE);
   });
+
+  test("renders empty state when no inbox items exist", async () => {
+    jest.useFakeTimers();
+
+    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const mockContainer = {
+      empty: jest.fn(),
+      addClass: jest.fn(),
+      createEl: jest.fn().mockReturnValue({
+        addEventListener: jest.fn(),
+        createEl: jest.fn(),
+        style: {},
+      }),
+      createDiv: jest.fn().mockReturnValue({
+        createEl: jest.fn(),
+        style: {},
+      }),
+    };
+    (view as any).containerEl = {
+      children: [null, mockContainer],
+    };
+
+    // Mock state methods - loadInboxItems should result in empty state
+    jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
+    const loadInboxItemsMock = jest
+      .spyOn((view as any).state, "loadInboxItems")
+      .mockImplementation(async () => {
+        // Simulate no items found
+        (view as any).state.editableItems = [];
+        (view as any).state.isLoadingInbox = false;
+        (view as any).state.requestRender("inbox");
+      });
+
+    await view.onOpen();
+
+    // Advance timers to trigger debounced render
+    jest.advanceTimersByTime(50);
+
+    // Verify renderInboxView was called with isLoading: false on the last call
+    const calls = (renderInboxView as jest.Mock).mock.calls;
+    const lastCall = calls[calls.length - 1];
+    expect(lastCall[2]).toEqual(expect.objectContaining({ isLoading: false }));
+
+    jest.useRealTimers();
+  });
 });
