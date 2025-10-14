@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
-import { FlowProject, PluginSettings } from "./types";
+import { FlowProject, PluginSettings, HotlistItem } from "./types";
+import { ActionLineFinder } from "./action-line-finder";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -18,15 +19,30 @@ interface SphereViewData {
 
 export class SphereView extends ItemView {
   private readonly scanner: FlowProjectScanner;
+  private readonly lineFinder: ActionLineFinder;
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private planningMode: boolean = false;
+  private saveSettings: () => Promise<void>;
 
-  constructor(leaf: WorkspaceLeaf, sphere: string, settings: PluginSettings) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    sphere: string,
+    settings: PluginSettings,
+    saveSettings: () => Promise<void>
+  ) {
     super(leaf);
     this.sphere = sphere;
     this.settings = settings;
     this.scanner = new FlowProjectScanner(this.app);
+    this.lineFinder = new ActionLineFinder(this.app);
+    this.saveSettings = saveSettings;
+  }
+
+  private togglePlanningMode() {
+    this.planningMode = !this.planningMode;
+    this.onOpen();
   }
 
   getViewType(): string {
@@ -64,9 +80,10 @@ export class SphereView extends ItemView {
   }
 
   // Method to update the sphere and refresh the view
-  async setSphere(sphere: string, settings: PluginSettings) {
+  async setSphere(sphere: string, settings: PluginSettings, saveSettings: () => Promise<void>) {
     this.sphere = sphere;
     this.settings = settings;
+    this.saveSettings = saveSettings;
     await this.onOpen();
   }
 
@@ -101,6 +118,26 @@ export class SphereView extends ItemView {
   private renderContent(container: HTMLElement, data: SphereViewData) {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
+
+    // Add planning mode toggle button
+    const toggleBtn = container.createEl("button", {
+      cls: "flow-gtd-sphere-planning-toggle",
+      text: this.planningMode ? "Exit Planning Mode" : "Planning Mode",
+    });
+    toggleBtn.addEventListener("click", () => {
+      this.togglePlanningMode();
+    });
+
+    // Add planning mode banner if active
+    if (this.planningMode) {
+      const banner = container.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
+      banner.setText("Planning Mode - Click actions to add/remove from hotlist");
+    }
+
+    // Add planning mode background class
+    if (this.planningMode) {
+      container.addClass("flow-gtd-sphere-planning-active");
+    }
 
     this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
     this.renderProjectsSection(container, data.projects);
@@ -167,8 +204,35 @@ export class SphereView extends ItemView {
 
       if (project.nextActions && project.nextActions.length > 0) {
         const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
-        project.nextActions.forEach((action) => {
-          list.createEl("li", { text: action });
+        project.nextActions.forEach((action, index) => {
+          const item = list.createEl("li", { text: action });
+
+          // In planning mode, make actions clickable
+          if (this.planningMode) {
+            item.style.cursor = "pointer";
+
+            item.addEventListener("click", async () => {
+              // Find the exact line number for this action
+              const lineResult = await this.lineFinder.findActionLine(project.file, action);
+              if (!lineResult.found) {
+                console.error("Could not find line for action:", action);
+                return;
+              }
+
+              if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
+                await this.removeFromHotlist(project.file, lineResult.lineNumber!);
+              } else {
+                await this.addToHotlist(
+                  action,
+                  project.file,
+                  lineResult.lineNumber!,
+                  lineResult.lineContent!,
+                  this.sphere,
+                  false
+                );
+              }
+            });
+          }
         });
       } else {
         this.renderEmptyMessage(wrapper, "No next actions captured yet.");
@@ -194,8 +258,37 @@ export class SphereView extends ItemView {
     }
 
     const list = section.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
-    actions.forEach((action) => {
-      list.createEl("li", { text: action });
+    const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
+
+    actions.forEach((action, index) => {
+      const item = list.createEl("li", { text: action });
+
+      // In planning mode, make actions clickable
+      if (this.planningMode) {
+        item.style.cursor = "pointer";
+
+        item.addEventListener("click", async () => {
+          // Find the exact line number for this action
+          const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
+          if (!lineResult.found) {
+            console.error("Could not find line for action:", action);
+            return;
+          }
+
+          if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
+            await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!);
+          } else {
+            await this.addToHotlist(
+              action,
+              nextActionsFile,
+              lineResult.lineNumber!,
+              lineResult.lineContent!,
+              this.sphere,
+              true
+            );
+          }
+        });
+      }
     });
   }
 
@@ -339,5 +432,42 @@ export class SphereView extends ItemView {
     } catch (error) {
       console.error(`Failed to open project file: ${filePath}`, error);
     }
+  }
+
+  private async addToHotlist(
+    text: string,
+    file: string,
+    lineNumber: number,
+    lineContent: string,
+    sphere: string,
+    isGeneral: boolean
+  ): Promise<void> {
+    const item: HotlistItem = {
+      file,
+      lineNumber,
+      lineContent,
+      text,
+      sphere,
+      isGeneral,
+      addedAt: Date.now(),
+    };
+
+    this.settings.hotlist.push(item);
+    await this.saveSettings();
+    await this.onOpen();
+  }
+
+  private async removeFromHotlist(file: string, lineNumber: number): Promise<void> {
+    this.settings.hotlist = this.settings.hotlist.filter(
+      (item) => !(item.file === file && item.lineNumber === lineNumber)
+    );
+    await this.saveSettings();
+    await this.onOpen();
+  }
+
+  private isOnHotlist(file: string, lineNumber: number): boolean {
+    return this.settings.hotlist.some(
+      (item) => item.file === file && item.lineNumber === lineNumber
+    );
   }
 }

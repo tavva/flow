@@ -1027,3 +1027,187 @@ select.flow-gtd-inline-select option,
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 }
+
+/* Hotlist View Styles */
+.flow-gtd-hotlist-view {
+	padding: 20px;
+}
+
+.flow-gtd-hotlist-title {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+}
+
+.flow-gtd-hotlist-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 20px 0;
+	text-align: center;
+}
+
+.flow-gtd-hotlist-section {
+	margin-bottom: 30px;
+}
+
+.flow-gtd-hotlist-section-title {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 16px;
+	padding-bottom: 8px;
+	border-bottom: 2px solid var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.flow-gtd-hotlist-file-section,
+.flow-gtd-hotlist-sphere-section {
+	margin-bottom: 24px;
+}
+
+.flow-gtd-hotlist-file-header,
+.flow-gtd-hotlist-sphere-header {
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 12px;
+	color: var(--text-accent);
+}
+
+.flow-gtd-hotlist-file-link {
+	color: var(--text-accent);
+	text-decoration: none;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.flow-gtd-hotlist-file-link:hover {
+	text-decoration: underline;
+	color: var(--interactive-accent);
+}
+
+.flow-gtd-hotlist-items {
+	list-style: none;
+	padding-left: 0;
+	margin: 0;
+}
+
+.flow-gtd-hotlist-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px;
+	margin-bottom: 8px;
+	border-radius: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-gtd-hotlist-item:hover {
+	background: var(--background-secondary-alt);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-hotlist-item-text {
+	flex: 1;
+	cursor: pointer;
+	color: var(--text-normal);
+	font-size: 14px;
+	margin-right: 12px;
+}
+
+.flow-gtd-hotlist-item-text:hover {
+	color: var(--text-accent);
+}
+
+.flow-gtd-hotlist-item-actions {
+	display: flex;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.flow-gtd-hotlist-action-btn {
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 16px;
+	line-height: 1;
+	transition: all 0.2s ease;
+	min-width: 36px;
+	text-align: center;
+}
+
+.flow-gtd-hotlist-action-btn:hover {
+	background: var(--interactive-hover);
+	border-color: var(--interactive-accent);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-hotlist-action-btn:active {
+	transform: translateY(0);
+}
+
+/* Planning Mode Styles */
+.flow-gtd-sphere-planning-toggle {
+	margin-bottom: 16px;
+	padding: 10px 20px;
+	border: 2px solid var(--interactive-accent);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	transition: all 0.2s ease;
+	display: inline-block;
+}
+
+.flow-gtd-sphere-planning-toggle:hover {
+	background: var(--background-secondary);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-sphere-planning-banner {
+	padding: 12px 16px;
+	margin-bottom: 16px;
+	background: var(--background-modifier-info);
+	border-left: 4px solid var(--interactive-accent);
+	border-radius: 6px;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--text-normal);
+}
+
+.flow-gtd-sphere-planning-active {
+	background: var(--background-secondary);
+}
+
+.flow-gtd-sphere-planning-active .flow-gtd-sphere-next-actions li {
+	cursor: pointer;
+	padding: 8px 12px;
+	border-radius: 6px;
+	margin-bottom: 8px;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+	border: 1px solid transparent;
+}
+
+.flow-gtd-sphere-planning-active .flow-gtd-sphere-next-actions li:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--background-modifier-border);
+	transform: translateX(4px);
+}
+
+.flow-gtd-hotlist-indicator {
+	background: var(--background-modifier-success);
+	font-weight: 600;
+	border-color: var(--color-green) !important;
+}
+
+.flow-gtd-hotlist-indicator::before {
+	content: "✓ ";
+	color: var(--color-green);
+	font-weight: 700;
+	margin-right: 4px;
+}

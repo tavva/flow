@@ -7,6 +7,7 @@ import { ReviewModal } from "./src/review-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
+import { HotlistView, HOTLIST_VIEW_TYPE } from "./src/hotlist-view";
 
 type InboxCommandConfig = {
   id: string;
@@ -22,7 +23,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Register the sphere view
     this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
       // Create with default sphere - will be updated when opened
-      return new SphereView(leaf, this.settings.spheres[0] || "personal", this.settings);
+      return new SphereView(
+        leaf,
+        this.settings.spheres[0] || "personal",
+        this.settings,
+        this.saveSettings.bind(this)
+      );
     });
 
     // Register the inbox processing view
@@ -33,6 +39,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Register the waiting for view
     this.registerView(WAITING_FOR_VIEW_TYPE, (leaf) => new WaitingForView(leaf));
 
+    // Register the hotlist view
+    this.registerView(
+      HOTLIST_VIEW_TYPE,
+      (leaf) => new HotlistView(leaf, this.settings, this.saveSettings.bind(this))
+    );
+
     // Add ribbon icon
     this.addRibbonIcon("inbox", "Flow GTD: Process Inbox", () => {
       this.openInboxProcessingView();
@@ -41,6 +53,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Add waiting for ribbon icon
     this.addRibbonIcon("clock", "Open Waiting For view", () => {
       this.activateWaitingForView();
+    });
+
+    // Add hotlist ribbon icon
+    this.addRibbonIcon("list-checks", "Open Hotlist", () => {
+      this.activateHotlistView();
     });
 
     const inboxCommands: InboxCommandConfig[] = [
@@ -83,6 +100,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       },
     });
 
+    // Add hotlist command
+    this.addCommand({
+      id: "open-hotlist",
+      name: "Open Hotlist",
+      callback: () => {
+        this.activateHotlistView();
+      },
+    });
+
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
 
@@ -96,6 +122,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
     // Detach all waiting for views
     this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
+    // Detach all hotlist views
+    this.app.workspace.detachLeavesOfType(HOTLIST_VIEW_TYPE);
     console.log("Flow GTD Coach plugin unloaded");
   }
 
@@ -209,7 +237,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Update the view with the correct sphere
     const view = leaf.view as SphereView;
-    await view.setSphere(sphere, this.settings);
+    await view.setSphere(sphere, this.settings, this.saveSettings.bind(this));
   }
 
   private getDisplaySphereName(sphere: string): string {
@@ -253,6 +281,27 @@ export default class FlowGTDCoachPlugin extends Plugin {
       if (rightLeaf) {
         await rightLeaf.setViewState({
           type: WAITING_FOR_VIEW_TYPE,
+          active: true,
+        });
+        leaf = rightLeaf;
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  async activateHotlistView() {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({
+          type: HOTLIST_VIEW_TYPE,
           active: true,
         });
         leaf = rightLeaf;

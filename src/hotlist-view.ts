@@ -1,0 +1,281 @@
+// ABOUTME: Leaf view displaying curated hotlist of next actions from across the vault.
+// ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
+
+import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { HotlistItem, PluginSettings } from "./types";
+import { HotlistValidator, ValidationResult } from "./hotlist-validator";
+
+export const HOTLIST_VIEW_TYPE = "flow-gtd-hotlist-view";
+
+interface GroupedHotlistItems {
+  projectActions: { [filePath: string]: HotlistItem[] };
+  generalActions: { [sphere: string]: HotlistItem[] };
+}
+
+export class HotlistView extends ItemView {
+  private settings: PluginSettings;
+  private validator: HotlistValidator;
+  private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private saveSettings: () => Promise<void>;
+
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
+    super(leaf);
+    this.settings = settings;
+    this.validator = new HotlistValidator(this.app);
+    this.saveSettings = saveSettings;
+  }
+
+  getViewType(): string {
+    return HOTLIST_VIEW_TYPE;
+  }
+
+  getDisplayText(): string {
+    return "Hotlist";
+  }
+
+  getIcon(): string {
+    return "list-checks";
+  }
+
+  async onOpen() {
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.addClass("flow-gtd-hotlist-view");
+
+    const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
+    titleEl.setText("Hotlist");
+
+    if (this.settings.hotlist.length === 0) {
+      this.renderEmptyMessage(container as HTMLElement);
+      return;
+    }
+
+    const grouped = this.groupItems(this.settings.hotlist);
+    this.renderGroupedItems(container as HTMLElement, grouped);
+  }
+
+  async onClose() {
+    // Cleanup if needed
+  }
+
+  private groupItems(items: HotlistItem[]): GroupedHotlistItems {
+    const projectActions: { [filePath: string]: HotlistItem[] } = {};
+    const generalActions: { [sphere: string]: HotlistItem[] } = {};
+
+    items.forEach((item) => {
+      if (item.isGeneral) {
+        if (!generalActions[item.sphere]) {
+          generalActions[item.sphere] = [];
+        }
+        generalActions[item.sphere].push(item);
+      } else {
+        if (!projectActions[item.file]) {
+          projectActions[item.file] = [];
+        }
+        projectActions[item.file].push(item);
+      }
+    });
+
+    return { projectActions, generalActions };
+  }
+
+  private renderGroupedItems(container: HTMLElement, grouped: GroupedHotlistItems) {
+    // Project Actions section
+    if (Object.keys(grouped.projectActions).length > 0) {
+      const projectSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      projectSection.createEl("h3", {
+        text: "Project Actions",
+        cls: "flow-gtd-hotlist-section-title",
+      });
+
+      Object.keys(grouped.projectActions)
+        .sort()
+        .forEach((filePath) => {
+          this.renderFileGroup(projectSection, filePath, grouped.projectActions[filePath]);
+        });
+    }
+
+    // General Actions section
+    if (Object.keys(grouped.generalActions).length > 0) {
+      const generalSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      generalSection.createEl("h3", {
+        text: "General Actions",
+        cls: "flow-gtd-hotlist-section-title",
+      });
+
+      Object.keys(grouped.generalActions)
+        .sort()
+        .forEach((sphere) => {
+          this.renderSphereGroup(generalSection, sphere, grouped.generalActions[sphere]);
+        });
+    }
+  }
+
+  private renderFileGroup(container: HTMLElement, filePath: string, items: HotlistItem[]) {
+    const fileSection = container.createDiv({ cls: "flow-gtd-hotlist-file-section" });
+
+    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-hotlist-file-header" });
+    const fileName = filePath.split("/").pop() || filePath;
+    const fileLink = fileHeader.createEl("a", {
+      text: fileName,
+      cls: "flow-gtd-hotlist-file-link",
+    });
+    fileLink.style.cursor = "pointer";
+    fileLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openFile(filePath);
+    });
+
+    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    items.forEach((item) => {
+      this.renderItem(itemsList, item);
+    });
+  }
+
+  private renderSphereGroup(container: HTMLElement, sphere: string, items: HotlistItem[]) {
+    const sphereSection = container.createDiv({ cls: "flow-gtd-hotlist-sphere-section" });
+
+    sphereSection.createEl("h4", {
+      text: `(${sphere} sphere)`,
+      cls: "flow-gtd-hotlist-sphere-header",
+    });
+
+    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    items.forEach((item) => {
+      this.renderItem(itemsList, item);
+    });
+  }
+
+  private renderItem(container: HTMLElement, item: HotlistItem) {
+    const itemEl = container.createEl("li", { cls: "flow-gtd-hotlist-item" });
+
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
+    textSpan.setText(item.text);
+    textSpan.style.cursor = "pointer";
+    textSpan.addEventListener("click", () => {
+      this.openFile(item.file, item.lineNumber);
+    });
+
+    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
+
+    const completeBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "✓",
+    });
+    completeBtn.title = "Mark as complete";
+    completeBtn.addEventListener("click", async () => {
+      await this.markItemComplete(item);
+    });
+
+    const waitingBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "⏸",
+    });
+    waitingBtn.title = "Convert to waiting for";
+    waitingBtn.addEventListener("click", async () => {
+      await this.convertToWaitingFor(item);
+    });
+
+    const removeBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "🗑️",
+    });
+    removeBtn.title = "Remove from hotlist";
+    removeBtn.addEventListener("click", async () => {
+      await this.removeFromHotlist(item);
+    });
+  }
+
+  private renderEmptyMessage(container: HTMLElement) {
+    container
+      .createDiv({ cls: "flow-gtd-hotlist-empty" })
+      .setText("No items in hotlist. Use planning mode in sphere view to add actions.");
+  }
+
+  private async openFile(filePath: string, lineNumber?: number): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+
+    if (!(file instanceof TFile)) {
+      console.error(`File not found: ${filePath}`);
+      return;
+    }
+
+    try {
+      if (!this.rightPaneLeaf) {
+        this.rightPaneLeaf = this.app.workspace.getLeaf("split", "vertical");
+      }
+      await this.rightPaneLeaf.openFile(file);
+
+      if (lineNumber !== undefined) {
+        const view = this.rightPaneLeaf.view;
+        if (view && "editor" in view) {
+          const editor = (view as any).editor;
+          if (editor) {
+            editor.setCursor({ line: lineNumber - 1, ch: 0 });
+            editor.scrollIntoView(
+              { from: { line: lineNumber - 1, ch: 0 }, to: { line: lineNumber - 1, ch: 0 } },
+              true
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to open file: ${filePath}`, error);
+    }
+  }
+
+  private async markItemComplete(item: HotlistItem): Promise<void> {
+    const validation = await this.validator.validateItem(item);
+    if (!validation.found) {
+      console.error("Cannot mark item complete: item not found");
+      return;
+    }
+
+    const file = this.app.vault.getAbstractFileByPath(item.file);
+    if (!(file instanceof TFile)) {
+      return;
+    }
+
+    const content = await this.app.vault.read(file);
+    const lines = content.split(/\r?\n/);
+    const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
+
+    if (lineIndex >= 0 && lineIndex < lines.length) {
+      lines[lineIndex] = lines[lineIndex].replace(/\[(?: |w)\]/i, "[x]");
+      await this.app.vault.modify(file, lines.join("\n"));
+      await this.removeFromHotlist(item);
+    }
+  }
+
+  private async convertToWaitingFor(item: HotlistItem): Promise<void> {
+    const validation = await this.validator.validateItem(item);
+    if (!validation.found) {
+      console.error("Cannot convert item: item not found");
+      return;
+    }
+
+    const file = this.app.vault.getAbstractFileByPath(item.file);
+    if (!(file instanceof TFile)) {
+      return;
+    }
+
+    const content = await this.app.vault.read(file);
+    const lines = content.split(/\r?\n/);
+    const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
+
+    if (lineIndex >= 0 && lineIndex < lines.length) {
+      lines[lineIndex] = lines[lineIndex].replace(/\[ \]/i, "[w]");
+      await this.app.vault.modify(file, lines.join("\n"));
+      await this.removeFromHotlist(item);
+    }
+  }
+
+  private async removeFromHotlist(item: HotlistItem): Promise<void> {
+    this.settings.hotlist = this.settings.hotlist.filter(
+      (i) =>
+        !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
+    );
+    await this.saveSettings();
+    await this.onOpen(); // Re-render
+  }
+}

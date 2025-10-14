@@ -17,6 +17,9 @@ This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for
 - Waiting For list management with `[w]` checkbox status
 - Global view aggregating waiting-for items across all projects
 - Keyboard-driven task status cycling ([ ] → [w] → [x])
+- Hotlist for curating a focused set of next actions from across the vault
+- Planning mode in sphere view for selecting actions to add to hotlist
+- Validation and resolution when source files change
 
 ## Common Commands
 
@@ -98,6 +101,40 @@ The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
 - **Status Cycler** (`src/task-status-cycler.ts`) - Cycles checkbox status: [ ] → [w] → [x]
 - **AI Integration** - Processor recognizes waiting-for scenarios during inbox processing
 
+### Hotlist Support
+
+The plugin supports creating a curated "hotlist" of next actions to work on:
+
+- **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files by searching for checkbox patterns
+- **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change, searches for moved lines
+- **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in right sidebar with actions grouped by project/sphere
+- **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from hotlist
+- **Commands** - "Open Hotlist" command (`open-hotlist`) and ribbon icon with `list-checks` icon
+- **Hotlist Item Actions** - Mark complete, convert to waiting-for, or remove from hotlist
+- **File Navigation** - Click action text to open source file at correct line in split pane
+
+**Workflow:**
+
+1. Open a sphere view (work, personal, etc.)
+2. Click "Planning Mode" button to enter planning mode
+3. Click next actions from projects or general actions to add them to the hotlist
+4. Selected actions show visual indicator (checkmark)
+5. Exit planning mode when done selecting
+6. Open hotlist view to see curated list of actions
+7. Work through hotlist, marking complete or converting to waiting-for
+
+**Storage:**
+
+Hotlist items are stored in plugin settings as `HotlistItem[]` with:
+
+- `file`: Source file path
+- `lineNumber`: Last known line number
+- `lineContent`: Full line content for exact matching
+- `text`: Display text (action without checkbox)
+- `sphere`: Which sphere the action belongs to
+- `isGeneral`: Whether from Next Actions file vs project file
+- `addedAt`: Timestamp for ordering
+
 ### Flow Project Structure
 
 Flow projects are Markdown files with specific frontmatter and sections:
@@ -165,10 +202,17 @@ The plugin supports multiple LLM providers through a factory pattern:
 ### Test Files
 
 - `flow-scanner.test.ts` - Vault scanning and project parsing
-- `gtd-processor.test.ts` - AI processing logic (if exists)
-- `file-writer.test.ts` - File creation and updates (if exists)
+- `gtd-processor.test.ts` - AI processing logic
+- `file-writer.test.ts` - File creation and updates
 - `validation.test.ts` - Input validation
-- `inbox-scanner.test.ts` - Inbox folder scanning functionality (if exists)
+- `inbox-scanner.test.ts` - Inbox folder scanning functionality
+- `hotlist-validator.test.ts` - Hotlist item validation and line finding
+- `hotlist-view.test.ts` - Hotlist view rendering and interactions
+- `hotlist-integration.test.ts` - End-to-end hotlist workflows
+- `action-line-finder.test.ts` - Action line number detection
+- `sphere-view.test.ts` - Sphere view and planning mode
+- `waiting-for-scanner.test.ts` - Waiting-for item scanning
+- `waiting-for-view.test.ts` - Waiting-for view rendering
 
 **Note:** Test coverage may vary - check `tests/` directory for current test files.
 
@@ -271,6 +315,7 @@ Examples:
 - `process-inbox-folders`: Opens the modal with inbox folder scanning enabled
 - `cycle-task-status`: Cycles checkbox status on current line
 - `open-waiting-for-view`: Opens the Waiting For view
+- `open-hotlist`: Opens the Hotlist view in right sidebar
 
 ### UI Components
 
