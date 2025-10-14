@@ -35,13 +35,12 @@ export class WaitingForView extends ItemView {
   }
 
   async onOpen() {
-    // Register event listener for file modifications (only markdown files with [w] checkboxes)
-    this.modifyEventRef = this.app.vault.on("modify", async (file) => {
-      if (file instanceof TFile && file.extension === "md") {
-        const content = await this.app.vault.read(file);
-        if (content.includes("[w]") || content.includes("[W]")) {
-          this.scheduleRefresh();
-        }
+    // Register event listener for metadata cache changes (fires after file is indexed)
+    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
+      // Check if file has list items (tasks) that might be waiting-for items
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache?.listItems && cache.listItems.length > 0) {
+        this.scheduleRefresh();
       }
     });
 
@@ -70,7 +69,7 @@ export class WaitingForView extends ItemView {
   async onClose() {
     // Unregister event listener
     if (this.modifyEventRef) {
-      this.app.vault.offref(this.modifyEventRef);
+      this.app.metadataCache.offref(this.modifyEventRef);
       this.modifyEventRef = null;
     }
 
