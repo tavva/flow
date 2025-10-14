@@ -160,6 +160,7 @@ export async function runREPL(
   languageModelClient: LanguageModelClient,
   model: string,
   systemPrompt: string,
+  gtdContext: GTDContext,
   projectCount: number,
   sphere: string
 ): Promise<void> {
@@ -184,9 +185,13 @@ export async function runREPL(
     prompt: `${colors.user}You: ${colors.reset}`,
   });
 
-  console.log(`\nFlow Priority Coach - ${sphere} sphere (${projectCount} projects loaded)`);
+  console.log(`\nFlow GTD Coach - ${sphere} sphere`);
+  console.log(`  ${projectCount} projects`);
+  console.log(`  ${gtdContext.nextActions.length} next actions`);
+  console.log(`  ${gtdContext.somedayItems.length} someday items`);
+  console.log(`  ${gtdContext.inboxItems.length} inbox items\n`);
   console.log(
-    `Type 'exit' to quit, 'reset' to start fresh conversation, 'list' to show projects\n`
+    `Type 'exit' to quit, 'reset' to start fresh conversation\n`
   );
 
   // Initial system message
@@ -463,7 +468,7 @@ export async function main() {
     const model = getModelForSettings(settings);
 
     // Run REPL
-    await runREPL(languageModelClient, model, systemPrompt, projects.length, args.sphere);
+    await runREPL(languageModelClient, model, systemPrompt, gtdContext, projects.length, args.sphere);
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
