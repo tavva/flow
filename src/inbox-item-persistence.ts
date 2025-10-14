@@ -9,7 +9,11 @@ const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "next-actions-file",
 ];
 
-const ACTIONS_REQUIRING_SPHERES: readonly string[] = ["create-project"];
+const ACTIONS_REQUIRING_SPHERES: readonly string[] = [
+  "create-project",
+  "next-actions-file",
+  "someday-file",
+];
 
 export class InboxItemPersistenceService {
   constructor(private readonly writer: FileWriter) {}
@@ -58,9 +62,7 @@ export class InboxItemPersistenceService {
       ACTIONS_REQUIRING_SPHERES.includes(item.selectedAction) &&
       (!item.selectedSpheres || item.selectedSpheres.length === 0)
     ) {
-      throw new GTDResponseValidationError(
-        "At least one sphere must be selected when creating a project."
-      );
+      throw new GTDResponseValidationError("At least one sphere must be selected for this action.");
     }
   }
 

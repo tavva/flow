@@ -107,7 +107,38 @@ describe("InboxItemPersistenceService", () => {
 
     await expect(service.persist(item)).rejects.toThrow(GTDResponseValidationError);
     await expect(service.persist(item)).rejects.toThrow(
-      "At least one sphere must be selected when creating a project."
+      "At least one sphere must be selected for this action."
     );
+  });
+
+  it("throws when adding to next-actions-file with no spheres selected", async () => {
+    const item: EditableItem = {
+      original: "Call dentist",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: [], // No spheres selected
+      editedName: "Call dentist to schedule cleaning",
+    };
+
+    await expect(service.persist(item)).rejects.toThrow(GTDResponseValidationError);
+    await expect(service.persist(item)).rejects.toThrow(
+      "At least one sphere must be selected for this action."
+    );
+    expect(writerMocks.addToNextActionsFile).not.toHaveBeenCalled();
+  });
+
+  it("throws when adding to someday-file with no spheres selected", async () => {
+    const item: EditableItem = {
+      original: "Learn Spanish",
+      isAIProcessed: false,
+      selectedAction: "someday-file",
+      selectedSpheres: [], // No spheres selected
+    };
+
+    await expect(service.persist(item)).rejects.toThrow(GTDResponseValidationError);
+    await expect(service.persist(item)).rejects.toThrow(
+      "At least one sphere must be selected for this action."
+    );
+    expect(writerMocks.addToSomedayFile).not.toHaveBeenCalled();
   });
 });
