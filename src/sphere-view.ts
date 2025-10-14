@@ -248,8 +248,38 @@ export class SphereView extends ItemView {
     }
 
     const list = section.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
-    actions.forEach((action) => {
-      list.createEl("li", { text: action });
+    const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
+
+    actions.forEach((action, index) => {
+      const item = list.createEl("li", { text: action });
+
+      // In planning mode, make actions clickable
+      if (this.planningMode) {
+        item.style.cursor = "pointer";
+
+        // Calculate line number (approximate - will be validated)
+        const lineNumber = index + 5;
+
+        // Show visual indicator if already on hotlist
+        if (this.isOnHotlist(nextActionsFile, lineNumber)) {
+          item.addClass("flow-gtd-hotlist-indicator");
+        }
+
+        item.addEventListener("click", async () => {
+          if (this.isOnHotlist(nextActionsFile, lineNumber)) {
+            await this.removeFromHotlist(nextActionsFile, lineNumber);
+          } else {
+            await this.addToHotlist(
+              action,
+              nextActionsFile,
+              lineNumber,
+              `- [ ] ${action} #sphere/${this.sphere}`,
+              this.sphere,
+              true
+            );
+          }
+        });
+      }
     });
   }
 
