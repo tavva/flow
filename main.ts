@@ -5,6 +5,7 @@ import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { ReviewModal } from "./src/review-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
+import { cycleTaskStatus } from "./src/task-status-cycler";
 
 type InboxCommandConfig = {
   id: string;
@@ -46,6 +47,21 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Review Projects",
       callback: () => {
         this.openReviewModal();
+      },
+    });
+
+    // Add cycle task status command
+    this.addCommand({
+      id: "cycle-task-status",
+      name: "Cycle task status",
+      editorCallback: (editor) => {
+        const cursor = editor.getCursor();
+        const line = editor.getLine(cursor.line);
+        const cycled = cycleTaskStatus(line);
+
+        if (cycled) {
+          editor.setLine(cursor.line, cycled);
+        }
       },
     });
 
