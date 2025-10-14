@@ -15,6 +15,7 @@ export class WaitingForView extends ItemView {
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private modifyEventRef: EventRef | null = null;
   private refreshTimeout: NodeJS.Timeout | null = null;
+  private isRefreshing: boolean = false;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -34,9 +35,9 @@ export class WaitingForView extends ItemView {
   }
 
   async onOpen() {
-    // Register event listener for file modifications
+    // Register event listener for file modifications (only markdown files)
     this.modifyEventRef = this.app.vault.on("modify", (file) => {
-      if (file instanceof TFile) {
+      if (file instanceof TFile && file.extension === "md") {
         this.scheduleRefresh();
       }
     });
@@ -86,23 +87,35 @@ export class WaitingForView extends ItemView {
     this.refreshTimeout = setTimeout(async () => {
       await this.refresh();
       this.refreshTimeout = null;
-    }, 500);
+    }, 1000);
   }
 
   private async refresh() {
-    const container = this.containerEl.children[1];
-    container.empty();
+    // Prevent concurrent refreshes
+    if (this.isRefreshing) {
+      return;
+    }
 
-    const loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
-    loadingEl.setText("Refreshing...");
+    this.isRefreshing = true;
 
     try {
+      const container = this.containerEl.children[1];
+      container.empty();
+
+      const loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
+      loadingEl.setText("Refreshing...");
+
       const items = await this.scanner.scanWaitingForItems();
       loadingEl.remove();
       this.renderContent(container as HTMLElement, items);
     } catch (error) {
       console.error("Failed to refresh waiting for view", error);
-      loadingEl.setText("Unable to refresh. Check the console for more information.");
+      const container = this.containerEl.children[1];
+      container.empty();
+      const errorEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
+      errorEl.setText("Unable to refresh. Check the console for more information.");
+    } finally {
+      this.isRefreshing = false;
     }
   }
 
