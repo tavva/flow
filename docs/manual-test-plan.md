@@ -1,17 +1,20 @@
 # Inbox Processing View - Manual Test Plan
 
 ## Test 1: Open view from ribbon
+
 1. Click inbox icon in ribbon
 2. Verify: New tab opens with "Flow Inbox Processing" title
 3. Verify: View shows inbox items
 
 ## Test 2: Open view from command palette
+
 1. Open command palette (Cmd+P)
 2. Type "Process Inbox"
 3. Select command
 4. Verify: New tab opens with inbox view
 
 ## Test 3: Navigate away and return
+
 1. Open inbox processing view
 2. Start AI refinement on an item
 3. Navigate to a different note
@@ -20,12 +23,14 @@
 6. Verify: Can continue processing items
 
 ## Test 4: Reuse existing tab
+
 1. Open inbox processing view (has items)
 2. Navigate to different note
 3. Run "Process Inbox" command again
 4. Verify: Existing tab is revealed (not new tab created)
 
 ## Test 5: Restart confirmation
+
 1. Open inbox processing view
 2. Load some items (don't process yet)
 3. Close the tab
@@ -41,6 +46,7 @@
 13. Verify: View refreshes with new item load
 
 ## Test 6: Close view
+
 1. Open inbox processing view
 2. Process and save all items
 3. Verify: "All items processed" message shows
@@ -48,6 +54,7 @@
 5. Verify: Tab closes
 
 ## Test 7: Multiple spheres workflow
+
 1. Open inbox processing view
 2. Process items selecting different spheres
 3. Navigate to different notes between items
@@ -61,4 +68,5 @@ Tester: [Name]
 Result: PASS/FAIL
 
 Issues found:
+
 - [List any issues]

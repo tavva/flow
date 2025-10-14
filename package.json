@@ -14,7 +14,7 @@
     "test:coverage": "jest --coverage",
     "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
-    "priority-coach": "ts-node src/cli.ts"
+    "priority-coach": "npx tsx src/cli.ts"
   },
   "keywords": [
     "obsidian",

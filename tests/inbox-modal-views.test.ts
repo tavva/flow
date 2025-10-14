@@ -88,7 +88,9 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
 
     await service.persist(item);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(project, ["Single edited action"]);
+    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(project, [
+      "Single edited action",
+    ]);
   });
 
   it("uses AI-suggested actions when no edits have been made", async () => {

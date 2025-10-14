@@ -438,7 +438,9 @@ Examples:
     const validCategories = new Set(["next-action", "project", "reference", "person", "someday"]);
     if (typeof parsed.category !== "string" || !validCategories.has(parsed.category)) {
       throw new GTDResponseValidationError(
-        withResponse('Invalid model response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)')
+        withResponse(
+          'Invalid model response: missing or invalid "category" (expected one of next-action/project/reference/person/someday)'
+        )
       );
     }
 
@@ -446,7 +448,9 @@ Examples:
     if (parsed.nextActions !== undefined && parsed.nextActions !== null) {
       if (!Array.isArray(parsed.nextActions)) {
         throw new GTDResponseValidationError(
-          withResponse(`Invalid model response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`)
+          withResponse(
+            `Invalid model response: "nextActions" must be an array when provided, got ${typeof parsed.nextActions}: ${JSON.stringify(parsed.nextActions)}`
+          )
         );
       }
       if (
@@ -455,7 +459,9 @@ Examples:
         )
       ) {
         throw new GTDResponseValidationError(
-          withResponse(`Invalid model response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`)
+          withResponse(
+            `Invalid model response: "nextActions" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.nextActions)}`
+          )
         );
       }
       hasValidNextActions = parsed.nextActions.length > 0;
@@ -467,7 +473,9 @@ Examples:
       if (typeof nextActionValue === "string") {
         if (nextActionValue.trim().length === 0) {
           throw new GTDResponseValidationError(
-            withResponse('Invalid model response: "nextAction" must be a non-empty string for actionable items')
+            withResponse(
+              'Invalid model response: "nextAction" must be a non-empty string for actionable items'
+            )
           );
         }
       } else {
@@ -500,7 +508,9 @@ Examples:
 
     if (typeof parsed.reasoning !== "string" || parsed.reasoning.trim().length === 0) {
       throw new GTDResponseValidationError(
-        withResponse('Invalid model response: missing or invalid "reasoning" (expected non-empty string)')
+        withResponse(
+          'Invalid model response: missing or invalid "reasoning" (expected non-empty string)'
+        )
       );
     }
 
@@ -542,14 +552,18 @@ Examples:
           typeof suggestion.confidence !== "string"
         ) {
           throw new GTDResponseValidationError(
-            withResponse(`Invalid model response: suggestedProjects[${index}] must include string "projectTitle", "relevance", and "confidence"`)
+            withResponse(
+              `Invalid model response: suggestedProjects[${index}] must include string "projectTitle", "relevance", and "confidence"`
+            )
           );
         }
 
         const validConfidence = new Set(["high", "medium", "low"]);
         if (!validConfidence.has(suggestion.confidence)) {
           throw new GTDResponseValidationError(
-            withResponse(`Invalid model response: suggestedProjects[${index}].confidence must be one of high/medium/low`)
+            withResponse(
+              `Invalid model response: suggestedProjects[${index}].confidence must be one of high/medium/low`
+            )
           );
         }
       }
@@ -571,14 +585,18 @@ Examples:
           typeof suggestion.confidence !== "string"
         ) {
           throw new GTDResponseValidationError(
-            withResponse(`Invalid model response: suggestedPersons[${index}] must include string "personName", "relevance", and "confidence"`)
+            withResponse(
+              `Invalid model response: suggestedPersons[${index}] must include string "personName", "relevance", and "confidence"`
+            )
           );
         }
 
         const validConfidence = new Set(["high", "medium", "low"]);
         if (!validConfidence.has(suggestion.confidence)) {
           throw new GTDResponseValidationError(
-            withResponse(`Invalid model response: suggestedPersons[${index}].confidence must be one of high/medium/low`)
+            withResponse(
+              `Invalid model response: suggestedPersons[${index}].confidence must be one of high/medium/low`
+            )
           );
         }
       }
@@ -601,7 +619,9 @@ Examples:
         !validRecommendedActions.has(parsed.recommendedAction)
       ) {
         throw new GTDResponseValidationError(
-          withResponse('Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard')
+          withResponse(
+            'Invalid model response: "recommendedAction" must be one of create-project/add-to-project/next-actions-file/someday-file/reference/person/trash/discard'
+          )
         );
       }
     }
@@ -612,7 +632,9 @@ Examples:
         parsed.recommendedActionReasoning.trim().length === 0
       ) {
         throw new GTDResponseValidationError(
-          withResponse('Invalid model response: "recommendedActionReasoning" must be a non-empty string when provided')
+          withResponse(
+            'Invalid model response: "recommendedActionReasoning" must be a non-empty string when provided'
+          )
         );
       }
     }
@@ -656,7 +678,9 @@ Examples:
     if (parsed.recommendedSpheres !== undefined && parsed.recommendedSpheres !== null) {
       if (!Array.isArray(parsed.recommendedSpheres)) {
         throw new GTDResponseValidationError(
-          withResponse(`Invalid model response: "recommendedSpheres" must be an array when provided, got ${typeof parsed.recommendedSpheres}: ${JSON.stringify(parsed.recommendedSpheres)}`)
+          withResponse(
+            `Invalid model response: "recommendedSpheres" must be an array when provided, got ${typeof parsed.recommendedSpheres}: ${JSON.stringify(parsed.recommendedSpheres)}`
+          )
         );
       }
       if (
@@ -665,7 +689,9 @@ Examples:
         )
       ) {
         throw new GTDResponseValidationError(
-          withResponse(`Invalid model response: "recommendedSpheres" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.recommendedSpheres)}`)
+          withResponse(
+            `Invalid model response: "recommendedSpheres" must be an array of non-empty strings when provided, got: ${JSON.stringify(parsed.recommendedSpheres)}`
+          )
         );
       }
     }
@@ -673,7 +699,9 @@ Examples:
     if (parsed.recommendedSpheresReasoning !== undefined) {
       if (typeof parsed.recommendedSpheresReasoning !== "string") {
         throw new GTDResponseValidationError(
-          withResponse('Invalid model response: "recommendedSpheresReasoning" must be a string when provided')
+          withResponse(
+            'Invalid model response: "recommendedSpheresReasoning" must be a string when provided'
+          )
         );
       }
     }

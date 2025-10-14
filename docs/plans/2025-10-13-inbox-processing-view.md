@@ -13,6 +13,7 @@
 ## Task 1: Create InboxProcessingView class
 
 **Files:**
+
 - Create: `src/inbox-processing-view.ts`
 - Test: `tests/inbox-processing-view.test.ts`
 
@@ -115,6 +116,7 @@ git commit -m "feat: add InboxProcessingView class with view type and display me
 ## Task 2: Integrate state management into view
 
 **Files:**
+
 - Modify: `src/inbox-processing-view.ts`
 - Test: `tests/inbox-processing-view.test.ts`
 
@@ -234,6 +236,7 @@ git commit -m "feat: integrate InboxModalState into InboxProcessingView"
 ## Task 3: Add render management to view
 
 **Files:**
+
 - Modify: `src/inbox-processing-view.ts`
 - Test: `tests/inbox-processing-view.test.ts`
 
@@ -363,6 +366,7 @@ git commit -m "feat: add render management with debouncing to InboxProcessingVie
 ## Task 4: Register view in plugin
 
 **Files:**
+
 - Modify: `main.ts`
 - Test: Manual verification (integration test)
 
@@ -403,6 +407,7 @@ git commit -m "feat: register InboxProcessingView in plugin"
 ## Task 5: Implement view opening with reuse logic
 
 **Files:**
+
 - Modify: `main.ts`
 - Test: Manual verification (integration test)
 
@@ -561,6 +566,7 @@ git commit -m "feat: implement view opening with reuse and restart confirmation"
 ## Task 6: Remove modal files and references
 
 **Files:**
+
 - Delete: `src/inbox-modal.ts`
 - Modify: `main.ts`
 - Modify: `tests/inbox-modal-state.test.ts` (if it imports the modal)
@@ -606,6 +612,7 @@ git commit -m "refactor: remove InboxProcessingModal, replaced by InboxProcessin
 ## Task 7: Update tests to use view instead of modal
 
 **Files:**
+
 - Modify: `tests/inbox-modal-state.test.ts` (if needed)
 - Modify: `tests/inbox-modal-views.test.ts` (if needed)
 - Test: `npm test`
@@ -644,6 +651,7 @@ git commit -m "refactor: update test descriptions to reflect view architecture"
 ## Task 8: Manual testing and documentation
 
 **Files:**
+
 - Create: `docs/manual-test-plan.md`
 - Manual testing to be performed
 
@@ -655,17 +663,20 @@ Create `docs/manual-test-plan.md`:
 # Inbox Processing View - Manual Test Plan
 
 ## Test 1: Open view from ribbon
+
 1. Click inbox icon in ribbon
 2. Verify: New tab opens with "Flow Inbox Processing" title
 3. Verify: View shows inbox items
 
 ## Test 2: Open view from command palette
+
 1. Open command palette (Cmd+P)
 2. Type "Process Inbox"
 3. Select command
 4. Verify: New tab opens with inbox view
 
 ## Test 3: Navigate away and return
+
 1. Open inbox processing view
 2. Start AI refinement on an item
 3. Navigate to a different note
@@ -674,12 +685,14 @@ Create `docs/manual-test-plan.md`:
 6. Verify: Can continue processing items
 
 ## Test 4: Reuse existing tab
+
 1. Open inbox processing view (has items)
 2. Navigate to different note
 3. Run "Process Inbox" command again
 4. Verify: Existing tab is revealed (not new tab created)
 
 ## Test 5: Restart confirmation
+
 1. Open inbox processing view
 2. Load some items (don't process yet)
 3. Close the tab
@@ -695,6 +708,7 @@ Create `docs/manual-test-plan.md`:
 13. Verify: View refreshes with new item load
 
 ## Test 6: Close view
+
 1. Open inbox processing view
 2. Process and save all items
 3. Verify: "All items processed" message shows
@@ -702,6 +716,7 @@ Create `docs/manual-test-plan.md`:
 5. Verify: Tab closes
 
 ## Test 7: Multiple spheres workflow
+
 1. Open inbox processing view
 2. Process items selecting different spheres
 3. Navigate to different notes between items
@@ -725,6 +740,7 @@ Tester: [Name]
 Result: PASS/FAIL
 
 Issues found:
+
 - [List any issues]
 ```
 
@@ -748,6 +764,7 @@ All tasks complete. The inbox processing modal has been converted to a full tab 
 - All existing functionality preserved
 
 Run final verification:
+
 ```bash
 npm test
 npm run build
