@@ -6,6 +6,7 @@ import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-pro
 import { ReviewModal } from "./src/review-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
+import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 
 type InboxCommandConfig = {
   id: string;
@@ -29,9 +30,17 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return new InboxProcessingView(leaf, this.settings);
     });
 
+    // Register the waiting for view
+    this.registerView(WAITING_FOR_VIEW_TYPE, (leaf) => new WaitingForView(leaf));
+
     // Add ribbon icon
     this.addRibbonIcon("inbox", "Flow GTD: Process Inbox", () => {
       this.openInboxProcessingView();
+    });
+
+    // Add waiting for ribbon icon
+    this.addRibbonIcon("clock", "Open Waiting For view", () => {
+      this.activateWaitingForView();
     });
 
     const inboxCommands: InboxCommandConfig[] = [
@@ -65,6 +74,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       },
     });
 
+    // Add waiting for view command
+    this.addCommand({
+      id: "open-waiting-for-view",
+      name: "Open Waiting For view",
+      callback: () => {
+        this.activateWaitingForView();
+      },
+    });
+
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
 
@@ -76,6 +94,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE);
     // Detach all inbox processing views
     this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
+    // Detach all waiting for views
+    this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
     console.log("Flow GTD Coach plugin unloaded");
   }
 
@@ -221,5 +241,26 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     const modal = new ReviewModal(this.app, this.settings);
     modal.open();
+  }
+
+  async activateWaitingForView() {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(WAITING_FOR_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({
+          type: WAITING_FOR_VIEW_TYPE,
+          active: true,
+        });
+        leaf = rightLeaf;
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
   }
 }
