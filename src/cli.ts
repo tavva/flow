@@ -100,7 +100,8 @@ import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 // ANSI color codes
 const colors = {
   reset: "\x1b[0m",
-  user: "\x1b[36m", // Cyan for user
+  user: "\x1b[1m\x1b[36m", // Bold cyan for user
+  userMessage: "\x1b[3m\x1b[36m", // Italic cyan for user message text
   assistant: "\x1b[35m", // Magenta for assistant
   dim: "\x1b[2m", // Dim for thinking indicator
 };
@@ -163,6 +164,9 @@ export async function runREPL(
       rl.prompt();
       return;
     }
+
+    // Echo user message in italic
+    console.log(`${colors.userMessage}${trimmed}${colors.reset}\n`);
 
     // Add user message
     messages.push({
