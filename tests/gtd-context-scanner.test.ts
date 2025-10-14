@@ -156,9 +156,7 @@ Some paragraph text.
     });
 
     it("should return empty array if no inbox files found", async () => {
-      const mockFiles = [
-        { path: "Other Folder/Not inbox.md", basename: "Not inbox" } as TFile,
-      ];
+      const mockFiles = [{ path: "Other Folder/Not inbox.md", basename: "Not inbox" } as TFile];
 
       mockGetMarkdownFiles.mockReturnValue(mockFiles);
 
@@ -169,6 +167,16 @@ Some paragraph text.
 
     it("should handle empty vault", async () => {
       mockGetMarkdownFiles.mockReturnValue([]);
+
+      const result = await scanner.scanInboxItems();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array if getMarkdownFiles throws error", async () => {
+      mockGetMarkdownFiles.mockImplementation(() => {
+        throw new Error("Vault access error");
+      });
 
       const result = await scanner.scanInboxItems();
 
@@ -191,10 +199,12 @@ Some paragraph text.
         return Promise.reject(new Error("File not found"));
       });
 
-      mockVault.getMarkdownFiles = jest.fn().mockReturnValue([
-        { path: "Flow Inbox Folder/Item 1.md", basename: "Item 1" } as TFile,
-        { path: "Flow Inbox Files/Item 2.md", basename: "Item 2" } as TFile,
-      ]);
+      mockVault.getMarkdownFiles = jest
+        .fn()
+        .mockReturnValue([
+          { path: "Flow Inbox Folder/Item 1.md", basename: "Item 1" } as TFile,
+          { path: "Flow Inbox Files/Item 2.md", basename: "Item 2" } as TFile,
+        ]);
 
       // Need to fix the readFile mock
       const mockGetAbstractFileByPath = jest.fn((path: string) => {

@@ -1,5 +1,6 @@
 import { parseCliArgs, loadPluginSettings, buildSystemPrompt } from "../src/cli";
 import { FlowProject } from "../src/types";
+import { GTDContext } from "../src/gtd-context-scanner";
 import * as fs from "fs";
 
 jest.mock("fs");
@@ -145,19 +146,31 @@ describe("System prompt generation", () => {
       },
     ];
 
-    const prompt = buildSystemPrompt(projects, "work");
+    const gtdContext: GTDContext = {
+      nextActions: ["Call dentist", "Email John about meeting"],
+      somedayItems: ["Learn Spanish", "Write a book"],
+      inboxItems: ["Random note from yesterday"],
+    };
+
+    const prompt = buildSystemPrompt(projects, "work", gtdContext);
 
     expect(prompt).toContain("Mobile App");
     expect(prompt).toContain("Rebuild mobile app with React Native");
     expect(prompt).toContain("Priority: 1");
     expect(prompt).toContain("Set up React Native development environment");
     expect(prompt).toContain("Hiring");
-    expect(prompt).toContain("2 projects");
+    expect(prompt).toContain("2 active projects");
   });
 
   it("should mention sphere in prompt", () => {
     const projects: FlowProject[] = [];
-    const prompt = buildSystemPrompt(projects, "work");
+    const gtdContext: GTDContext = {
+      nextActions: [],
+      somedayItems: [],
+      inboxItems: [],
+    };
+
+    const prompt = buildSystemPrompt(projects, "work", gtdContext);
 
     expect(prompt).toContain("work sphere");
   });

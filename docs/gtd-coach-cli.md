@@ -7,6 +7,7 @@ A conversational CLI tool for AI-powered GTD coaching using your Flow vault data
 The GTD Coach CLI loads your complete GTD system from a specified sphere and provides an interactive REPL where you can have conversations with an AI GTD expert about all aspects of your GTD practice.
 
 The coach has access to:
+
 - Your Flow projects with priorities, statuses, and next actions
 - Central next actions file
 - Someday/maybe items
