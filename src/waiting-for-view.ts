@@ -105,12 +105,16 @@ export class WaitingForView extends ItemView {
       const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-waiting-for-items" });
 
       items.forEach((item) => {
-        this.renderItem(itemsList, item);
+        this.renderItem(itemsList, item, fileSection);
       });
     });
   }
 
-  private renderItem(container: HTMLElement, item: WaitingForItem) {
+  private renderItem(
+    container: HTMLElement,
+    item: WaitingForItem,
+    fileSection: HTMLElement
+  ) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-waiting-for-item" });
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-waiting-for-item-text" });
@@ -129,7 +133,7 @@ export class WaitingForView extends ItemView {
     completeBtn.title = "Mark as complete (changes [w] to [x])";
     completeBtn.addEventListener("click", async () => {
       await this.toggleItemComplete(item);
-      itemEl.remove();
+      this.removeItemAndCleanup(itemEl, container, fileSection);
     });
 
     const convertBtn = actionsSpan.createEl("button", {
@@ -139,8 +143,21 @@ export class WaitingForView extends ItemView {
     convertBtn.title = "Convert back to regular action (changes [w] to [ ])";
     convertBtn.addEventListener("click", async () => {
       await this.convertToAction(item);
-      itemEl.remove();
+      this.removeItemAndCleanup(itemEl, container, fileSection);
     });
+  }
+
+  private removeItemAndCleanup(
+    itemEl: HTMLElement,
+    itemsList: HTMLElement,
+    fileSection: HTMLElement
+  ) {
+    itemEl.remove();
+
+    // Check if the items list is now empty
+    if (itemsList.children.length === 0) {
+      fileSection.remove();
+    }
   }
 
   private renderEmptyMessage(container: HTMLElement) {
