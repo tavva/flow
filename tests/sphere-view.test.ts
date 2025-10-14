@@ -91,5 +91,66 @@ describe("SphereView", () => {
       (view as any).togglePlanningMode();
       expect((view as any).planningMode).toBe(false);
     });
+
+    it("should add action to hotlist when clicked in planning mode", async () => {
+      settings.hotlist = [];
+      const view = new SphereView(leaf, "work", settings);
+      view.app = app;
+      (view as any).planningMode = true;
+
+      await (view as any).addToHotlist(
+        "Test action",
+        "Projects/Test.md",
+        5,
+        "- [ ] Test action",
+        "work",
+        false
+      );
+
+      expect(settings.hotlist).toHaveLength(1);
+      expect(settings.hotlist[0].text).toBe("Test action");
+      expect(settings.hotlist[0].file).toBe("Projects/Test.md");
+    });
+
+    it("should remove action from hotlist when clicked again in planning mode", async () => {
+      settings.hotlist = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Test action",
+          text: "Test action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+      const view = new SphereView(leaf, "work", settings);
+      view.app = app;
+      (view as any).planningMode = true;
+
+      await (view as any).removeFromHotlist("Projects/Test.md", 5);
+
+      expect(settings.hotlist).toHaveLength(0);
+    });
+
+    it("should check if action is on hotlist", () => {
+      settings.hotlist = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Test action",
+          text: "Test action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+      const view = new SphereView(leaf, "work", settings);
+      view.app = app;
+
+      expect((view as any).isOnHotlist("Projects/Test.md", 5)).toBe(true);
+      expect((view as any).isOnHotlist("Projects/Test.md", 6)).toBe(false);
+      expect((view as any).isOnHotlist("Projects/Other.md", 5)).toBe(false);
+    });
   });
 });

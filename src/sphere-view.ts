@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
-import { FlowProject, PluginSettings } from "./types";
+import { FlowProject, PluginSettings, HotlistItem } from "./types";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -365,5 +365,38 @@ export class SphereView extends ItemView {
     } catch (error) {
       console.error(`Failed to open project file: ${filePath}`, error);
     }
+  }
+
+  private async addToHotlist(
+    text: string,
+    file: string,
+    lineNumber: number,
+    lineContent: string,
+    sphere: string,
+    isGeneral: boolean
+  ): Promise<void> {
+    const item: HotlistItem = {
+      file,
+      lineNumber,
+      lineContent,
+      text,
+      sphere,
+      isGeneral,
+      addedAt: Date.now(),
+    };
+
+    this.settings.hotlist.push(item);
+    await this.onOpen();
+  }
+
+  private async removeFromHotlist(file: string, lineNumber: number): Promise<void> {
+    this.settings.hotlist = this.settings.hotlist.filter(
+      (item) => !(item.file === file && item.lineNumber === lineNumber)
+    );
+    await this.onOpen();
+  }
+
+  private isOnHotlist(file: string, lineNumber: number): boolean {
+    return this.settings.hotlist.some((item) => item.file === file && item.lineNumber === lineNumber);
   }
 }
