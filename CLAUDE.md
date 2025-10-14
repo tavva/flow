@@ -126,6 +126,7 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 **Storage:**
 
 Hotlist items are stored in plugin settings as `HotlistItem[]` with:
+
 - `file`: Source file path
 - `lineNumber`: Last known line number
 - `lineContent`: Full line content for exact matching

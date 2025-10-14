@@ -466,6 +466,8 @@ export class SphereView extends ItemView {
   }
 
   private isOnHotlist(file: string, lineNumber: number): boolean {
-    return this.settings.hotlist.some((item) => item.file === file && item.lineNumber === lineNumber);
+    return this.settings.hotlist.some(
+      (item) => item.file === file && item.lineNumber === lineNumber
+    );
   }
 }

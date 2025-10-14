@@ -272,7 +272,8 @@ export class HotlistView extends ItemView {
 
   private async removeFromHotlist(item: HotlistItem): Promise<void> {
     this.settings.hotlist = this.settings.hotlist.filter(
-      (i) => !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
+      (i) =>
+        !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
     await this.saveSettings();
     await this.onOpen(); // Re-render

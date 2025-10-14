@@ -13,6 +13,7 @@
 ## Task 1: Add HotlistItem type and settings storage
 
 **Files:**
+
 - Modify: `src/types.ts` (add HotlistItem interface)
 - Modify: `src/types.ts` (extend PluginSettings interface)
 
@@ -56,13 +57,13 @@ In `src/types.ts`, add after the FlowProject interface:
 
 ```typescript
 export interface HotlistItem {
-  file: string;           // Full path to source file
-  lineNumber: number;     // Last known line number
-  lineContent: string;    // Full line content for validation
-  text: string;           // Display text (action without checkbox)
-  sphere: string;         // Which sphere this belongs to
-  isGeneral: boolean;     // true if from Next Actions file
-  addedAt: number;        // Timestamp
+  file: string; // Full path to source file
+  lineNumber: number; // Last known line number
+  lineContent: string; // Full line content for validation
+  text: string; // Display text (action without checkbox)
+  sphere: string; // Which sphere this belongs to
+  isGeneral: boolean; // true if from Next Actions file
+  addedAt: number; // Timestamp
 }
 ```
 
@@ -105,6 +106,7 @@ git commit -m "feat: add HotlistItem type and settings storage"
 ## Task 2: Create hotlist validator service
 
 **Files:**
+
 - Create: `src/hotlist-validator.ts`
 - Create: `tests/hotlist-validator.test.ts`
 
@@ -255,6 +257,7 @@ git commit -m "feat: add hotlist validator with basic validation"
 ## Task 3: Add comprehensive validator tests for edge cases
 
 **Files:**
+
 - Modify: `tests/hotlist-validator.test.ts`
 
 **Step 1: Write tests for line movement scenarios**
@@ -393,6 +396,7 @@ git commit -m "test: add comprehensive hotlist validator edge case tests"
 ## Task 4: Create hotlist view component
 
 **Files:**
+
 - Create: `src/hotlist-view.ts`
 - Create: `tests/hotlist-view.test.ts`
 
@@ -737,7 +741,8 @@ export class HotlistView extends ItemView {
 
   private async removeFromHotlist(item: HotlistItem): Promise<void> {
     this.settings.hotlist = this.settings.hotlist.filter(
-      (i) => !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
+      (i) =>
+        !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
     await this.onOpen(); // Re-render
   }
@@ -761,6 +766,7 @@ git commit -m "feat: add hotlist view component with grouping and actions"
 ## Task 5: Add planning mode to sphere view
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 - Modify: `tests/sphere-view.test.ts`
 
@@ -867,6 +873,7 @@ git commit -m "feat: add planning mode toggle to sphere view"
 ## Task 6: Add clickable actions in planning mode
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 - Modify: `tests/sphere-view.test.ts`
 
@@ -989,6 +996,7 @@ git commit -m "feat: add hotlist management methods to sphere view"
 ## Task 7: Make project actions clickable in planning mode
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 
 **Step 1: Modify renderProjectsSection to handle planning mode clicks**
@@ -1078,6 +1086,7 @@ git commit -m "feat: make project actions clickable in planning mode"
 ## Task 8: Make general actions clickable in planning mode
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 
 **Step 1: Modify renderGeneralNextActionsSection to handle planning mode clicks**
@@ -1153,6 +1162,7 @@ git commit -m "feat: make general actions clickable in planning mode"
 ## Task 9: Register hotlist view and commands in main.ts
 
 **Files:**
+
 - Modify: `main.ts`
 
 **Step 1: Write test for command registration**
@@ -1262,6 +1272,7 @@ git commit -m "feat: register hotlist view and commands"
 ## Task 10: Add CSS styling for hotlist and planning mode
 
 **Files:**
+
 - Create: `styles/hotlist.css` (or modify existing styles.css)
 
 **Step 1: Create CSS for hotlist view**
@@ -1425,6 +1436,7 @@ git commit -m "feat: add CSS styling for hotlist and planning mode"
 ## Task 11: Fix line number detection for accurate hotlist references
 
 **Files:**
+
 - Create: `src/action-line-finder.ts`
 - Create: `tests/action-line-finder.test.ts`
 - Modify: `src/sphere-view.ts`
@@ -1622,6 +1634,7 @@ git commit -m "feat: add accurate line number detection for hotlist items"
 ## Task 12: Add comprehensive integration tests
 
 **Files:**
+
 - Create: `tests/hotlist-integration.test.ts`
 
 **Step 1: Write integration test**
@@ -1753,6 +1766,7 @@ git commit -m "test: add comprehensive hotlist integration tests"
 ## Task 13: Update documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 - Modify: `README.md` (if exists)
 
@@ -1792,6 +1806,7 @@ git commit -m "docs: document hotlist feature in CLAUDE.md"
 ## Task 14: Run full test suite and verify coverage
 
 **Files:**
+
 - All test files
 
 **Step 1: Run full test suite**
@@ -1820,6 +1835,7 @@ git commit -m "test: ensure full test coverage for hotlist feature"
 ## Task 15: Manual testing in Obsidian
 
 **Files:**
+
 - N/A (manual testing)
 
 **Step 1: Build the plugin**
@@ -1859,6 +1875,7 @@ Create issues or fix bugs discovered during testing.
 ## Task 16: Final cleanup and commit
 
 **Files:**
+
 - All modified files
 
 **Step 1: Run formatter**

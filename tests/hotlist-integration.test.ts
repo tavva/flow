@@ -215,9 +215,7 @@ describe("Hotlist Integration", () => {
   it("should find actions with different checkbox statuses (waiting)", async () => {
     const mockFile = new TFile();
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
-    mockVault.read.mockResolvedValue(
-      "# Test\n\n- [w] Waiting action\n- [ ] Normal action\n"
-    );
+    mockVault.read.mockResolvedValue("# Test\n\n- [w] Waiting action\n- [ ] Normal action\n");
 
     const finder = new ActionLineFinder(mockApp);
     const result = await finder.findActionLine("Test.md", "Waiting action");
@@ -230,9 +228,7 @@ describe("Hotlist Integration", () => {
   it("should find actions with different checkbox statuses (complete)", async () => {
     const mockFile = new TFile();
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
-    mockVault.read.mockResolvedValue(
-      "# Test\n\n- [x] Completed action\n- [ ] Normal action\n"
-    );
+    mockVault.read.mockResolvedValue("# Test\n\n- [x] Completed action\n- [ ] Normal action\n");
 
     const finder = new ActionLineFinder(mockApp);
     const result = await finder.findActionLine("Test.md", "Completed action");
