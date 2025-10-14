@@ -1,6 +1,7 @@
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, HotlistItem } from "./types";
+import { ActionLineFinder } from "./action-line-finder";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -18,6 +19,7 @@ interface SphereViewData {
 
 export class SphereView extends ItemView {
   private readonly scanner: FlowProjectScanner;
+  private readonly lineFinder: ActionLineFinder;
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
@@ -34,6 +36,7 @@ export class SphereView extends ItemView {
     this.sphere = sphere;
     this.settings = settings;
     this.scanner = new FlowProjectScanner(this.app);
+    this.lineFinder = new ActionLineFinder(this.app);
     this.saveSettings = saveSettings;
   }
 
@@ -208,23 +211,22 @@ export class SphereView extends ItemView {
           if (this.planningMode) {
             item.style.cursor = "pointer";
 
-            // Calculate line number (approximate - will be validated)
-            const lineNumber = index + 10;
-
-            // Show visual indicator if already on hotlist
-            if (this.isOnHotlist(project.file, lineNumber)) {
-              item.addClass("flow-gtd-hotlist-indicator");
-            }
-
             item.addEventListener("click", async () => {
-              if (this.isOnHotlist(project.file, lineNumber)) {
-                await this.removeFromHotlist(project.file, lineNumber);
+              // Find the exact line number for this action
+              const lineResult = await this.lineFinder.findActionLine(project.file, action);
+              if (!lineResult.found) {
+                console.error("Could not find line for action:", action);
+                return;
+              }
+
+              if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
+                await this.removeFromHotlist(project.file, lineResult.lineNumber!);
               } else {
                 await this.addToHotlist(
                   action,
                   project.file,
-                  lineNumber,
-                  `- [ ] ${action}`,
+                  lineResult.lineNumber!,
+                  lineResult.lineContent!,
                   this.sphere,
                   false
                 );
@@ -265,23 +267,22 @@ export class SphereView extends ItemView {
       if (this.planningMode) {
         item.style.cursor = "pointer";
 
-        // Calculate line number (approximate - will be validated)
-        const lineNumber = index + 5;
-
-        // Show visual indicator if already on hotlist
-        if (this.isOnHotlist(nextActionsFile, lineNumber)) {
-          item.addClass("flow-gtd-hotlist-indicator");
-        }
-
         item.addEventListener("click", async () => {
-          if (this.isOnHotlist(nextActionsFile, lineNumber)) {
-            await this.removeFromHotlist(nextActionsFile, lineNumber);
+          // Find the exact line number for this action
+          const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
+          if (!lineResult.found) {
+            console.error("Could not find line for action:", action);
+            return;
+          }
+
+          if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
+            await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!);
           } else {
             await this.addToHotlist(
               action,
               nextActionsFile,
-              lineNumber,
-              `- [ ] ${action} #sphere/${this.sphere}`,
+              lineResult.lineNumber!,
+              lineResult.lineContent!,
               this.sphere,
               true
             );
