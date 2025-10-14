@@ -18,6 +18,16 @@ export interface PersonNote {
   creationDate?: string;
 }
 
+export interface HotlistItem {
+  file: string; // Full path to source file
+  lineNumber: number; // Last known line number
+  lineContent: string; // Full line content for validation
+  text: string; // Display text (action without checkbox)
+  sphere: string; // Which sphere this belongs to
+  isGeneral: boolean; // true if from Next Actions file
+  addedAt: number; // Timestamp
+}
+
 export type ProcessingAction =
   | "create-project"
   | "add-to-project"
@@ -77,6 +87,7 @@ export interface PluginSettings {
   projectsFolderPath: string;
   projectTemplateFilePath: string;
   spheres: string[];
+  hotlist: HotlistItem[];
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -95,6 +106,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
   spheres: ["personal", "work"],
+  hotlist: [],
 };
 
 // Project Review Types
