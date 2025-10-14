@@ -136,22 +136,32 @@ Some paragraph text.
       mockVault.getMarkdownFiles = mockGetMarkdownFiles;
     });
 
-    it("should list files from both inbox folders", async () => {
+    it("should extract lines from inbox files and list note files", async () => {
       const mockFiles = [
         { path: "Flow Inbox Folder/Meeting notes.md", basename: "Meeting notes" } as TFile,
-        { path: "Flow Inbox Files/Project idea.md", basename: "Project idea" } as TFile,
+        { path: "Flow Inbox Files/Quick capture.md", basename: "Quick capture" } as TFile,
         { path: "Other Folder/Not inbox.md", basename: "Not inbox" } as TFile,
         { path: "Flow Inbox Folder/Quick thought.md", basename: "Quick thought" } as TFile,
       ];
 
       mockGetMarkdownFiles.mockReturnValue(mockFiles);
 
+      // Mock reading inbox files content (line-by-line)
+      (mockVault.read as jest.Mock).mockImplementation((file: TFile) => {
+        if (file.path === "Flow Inbox Files/Quick capture.md") {
+          return Promise.resolve("First item\nSecond item\n\nThird item");
+        }
+        return Promise.resolve("");
+      });
+
       const result = await scanner.scanInboxItems();
 
       expect(result).toEqual([
-        "Meeting notes (Flow Inbox Folder)",
-        "Project idea (Flow Inbox Files)",
-        "Quick thought (Flow Inbox Folder)",
+        "First item",
+        "Second item",
+        "Third item",
+        "Meeting notes",
+        "Quick thought",
       ]);
     });
 
@@ -167,6 +177,19 @@ Some paragraph text.
 
     it("should handle empty vault", async () => {
       mockGetMarkdownFiles.mockReturnValue([]);
+
+      const result = await scanner.scanInboxItems();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle inbox files with only empty lines", async () => {
+      const mockFiles = [
+        { path: "Flow Inbox Files/Empty.md", basename: "Empty" } as TFile,
+      ];
+
+      mockGetMarkdownFiles.mockReturnValue(mockFiles);
+      (mockVault.read as jest.Mock).mockResolvedValue("\n\n\n");
 
       const result = await scanner.scanInboxItems();
 
@@ -196,7 +219,10 @@ Some paragraph text.
         if (file.path === "Someday.md") {
           return Promise.resolve(somedayContent);
         }
-        return Promise.reject(new Error("File not found"));
+        if (file.path === "Flow Inbox Files/Item 2.md") {
+          return Promise.resolve("Line 1\nLine 2");
+        }
+        return Promise.resolve("");
       });
 
       mockVault.getMarkdownFiles = jest
@@ -217,7 +243,7 @@ Some paragraph text.
       expect(result).toEqual({
         nextActions: ["Action 1", "Action 2"],
         somedayItems: ["Someday 1", "Someday 2"],
-        inboxItems: ["Item 1 (Flow Inbox Folder)", "Item 2 (Flow Inbox Files)"],
+        inboxItems: ["Line 1", "Line 2", "Item 1"],
       });
     });
 

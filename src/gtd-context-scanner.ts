@@ -37,16 +37,30 @@ export class GTDContextScanner {
   async scanInboxItems(): Promise<string[]> {
     try {
       const files = this.app.vault.getMarkdownFiles();
-      const inboxFiles: string[] = [];
+      const inboxItems: string[] = [];
 
+      // First process line items from inboxFilesFolderPath
       for (const file of files) {
-        if (this.isInInboxFolder(file.path)) {
-          const folderName = this.getInboxFolderName(file.path);
-          inboxFiles.push(`${file.basename} (${folderName})`);
+        if (file.path.startsWith(this.settings.inboxFilesFolderPath + "/")) {
+          const content = await this.app.vault.read(file);
+          const lines = content.split("\n");
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed !== "") {
+              inboxItems.push(trimmed);
+            }
+          }
         }
       }
 
-      return inboxFiles;
+      // Then process note items from inboxFolderPath
+      for (const file of files) {
+        if (file.path.startsWith(this.settings.inboxFolderPath + "/")) {
+          inboxItems.push(file.basename);
+        }
+      }
+
+      return inboxItems;
     } catch (error) {
       return [];
     }
@@ -108,19 +122,5 @@ export class GTDContextScanner {
     }
 
     return items;
-  }
-
-  private isInInboxFolder(path: string): boolean {
-    return (
-      path.startsWith(this.settings.inboxFolderPath + "/") ||
-      path.startsWith(this.settings.inboxFilesFolderPath + "/")
-    );
-  }
-
-  private getInboxFolderName(path: string): string {
-    if (path.startsWith(this.settings.inboxFolderPath + "/")) {
-      return this.settings.inboxFolderPath;
-    }
-    return this.settings.inboxFilesFolderPath;
   }
 }
