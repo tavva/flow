@@ -33,7 +33,13 @@ describe("SphereView", () => {
       somedayFilePath: "Someday.md",
       projectsFolder: "Projects",
       availableSpheres: ["personal", "work"],
+      hotlist: [],
     };
+
+    // Mock workspace methods for hotlist view
+    app.workspace.getLeavesOfType = jest.fn().mockReturnValue([]);
+    app.workspace.getRightLeaf = jest.fn().mockReturnValue(null);
+    app.workspace.revealLeaf = jest.fn();
   });
 
   describe("openProjectFile", () => {

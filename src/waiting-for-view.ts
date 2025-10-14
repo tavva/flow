@@ -190,11 +190,7 @@ export class WaitingForView extends ItemView {
     });
   }
 
-  private renderItem(
-    container: HTMLElement,
-    item: WaitingForItem,
-    fileSection: HTMLElement
-  ) {
+  private renderItem(container: HTMLElement, item: WaitingForItem, fileSection: HTMLElement) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-waiting-for-item" });
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-waiting-for-item-text" });

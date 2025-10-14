@@ -40,9 +40,33 @@ export class SphereView extends ItemView {
     this.saveSettings = saveSettings;
   }
 
-  private togglePlanningMode() {
+  private async togglePlanningMode() {
     this.planningMode = !this.planningMode;
+
+    // If entering planning mode, open hotlist view
+    if (this.planningMode) {
+      await this.openHotlistView();
+    }
+
     this.onOpen();
+  }
+
+  private async openHotlistView() {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType("flow-gtd-hotlist-view");
+
+    if (leaves.length > 0) {
+      workspace.revealLeaf(leaves[0]);
+    } else {
+      const leaf = workspace.getRightLeaf(false);
+      if (leaf) {
+        await leaf.setViewState({
+          type: "flow-gtd-hotlist-view",
+          active: true,
+        });
+        workspace.revealLeaf(leaf);
+      }
+    }
   }
 
   getViewType(): string {
@@ -454,7 +478,7 @@ export class SphereView extends ItemView {
 
     this.settings.hotlist.push(item);
     await this.saveSettings();
-    await this.onOpen();
+    await this.refreshHotlistView();
   }
 
   private async removeFromHotlist(file: string, lineNumber: number): Promise<void> {
@@ -462,12 +486,25 @@ export class SphereView extends ItemView {
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
     await this.saveSettings();
-    await this.onOpen();
+    await this.refreshHotlistView();
   }
 
   private isOnHotlist(file: string, lineNumber: number): boolean {
     return this.settings.hotlist.some(
       (item) => item.file === file && item.lineNumber === lineNumber
     );
+  }
+
+  private async refreshHotlistView(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType("flow-gtd-hotlist-view");
+
+    if (leaves.length > 0) {
+      for (const leaf of leaves) {
+        if (leaf.view && "onOpen" in leaf.view) {
+          await (leaf.view as any).onOpen();
+        }
+      }
+    }
   }
 }
