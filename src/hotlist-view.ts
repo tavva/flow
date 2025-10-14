@@ -1,7 +1,8 @@
 // ABOUTME: Leaf view displaying curated hotlist of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
+import { getAPI } from "obsidian-dataview";
 import { HotlistItem, PluginSettings } from "./types";
 import { HotlistValidator, ValidationResult } from "./hotlist-validator";
 
@@ -17,12 +18,23 @@ export class HotlistView extends ItemView {
   private validator: HotlistValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
+  private modifyEventRef: EventRef | null = null;
+  private refreshTimeout: NodeJS.Timeout | null = null;
+  private isRefreshing: boolean = false;
+  private hasDataview: boolean = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
     this.validator = new HotlistValidator(this.app);
     this.saveSettings = saveSettings;
+
+    // Check if Dataview is available for fast refreshes
+    try {
+      this.hasDataview = !!getAPI(this.app);
+    } catch {
+      this.hasDataview = false;
+    }
   }
 
   getViewType(): string {
@@ -38,6 +50,19 @@ export class HotlistView extends ItemView {
   }
 
   async onOpen() {
+    // Register event listener for metadata cache changes (fires after file is indexed)
+    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
+      // Check if file has list items (tasks) that might be hotlist items
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache?.listItems && cache.listItems.length > 0) {
+        // Check if this file contains any hotlist items
+        const hasHotlistItems = this.settings.hotlist.some((item) => item.file === file.path);
+        if (hasHotlistItems) {
+          this.scheduleRefresh();
+        }
+      }
+    });
+
     const container = this.containerEl.children[1];
     container.empty();
     container.addClass("flow-gtd-hotlist-view");
@@ -55,7 +80,107 @@ export class HotlistView extends ItemView {
   }
 
   async onClose() {
-    // Cleanup if needed
+    // Unregister event listener
+    if (this.modifyEventRef) {
+      this.app.metadataCache.offref(this.modifyEventRef);
+      this.modifyEventRef = null;
+    }
+
+    // Clear any pending refresh
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+  }
+
+  private scheduleRefresh() {
+    // Use short debounce with Dataview (fast), longer without (slow file scanning)
+    const debounceTime = this.hasDataview ? 500 : 2000;
+
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+    }
+
+    this.refreshTimeout = setTimeout(async () => {
+      await this.refresh();
+      this.refreshTimeout = null;
+    }, debounceTime);
+  }
+
+  private async refresh() {
+    // Prevent concurrent refreshes
+    if (this.isRefreshing) {
+      return;
+    }
+
+    this.isRefreshing = true;
+
+    try {
+      // Validate all hotlist items and remove completed ones
+      const validatedItems: HotlistItem[] = [];
+      let needsSettingsSave = false;
+
+      for (const item of this.settings.hotlist) {
+        const validation = await this.validator.validateItem(item);
+
+        if (!validation.found) {
+          // Item no longer exists or line content changed significantly
+          needsSettingsSave = true;
+          continue;
+        }
+
+        // Check if item was marked as complete
+        const file = this.app.vault.getAbstractFileByPath(item.file);
+        if (file instanceof TFile) {
+          const content = await this.app.vault.read(file);
+          const lines = content.split(/\r?\n/);
+          const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
+
+          if (lineIndex >= 0 && lineIndex < lines.length) {
+            const line = lines[lineIndex];
+            // If marked as complete [x] or waiting [w], remove from hotlist
+            if (line.match(/\[x\]/i) || line.match(/\[w\]/i)) {
+              needsSettingsSave = true;
+              continue;
+            }
+          }
+        }
+
+        // Item is still valid and not complete
+        if (validation.updatedLineNumber && validation.updatedLineNumber !== item.lineNumber) {
+          // Update line number if it moved
+          validatedItems.push({ ...item, lineNumber: validation.updatedLineNumber });
+          needsSettingsSave = true;
+        } else {
+          validatedItems.push(item);
+        }
+      }
+
+      // Update settings if any items were removed or updated
+      if (needsSettingsSave) {
+        this.settings.hotlist = validatedItems;
+        await this.saveSettings();
+      }
+
+      // Re-render the view
+      const container = this.containerEl.children[1];
+      container.empty();
+      container.addClass("flow-gtd-hotlist-view");
+
+      const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
+      titleEl.setText("Hotlist");
+
+      if (validatedItems.length === 0) {
+        this.renderEmptyMessage(container as HTMLElement);
+      } else {
+        const grouped = this.groupItems(validatedItems);
+        this.renderGroupedItems(container as HTMLElement, grouped);
+      }
+    } catch (error) {
+      console.error("Failed to refresh hotlist view", error);
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   private groupItems(items: HotlistItem[]): GroupedHotlistItems {

@@ -25,6 +25,11 @@ describe("HotlistView", () => {
       workspace: {
         getLeaf: jest.fn(),
       },
+      metadataCache: {
+        on: jest.fn(),
+        offref: jest.fn(),
+        getFileCache: jest.fn(),
+      },
     };
     mockLeaf = {
       view: null,
