@@ -4,7 +4,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { PluginSettings, FlowProject } from "./types";
-import { GTDContext } from "./gtd-context-scanner";
+import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
 
 export interface CliArgs {
   vaultPath: string;
@@ -322,6 +322,23 @@ class MockVault {
     const fullPath = path.join(this.vaultPath, file.path);
     return fs.readFileSync(fullPath, "utf-8");
   }
+
+  getAbstractFileByPath(filePath: string): TFile | null {
+    const fullPath = path.join(this.vaultPath, filePath);
+    if (!fs.existsSync(fullPath)) {
+      return null;
+    }
+    const stats = fs.statSync(fullPath);
+    const basename = filePath.split("/").pop()?.replace(".md", "") || "";
+    return {
+      path: filePath,
+      basename: basename,
+      extension: "md",
+      stat: {
+        mtime: stats.mtimeMs,
+      },
+    } as TFile;
+  }
 }
 
 class MockMetadataCache {
@@ -434,14 +451,12 @@ export async function main() {
       console.warn("Continuing anyway - you can discuss why projects might be missing.\n");
     }
 
+    // Scan GTD context
+    const gtdScanner = new GTDContextScanner(mockApp as any, settings);
+    const gtdContext = await gtdScanner.scanContext();
+
     // Build system prompt
-    // TODO: Task 8 will add GTDContextScanner here
-    const emptyGtdContext: GTDContext = {
-      nextActions: [],
-      somedayItems: [],
-      inboxItems: [],
-    };
-    const systemPrompt = buildSystemPrompt(projects, args.sphere, emptyGtdContext);
+    const systemPrompt = buildSystemPrompt(projects, args.sphere, gtdContext);
 
     // Create language model
     const languageModelClient = createLanguageModelClient(settings);
