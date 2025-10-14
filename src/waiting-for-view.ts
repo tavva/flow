@@ -121,9 +121,9 @@ export class WaitingForView extends ItemView {
 
     const completeBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-waiting-for-action-btn",
-      text: "✓",
+      text: "Done",
     });
-    completeBtn.title = "Mark as complete";
+    completeBtn.title = "Mark as complete (changes [w] to [x])";
     completeBtn.addEventListener("click", async () => {
       await this.toggleItemComplete(item);
       await this.onOpen();
@@ -131,9 +131,9 @@ export class WaitingForView extends ItemView {
 
     const convertBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-waiting-for-action-btn",
-      text: "←",
+      text: "Resume",
     });
-    convertBtn.title = "Convert to action";
+    convertBtn.title = "Convert back to regular action (changes [w] to [ ])";
     convertBtn.addEventListener("click", async () => {
       await this.convertToAction(item);
       await this.onOpen();
