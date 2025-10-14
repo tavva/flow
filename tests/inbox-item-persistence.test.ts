@@ -43,9 +43,12 @@ describe("InboxItemPersistenceService", () => {
       nextActions: ["Finalize venue", "Publish agenda"],
       recommendedAction: "create-project",
     });
-    expect(writerMocks.createProject).toHaveBeenCalledWith(expect.any(Object), "Plan offsite", [
-      "work",
-    ]);
+    expect(writerMocks.createProject).toHaveBeenCalledWith(
+      expect.any(Object),
+      "Plan offsite",
+      ["work"],
+      [false, false]
+    );
   });
 
   it("propagates the selected project priority when creating a project", async () => {

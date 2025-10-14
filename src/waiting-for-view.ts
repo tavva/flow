@@ -45,7 +45,9 @@ export class WaitingForView extends ItemView {
       this.renderContent(container as HTMLElement, items);
     } catch (error) {
       console.error("Failed to load waiting for view", error);
-      loadingEl.setText("Unable to load waiting for items. Check the console for more information.");
+      loadingEl.setText(
+        "Unable to load waiting for items. Check the console for more information."
+      );
     }
   }
 
@@ -139,7 +141,9 @@ export class WaitingForView extends ItemView {
   }
 
   private renderEmptyMessage(container: HTMLElement) {
-    container.createDiv({ cls: "flow-gtd-waiting-for-empty" }).setText("No waiting for items found.");
+    container
+      .createDiv({ cls: "flow-gtd-waiting-for-empty" })
+      .setText("No waiting for items found.");
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {
@@ -162,7 +166,10 @@ export class WaitingForView extends ItemView {
           const editor = (view as any).editor;
           if (editor) {
             editor.setCursor({ line: lineNumber - 1, ch: 0 });
-            editor.scrollIntoView({ from: { line: lineNumber - 1, ch: 0 }, to: { line: lineNumber - 1, ch: 0 } }, true);
+            editor.scrollIntoView(
+              { from: { line: lineNumber - 1, ch: 0 }, to: { line: lineNumber - 1, ch: 0 } },
+              true
+            );
           }
         }
       }

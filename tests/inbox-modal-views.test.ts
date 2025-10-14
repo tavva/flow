@@ -50,10 +50,11 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
 
     await service.persist(item);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(project, [
-      "Edited first action",
-      "Edited second action",
-    ]);
+    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
+      project,
+      ["Edited first action", "Edited second action"],
+      [false, false]
+    );
   });
 
   it("uses editedName when only one action is edited", async () => {
@@ -88,9 +89,11 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
 
     await service.persist(item);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(project, [
-      "Single edited action",
-    ]);
+    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
+      project,
+      ["Single edited action"],
+      [false]
+    );
   });
 
   it("uses AI-suggested actions when no edits have been made", async () => {
@@ -125,9 +128,10 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
 
     await service.persist(item);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(project, [
-      "First AI action",
-      "Second AI action",
-    ]);
+    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
+      project,
+      ["First AI action", "Second AI action"],
+      [false, false]
+    );
   });
 });

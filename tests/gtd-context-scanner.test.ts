@@ -184,9 +184,7 @@ Some paragraph text.
     });
 
     it("should handle inbox files with only empty lines", async () => {
-      const mockFiles = [
-        { path: "Flow Inbox Files/Empty.md", basename: "Empty" } as TFile,
-      ];
+      const mockFiles = [{ path: "Flow Inbox Files/Empty.md", basename: "Empty" } as TFile];
 
       mockGetMarkdownFiles.mockReturnValue(mockFiles);
       (mockVault.read as jest.Mock).mockResolvedValue("\n\n\n");

@@ -738,9 +738,14 @@ Examples:
     }
 
     if (parsed.waitingForReason !== undefined) {
-      if (typeof parsed.waitingForReason !== "string" || parsed.waitingForReason.trim().length === 0) {
+      if (
+        typeof parsed.waitingForReason !== "string" ||
+        parsed.waitingForReason.trim().length === 0
+      ) {
         throw new GTDResponseValidationError(
-          withResponse('Invalid model response: "waitingForReason" must be a non-empty string when provided')
+          withResponse(
+            'Invalid model response: "waitingForReason" must be a non-empty string when provided'
+          )
         );
       }
     }
