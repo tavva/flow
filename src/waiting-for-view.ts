@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying all waiting-for items aggregated from across the vault.
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
-import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
@@ -13,6 +13,8 @@ interface GroupedItems {
 export class WaitingForView extends ItemView {
   private scanner: WaitingForScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private modifyEventRef: EventRef | null = null;
+  private refreshTimeout: NodeJS.Timeout | null = null;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -32,6 +34,13 @@ export class WaitingForView extends ItemView {
   }
 
   async onOpen() {
+    // Register event listener for file modifications
+    this.modifyEventRef = this.app.vault.on("modify", (file) => {
+      if (file instanceof TFile) {
+        this.scheduleRefresh();
+      }
+    });
+
     const container = this.containerEl.children[1];
     container.empty();
     container.addClass("flow-gtd-waiting-for-view");
@@ -55,7 +64,46 @@ export class WaitingForView extends ItemView {
   }
 
   async onClose() {
-    // Cleanup if needed
+    // Unregister event listener
+    if (this.modifyEventRef) {
+      this.app.vault.offref(this.modifyEventRef);
+      this.modifyEventRef = null;
+    }
+
+    // Clear any pending refresh
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+  }
+
+  private scheduleRefresh() {
+    // Debounce refreshes to avoid excessive re-scanning
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+    }
+
+    this.refreshTimeout = setTimeout(async () => {
+      await this.refresh();
+      this.refreshTimeout = null;
+    }, 500);
+  }
+
+  private async refresh() {
+    const container = this.containerEl.children[1];
+    container.empty();
+
+    const loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
+    loadingEl.setText("Refreshing...");
+
+    try {
+      const items = await this.scanner.scanWaitingForItems();
+      loadingEl.remove();
+      this.renderContent(container as HTMLElement, items);
+    } catch (error) {
+      console.error("Failed to refresh waiting for view", error);
+      loadingEl.setText("Unable to refresh. Check the console for more information.");
+    }
   }
 
   private renderContent(container: HTMLElement, items: WaitingForItem[]) {
