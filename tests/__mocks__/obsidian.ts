@@ -165,9 +165,9 @@ export class ItemView {
     this.app = new App();
     this.leaf = leaf;
     // Create a simple mock container without using DOM
-    this.containerEl = {
-      children: [{}, {}],
+    const childElement = {
       empty: jest.fn(),
+      setText: jest.fn(),
       createDiv: jest.fn(() => ({
         setText: jest.fn(),
         createDiv: jest.fn(() => ({ setText: jest.fn() })),
@@ -177,13 +177,27 @@ export class ItemView {
             setText: jest.fn(),
             addEventListener: jest.fn(),
           })),
+          addEventListener: jest.fn(),
         })),
         addClass: jest.fn(),
         remove: jest.fn(),
+        addEventListener: jest.fn(),
       })),
       createEl: jest.fn(() => ({
         setText: jest.fn(),
+        addEventListener: jest.fn(),
+        createEl: jest.fn(() => ({
+          setText: jest.fn(),
+          addEventListener: jest.fn(),
+        })),
       })),
+      addClass: jest.fn(),
+    };
+    this.containerEl = {
+      children: [{}, childElement],
+      empty: jest.fn(),
+      createDiv: jest.fn(() => childElement),
+      createEl: jest.fn(() => childElement),
       addClass: jest.fn(),
     };
   }

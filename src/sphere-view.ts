@@ -21,12 +21,18 @@ export class SphereView extends ItemView {
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private planningMode: boolean = false;
 
   constructor(leaf: WorkspaceLeaf, sphere: string, settings: PluginSettings) {
     super(leaf);
     this.sphere = sphere;
     this.settings = settings;
     this.scanner = new FlowProjectScanner(this.app);
+  }
+
+  private togglePlanningMode() {
+    this.planningMode = !this.planningMode;
+    this.onOpen();
   }
 
   getViewType(): string {
@@ -101,6 +107,26 @@ export class SphereView extends ItemView {
   private renderContent(container: HTMLElement, data: SphereViewData) {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
+
+    // Add planning mode toggle button
+    const toggleBtn = container.createEl("button", {
+      cls: "flow-gtd-sphere-planning-toggle",
+      text: this.planningMode ? "Exit Planning Mode" : "Planning Mode",
+    });
+    toggleBtn.addEventListener("click", () => {
+      this.togglePlanningMode();
+    });
+
+    // Add planning mode banner if active
+    if (this.planningMode) {
+      const banner = container.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
+      banner.setText("Planning Mode - Click actions to add/remove from hotlist");
+    }
+
+    // Add planning mode background class
+    if (this.planningMode) {
+      container.addClass("flow-gtd-sphere-planning-active");
+    }
 
     this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
     this.renderProjectsSection(container, data.projects);

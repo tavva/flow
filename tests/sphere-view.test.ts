@@ -77,4 +77,19 @@ describe("SphereView", () => {
       expect(secondLeaf.openFile).not.toHaveBeenCalled();
     });
   });
+
+  describe("planning mode", () => {
+    it("should toggle planning mode on and off", () => {
+      const view = new SphereView(leaf, "work", settings);
+      view.app = app;
+
+      expect((view as any).planningMode).toBe(false);
+
+      (view as any).togglePlanningMode();
+      expect((view as any).planningMode).toBe(true);
+
+      (view as any).togglePlanningMode();
+      expect((view as any).planningMode).toBe(false);
+    });
+  });
 });
