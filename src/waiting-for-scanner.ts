@@ -2,6 +2,7 @@
 // ABOUTME: Returns array of waiting-for items with file location and line numbers for editing.
 
 import { App, TFile } from "obsidian";
+import { getAPI } from "obsidian-dataview";
 
 export interface WaitingForItem {
   file: string;
@@ -18,21 +19,63 @@ export class WaitingForScanner {
   }
 
   async scanWaitingForItems(): Promise<WaitingForItem[]> {
+    // Try to use Dataview if available (much faster)
+    const dv = getAPI(this.app);
+    if (dv) {
+      return this.scanWithDataview(dv);
+    }
+
+    // Fall back to manual scanning
+    return this.scanManually();
+  }
+
+  private scanWithDataview(dv: any): WaitingForItem[] {
+    const items: WaitingForItem[] = [];
+
+    // Query all tasks with status 'w' (case insensitive)
+    const tasks = dv.pages().file.tasks.where((t: any) => {
+      return t.status.toLowerCase() === "w";
+    });
+
+    for (const task of tasks) {
+      items.push({
+        file: task.path,
+        fileName: task.link.path.split("/").pop()?.replace(".md", "") || task.path,
+        lineNumber: task.line,
+        text: task.text,
+      });
+    }
+
+    return items;
+  }
+
+  private async scanManually(): Promise<WaitingForItem[]> {
     const files = this.app.vault.getMarkdownFiles();
     const items: WaitingForItem[] = [];
 
     for (const file of files) {
-      const fileItems = await this.scanFile(file);
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (!cache?.listItems || cache.listItems.length === 0) {
+        continue;
+      }
+
+      const fileItems = await this.scanFile(file, cache);
       items.push(...fileItems);
     }
 
     return items;
   }
 
-  private async scanFile(file: TFile): Promise<WaitingForItem[]> {
+  private async scanFile(file: TFile, cache: any): Promise<WaitingForItem[]> {
+    const items: WaitingForItem[] = [];
+
+    // Only read file if it has list items
+    if (!cache.listItems || cache.listItems.length === 0) {
+      return items;
+    }
+
     const content = await this.app.vault.read(file);
     const lines = content.split(/\r?\n/);
-    const items: WaitingForItem[] = [];
 
     const waitingForPattern = /^[-*]\s*\[w\]\s*(.+)$/i;
 
