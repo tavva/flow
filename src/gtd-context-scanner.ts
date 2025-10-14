@@ -25,6 +25,15 @@ export class GTDContextScanner {
     }
   }
 
+  async scanSomedayItems(): Promise<string[]> {
+    try {
+      const content = await this.readFile(this.settings.somedayFilePath);
+      return this.extractListItems(content);
+    } catch (error) {
+      return [];
+    }
+  }
+
   private async readFile(path: string): Promise<string> {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!file) {
@@ -41,6 +50,28 @@ export class GTDContextScanner {
       const match = line.match(/^- \[ \] (.+)$/);
       if (match) {
         items.push(match[1].trim());
+      }
+    }
+
+    return items;
+  }
+
+  private extractListItems(content: string): string[] {
+    const lines = content.split("\n");
+    const items: string[] = [];
+
+    for (const line of lines) {
+      // Match regular list items: "- item"
+      const regularMatch = line.match(/^- ([^\[].+)$/);
+      if (regularMatch) {
+        items.push(regularMatch[1].trim());
+        continue;
+      }
+
+      // Match unchecked checkbox items: "- [ ] item"
+      const checkboxMatch = line.match(/^- \[ \] (.+)$/);
+      if (checkboxMatch) {
+        items.push(checkboxMatch[1].trim());
       }
     }
 

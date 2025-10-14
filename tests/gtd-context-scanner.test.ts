@@ -74,4 +74,57 @@ No checkboxes here`;
       expect(result).toEqual([]);
     });
   });
+
+  describe("scanSomedayItems", () => {
+    it("should extract list items from someday file", async () => {
+      const content = `# Someday/Maybe
+
+- Learn Italian
+- Write a book
+- Visit Japan
+- Remodel kitchen
+
+Some paragraph text.
+
+- Start a podcast`;
+
+      const mockFile = { path: "Someday.md" } as TFile;
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(content);
+
+      const result = await scanner.scanSomedayItems();
+
+      expect(result).toEqual([
+        "Learn Italian",
+        "Write a book",
+        "Visit Japan",
+        "Remodel kitchen",
+        "Start a podcast",
+      ]);
+    });
+
+    it("should return empty array if file does not exist", async () => {
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+
+      const result = await scanner.scanSomedayItems();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle both checkbox and regular list items", async () => {
+      const content = `# Someday/Maybe
+
+- Regular item
+- [ ] Checkbox item
+- [x] Completed item`;
+
+      const mockFile = { path: "Someday.md" } as TFile;
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(content);
+
+      const result = await scanner.scanSomedayItems();
+
+      expect(result).toEqual(["Regular item", "Checkbox item"]);
+    });
+  });
 });
