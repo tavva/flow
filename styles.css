@@ -925,6 +925,86 @@ select.flow-gtd-inline-select option,
         text-decoration: underline;
 }
 
+/* Waiting For View */
+.flow-gtd-waiting-for-view {
+	padding: 20px;
+}
+
+.flow-gtd-waiting-for-title {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+}
+
+.flow-gtd-waiting-for-loading {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.flow-gtd-waiting-for-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 20px 0;
+}
+
+.flow-gtd-waiting-for-file-section {
+	margin-bottom: 30px;
+}
+
+.flow-gtd-waiting-for-file-header {
+	margin-bottom: 10px;
+	font-size: 1.1em;
+}
+
+.flow-gtd-waiting-for-file-link {
+	color: var(--text-accent);
+	text-decoration: none;
+}
+
+.flow-gtd-waiting-for-file-link:hover {
+	text-decoration: underline;
+}
+
+.flow-gtd-waiting-for-items {
+	list-style: none;
+	padding-left: 0;
+	margin-left: 20px;
+}
+
+.flow-gtd-waiting-for-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-waiting-for-item-text {
+	flex: 1;
+	color: var(--text-normal);
+}
+
+.flow-gtd-waiting-for-item-text:hover {
+	color: var(--text-accent);
+}
+
+.flow-gtd-waiting-for-item-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.flow-gtd-waiting-for-action-btn {
+	padding: 4px 8px;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 0.9em;
+}
+
+.flow-gtd-waiting-for-action-btn:hover {
+	background: var(--interactive-hover);
+}
+
 /* Waiting For Toggle in Inbox Modal */
 .flow-gtd-next-action-waiting-toggle {
 	padding: 4px 8px;
