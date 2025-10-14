@@ -60,14 +60,14 @@ npm run evaluate
 
 The evaluation framework tests the AI processor against 15 curated test cases and generates detailed quality metrics. Results are saved to `evaluation/results/`. See `evaluation/README.md` for details.
 
-### Priority Coach CLI
+### GTD Coach CLI
 
 ```bash
-# Interactive prioritisation coaching for a specific sphere
+# Interactive GTD coaching for a specific sphere
 npx tsx src/cli.ts --vault /path/to/vault --sphere work
 ```
 
-See `docs/priority-coach-cli.md` for full CLI documentation.
+See `docs/gtd-coach-cli.md` for full CLI documentation.
 
 ## Architecture
 
