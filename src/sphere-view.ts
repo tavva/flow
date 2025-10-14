@@ -193,8 +193,36 @@ export class SphereView extends ItemView {
 
       if (project.nextActions && project.nextActions.length > 0) {
         const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
-        project.nextActions.forEach((action) => {
-          list.createEl("li", { text: action });
+        project.nextActions.forEach((action, index) => {
+          const item = list.createEl("li", { text: action });
+
+          // In planning mode, make actions clickable
+          if (this.planningMode) {
+            item.style.cursor = "pointer";
+
+            // Calculate line number (approximate - will be validated)
+            const lineNumber = index + 10;
+
+            // Show visual indicator if already on hotlist
+            if (this.isOnHotlist(project.file, lineNumber)) {
+              item.addClass("flow-gtd-hotlist-indicator");
+            }
+
+            item.addEventListener("click", async () => {
+              if (this.isOnHotlist(project.file, lineNumber)) {
+                await this.removeFromHotlist(project.file, lineNumber);
+              } else {
+                await this.addToHotlist(
+                  action,
+                  project.file,
+                  lineNumber,
+                  `- [ ] ${action}`,
+                  this.sphere,
+                  false
+                );
+              }
+            });
+          }
         });
       } else {
         this.renderEmptyMessage(wrapper, "No next actions captured yet.");
