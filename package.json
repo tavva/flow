@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "marked": "^15.0.12",
     "marked-terminal": "^7.3.0"
   }
 }

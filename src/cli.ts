@@ -178,6 +178,7 @@ export async function runREPL(
       em: (s: string) => `\x1b[3m${s}\x1b[23m`, // Italic
     }) as any
   );
+  marked.setOptions({ async: false });
 
   const rl = readline.createInterface({
     input: process.stdin,
