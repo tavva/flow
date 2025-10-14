@@ -4,15 +4,20 @@
 import { App, TFile, WorkspaceLeaf } from "obsidian";
 import { SphereView } from "../src/sphere-view";
 import { PluginSettings } from "../src/types";
+import { FlowProjectScanner } from "../src/flow-scanner";
+import { ActionLineFinder } from "../src/action-line-finder";
 
-// Mock the scanner
+// Mock the scanner and line finder
 jest.mock("../src/flow-scanner");
+jest.mock("../src/action-line-finder");
 
 describe("SphereView", () => {
   let app: App;
   let leaf: WorkspaceLeaf;
   let settings: PluginSettings;
   let mockSaveSettings: jest.Mock;
+  let mockScanner: jest.Mocked<FlowProjectScanner>;
+  let mockLineFinder: jest.Mocked<ActionLineFinder>;
 
   beforeEach(() => {
     app = new App();
@@ -36,10 +41,26 @@ describe("SphereView", () => {
       hotlist: [],
     };
 
+    // Mock scanner to return empty array by default
+    mockScanner = {
+      scanProjects: jest.fn().mockResolvedValue([]),
+    } as any;
+    (FlowProjectScanner as jest.Mock).mockImplementation(() => mockScanner);
+
+    // Mock line finder
+    mockLineFinder = {
+      findActionLine: jest.fn().mockResolvedValue({ found: false }),
+    } as any;
+    (ActionLineFinder as jest.Mock).mockImplementation(() => mockLineFinder);
+
     // Mock workspace methods for hotlist view
     app.workspace.getLeavesOfType = jest.fn().mockReturnValue([]);
     app.workspace.getRightLeaf = jest.fn().mockReturnValue(null);
     app.workspace.revealLeaf = jest.fn();
+
+    // Mock vault methods
+    app.vault.getAbstractFileByPath = jest.fn().mockReturnValue(null);
+    app.vault.read = jest.fn().mockResolvedValue("");
   });
 
   describe("openProjectFile", () => {
