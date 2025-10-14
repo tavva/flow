@@ -90,3 +90,100 @@ export function buildSystemPrompt(projects: FlowProject[], sphere: string): stri
 
   return prompt;
 }
+
+import * as readline from "readline";
+import { LanguageModelClient, ChatMessage } from "./language-model";
+
+export async function runREPL(
+  languageModelClient: LanguageModelClient,
+  model: string,
+  systemPrompt: string,
+  projectCount: number,
+  sphere: string
+): Promise<void> {
+  const messages: ChatMessage[] = [];
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    prompt: "> ",
+  });
+
+  console.log(`\nFlow Priority Coach - ${sphere} sphere (${projectCount} projects loaded)`);
+  console.log(
+    `Type 'exit' to quit, 'reset' to start fresh conversation, 'list' to show projects\n`
+  );
+
+  // Initial system message
+  messages.push({
+    role: "system",
+    content: systemPrompt,
+  });
+
+  rl.prompt();
+
+  rl.on("line", async (input: string) => {
+    const trimmed = input.trim();
+
+    if (trimmed === "exit" || trimmed === "quit") {
+      console.log("Goodbye!");
+      rl.close();
+      return;
+    }
+
+    if (trimmed === "reset") {
+      messages.length = 0;
+      messages.push({
+        role: "system",
+        content: systemPrompt,
+      });
+      console.log("Conversation reset.\n");
+      rl.prompt();
+      return;
+    }
+
+    if (trimmed === "list") {
+      console.log('Use your initial prompt to see project list, or ask "list all projects"\n');
+      rl.prompt();
+      return;
+    }
+
+    if (trimmed === "") {
+      rl.prompt();
+      return;
+    }
+
+    // Add user message
+    messages.push({
+      role: "user",
+      content: trimmed,
+    });
+
+    try {
+      // Get AI response
+      const response = await languageModelClient.sendMessage({
+        model,
+        maxTokens: 4000,
+        messages,
+      });
+
+      // Add assistant message
+      messages.push({
+        role: "assistant",
+        content: response,
+      });
+
+      console.log(`\n${response}\n`);
+    } catch (error) {
+      console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
+      // Remove the user message that caused the error
+      messages.pop();
+    }
+
+    rl.prompt();
+  });
+
+  rl.on("close", () => {
+    process.exit(0);
+  });
+}
