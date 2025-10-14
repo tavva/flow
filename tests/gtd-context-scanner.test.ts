@@ -127,4 +127,52 @@ Some paragraph text.
       expect(result).toEqual(["Regular item", "Checkbox item"]);
     });
   });
+
+  describe("scanInboxItems", () => {
+    let mockGetMarkdownFiles: jest.Mock;
+
+    beforeEach(() => {
+      mockGetMarkdownFiles = jest.fn();
+      mockVault.getMarkdownFiles = mockGetMarkdownFiles;
+    });
+
+    it("should list files from both inbox folders", async () => {
+      const mockFiles = [
+        { path: "Flow Inbox Folder/Meeting notes.md", basename: "Meeting notes" } as TFile,
+        { path: "Flow Inbox Files/Project idea.md", basename: "Project idea" } as TFile,
+        { path: "Other Folder/Not inbox.md", basename: "Not inbox" } as TFile,
+        { path: "Flow Inbox Folder/Quick thought.md", basename: "Quick thought" } as TFile,
+      ];
+
+      mockGetMarkdownFiles.mockReturnValue(mockFiles);
+
+      const result = await scanner.scanInboxItems();
+
+      expect(result).toEqual([
+        "Meeting notes (Flow Inbox Folder)",
+        "Project idea (Flow Inbox Files)",
+        "Quick thought (Flow Inbox Folder)",
+      ]);
+    });
+
+    it("should return empty array if no inbox files found", async () => {
+      const mockFiles = [
+        { path: "Other Folder/Not inbox.md", basename: "Not inbox" } as TFile,
+      ];
+
+      mockGetMarkdownFiles.mockReturnValue(mockFiles);
+
+      const result = await scanner.scanInboxItems();
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle empty vault", async () => {
+      mockGetMarkdownFiles.mockReturnValue([]);
+
+      const result = await scanner.scanInboxItems();
+
+      expect(result).toEqual([]);
+    });
+  });
 });

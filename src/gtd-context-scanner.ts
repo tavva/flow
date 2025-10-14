@@ -34,6 +34,24 @@ export class GTDContextScanner {
     }
   }
 
+  async scanInboxItems(): Promise<string[]> {
+    try {
+      const files = this.app.vault.getMarkdownFiles();
+      const inboxFiles: string[] = [];
+
+      for (const file of files) {
+        if (this.isInInboxFolder(file.path)) {
+          const folderName = this.getInboxFolderName(file.path);
+          inboxFiles.push(`${file.basename} (${folderName})`);
+        }
+      }
+
+      return inboxFiles;
+    } catch (error) {
+      return [];
+    }
+  }
+
   private async readFile(path: string): Promise<string> {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!file) {
@@ -76,5 +94,19 @@ export class GTDContextScanner {
     }
 
     return items;
+  }
+
+  private isInInboxFolder(path: string): boolean {
+    return (
+      path.startsWith(this.settings.inboxFolderPath + "/") ||
+      path.startsWith(this.settings.inboxFilesFolderPath + "/")
+    );
+  }
+
+  private getInboxFolderName(path: string): string {
+    if (path.startsWith(this.settings.inboxFolderPath + "/")) {
+      return this.settings.inboxFolderPath;
+    }
+    return this.settings.inboxFilesFolderPath;
   }
 }
