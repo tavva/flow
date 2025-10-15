@@ -73,6 +73,8 @@ The evaluation framework tests the AI processor against 15 curated test cases an
 npx tsx src/cli.ts --vault /path/to/vault --sphere work
 ```
 
+The CLI includes automatic retry logic for network errors with exponential backoff and user feedback.
+
 See `docs/gtd-coach-cli.md` for full CLI documentation.
 
 ## Architecture

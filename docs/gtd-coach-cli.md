@@ -98,6 +98,15 @@ The CLI maintains conversation history across turns, so you can have natural bac
 
 Use `reset` if you want to start a fresh conversation without previous context.
 
+## Network Error Handling
+
+The CLI automatically retries network errors with exponential backoff:
+
+- Up to 5 attempts for transient network failures
+- Exponential backoff with jitter (1s, 2s, 4s, 8s, 10s max)
+- Visual feedback showing retry progress
+- Non-network errors (authentication, validation) fail immediately without retry
+
 ## Tips
 
 - Be specific about your constraints (time, energy, deadlines)
