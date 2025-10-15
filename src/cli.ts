@@ -194,18 +194,13 @@ export async function runREPL(
   );
   marked.setOptions({ async: false });
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    prompt: `${colors.user}You: ${colors.reset}`,
-  });
-
   console.log(`\nFlow GTD Coach - ${sphere} sphere`);
   console.log(`  ${projectCount} projects`);
   console.log(`  ${gtdContext.nextActions.length} next actions`);
   console.log(`  ${gtdContext.somedayItems.length} someday items`);
   console.log(`  ${gtdContext.inboxItems.length} inbox items\n`);
-  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation\n`);
+  console.log(`Press Enter to submit, Shift+Enter for newline`);
+  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation, Ctrl+C to exit\n`);
 
   // Initial system message
   messages.push({
@@ -213,46 +208,84 @@ export async function runREPL(
     content: systemPrompt,
   });
 
-  rl.prompt();
+  // Multiline input handling
+  let inputBuffer = "";
+  let cursorPosition = 0;
 
-  rl.on("line", async (input: string) => {
-    const trimmed = input.trim();
+  // Enable raw mode for character-by-character input
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.setEncoding("utf8");
 
-    if (trimmed === "exit" || trimmed === "quit") {
-      console.log("Goodbye!");
-      rl.close();
-      return;
+  const showPrompt = () => {
+    const lines = inputBuffer.split("\n");
+    const currentLineIndex = inputBuffer.substring(0, cursorPosition).split("\n").length - 1;
+    const currentLine = lines[currentLineIndex] || "";
+    const cursorInLine =
+      cursorPosition - inputBuffer.substring(0, cursorPosition).lastIndexOf("\n") - 1;
+
+    // Clear screen and redraw
+    readline.clearScreenDown(process.stdout);
+    readline.cursorTo(process.stdout, 0);
+
+    // Show prompt and first line
+    process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}\n`);
+
+    // Show continuation lines
+    for (let i = 1; i < lines.length; i++) {
+      process.stdout.write(`${colors.user}...  ${colors.reset}${lines[i] || ""}\n`);
     }
 
-    if (trimmed === "reset") {
+    // Position cursor correctly
+    const visualLine = currentLineIndex + 1; // +1 because first line has prompt
+    const visualColumn = currentLineIndex === 0 ? 5 + cursorInLine : 5 + cursorInLine; // "You: " or "...  " = 5 chars
+    readline.cursorTo(process.stdout, visualColumn);
+    readline.moveCursor(process.stdout, 0, -(lines.length - visualLine));
+  };
+
+  const handleSubmit = async () => {
+    const input = inputBuffer.trim();
+    inputBuffer = "";
+    cursorPosition = 0;
+
+    // Move to end and add newlines
+    process.stdout.write("\n\n");
+
+    if (input === "exit" || input === "quit") {
+      console.log("Goodbye!");
+      process.exit(0);
+    }
+
+    if (input === "reset") {
       messages.length = 0;
       messages.push({
         role: "system",
         content: systemPrompt,
       });
       console.log("Conversation reset.\n");
-      rl.prompt();
+      showPrompt();
       return;
     }
 
-    if (trimmed === "list") {
+    if (input === "list") {
       console.log('Use your initial prompt to see project list, or ask "list all projects"\n');
-      rl.prompt();
+      showPrompt();
       return;
     }
 
-    if (trimmed === "") {
-      rl.prompt();
+    if (input === "") {
+      showPrompt();
       return;
     }
 
     // Echo user message in italic
-    console.log(`${colors.userMessage}${trimmed}${colors.reset}\n`);
+    console.log(`${colors.userMessage}${input}${colors.reset}\n`);
 
     // Add user message
     messages.push({
       role: "user",
-      content: trimmed,
+      content: input,
     });
 
     try {
@@ -296,11 +329,125 @@ export async function runREPL(
       messages.pop();
     }
 
-    rl.prompt();
-  });
+    showPrompt();
+  };
 
-  rl.on("close", () => {
-    process.exit(0);
+  showPrompt();
+
+  // Track if we're in an escape sequence for Shift+Enter detection
+  let escapeBuffer = "";
+  let escapeTimeout: NodeJS.Timeout | null = null;
+
+  process.stdin.on("data", async (key: string) => {
+    // Handle escape sequences with buffering
+    if (escapeBuffer) {
+      escapeBuffer += key;
+
+      // Check for Shift+Enter patterns (adds newline in chat mode)
+      // Different terminals send different sequences:
+      // - Some: ESC + \r or ESC + \n
+      // - Some: ESC[13;2~
+      // - Some: ESC[27;5;13~
+      if (
+        escapeBuffer === "\x1b\r" ||
+        escapeBuffer === "\x1b\n" ||
+        escapeBuffer.includes("[13;2~") ||
+        escapeBuffer.includes("[27;5;13~")
+      ) {
+        if (escapeTimeout) clearTimeout(escapeTimeout);
+        escapeBuffer = "";
+        // Shift+Enter adds newline (chat pattern)
+        inputBuffer = inputBuffer.slice(0, cursorPosition) + "\n" + inputBuffer.slice(cursorPosition);
+        cursorPosition++;
+        showPrompt();
+        return;
+      }
+
+      // If we have a complete escape sequence that's not Shift+Enter, process it
+      if (
+        key === "~" ||
+        (escapeBuffer.length >= 3 && !escapeBuffer.includes("["))
+      ) {
+        if (escapeTimeout) clearTimeout(escapeTimeout);
+
+        // Arrow keys
+        if (escapeBuffer === "\x1b[A" || escapeBuffer === "\x1b[B" ||
+            escapeBuffer === "\x1b[C" || escapeBuffer === "\x1b[D") {
+          // Ignore arrow keys for now
+          escapeBuffer = "";
+          return;
+        }
+
+        // Unknown escape sequence, ignore
+        escapeBuffer = "";
+        return;
+      }
+
+      // Reset timeout - wait for complete sequence
+      if (escapeTimeout) clearTimeout(escapeTimeout);
+      escapeTimeout = setTimeout(() => {
+        escapeBuffer = "";
+      }, 100);
+      return;
+    }
+
+    const byte = key.charCodeAt(0);
+
+    // Ctrl+C
+    if (byte === 3) {
+      console.log("\nGoodbye!");
+      process.exit(0);
+    }
+
+    // Ctrl+D (EOF - exit gracefully if buffer empty, otherwise ignore)
+    if (byte === 4) {
+      if (inputBuffer.trim() === "") {
+        console.log("\nGoodbye!");
+        process.exit(0);
+      }
+      return;
+    }
+
+    // Backspace or Delete
+    if (byte === 127 || byte === 8) {
+      if (cursorPosition > 0) {
+        inputBuffer = inputBuffer.slice(0, cursorPosition - 1) + inputBuffer.slice(cursorPosition);
+        cursorPosition--;
+        showPrompt();
+      }
+      return;
+    }
+
+    // ESC - start escape sequence
+    if (byte === 27) {
+      escapeBuffer = key;
+      escapeTimeout = setTimeout(() => {
+        escapeBuffer = "";
+      }, 100);
+      return;
+    }
+
+    // Regular Enter (submit in chat pattern) - byte 13 is \r, byte 10 is \n
+    if (byte === 13 || byte === 10) {
+      await handleSubmit();
+      return;
+    }
+
+    // Regular printable characters
+    if (byte >= 32 && byte <= 126) {
+      inputBuffer = inputBuffer.slice(0, cursorPosition) + key + inputBuffer.slice(cursorPosition);
+      cursorPosition += key.length;
+      showPrompt();
+      return;
+    }
+
+    // Handle other printable UTF-8 characters
+    if (byte > 126) {
+      inputBuffer = inputBuffer.slice(0, cursorPosition) + key + inputBuffer.slice(cursorPosition);
+      cursorPosition += key.length;
+      showPrompt();
+      return;
+    }
   });
 }
 
