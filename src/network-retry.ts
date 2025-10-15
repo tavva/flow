@@ -33,14 +33,12 @@ export async function withRetry<T>(
       await sleep(delayMs);
     }
   }
-
-  throw lastError;
 }
 
 function calculateDelay(attempt: number, options: RetryOptions): number {
   const exponentialDelay = options.baseDelayMs * Math.pow(2, attempt);
   const cappedDelay = Math.min(exponentialDelay, options.maxDelayMs);
-  const jitteredDelay = Math.random() * cappedDelay;
+  const jitteredDelay = cappedDelay * (0.5 + Math.random() * 0.5);
   return jitteredDelay;
 }
 
