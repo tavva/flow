@@ -121,8 +121,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
-
-    console.log("Flow GTD Coach plugin loaded");
   }
 
   onunload() {
@@ -140,7 +138,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
     // Detach all hotlist views
     this.app.workspace.detachLeavesOfType(HOTLIST_VIEW_TYPE);
-    console.log("Flow GTD Coach plugin unloaded");
   }
 
   async loadSettings() {
