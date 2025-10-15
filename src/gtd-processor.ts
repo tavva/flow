@@ -25,6 +25,29 @@ export class GTDProcessor {
   }
 
   /**
+   * Extract project hint from inbox item if it starts with "ProjectName:"
+   * Returns { projectHint: string, cleanedItem: string } or null if no hint found
+   */
+  private extractProjectHint(item: string): { projectHint: string; cleanedItem: string } | null {
+    const match = item.match(/^([^:]+):\s*(.+)$/s);
+    if (!match) return null;
+
+    const potentialProject = match[1].trim();
+    const remainingText = match[2].trim();
+
+    // Only treat as project hint if the prefix looks like a project name
+    // (not empty, not too long, no special patterns that suggest it's not a project)
+    if (potentialProject.length > 0 && potentialProject.length < 100 && remainingText.length > 0) {
+      return {
+        projectHint: potentialProject,
+        cleanedItem: remainingText,
+      };
+    }
+
+    return null;
+  }
+
+  /**
    * Process an inbox item with context from existing Flow projects and person notes
    */
   async processInboxItem(
@@ -33,7 +56,8 @@ export class GTDProcessor {
     existingPersons: PersonNote[] = []
   ): Promise<GTDProcessingResult> {
     const liveProjects = this.filterLiveProjects(existingProjects);
-    const prompt = this.buildProcessingPrompt(item, liveProjects, existingPersons);
+    const projectHint = this.extractProjectHint(item);
+    const prompt = this.buildProcessingPrompt(item, liveProjects, existingPersons, projectHint);
 
     try {
       const responseText = await this.client.sendMessage({
@@ -55,7 +79,8 @@ export class GTDProcessor {
   private buildProcessingPrompt(
     item: string,
     projects: FlowProject[],
-    persons: PersonNote[] = []
+    persons: PersonNote[] = [],
+    projectHint: { projectHint: string; cleanedItem: string } | null = null
   ): string {
     const projectContext = this.buildProjectContext(projects);
     const personContext = this.buildPersonContext(persons);
@@ -64,9 +89,13 @@ export class GTDProcessor {
         ? `\n\nThe user organises their work using these spheres: ${this.availableSpheres.join(", ")}.`
         : "";
 
+    const projectHintContext = projectHint
+      ? `\n\nCRITICAL: The user has provided a hint that this item relates to a project matching "${projectHint.projectHint}". Look through the existing projects list below and find the best match for this hint (it doesn't need to be an exact match - e.g., "AI demo" could match "Record an AI demo for the leadership team"). You MUST set recommendedAction to "add-to-project" and include the matched project in suggestedProjects with high confidence. The actual item content (with the hint prefix removed) is: "${projectHint.cleanedItem}"`
+      : "";
+
     return `You are a GTD (Getting Things Done) coach. You must use British English spelling and grammar in all responses. A user has captured this item in their inbox:
 
-"${item}"
+"${item}"${projectHintContext}
 
 ${projectContext}${personContext}${spheresContext}
 
@@ -88,8 +117,6 @@ Examples:
 - "Follow up with Sarah after she sends the report" → isWaitingFor: true, waitingForReason: "Waiting for Sarah to send the report"
 - "Check if deployment is complete" → isWaitingFor: true, waitingForReason: "Waiting for deployment to complete"
 - "Call dentist to schedule appointment" → isWaitingFor: false (you're taking direct action)
-
-**PROJECT HINTS**: If an inbox item begins with a project name followed by a colon (e.g., "Flow: add a button"), this item MUST be associated with that project. Look for a matching project in the existing projects list and recommend adding it to that project as either a next action, reference, or sub-project. Do NOT recommend creating a standalone item or new project unless the named project doesn't exist.
 
 Rules:
 - If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action. Set isActionable: true.

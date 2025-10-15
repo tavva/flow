@@ -648,6 +648,94 @@ Clarify what it refers to before proceeding.",
       expect(result.waitingForReason).toBe("Waiting for John to review the proposal");
       expect(result.nextAction).toBe("Follow up with John about the proposal");
     });
+
+    test("should detect and pass project hints from 'ProjectName:' prefix for exact matches", async () => {
+      const projects: FlowProject[] = [
+        {
+          file: "flow.md",
+          title: "Flow",
+          tags: ["project/personal"],
+          nextActions: ["Existing action"],
+        },
+      ];
+
+      const mockResponse = buildClaudeResponse({
+        nextAction: "Add submit button to next actions page",
+        reasoning: "Hint 'Flow' matches Flow project",
+        suggestedProjects: [
+          {
+            projectTitle: "Flow",
+            relevance: "User hint matched this project",
+            confidence: "high",
+          },
+        ],
+        recommendedAction: "add-to-project",
+        recommendedActionReasoning: "Hint indicates this belongs to Flow project",
+      });
+
+      mockClient.sendMessage.mockImplementation(async (request) => {
+        const prompt = request.messages[0].content;
+        // Should include the critical instruction about project hint
+        expect(prompt).toContain('CRITICAL');
+        expect(prompt).toContain('hint');
+        expect(prompt).toContain('"Flow"');
+        expect(prompt).toContain('add submit button');
+        return mockResponse;
+      });
+
+      const result = await processor.processInboxItem(
+        "Flow: add submit button to next actions page",
+        projects
+      );
+
+      expect(result.recommendedAction).toBe("add-to-project");
+      expect(result.suggestedProjects).toHaveLength(1);
+      expect(result.suggestedProjects![0].project.title).toBe("Flow");
+    });
+
+    test("should detect and match fuzzy project hints", async () => {
+      const projects: FlowProject[] = [
+        {
+          file: "ai-demo.md",
+          title: "Record an AI demo for the leadership team",
+          tags: ["project/work"],
+          nextActions: ["Draft script"],
+        },
+      ];
+
+      const mockResponse = buildClaudeResponse({
+        nextAction: "Do the thing for the AI demo",
+        reasoning: "Hint 'AI demo' matches 'Record an AI demo for the leadership team'",
+        suggestedProjects: [
+          {
+            projectTitle: "Record an AI demo for the leadership team",
+            relevance: "User hint 'AI demo' matches this project title",
+            confidence: "high",
+          },
+        ],
+        recommendedAction: "add-to-project",
+        recommendedActionReasoning: "Fuzzy hint matched existing project",
+      });
+
+      mockClient.sendMessage.mockImplementation(async (request) => {
+        const prompt = request.messages[0].content;
+        // Should include the critical instruction with the hint
+        expect(prompt).toContain('CRITICAL');
+        expect(prompt).toContain('"AI demo"');
+        expect(prompt).toContain('best match');
+        expect(prompt).toContain('do the thing');
+        return mockResponse;
+      });
+
+      const result = await processor.processInboxItem(
+        "AI demo: do the thing",
+        projects
+      );
+
+      expect(result.recommendedAction).toBe("add-to-project");
+      expect(result.suggestedProjects).toHaveLength(1);
+      expect(result.suggestedProjects![0].project.title).toBe("Record an AI demo for the leadership team");
+    });
   });
 
   describe("prioritizeActions", () => {
