@@ -27,11 +27,18 @@ export class FileManager {
 
 export class WorkspaceLeaf {
   openFile = jest.fn();
+  view: any = null;
+  setViewState = jest.fn();
 }
 
 export class Workspace {
   getLeaf = jest.fn();
   activeLeaf: WorkspaceLeaf | null = null;
+  getLeavesOfType = jest.fn();
+  revealLeaf = jest.fn();
+  setActiveLeaf = jest.fn();
+  getRightLeaf = jest.fn();
+  detachLeavesOfType = jest.fn();
 }
 
 export class App {
@@ -122,6 +129,7 @@ export class Plugin {
   registerEvent(event: any) {}
   registerDomEvent(el: HTMLElement, event: string, callback: () => void) {}
   registerInterval(interval: number) {}
+  registerView(type: string, viewCreator: (leaf: WorkspaceLeaf) => any) {}
 }
 
 export class PluginSettingTab {
