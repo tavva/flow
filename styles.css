@@ -1115,6 +1115,9 @@ select.flow-gtd-inline-select option,
 	color: var(--text-normal);
 	font-size: 14px;
 	margin-right: 12px;
+	min-width: 0;
+	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .flow-gtd-hotlist-item-text:hover {
