@@ -132,6 +132,26 @@ export class RateLimitedAnthropicClient {
         const latency = (Date.now() - started) / 1000;
         const meta = this.extractErrorMeta(error);
         this.onResponse(meta, latency);
+
+        // Enhance network error messages for better user experience
+        if (error instanceof Error) {
+          const message = error.message.toLowerCase();
+          if (
+            message.includes("fetch") ||
+            message.includes("network") ||
+            message.includes("econnrefused") ||
+            message.includes("enotfound") ||
+            message.includes("timeout")
+          ) {
+            task.reject(
+              new Error(
+                "Network error: Unable to reach the AI service. Please check your internet connection and try again."
+              )
+            );
+            return;
+          }
+        }
+
         task.reject(error);
       })
       .finally(() => {

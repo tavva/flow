@@ -58,11 +58,23 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       headers["OpenAI-Organization"] = this.organization;
     }
 
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers,
-      body,
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers,
+        body,
+      });
+    } catch (error) {
+      // Network-level errors (connection timeout, DNS failure, network unreachable)
+      const message = error instanceof Error ? error.message.toLowerCase() : "";
+      if (message.includes("fetch") || message.includes("network") || message.includes("timeout")) {
+        throw new Error(
+          "Network error: Unable to reach the AI service. Please check your internet connection and try again."
+        );
+      }
+      throw new Error(`Network error: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     if (!response.ok) {
       let errorMessage = `OpenAI-compatible API request failed with status ${response.status}`;
