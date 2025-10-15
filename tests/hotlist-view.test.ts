@@ -15,6 +15,10 @@ describe("HotlistView", () => {
   beforeEach(() => {
     mockSettings = {
       hotlist: [],
+      hotlistAutoClearTime: "03:00",
+      hotlistArchiveFile: "Hotlist Archive.md",
+      lastHotlistClearTimestamp: 0,
+      hotlistClearedNotificationDismissed: false,
     };
     mockApp = {
       vault: {
@@ -125,5 +129,53 @@ describe("HotlistView", () => {
 
     expect(mockSaveSettings).toHaveBeenCalled();
     expect(mockSettings.hotlist).toHaveLength(0);
+  });
+
+  describe("Clear notification", () => {
+    it("should show notification when items were recently cleared", () => {
+      const now = Date.now();
+      mockSettings.lastHotlistClearTimestamp = now - 1000; // Cleared 1 second ago
+      mockSettings.hotlistClearedNotificationDismissed = false;
+
+      const shouldShow = (view as any).shouldShowClearNotification();
+
+      expect(shouldShow).toBe(true);
+    });
+
+    it("should not show notification when dismissed", () => {
+      const now = Date.now();
+      mockSettings.lastHotlistClearTimestamp = now - 1000;
+      mockSettings.hotlistClearedNotificationDismissed = true;
+
+      const shouldShow = (view as any).shouldShowClearNotification();
+
+      expect(shouldShow).toBe(false);
+    });
+
+    it("should not show notification when never cleared", () => {
+      mockSettings.lastHotlistClearTimestamp = 0;
+      mockSettings.hotlistClearedNotificationDismissed = false;
+
+      const shouldShow = (view as any).shouldShowClearNotification();
+
+      expect(shouldShow).toBe(false);
+    });
+
+    it("should not show notification when cleared more than 24 hours ago", () => {
+      const dayAndAHalfAgo = Date.now() - (36 * 60 * 60 * 1000);
+      mockSettings.lastHotlistClearTimestamp = dayAndAHalfAgo;
+      mockSettings.hotlistClearedNotificationDismissed = false;
+
+      const shouldShow = (view as any).shouldShowClearNotification();
+
+      expect(shouldShow).toBe(false);
+    });
+
+    it("should dismiss notification and save settings", async () => {
+      await (view as any).dismissClearNotification();
+
+      expect(mockSettings.hotlistClearedNotificationDismissed).toBe(true);
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
   });
 });

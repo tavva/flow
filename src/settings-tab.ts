@@ -288,6 +288,46 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Hotlist Settings
+    containerEl.createEl("h3", { text: "Hotlist" });
+    containerEl.createDiv("setting-item-description").innerHTML = `
+			<p>Configure automatic clearing and archiving of your hotlist.</p>
+		`;
+
+    new Setting(containerEl)
+      .setName("Auto-clear time")
+      .setDesc(
+        'Time to automatically clear the hotlist daily (e.g., "03:00"). Leave empty to disable auto-clearing.'
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("03:00")
+          .setValue(this.plugin.settings.hotlistAutoClearTime)
+          .onChange(async (value) => {
+            const trimmed = value.trim();
+            // Validate format if not empty
+            if (trimmed && !/^\d{1,2}:\d{2}$/.test(trimmed)) {
+              // Invalid format, don't save
+              return;
+            }
+            this.plugin.settings.hotlistAutoClearTime = trimmed;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Archive file")
+      .setDesc("File path where cleared hotlist items will be archived. Disabled if auto-clear is off.")
+      .addText((text) =>
+        text
+          .setPlaceholder("Hotlist Archive.md")
+          .setValue(this.plugin.settings.hotlistArchiveFile)
+          .onChange(async (value) => {
+            this.plugin.settings.hotlistArchiveFile = value.trim();
+            await this.plugin.saveSettings();
+          })
+      );
+
     // GTD Principles Info
     containerEl.createEl("h3", { text: "GTD Principles" });
     const gtdInfo = containerEl.createDiv("flow-gtd-info");

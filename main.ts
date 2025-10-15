@@ -8,6 +8,7 @@ import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { HotlistView, HOTLIST_VIEW_TYPE } from "./src/hotlist-view";
+import { shouldClearHotlist, archiveClearedTasks } from "./src/hotlist-auto-clear";
 
 type InboxCommandConfig = {
   id: string;
@@ -16,9 +17,18 @@ type InboxCommandConfig = {
 
 export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
+  private autoClearInterval: number | null = null;
 
   async onload() {
     await this.loadSettings();
+
+    // Check and clear hotlist if needed
+    await this.checkAndClearHotlist();
+
+    // Set up periodic check (every hour)
+    this.autoClearInterval = window.setInterval(async () => {
+      await this.checkAndClearHotlist();
+    }, 60 * 60 * 1000); // 1 hour
 
     // Register the sphere view
     this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
@@ -116,6 +126,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   onunload() {
+    // Clear the auto-clear interval
+    if (this.autoClearInterval !== null) {
+      window.clearInterval(this.autoClearInterval);
+      this.autoClearInterval = null;
+    }
+
     // Detach all sphere views
     this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE);
     // Detach all inbox processing views
@@ -317,5 +333,37 @@ export default class FlowGTDCoachPlugin extends Plugin {
       workspace.revealLeaf(leaf);
       workspace.setActiveLeaf(leaf, { focus: true });
     }
+  }
+
+  private async checkAndClearHotlist(): Promise<void> {
+    // Check if it's time to clear the hotlist
+    if (
+      !shouldClearHotlist(
+        this.settings.hotlistAutoClearTime,
+        this.settings.lastHotlistClearTimestamp
+      )
+    ) {
+      return;
+    }
+
+    // Archive the tasks if archive file is configured
+    if (this.settings.hotlistArchiveFile && this.settings.hotlist.length > 0) {
+      try {
+        await archiveClearedTasks(
+          this.app.vault,
+          this.settings.hotlist,
+          this.settings.hotlistArchiveFile,
+          new Date()
+        );
+      } catch (error) {
+        console.error("Failed to archive cleared hotlist tasks", error);
+      }
+    }
+
+    // Clear the hotlist
+    this.settings.hotlist = [];
+    this.settings.lastHotlistClearTimestamp = Date.now();
+    this.settings.hotlistClearedNotificationDismissed = false; // Reset so user sees notification
+    await this.saveSettings();
   }
 }

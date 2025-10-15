@@ -44,6 +44,12 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
   let mockLeaf: WorkspaceLeaf;
 
   beforeEach(async () => {
+    // Mock window.setInterval and window.clearInterval
+    global.window = {
+      setInterval: jest.fn().mockReturnValue(123),
+      clearInterval: jest.fn(),
+    } as any;
+
     mockApp = new App();
     mockLeaf = new WorkspaceLeaf();
 

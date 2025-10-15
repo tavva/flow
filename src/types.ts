@@ -91,6 +91,10 @@ export interface PluginSettings {
   projectTemplateFilePath: string;
   spheres: string[];
   hotlist: HotlistItem[];
+  hotlistAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
+  hotlistArchiveFile: string; // Path to archive file for cleared tasks
+  lastHotlistClearTimestamp: number; // Timestamp of last auto-clear
+  hotlistClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -110,6 +114,10 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectTemplateFilePath: "Templates/Project.md",
   spheres: ["personal", "work"],
   hotlist: [],
+  hotlistAutoClearTime: "03:00",
+  hotlistArchiveFile: "Hotlist Archive.md",
+  lastHotlistClearTimestamp: 0,
+  hotlistClearedNotificationDismissed: false,
 };
 
 // Project Review Types

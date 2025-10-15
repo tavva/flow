@@ -78,6 +78,11 @@ export class HotlistView extends ItemView {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
     titleEl.setText("Hotlist");
 
+    // Show clear notification if applicable
+    if (this.shouldShowClearNotification()) {
+      this.renderClearNotification(container as HTMLElement);
+    }
+
     if (this.settings.hotlist.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
@@ -177,6 +182,11 @@ export class HotlistView extends ItemView {
 
       const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
       titleEl.setText("Hotlist");
+
+      // Show clear notification if applicable
+      if (this.shouldShowClearNotification()) {
+        this.renderClearNotification(container as HTMLElement);
+      }
 
       if (validatedItems.length === 0) {
         this.renderEmptyMessage(container as HTMLElement);
@@ -337,6 +347,67 @@ export class HotlistView extends ItemView {
     container
       .createDiv({ cls: "flow-gtd-hotlist-empty" })
       .setText("No items in hotlist. Use planning mode in sphere view to add actions.");
+  }
+
+  private shouldShowClearNotification(): boolean {
+    // Don't show if dismissed
+    if (this.settings.hotlistClearedNotificationDismissed) {
+      return false;
+    }
+
+    // Don't show if never cleared
+    if (this.settings.lastHotlistClearTimestamp === 0) {
+      return false;
+    }
+
+    // Only show notification within 24 hours of clearing
+    const hoursSinceClear =
+      (Date.now() - this.settings.lastHotlistClearTimestamp) / (1000 * 60 * 60);
+    return hoursSinceClear < 24;
+  }
+
+  private async dismissClearNotification(): Promise<void> {
+    this.settings.hotlistClearedNotificationDismissed = true;
+    await this.saveSettings();
+  }
+
+  private renderClearNotification(container: HTMLElement) {
+    const notificationEl = container.createDiv({ cls: "flow-gtd-hotlist-notification" });
+    notificationEl.style.padding = "12px";
+    notificationEl.style.marginBottom = "12px";
+    notificationEl.style.backgroundColor = "var(--background-secondary)";
+    notificationEl.style.borderRadius = "4px";
+    notificationEl.style.display = "flex";
+    notificationEl.style.justifyContent = "space-between";
+    notificationEl.style.alignItems = "center";
+
+    const messageSpan = notificationEl.createSpan();
+    messageSpan.setText("Your hotlist was automatically cleared. ");
+
+    const archiveLink = messageSpan.createEl("a", {
+      text: "View archived items",
+      cls: "flow-gtd-hotlist-archive-link",
+    });
+    archiveLink.style.cursor = "pointer";
+    archiveLink.style.textDecoration = "underline";
+    archiveLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openFile(this.settings.hotlistArchiveFile);
+    });
+
+    const dismissBtn = notificationEl.createEl("button", {
+      text: "×",
+      cls: "flow-gtd-hotlist-dismiss-btn",
+    });
+    dismissBtn.style.fontSize = "20px";
+    dismissBtn.style.cursor = "pointer";
+    dismissBtn.style.border = "none";
+    dismissBtn.style.background = "transparent";
+    dismissBtn.title = "Dismiss";
+    dismissBtn.addEventListener("click", async () => {
+      await this.dismissClearNotification();
+      notificationEl.remove();
+    });
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {
