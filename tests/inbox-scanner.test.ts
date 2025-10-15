@@ -82,7 +82,7 @@ describe("Inbox deletion handling", () => {
     jest.clearAllMocks();
   });
 
-  it("removes multiple lines from the same file even when original positions change", async () => {
+  it("removes multiple lines from the same file when line numbers are adjusted", async () => {
     const firstItem: InboxItem = {
       type: "line",
       content: "Line two",
@@ -90,15 +90,17 @@ describe("Inbox deletion handling", () => {
       lineNumber: 2,
     };
 
+    await scanner.deleteInboxItem(firstItem);
+    expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three", "Line four"].join("\n"));
+
+    // After first deletion, "Line four" is now on line 3 (not line 4)
+    // In production, DeletionOffsetManager handles this adjustment
     const secondItem: InboxItem = {
       type: "line",
       content: "Line four",
       sourceFile: inboxFile,
-      lineNumber: 4,
+      lineNumber: 3, // Adjusted from original lineNumber=4
     };
-
-    await scanner.deleteInboxItem(firstItem);
-    expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three", "Line four"].join("\n"));
 
     await scanner.deleteInboxItem(secondItem);
     expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three"].join("\n"));
@@ -172,5 +174,35 @@ describe("Inbox deletion handling", () => {
     expect(deleteMock).toHaveBeenCalledTimes(2);
     expect(deleteMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ lineNumber: 2 }));
     expect(deleteMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ lineNumber: 3 }));
+  });
+
+  it("deletes the correct line when file has empty lines", async () => {
+    // Reproduces the bug: file with empty line at start
+    const fileWithEmptyLines = new TFile("Flow Inbox Files/with-empty.md", "with-empty");
+    fileContents[fileWithEmptyLines.path] = [
+      "", // Line 1 (index 0): empty
+      "Think about how Lisa can share learnings", // Line 2 (index 1): first non-empty
+      "Flow: discarding inbox items bug", // Line 3 (index 2): second non-empty
+      "Flow: Refine all button feedback", // Line 4 (index 3): third non-empty
+    ].join("\n");
+
+    // First item should be on line 2 (as assigned by getLineItems)
+    const firstItem: InboxItem = {
+      type: "line",
+      content: "Think about how Lisa can share learnings",
+      sourceFile: fileWithEmptyLines,
+      lineNumber: 2, // This is line 2 of the file (index 1 + 1)
+    };
+
+    await scanner.deleteInboxItem(firstItem);
+
+    // Should delete "Think about..." and leave the empty line plus the other two items
+    const expectedContent = [
+      "", // Empty line remains
+      "Flow: discarding inbox items bug",
+      "Flow: Refine all button feedback",
+    ].join("\n");
+
+    expect(fileContents[fileWithEmptyLines.path]).toBe(expectedContent);
   });
 });

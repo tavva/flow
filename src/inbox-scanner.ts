@@ -94,19 +94,12 @@ export class InboxScanner {
       const content = await this.app.vault.read(item.sourceFile);
       const lines = content.split("\n");
 
-      const nonEmptyIndexes = lines
-        .map((line, index) => ({ line, index }))
-        .filter((entry) => entry.line.trim() !== "");
+      // lineNumber is 1-based line number in the file, convert to 0-based index
+      const lineIndex = item.lineNumber - 1;
 
-      if (nonEmptyIndexes.length === 0) {
-        return;
-      }
-
-      const targetOrdinal = Math.min(item.lineNumber, nonEmptyIndexes.length);
-      const targetEntry = nonEmptyIndexes[targetOrdinal - 1];
-
-      if (targetEntry) {
-        lines.splice(targetEntry.index, 1);
+      // Check bounds and delete the line
+      if (lineIndex >= 0 && lineIndex < lines.length) {
+        lines.splice(lineIndex, 1);
         await this.app.vault.modify(item.sourceFile, lines.join("\n"));
       }
     } else if (item.type === "note") {
