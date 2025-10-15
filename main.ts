@@ -183,6 +183,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
         if (!shouldRestart) {
           // Just reveal the existing view
           this.app.workspace.revealLeaf(leaf);
+          this.app.workspace.setActiveLeaf(leaf, { focus: true });
           return;
         }
         // User wants to restart - will reuse the leaf
@@ -190,6 +191,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
       // Reveal and refresh the existing view
       this.app.workspace.revealLeaf(leaf);
+      this.app.workspace.setActiveLeaf(leaf, { focus: true });
       await view.refresh();
       return;
     }
@@ -224,6 +226,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       if (view.getDisplayText().toLowerCase().includes(sphere.toLowerCase())) {
         // Activate the existing view
         this.app.workspace.revealLeaf(leaf);
+        this.app.workspace.setActiveLeaf(leaf, { focus: true });
         return;
       }
     }
@@ -289,6 +292,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     if (leaf) {
       workspace.revealLeaf(leaf);
+      workspace.setActiveLeaf(leaf, { focus: true });
     }
   }
 
@@ -310,6 +314,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     if (leaf) {
       workspace.revealLeaf(leaf);
+      workspace.setActiveLeaf(leaf, { focus: true });
     }
   }
 }
