@@ -89,6 +89,8 @@ Examples:
 - "Check if deployment is complete" → isWaitingFor: true, waitingForReason: "Waiting for deployment to complete"
 - "Call dentist to schedule appointment" → isWaitingFor: false (you're taking direct action)
 
+**PROJECT HINTS**: If an inbox item begins with a project name followed by a colon (e.g., "Flow: add a button"), treat the prefix as a strong hint that this item belongs to that project. In such cases, you should strongly favour suggesting that existing project and consider whether this is a next action, reference, or sub-project for it.
+
 Rules:
 - If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action. Set isActionable: true.
 - If it's a single completable action → It's a NEXT ACTION. Set isActionable: true.
