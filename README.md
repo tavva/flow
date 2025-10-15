@@ -1,137 +1,112 @@
 # Flow GTD Coach
 
-An Obsidian plugin that helps you implement the GTD (Getting Things Done) methodology in your Flow-based vault. This plugin uses AI to intelligently process inbox items into well-formed projects and quality next actions.
+An Obsidian plugin that implements GTD (Getting Things Done) in your Flow vault. Uses AI to process inbox items into projects and next actions.
 
 ## Features
 
-### 🧠 Intelligent Inbox Processing
+### Inbox Processing
 
-- **AI-Powered Analysis**: Uses Claude AI to analyze inbox items and determine if they're projects, next actions, reference material, or someday/maybe items
-- **Context-Aware**: Scans your existing Flow projects to suggest relevant projects for new actions
-- **GTD-Quality Actions**: Ensures next actions are specific, actionable, and completable
-- **Waiting For Support**: Automatically detects items that require waiting for others and creates them with `[w]` status
+- Analyzes inbox items using Claude AI
+- Categorizes as projects, next actions, reference material, or someday/maybe items
+- Scans existing Flow projects to suggest where new actions belong
+- Detects items requiring waiting for others; creates them with `[w]` status
 
-### 📁 Flow Integration
+### Flow Integration
 
-- **Automatic Project Detection**: Scans your vault for Flow projects (files with `project/*` tags)
-- **Smart File Creation**: Creates new project files with proper Flow frontmatter
-- **Section Management**: Intelligently updates "Next actions" sections
+- Scans vault for Flow projects (files with `project/*` tags)
+- Creates project files with Flow frontmatter
+- Updates "Next actions" sections
 
-### ✨ User-Friendly Interface
+### Interface
 
-- **Guided Workflow**: Step-by-step process for capturing, clarifying, and organizing
-- **Bulk Processing**: Process multiple inbox items at once
-- **Project Suggestions**: Get AI suggestions for which existing projects items belong to
-- **Waiting For View**: Dedicated view showing all items you're waiting on across all projects
-- **Task Status Cycling**: Keyboard shortcut to cycle tasks between todo, waiting-for, and done states
+- Guides you through capturing, clarifying, and organizing
+- Processes multiple inbox items
+- Shows all waiting-for items across projects in dedicated view
+- Cycles task status via keyboard: todo → waiting-for → done
 
 ## Installation
 
-### Manual Installation
-
 1. Download the latest release
-2. Extract the files to your vault's `.obsidian/plugins/flow-gtd-coach/` directory
+2. Extract files to `.obsidian/plugins/flow-gtd-coach/` in your vault
 3. Reload Obsidian
 4. Enable the plugin in Settings → Community Plugins
 
-### Building from Source
+To build from source:
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/flow-gtd-coach.git
 cd flow-gtd-coach
-
-# Install dependencies
 npm install
-
-# Build the plugin
-npm run build
-
-# For development with auto-rebuild
-npm run dev
+npm run build        # production build
+npm run dev          # development with auto-rebuild
 ```
 
 ## Setup
 
-1. Get an Anthropic API key from [https://console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
-2. Open Obsidian Settings → Flow GTD Coach
-3. Enter your API key
-4. Configure default settings for new projects (priority, status)
+1. Get an Anthropic API key: [https://console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+2. In Obsidian Settings → Flow GTD Coach, enter your API key
+3. Configure defaults for new projects (priority, status)
 
 ## Usage
 
 ### Processing Your Inbox
 
-1. Click the inbox icon in the ribbon, or use the command palette (`Cmd/Ctrl+P`) and search for "Process Inbox"
-2. **Capture**: Add items one at a time or paste a bulk list
-3. **Process**: Let the AI analyze each item and suggest how to handle it
-4. **Review**: Check the AI's suggestions and make adjustments
-5. **Save**: Save processed items to your vault
+1. Click the inbox ribbon icon or run "Process Inbox" from command palette
+2. Capture items individually or paste a list
+3. Let AI analyze each item
+4. Review suggestions and adjust
+5. Save to vault
 
-### Interpreting AI Recommendations
+### AI Recommendations
 
-The AI response includes two distinct signals:
+AI provides two signals:
 
-- **Recommended Action** – the model's primary instruction for how to handle the item. The plugin applies this directly (e.g. _Create New Project_, _Add to Project_, _File to Reference_).
-- **Suggested Projects/People** – optional matches to existing notes, each with a confidence level. These are surfaced for convenience, but they do not override the recommended action. For example, the model may recommend creating a new project while still surfacing a low-confidence related project so you can manually redirect the item if appropriate.
+- **Recommended Action**: Primary instruction (_Create New Project_, _Add to Project_, _File to Reference_). The plugin applies this directly.
+- **Suggested Projects/People**: Optional matches with confidence levels. These don't override the recommended action. Use them to manually redirect items if appropriate.
 
-When you see a recommended action of "Create New Project" alongside suggested projects, that's the model signalling "treat this as new work" while still providing nearby matches you might want to reuse. No additional override logic is applied by the plugin beyond displaying those suggestions.
+"Create New Project" alongside suggestions means "treat as new work" while showing potential matches you might reuse.
 
-### Managing Waiting For Items
+### Waiting For Items
 
-The plugin includes full support for GTD "Waiting For" lists using the `[w]` checkbox status:
+Creates GTD "Waiting For" lists using `[w]` checkbox status.
 
-**Creating Waiting For Items:**
+**Creating:**
+- AI detects items requiring waiting for others
+- Manually mark actions in inbox modal
+- Use "Cycle task status" command on existing tasks
 
-- The AI automatically detects when an inbox item requires waiting for someone else (e.g., "Follow up with John after he reviews the proposal")
-- You can manually mark any action as waiting-for using the toggle button in the inbox modal
-- Use the "Cycle task status" command to change existing tasks to waiting-for status
+**View:**
+- Click clock ribbon icon or run "Open Waiting For view"
+- Shows all `[w]` items grouped by file
+- Click items to open source file
+- Mark complete (✓) or convert to regular action (←)
 
-**Waiting For View:**
-
-- Click the clock icon in the ribbon or use the "Open Waiting For view" command
-- See all `[w]` items aggregated from across your vault, grouped by file
-- Click any item to open its source file
-- Mark items complete with the ✓ button
-- Convert items back to regular actions with the ← button
-
-**Keyboard Workflow:**
-
-Place your cursor on any task checkbox and use "Cycle task status" to cycle through:
-
-- `[ ]` Todo (ready to do)
-- `[w]` Waiting for (blocked by someone/something else)
-- `[x]` Done (completed)
-
-This makes it easy to update task status without leaving your keyboard.
+**Keyboard:**
+Place cursor on any checkbox and run "Cycle task status": `[ ]` → `[w]` → `[x]`
 
 ### How It Works
 
-The plugin follows GTD principles:
+Follows GTD principles:
 
-- **Next Action**: Single, specific actions are identified and can be added to existing projects or saved for later
-- **Project**: Multi-step outcomes are created as new Flow project files with:
-  - Proper frontmatter (tags, priority, status, creation date)
-  - Project description (the "why")
-  - Immediate next actions that can be worked on now
-- **Reference**: Information items are identified (you can file these manually)
-- **Someday/Maybe**: Ideas for the future are flagged
+- **Next Action**: Single actions added to existing projects or saved for later
+- **Project**: Multi-step outcomes become Flow project files with frontmatter, description, and next actions
+- **Reference**: Information items identified for manual filing
+- **Someday/Maybe**: Future ideas flagged
 
-### Example Flow
+### Example
 
 **Input:** "plan vacation to Italy"
 
 **AI Analysis:**
-
 - Category: Project
 - Outcome: "Italy vacation fully planned and booked"
 - Next Action: "Research best time to visit Italy and check Sarah's availability"
 
-**Result:** New project file created at `Italy-vacation-fully-planned-and-booked.md` with all the details
+**Result:** Creates `Italy-vacation-fully-planned-and-booked.md` with details
 
 ## Flow Project Structure
 
-This plugin works with the Flow system's project format:
+Uses Flow system's project format:
 
 ```markdown
 ---
@@ -150,97 +125,72 @@ Project description and context.
 - [ ] Specific, actionable items ready to do now
 ```
 
-**Note:** All actions are created as Markdown checkboxes (`- [ ]`) so you can easily track completion status.
+All actions use Markdown checkboxes (`- [ ]`) for tracking completion.
 
 ## Development
 
-### Running Tests
+### Tests
 
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Generate coverage report
-npm run test:coverage
+npm test                  # run all tests
+npm run test:watch        # watch mode
+npm run test:coverage     # coverage report
 ```
 
-### Code Formatting
+### Formatting
 
 ```bash
-# Format all code with Prettier
-npm run format
-
-# Check if code is formatted (useful for CI)
-npm run format:check
+npm run format            # format with Prettier
+npm run format:check      # check formatting (CI)
 ```
 
-The project uses Prettier with 2-space indentation. Always run `npm run format` before committing changes. The CI pipeline automatically checks formatting on all pull requests.
+Uses Prettier with 2-space indentation. Run `npm run format` before committing. CI checks formatting on all PRs.
 
 ### Evaluation Framework
 
-The plugin includes a comprehensive evaluation framework to measure GTD processing quality:
+Measures GTD processing quality:
 
 ```bash
-# Run evaluation (requires API key)
 export ANTHROPIC_API_KEY=your-key
 npm run evaluate
 ```
 
-The evaluation tests against 15 curated test cases, measuring:
-
-- Category accuracy (project vs. action identification)
-- Action quality (GTD compliance)
-- Specificity and verb usage
-- Project outcome clarity
-
-See [`evaluation/README.md`](evaluation/README.md) for details.
+Tests 15 curated cases, measuring category accuracy, action quality, specificity, and outcome clarity. See [`evaluation/README.md`](evaluation/README.md).
 
 ### Project Structure
 
 ```
-flow-gtd-coach/
-├── src/
-│   ├── types.ts              # TypeScript interfaces
-│   ├── flow-scanner.ts       # Scans vault for Flow projects
-│   ├── gtd-processor.ts      # AI-powered GTD analysis
-│   ├── file-writer.ts        # Creates/updates project files
-│   ├── inbox-modal.ts        # Main UI component
-│   └── settings-tab.ts       # Settings interface
-├── tests/
-│   ├── flow-scanner.test.ts
-│   ├── gtd-processor.test.ts
-│   └── file-writer.test.ts
-├── main.ts                   # Plugin entry point
-├── manifest.json
-└── package.json
+src/
+├── types.ts              # TypeScript interfaces
+├── flow-scanner.ts       # Vault scanner for Flow projects
+├── gtd-processor.ts      # AI-powered GTD analysis
+├── file-writer.ts        # Project file creation/updates
+├── inbox-modal.ts        # Main UI
+└── settings-tab.ts       # Settings interface
+tests/                    # Test files mirror src/
+main.ts                   # Plugin entry point
 ```
 
 ## GTD Principles
 
-This plugin implements the core GTD workflow:
+Implements core GTD workflow:
 
 1. **Capture** - Collect everything that has your attention
-2. **Clarify** - Process what each item means and what to do about it
-3. **Organise** - Put it where it belongs
+2. **Clarify** - Process what each item means
+3. **Organize** - Put it where it belongs
 4. **Review** - Look over your system regularly
-5. **Engage** - Simply do what needs to be done
+5. **Engage** - Do what needs doing
 
-The plugin helps with steps 1-3, making it easy to get things out of your head and into your trusted system.
+Plugin handles steps 1-3: capture, clarify, organize.
 
 ## Privacy & Security
 
-- Your API key is stored locally in Obsidian's settings
-- No data is sent anywhere except to Anthropic's API for processing
-- All processing happens on-demand when you use the plugin
-- Your vault data never leaves your control
-- The plugin runs locally on your machine - your API key is never exposed to external parties
-- The Anthropic SDK requires the `dangerouslyAllowBrowser` flag because Obsidian plugins run in an Electron environment. This is safe because:
-  - The plugin runs entirely on your local machine
-  - Your API key is only used for your own requests
-  - No third parties have access to your credentials
+- API key stored locally in Obsidian settings
+- Data sent only to Anthropic's API for processing
+- Processing happens on-demand
+- Vault data stays under your control
+- Plugin runs locally; no third-party access to credentials
+- `dangerouslyAllowBrowser` flag required because Obsidian uses Electron (safe in this context)
 
 ## Support
 
