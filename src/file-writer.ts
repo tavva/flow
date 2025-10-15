@@ -221,18 +221,30 @@ export class FileWriter {
         : this.settings.defaultPriority;
 
     // Replace template variables
-    const parentProjectForTemplate = parentProject || "";
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem))
-      .replace(/{{\s*parent-project\s*}}/g, parentProjectForTemplate);
+      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem));
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
     templateContent = templateContent
       .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, date)
       .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, date);
+
+    // Add parent-project to frontmatter if provided
+    if (parentProject) {
+      // Find the closing --- of the frontmatter
+      const frontmatterEndMatch = templateContent.match(/^---\n[\s\S]*?\n---/m);
+      if (frontmatterEndMatch) {
+        const frontmatterEnd = frontmatterEndMatch[0];
+        const frontmatterEndIndex = frontmatterEnd.lastIndexOf("---");
+        const beforeEnd = frontmatterEnd.substring(0, frontmatterEndIndex);
+        const afterEnd = templateContent.substring(frontmatterEndMatch.index! + frontmatterEnd.length);
+
+        templateContent = beforeEnd + `parent-project: ${parentProject}\n---` + afterEnd;
+      }
+    }
 
     // Add next actions to the template
     let content = templateContent;

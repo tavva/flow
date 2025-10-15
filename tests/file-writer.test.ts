@@ -373,6 +373,81 @@ status: live
 
       expect(mockVault.createFolder).toHaveBeenCalledWith("Projects");
     });
+
+    it("should add parent-project to frontmatter when creating sub-project with template", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Sub Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: <% tp.date.now("YYYY-MM-DD HH:mm") %>
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        if (path === "Templates/Project.md") {
+          return templateFile;
+        }
+
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "test", [], [], "[[Parent Project]]");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("parent-project: [[Parent Project]]");
+    });
+
+    it("should add parent-project to frontmatter when creating sub-project with fallback", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Sub Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "test", [], [], "[[Parent Project]]");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("parent-project: [[Parent Project]]");
+    });
   });
 
   describe("addNextActionToProject", () => {
