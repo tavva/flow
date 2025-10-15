@@ -1,15 +1,19 @@
-# Flow GTD Coach
+# Flow
 
-An Obsidian plugin that implements GTD (Getting Things Done) in your Flow vault. Uses AI to process inbox items into projects and next actions.
+An Obsidian plugin that implements GTD (Getting Things Done) in your Flow vault.
 
 ## Features
 
 ### Inbox Processing
 
-- Analyzes inbox items using Claude AI
 - Categorizes as projects, next actions, reference material, or someday/maybe items
 - Scans existing Flow projects to suggest where new actions belong
 - Detects items requiring waiting for others; creates them with `[w]` status
+- AI refinement of items
+
+### AI Refinement
+
+- Optional AI refinement of inbox items, helping suggest how to process, ensuring actionable next actions
 
 ### Flow Integration
 
@@ -71,11 +75,13 @@ AI provides two signals:
 Creates GTD "Waiting For" lists using `[w]` checkbox status.
 
 **Creating:**
+
 - AI detects items requiring waiting for others
 - Manually mark actions in inbox modal
 - Use "Cycle task status" command on existing tasks
 
 **View:**
+
 - Click clock ribbon icon or run "Open Waiting For view"
 - Shows all `[w]` items grouped by file
 - Click items to open source file
@@ -98,6 +104,7 @@ Follows GTD principles:
 **Input:** "plan vacation to Italy"
 
 **AI Analysis:**
+
 - Category: Project
 - Outcome: "Italy vacation fully planned and booked"
 - Next Action: "Research best time to visit Italy and check Sarah's availability"
