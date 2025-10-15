@@ -277,7 +277,14 @@ export async function runREPL(
       });
 
       // Render markdown response
-      const rendered = marked.parse(response) as string;
+      let rendered = marked.parse(response) as string;
+
+      // Workaround for marked-terminal bug #371: bold/italic not processed in list items
+      // Manually convert **text** to bold and *text* or _text_ to italic
+      rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m"); // bold
+      rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
+      rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
+
       console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
     } catch (error) {
       // Clear thinking indicator on error
