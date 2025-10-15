@@ -140,6 +140,7 @@ export class SphereView extends ItemView {
       .filter((node) =>
         node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
         node.project.status === "live" &&
+        !node.project.file.startsWith("Templates/") &&
         node.project.file !== this.settings.projectTemplateFilePath
       )
       .map((node) => ({

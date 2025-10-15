@@ -108,7 +108,7 @@ describe("SphereView", () => {
   });
 
   describe("filtering projects", () => {
-    it("should filter out the project template file", async () => {
+    it("should filter out all files in Templates folder", async () => {
       const projectTemplate = {
         file: "Templates/Project.md",
         title: "Project Template",
@@ -116,6 +116,15 @@ describe("SphereView", () => {
         status: "live" as const,
         priority: 1,
         nextActions: ["Some action"],
+      };
+
+      const workProjectTemplate = {
+        file: "Templates/Work project.md",
+        title: "Work Project Template",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Some work action"],
       };
 
       const regularProject = {
@@ -127,9 +136,12 @@ describe("SphereView", () => {
         nextActions: ["Another action"],
       };
 
-      mockScanner.scanProjects.mockResolvedValue([projectTemplate, regularProject]);
+      mockScanner.scanProjects.mockResolvedValue([
+        projectTemplate,
+        workProjectTemplate,
+        regularProject,
+      ]);
 
-      settings.projectTemplateFilePath = "Templates/Project.md";
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -137,7 +149,37 @@ describe("SphereView", () => {
 
       expect(data.projects).toHaveLength(1);
       expect(data.projects[0].project.file).toBe("Projects/Regular.md");
-      expect(data.projects[0].project.file).not.toBe("Templates/Project.md");
+    });
+
+    it("should filter out template file from settings even if outside Templates folder", async () => {
+      const customTemplate = {
+        file: "My Custom Template.md",
+        title: "Custom Template",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Template action"],
+      };
+
+      const regularProject = {
+        file: "Projects/Regular.md",
+        title: "Regular Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["Another action"],
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([customTemplate, regularProject]);
+
+      settings.projectTemplateFilePath = "My Custom Template.md";
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(1);
+      expect(data.projects[0].project.file).toBe("Projects/Regular.md");
     });
   });
 
