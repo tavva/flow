@@ -76,11 +76,11 @@ Analyze this item according to GTD principles:
 
 **NEXT ACTION**: A single, physical, visible action that can be done in one sitting. Must start with an action verb and be completely clear about what to do.
 
-**REFERENCE**: Information to store for later (no action needed). Reference items must be added to an existing project for context.
+**REFERENCE**: Information to store for later (no action needed). Reference items are NOT actionable and must have isActionable: false. They should be added to an existing project for context.
 
-**PERSON**: Something to discuss with a specific person. This should be added to the person's "## Discuss next" section.
+**PERSON**: Something to discuss with a specific person. This should be added to the person's "## Discuss next" section and is actionable.
 
-**SOMEDAY/MAYBE**: Something you might want to do in the future but not now.
+**SOMEDAY/MAYBE**: Something you might want to do in the future but not now. These are NOT actionable and must have isActionable: false.
 
 **WAITING FOR**: If the item involves waiting for someone else to do something before you can act, set "isWaitingFor": true and provide "waitingForReason". This signals that next actions should use [w] checkbox status instead of [ ].
 
@@ -90,9 +90,11 @@ Examples:
 - "Call dentist to schedule appointment" → isWaitingFor: false (you're taking direct action)
 
 Rules:
-- If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action.
-- If it's a single completable action → It's a NEXT ACTION.
-- If it's something to discuss with a specific person → It's a PERSON item.
+- If it requires multiple steps → It's a PROJECT. Define the outcome and identify the FIRST next action. Set isActionable: true.
+- If it's a single completable action → It's a NEXT ACTION. Set isActionable: true.
+- If it's something to discuss with a specific person → It's a PERSON item. Set isActionable: true.
+- If it's information to store for later → It's a REFERENCE item. Set isActionable: false.
+- If it's something you might do someday → It's a SOMEDAY item. Set isActionable: false.
 - A quality next action must: start with a verb, be specific, be completable in one sitting, include context.
 - Projects should be stated as outcomes (e.g., "Website redesign complete" not "Redesign website").
 - If this item relates to an existing project, suggest which project(s) it belongs to.
