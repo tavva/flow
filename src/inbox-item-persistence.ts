@@ -106,11 +106,17 @@ export class InboxItemPersistenceService {
 
     switch (item.selectedAction) {
       case "create-project":
+        // Convert parent project to wikilink format if present
+        const parentProjectLink = item.parentProject
+          ? `[[${item.parentProject.title}]]`
+          : undefined;
+
         await this.writer.createProject(
           resultForSaving,
           item.original,
           item.selectedSpheres,
-          finalWaitingFor
+          finalWaitingFor,
+          parentProjectLink
         );
         break;
 

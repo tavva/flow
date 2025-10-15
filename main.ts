@@ -224,9 +224,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
       const view = leaf.view as SphereView;
       // Check if this view is for the same sphere
       if (view.getDisplayText().toLowerCase().includes(sphere.toLowerCase())) {
-        // Activate the existing view
+        // Activate and refresh the existing view
         this.app.workspace.revealLeaf(leaf);
         this.app.workspace.setActiveLeaf(leaf, { focus: true });
+        await view.onOpen(); // Refresh the view with latest data
         return;
       }
     }

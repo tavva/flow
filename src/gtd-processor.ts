@@ -96,6 +96,7 @@ Rules:
 - A quality next action must: start with a verb, be specific, be completable in one sitting, include context.
 - Projects should be stated as outcomes (e.g., "Website redesign complete" not "Redesign website").
 - If this item relates to an existing project, suggest which project(s) it belongs to.
+- If this item should be a SUB-PROJECT of an existing project (a focused initiative within a larger strategic project), set "asSubProject": true and specify the "parentProject" file path.
 - If this item relates to a specific person, suggest which person note(s) it belongs to.
 - ALWAYS provide the option to create a new project, even if suggesting existing ones.
 - If a complex item could be broken into multiple discrete next actions (not requiring dependencies), you may provide multiple next actions in the "nextActions" array.
@@ -114,7 +115,9 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
     {
       "projectTitle": "title of existing project",
       "relevance": "why this project is relevant",
-      "confidence": "high/medium/low"
+      "confidence": "high/medium/low",
+      "asSubProject": false (optional - true if this should be created as a sub-project),
+      "parentProject": "path/to/parent.md" (optional - only if asSubProject is true)
     }
   ],
   "suggestedPersons": [
@@ -150,7 +153,8 @@ For spheres: Recommend one or more spheres that best categorise this item. Consi
 Examples:
 - "plan vacation" → PROJECT: "Summer vacation planned", next action: "Email Sarah to discuss vacation dates"
 - "call dentist" → NEXT ACTION: "Call Dr. Smith's office at 555-0123 to schedule cleaning"
-- "recipe for lasagna" → REFERENCE: Store in recipe collection`;
+- "recipe for lasagna" → REFERENCE: Store in recipe collection
+- "ship initial AI-first experiment" (when "Engineering AI Strategy" project exists) → SUB-PROJECT with asSubProject: true, parentProject: "path/to/Engineering AI Strategy.md"`;
   }
 
   /**
@@ -348,6 +352,8 @@ Examples:
             project,
             relevance: suggestion.relevance,
             confidence: suggestion.confidence,
+            asSubProject: suggestion.asSubProject || false,
+            parentProject: suggestion.parentProject,
           });
         }
       }
@@ -409,6 +415,8 @@ Examples:
       projectTitle: string;
       relevance: string;
       confidence: "high" | "medium" | "low";
+      asSubProject?: boolean;
+      parentProject?: string;
     }>;
     suggestedPersons?: Array<{
       personName: string;

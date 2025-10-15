@@ -15,7 +15,8 @@ export class FileWriter {
     result: GTDProcessingResult,
     originalItem: string,
     spheres: string[] = [],
-    waitingFor: boolean[] = []
+    waitingFor: boolean[] = [],
+    parentProject?: string
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
@@ -38,7 +39,7 @@ export class FileWriter {
       throw new Error(`File ${filePath} already exists`);
     }
 
-    const content = await this.buildProjectContent(result, originalItem, spheres, waitingFor);
+    const content = await this.buildProjectContent(result, originalItem, spheres, waitingFor, parentProject);
     const file = await this.app.vault.create(filePath, content);
 
     return file;
@@ -192,7 +193,8 @@ export class FileWriter {
     result: GTDProcessingResult,
     originalItem: string,
     spheres: string[] = [],
-    waitingFor: boolean[] = []
+    waitingFor: boolean[] = [],
+    parentProject?: string
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
       this.settings.projectTemplateFilePath
@@ -200,7 +202,7 @@ export class FileWriter {
 
     if (!templateFile || !(templateFile instanceof TFile)) {
       // Fallback to hardcoded template if template file doesn't exist
-      return this.buildProjectContentFallback(result, originalItem, spheres, waitingFor);
+      return this.buildProjectContentFallback(result, originalItem, spheres, waitingFor, parentProject);
     }
 
     let templateContent = await this.app.vault.read(templateFile);
@@ -219,10 +221,12 @@ export class FileWriter {
         : this.settings.defaultPriority;
 
     // Replace template variables
+    const parentProjectForTemplate = parentProject || "";
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem));
+      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem))
+      .replace(/{{\s*parent-project\s*}}/g, parentProjectForTemplate);
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
@@ -269,7 +273,8 @@ export class FileWriter {
     result: GTDProcessingResult,
     originalItem: string,
     spheres: string[] = [],
-    waitingFor: boolean[] = []
+    waitingFor: boolean[] = [],
+    parentProject?: string
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
@@ -295,7 +300,13 @@ priority:
   ${projectPriorityFallback}
 tags:
 ${sphereTagsList}
-status: ${this.settings.defaultStatus}
+status: ${this.settings.defaultStatus}`;
+
+    if (parentProject) {
+      content += `\nparent-project: ${parentProject}`;
+    }
+
+    content += `
 ---
 
 # Description

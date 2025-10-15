@@ -8,6 +8,7 @@ export interface FlowProject {
   creationDate?: string;
   mtime?: number; // File modification time in milliseconds
   nextActions: string[];
+  parentProject?: string; // Wikilink to parent project, e.g., "[[Engineering AI Strategy]]"
 }
 
 export interface PersonNote {
@@ -61,6 +62,8 @@ export interface ProjectSuggestion {
   project: FlowProject;
   relevance: string;
   confidence: "high" | "medium" | "low";
+  asSubProject?: boolean; // True if this should be created as a sub-project
+  parentProject?: string; // Path to parent project file if asSubProject is true
 }
 
 export interface PersonSuggestion {

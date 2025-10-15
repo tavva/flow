@@ -21,6 +21,7 @@ describe("HotlistView", () => {
         getAbstractFileByPath: jest.fn(),
         read: jest.fn(),
         modify: jest.fn(),
+        getMarkdownFiles: jest.fn().mockReturnValue([]),
       },
       workspace: {
         getLeaf: jest.fn(),
@@ -33,11 +34,18 @@ describe("HotlistView", () => {
     };
     mockLeaf = {
       view: null,
+      getRoot: jest.fn().mockReturnValue({
+        app: mockApp,
+      }),
     } as any;
     mockSaveSettings = jest.fn();
 
     view = new HotlistView(mockLeaf, mockSettings, mockSaveSettings);
     (view as any).app = mockApp;
+    // Re-initialize scanner with mocked app
+    (view as any).scanner = {
+      scanProjects: jest.fn().mockResolvedValue([]),
+    };
   });
 
   it("should have correct view type", () => {

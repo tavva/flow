@@ -5,6 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { PluginSettings, FlowProject } from "./types";
 import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
+import { buildProjectHierarchy, flattenHierarchy } from "./project-hierarchy";
 
 export interface CliArgs {
   vaultPath: string;
@@ -58,14 +59,18 @@ export function buildSystemPrompt(
   sphere: string,
   gtdContext: GTDContext
 ): string {
-  const projectCount = projects.length;
+  // Build hierarchy to get correct count including all sub-projects
+  const hierarchy = buildProjectHierarchy(projects);
+  const flattenedHierarchy = flattenHierarchy(hierarchy);
+  const projectCount = flattenedHierarchy.length;
+
   const nextActionsCount = gtdContext.nextActions.length;
   const somedayCount = gtdContext.somedayItems.length;
   const inboxCount = gtdContext.inboxItems.length;
 
   let prompt = `You are a GTD (Getting Things Done) coach for the ${sphere} sphere.\n\n`;
   prompt += `You have context on the user's complete GTD system:\n`;
-  prompt += `- ${projectCount} active projects with their next actions and priorities\n`;
+  prompt += `- ${projectCount} active projects (including sub-projects) with their next actions and priorities\n`;
   prompt += `- ${nextActionsCount} next actions from the central next actions file\n`;
   prompt += `- ${somedayCount} items in someday/maybe\n`;
   prompt += `- ${inboxCount} unprocessed inbox items\n\n`;
@@ -93,19 +98,28 @@ export function buildSystemPrompt(
 
   if (projectCount > 0) {
     prompt += `## Projects (${projectCount})\n\n`;
-    for (const project of projects) {
-      prompt += `### ${project.title}\n`;
-      prompt += `Description: ${project.description || "No description"}\n`;
-      prompt += `Priority: ${project.priority} (1=highest, 3=lowest)\n`;
-      prompt += `Status: ${project.status}\n`;
+    prompt += `Projects are shown hierarchically with sub-projects indented under their parents.\n\n`;
+
+    for (const node of flattenedHierarchy) {
+      const project = node.project;
+      const indent = "  ".repeat(node.depth);
+
+      prompt += `${indent}### ${project.title}\n`;
+      prompt += `${indent}Description: ${project.description || "No description"}\n`;
+      prompt += `${indent}Priority: ${project.priority} (1=highest, 3=lowest)\n`;
+      prompt += `${indent}Status: ${project.status}\n`;
+
+      if (node.depth > 0) {
+        prompt += `${indent}(Sub-project at depth ${node.depth})\n`;
+      }
 
       if (project.nextActions && project.nextActions.length > 0) {
-        prompt += `Next Actions (${project.nextActions.length}):\n`;
+        prompt += `${indent}Next Actions (${project.nextActions.length}):\n`;
         for (const action of project.nextActions) {
-          prompt += `- ${action}\n`;
+          prompt += `${indent}- ${action}\n`;
         }
       } else {
-        prompt += `⚠️ Next Actions: None defined (project may be stalled)\n`;
+        prompt += `${indent}⚠️ Next Actions: None defined (project may be stalled)\n`;
       }
 
       prompt += `\n`;

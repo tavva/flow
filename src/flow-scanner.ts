@@ -1,5 +1,6 @@
 import { App, TFile, CachedMetadata } from "obsidian";
 import { FlowProject } from "./types";
+import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
 
 export class FlowProjectScanner {
   constructor(private app: App) {}
@@ -19,6 +20,14 @@ export class FlowProjectScanner {
     }
 
     return projects;
+  }
+
+  /**
+   * Scans the vault and builds a hierarchical tree of projects
+   */
+  async scanProjectTree(): Promise<ProjectNode[]> {
+    const projects = await this.scanProjects();
+    return buildProjectHierarchy(projects);
   }
 
   /**
@@ -44,6 +53,7 @@ export class FlowProjectScanner {
       creationDate: frontmatter["creation-date"],
       mtime: file.stat.mtime,
       nextActions: this.extractSection(content, "## Next actions"),
+      parentProject: frontmatter["parent-project"],
     };
   }
 

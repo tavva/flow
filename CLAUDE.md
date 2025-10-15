@@ -135,6 +135,34 @@ Hotlist items are stored in plugin settings as `HotlistItem[]` with:
 - `isGeneral`: Whether from Next Actions file vs project file
 - `addedAt`: Timestamp for ordering
 
+### Sub-Projects Support
+
+The plugin supports hierarchical project relationships where projects can have sub-projects:
+
+- **Project Hierarchy** (`src/project-hierarchy.ts`) - Builds hierarchical tree structures from flat project lists
+  - `buildProjectHierarchy()` - Creates tree from projects, detects cycles, calculates depths
+  - `flattenHierarchy()` - Depth-first traversal for rendering with indentation
+  - `extractParentPath()` - Converts wikilink `[[Parent]]` to file path
+  - `getProjectDisplayName()` - Returns display name with parent context
+- **Parent-Project Frontmatter** - Sub-projects reference parents using `parent-project: "[[Parent Name]]"` in frontmatter
+- **Arbitrary Nesting** - Sub-projects can have their own sub-projects (unlimited depth)
+- **Hierarchy Views** - Sphere view shows indented hierarchy (24px per level), hotlist shows parent context
+- **Inbox Modal** - AI can suggest creating projects as sub-projects; UI provides checkbox toggle and parent selector
+- **Action Aggregation** - Parent projects aggregate next actions from all descendants recursively
+
+**Important Implementation Detail:** When building hierarchies with filtering (e.g., by sphere), always build hierarchy from ALL projects first, then filter. This preserves parent-child relationships even when parent is in different sphere or status:
+
+```typescript
+// ✅ CORRECT
+const hierarchy = buildProjectHierarchy(allProjects);
+const flattenedHierarchy = flattenHierarchy(hierarchy);
+const filtered = flattenedHierarchy.filter(/* sphere filter */);
+
+// ❌ WRONG - breaks relationships
+const filtered = allProjects.filter(/* sphere filter */);
+const hierarchy = buildProjectHierarchy(filtered);
+```
+
 ### Flow Project Structure
 
 Flow projects are Markdown files with specific frontmatter and sections:
@@ -156,11 +184,33 @@ Project description and context.
 - [ ] GTD-quality actions ready to do now
 ```
 
+**Sub-project example:**
+
+```markdown
+---
+creation-date: 2025-10-15 14:30
+priority: 2
+tags: project/work
+status: live
+parent-project: "[[Engineering AI Strategy]]"
+---
+
+# Ship initial AI-first experiment
+
+First hands-on exploration of AI capabilities in production.
+
+## Next actions
+
+- [ ] Define success metrics for experiment
+- [ ] Choose initial use case to test
+```
+
 **Important:**
 
 - Projects are identified by `project/*` tags in frontmatter
 - All next actions MUST be Markdown checkboxes (`- [ ]`)
 - Next actions section contains immediately actionable items
+- Sub-projects use `parent-project: "[[Parent Name]]"` wikilink format in frontmatter
 
 ### GTD Categories
 
@@ -213,6 +263,7 @@ The plugin supports multiple LLM providers through a factory pattern:
 - `sphere-view.test.ts` - Sphere view and planning mode
 - `waiting-for-scanner.test.ts` - Waiting-for item scanning
 - `waiting-for-view.test.ts` - Waiting-for view rendering
+- `project-hierarchy.test.ts` - Project hierarchy building, cycle detection, and display utilities
 
 **Note:** Test coverage may vary - check `tests/` directory for current test files.
 

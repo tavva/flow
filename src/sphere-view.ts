@@ -2,12 +2,14 @@ import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, HotlistItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
+import { buildProjectHierarchy, flattenHierarchy, ProjectNode } from "./project-hierarchy";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
 interface SphereProjectSummary {
   project: FlowProject;
   priority: number | null;
+  depth: number; // Hierarchy depth: 0 for root, 1+ for sub-projects
 }
 
 interface SphereViewData {
@@ -103,6 +105,21 @@ export class SphereView extends ItemView {
     // Cleanup if needed
   }
 
+  // Save state for persistence across Obsidian reloads
+  getState() {
+    return {
+      sphere: this.sphere,
+    };
+  }
+
+  // Restore state when Obsidian reloads
+  async setState(state: { sphere?: string }, result: any) {
+    if (state?.sphere) {
+      this.sphere = state.sphere;
+    }
+    await super.setState(state, result);
+  }
+
   // Method to update the sphere and refresh the view
   async setSphere(sphere: string, settings: PluginSettings, saveSettings: () => Promise<void>) {
     this.sphere = sphere;
@@ -113,19 +130,23 @@ export class SphereView extends ItemView {
 
   private async loadSphereData(): Promise<SphereViewData> {
     const allProjects = await this.scanner.scanProjects();
-    const sphereProjects = allProjects.filter(
-      (project) =>
-        project.tags.some((tag) => this.matchesSphereTag(tag)) &&
-        project.status === "live" &&
-        project.file !== this.settings.projectTemplateFilePath
-    );
 
-    const projectSummaries = sphereProjects
-      .map((project) => ({
-        project,
-        priority: this.normalizePriority(project.priority),
-      }))
-      .sort((a, b) => this.compareProjects(a, b));
+    // Build hierarchy from ALL projects first (so parent relationships are preserved)
+    const hierarchy = buildProjectHierarchy(allProjects);
+    const flattenedHierarchy = flattenHierarchy(hierarchy);
+
+    // Then filter to only sphere projects with live status
+    const projectSummaries = flattenedHierarchy
+      .filter((node) =>
+        node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
+        node.project.status === "live" &&
+        node.project.file !== this.settings.projectTemplateFilePath
+      )
+      .map((node) => ({
+        project: node.project,
+        priority: this.normalizePriority(node.project.priority),
+        depth: node.depth,
+      }));
 
     const projectsNeedingNextActions = projectSummaries.filter(
       ({ project }) => !project.nextActions || project.nextActions.length === 0
@@ -211,8 +232,16 @@ export class SphereView extends ItemView {
       return;
     }
 
-    projects.forEach(({ project, priority }) => {
+    projects.forEach(({ project, priority, depth }) => {
       const wrapper = section.createDiv({ cls: "flow-gtd-sphere-project" });
+
+      // Apply indentation based on hierarchy depth
+      if (depth > 0) {
+        wrapper.style.marginLeft = `${depth * 32}px`;
+        wrapper.style.width = `calc(100% - ${depth * 32}px)`;
+        wrapper.addClass("flow-gtd-sphere-subproject");
+      }
+
       const header = wrapper.createDiv({ cls: "flow-gtd-sphere-project-header" });
 
       const titleLink = header.createEl("a", {

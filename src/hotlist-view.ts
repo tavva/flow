@@ -3,8 +3,10 @@
 
 import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
 import { getAPI } from "obsidian-dataview";
-import { HotlistItem, PluginSettings } from "./types";
+import { HotlistItem, PluginSettings, FlowProject } from "./types";
 import { HotlistValidator, ValidationResult } from "./hotlist-validator";
+import { FlowProjectScanner } from "./flow-scanner";
+import { getProjectDisplayName } from "./project-hierarchy";
 
 export const HOTLIST_VIEW_TYPE = "flow-gtd-hotlist-view";
 
@@ -16,17 +18,20 @@ interface GroupedHotlistItems {
 export class HotlistView extends ItemView {
   private settings: PluginSettings;
   private validator: HotlistValidator;
+  private scanner: FlowProjectScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
   private modifyEventRef: EventRef | null = null;
   private refreshTimeout: NodeJS.Timeout | null = null;
   private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
+  private allProjects: FlowProject[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
     this.validator = new HotlistValidator(this.app);
+    this.scanner = new FlowProjectScanner(this.app);
     this.saveSettings = saveSettings;
 
     // Check if Dataview is available for fast refreshes
@@ -50,6 +55,9 @@ export class HotlistView extends ItemView {
   }
 
   async onOpen() {
+    // Load all projects for parent context
+    this.allProjects = await this.scanner.scanProjects();
+
     // Register event listener for metadata cache changes (fires after file is indexed)
     this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
       // Check if file has list items (tasks) that might be hotlist items
@@ -240,9 +248,12 @@ export class HotlistView extends ItemView {
     const fileSection = container.createDiv({ cls: "flow-gtd-hotlist-file-section" });
 
     const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-hotlist-file-header" });
-    const fileName = filePath.split("/").pop() || filePath;
+
+    // Get project display name with parent context
+    const displayName = getProjectDisplayName(filePath, this.allProjects);
+
     const fileLink = fileHeader.createEl("a", {
-      text: fileName,
+      text: displayName.primary,
       cls: "flow-gtd-hotlist-file-link",
     });
     fileLink.style.cursor = "pointer";
@@ -250,6 +261,17 @@ export class HotlistView extends ItemView {
       e.preventDefault();
       this.openFile(filePath);
     });
+
+    // Add parent project context if it exists
+    if (displayName.parent) {
+      const parentSpan = fileHeader.createSpan({
+        text: ` (${displayName.parent})`,
+        cls: "flow-gtd-hotlist-parent-context",
+      });
+      parentSpan.style.fontSize = "0.85em";
+      parentSpan.style.opacity = "0.7";
+      parentSpan.style.fontWeight = "normal";
+    }
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
     items.forEach((item) => {

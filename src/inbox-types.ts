@@ -17,6 +17,8 @@ export interface EditableItem {
   projectPriority?: number;
   isProcessing?: boolean;
   hasAIRequest?: boolean;
+  parentProject?: FlowProject; // Parent project if creating as sub-project
+  isSubProject?: boolean; // Whether to create as sub-project
 }
 
 export interface ProcessingOutcome {

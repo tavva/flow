@@ -548,12 +548,201 @@ function renderProjectCreationSection(
     item.editedProjectTitle = (e.target as HTMLInputElement).value;
   });
 
-  // AI Suggestions for existing projects (not for new project creation)
+  // Sub-project toggle and parent selection
+  // Initialize from AI suggestion if available
+  if (item.isSubProject === undefined && item.isAIProcessed && item.result?.suggestedProjects) {
+    const suggestion = item.result.suggestedProjects[0];
+    if (suggestion?.asSubProject) {
+      item.isSubProject = true;
+      // Find parent project from the suggestion
+      if (suggestion.parentProject) {
+        item.parentProject = state.existingProjects.find(
+          (p) => p.file === suggestion.parentProject
+        );
+      }
+    }
+  }
+
+  const subProjectToggleContainer = projectEl.createDiv();
+  subProjectToggleContainer.style.marginTop = "12px";
+  subProjectToggleContainer.style.display = "flex";
+  subProjectToggleContainer.style.alignItems = "center";
+  subProjectToggleContainer.style.gap = "8px";
+
+  const subProjectCheckbox = subProjectToggleContainer.createEl("input", {
+    type: "checkbox",
+  });
+  subProjectCheckbox.id = state.getUniqueId("sub-project-toggle");
+  subProjectCheckbox.checked = item.isSubProject || false;
+  subProjectCheckbox.addEventListener("change", (e) => {
+    item.isSubProject = (e.target as HTMLInputElement).checked;
+    state.queueRender("editable");
+  });
+
+  const subProjectLabel = subProjectToggleContainer.createEl("label");
+  subProjectLabel.setAttribute("for", subProjectCheckbox.id);
+  subProjectLabel.setText("Create as sub-project");
+  subProjectLabel.style.cursor = "pointer";
+  subProjectLabel.style.fontSize = "14px";
+  subProjectLabel.style.color = "var(--text-normal)";
+
+  // Show parent project selector if creating as sub-project
+  if (item.isSubProject) {
+    const parentSelectorEl = projectEl.createDiv();
+    parentSelectorEl.style.marginTop = "12px";
+
+    const parentLabel = parentSelectorEl.createEl("label", {
+      text: "Parent Project",
+      cls: "flow-gtd-label",
+    });
+    parentLabel.style.display = "block";
+    parentLabel.style.marginBottom = "8px";
+    parentLabel.style.fontSize = "14px";
+    parentLabel.style.fontWeight = "600";
+    parentLabel.style.color = "var(--text-normal)";
+    parentLabel.style.textTransform = "none";
+
+    const parentSearchInput = parentSelectorEl.createEl("input", {
+      type: "text",
+      placeholder: "Type to search parent projects...",
+    });
+    parentSearchInput.addClass("flow-gtd-project-search");
+    parentSearchInput.value = item.parentProject?.title || "";
+    parentSearchInput.style.width = "100%";
+    parentSearchInput.style.padding = "8px 12px";
+    parentSearchInput.style.fontSize = "14px";
+    parentSearchInput.style.border = "1px solid var(--background-modifier-border)";
+    parentSearchInput.style.borderRadius = "4px";
+    parentSearchInput.style.backgroundColor = "var(--background-primary)";
+    parentSearchInput.style.color = "var(--text-normal)";
+
+    const parentListContainer = parentSelectorEl.createDiv();
+    parentListContainer.style.maxHeight = "200px";
+    parentListContainer.style.overflowY = "auto";
+    parentListContainer.style.border = "1px solid var(--background-modifier-border)";
+    parentListContainer.style.borderRadius = "4px";
+    parentListContainer.style.marginTop = "8px";
+    parentListContainer.style.display = "none";
+
+    const updateParentList = (searchTerm: string) => {
+      parentListContainer.empty();
+
+      const filtered = searchTerm
+        ? state.existingProjects.filter((project) =>
+            project.title.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : state.existingProjects;
+
+      if (filtered.length === 0) {
+        parentListContainer.createEl("div", {
+          text: "No projects found",
+        });
+        parentListContainer.style.display = "block";
+        return;
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        const mtimeA = a.mtime || 0;
+        const mtimeB = b.mtime || 0;
+        return mtimeB - mtimeA;
+      });
+
+      sorted.forEach((project) => {
+        const projectButton = parentListContainer.createEl("button", {
+          text: project.title,
+        });
+        projectButton.setAttribute("type", "button");
+        projectButton.style.width = "100%";
+        projectButton.style.padding = "8px 12px";
+        projectButton.style.textAlign = "left";
+        projectButton.style.border = "none";
+        projectButton.style.backgroundColor = "transparent";
+        projectButton.style.cursor = "pointer";
+        projectButton.style.fontSize = "14px";
+        projectButton.style.color = "var(--text-normal)";
+
+        if (item.parentProject?.file === project.file) {
+          projectButton.style.backgroundColor = "var(--background-modifier-hover)";
+          projectButton.style.fontWeight = "600";
+        }
+
+        projectButton.addEventListener("mouseenter", () => {
+          projectButton.style.backgroundColor = "var(--background-modifier-hover)";
+        });
+        projectButton.addEventListener("mouseleave", () => {
+          if (item.parentProject?.file !== project.file) {
+            projectButton.style.backgroundColor = "transparent";
+          }
+        });
+
+        projectButton.addEventListener("click", () => {
+          item.parentProject = project;
+          parentSearchInput.value = project.title;
+          parentListContainer.style.display = "none";
+          state.queueRender("editable");
+        });
+      });
+
+      parentListContainer.style.display = "block";
+    };
+
+    parentSearchInput.addEventListener("input", (e) => {
+      const value = (e.target as HTMLInputElement).value;
+      updateParentList(value);
+    });
+
+    parentSearchInput.addEventListener("focus", () => {
+      updateParentList(parentSearchInput.value);
+    });
+
+    parentSearchInput.addEventListener("blur", () => {
+      setTimeout(() => {
+        parentListContainer.style.display = "none";
+      }, 200);
+    });
+
+    // Show AI suggestion for parent project if available
+    if (
+      item.isAIProcessed &&
+      item.result?.suggestedProjects?.[0]?.asSubProject &&
+      item.result.suggestedProjects[0].parentProject &&
+      item.parentProject
+    ) {
+      const aiSuggestionBox = parentSelectorEl.createDiv();
+      aiSuggestionBox.style.display = "flex";
+      aiSuggestionBox.style.alignItems = "flex-start";
+      aiSuggestionBox.style.gap = "8px";
+      aiSuggestionBox.style.padding = "12px";
+      aiSuggestionBox.style.backgroundColor = "rgba(76, 175, 80, 0.1)";
+      aiSuggestionBox.style.border = "1px solid rgba(76, 175, 80, 0.3)";
+      aiSuggestionBox.style.borderRadius = "8px";
+      aiSuggestionBox.style.marginTop = "12px";
+
+      const sparkleIcon = aiSuggestionBox.createSpan();
+      sparkleIcon.setText("✨");
+      sparkleIcon.style.flexShrink = "0";
+      sparkleIcon.style.marginTop = "2px";
+
+      const suggestionText = aiSuggestionBox.createDiv();
+      suggestionText.style.fontSize = "12px";
+      suggestionText.style.color = "var(--text-normal)";
+
+      const strongText = suggestionText.createEl("strong");
+      strongText.setText("AI Suggestion: ");
+      suggestionText.createSpan({
+        text: `Create as sub-project of "${item.parentProject.title}"`,
+      });
+    }
+  }
+
+  // AI Suggestions for existing projects (shown when NOT creating as sub-project)
   if (
+    !item.isSubProject &&
     item.isAIProcessed &&
     item.result?.suggestedProjects &&
     item.result.suggestedProjects.length > 0 &&
-    item.result.suggestedProjects[0].confidence === "high"
+    item.result.suggestedProjects[0].confidence === "high" &&
+    !item.result.suggestedProjects[0].asSubProject
   ) {
     const suggestion = item.result.suggestedProjects[0];
     const aiSuggestionBox = projectEl.createDiv();

@@ -107,6 +107,133 @@ describe("SphereView", () => {
     });
   });
 
+  describe("filtering projects", () => {
+    it("should filter out the project template file", async () => {
+      const projectTemplate = {
+        file: "Templates/Project.md",
+        title: "Project Template",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Some action"],
+      };
+
+      const regularProject = {
+        file: "Projects/Regular.md",
+        title: "Regular Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["Another action"],
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([projectTemplate, regularProject]);
+
+      settings.projectTemplateFilePath = "Templates/Project.md";
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(1);
+      expect(data.projects[0].project.file).toBe("Projects/Regular.md");
+      expect(data.projects[0].project.file).not.toBe("Templates/Project.md");
+    });
+  });
+
+  describe("project hierarchy", () => {
+    it("should preserve hierarchy depth when filtering projects by sphere", async () => {
+      // Create a hierarchy: Root (work) -> Child (work) -> Grandchild (personal)
+      const rootProject = {
+        file: "Root.md",
+        title: "Root Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Root action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        parentProject: "[[Root]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      const grandchildProject = {
+        file: "Grandchild.md",
+        title: "Grandchild Project",
+        tags: ["project/personal"],
+        status: "live" as const,
+        priority: 3,
+        parentProject: "[[Child]]",
+        nextActions: ["Grandchild action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([rootProject, childProject, grandchildProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      // Should include root and child (both tagged work), but not grandchild (tagged personal)
+      expect(data.projects).toHaveLength(2);
+
+      // Root should have depth 0
+      const root = data.projects.find((p: any) => p.project.file === "Root.md");
+      expect(root?.depth).toBe(0);
+
+      // Child should have depth 1
+      const child = data.projects.find((p: any) => p.project.file === "Child.md");
+      expect(child?.depth).toBe(1);
+    });
+
+    it("should handle sub-projects where parent is filtered out", async () => {
+      // Create: Root (personal) -> Child (work)
+      const rootProject = {
+        file: "Root.md",
+        title: "Root Project",
+        tags: ["project/personal"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Root action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        parentProject: "[[Root]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([rootProject, childProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      // Should only include child (tagged work)
+      expect(data.projects).toHaveLength(1);
+      expect(data.projects[0].project.file).toBe("Child.md");
+
+      // Child should still have depth 1 because hierarchy was built from ALL projects first
+      expect(data.projects[0].depth).toBe(1);
+    });
+  });
+
   describe("planning mode", () => {
     it("should toggle planning mode on and off", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);

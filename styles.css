@@ -870,6 +870,11 @@ select.flow-gtd-inline-select option,
         margin-bottom: 12px;
 }
 
+.flow-gtd-sphere-subproject {
+        border-left: 3px solid var(--interactive-accent);
+        background-color: var(--background-secondary);
+}
+
 .flow-gtd-sphere-project-header {
         display: flex;
         justify-content: space-between;

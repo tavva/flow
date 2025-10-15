@@ -47,7 +47,8 @@ describe("InboxItemPersistenceService", () => {
       expect.any(Object),
       "Plan offsite",
       ["work"],
-      [false, false]
+      [false, false],
+      undefined // parentProject
     );
   });
 
