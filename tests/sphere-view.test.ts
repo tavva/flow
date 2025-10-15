@@ -64,15 +64,14 @@ describe("SphereView", () => {
   });
 
   describe("openProjectFile", () => {
-    it("should reuse the same right pane when opening multiple projects", async () => {
+    it("should get a fresh leaf each time to avoid stale references", async () => {
       const firstProject = new TFile("Projects/first-project.md");
       const secondProject = new TFile("Projects/second-project.md");
 
       const firstLeaf = new WorkspaceLeaf();
       const secondLeaf = new WorkspaceLeaf();
 
-      // Setup mocks - getLeaf will return a different leaf each time if called
-      // This tests that we DON'T call it multiple times
+      // Setup mocks - getLeaf will return a fresh leaf each time
       app.workspace.getLeaf = jest
         .fn()
         .mockReturnValueOnce(firstLeaf)
@@ -97,13 +96,11 @@ describe("SphereView", () => {
       // Open second project
       await (view as any).openProjectFile(secondProject.path);
 
-      // Should reuse the same leaf - getLeaf should only be called ONCE, not twice
-      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(1);
-      // Second file should open in the FIRST leaf, not the second
-      expect(firstLeaf.openFile).toHaveBeenCalledWith(secondProject);
-      expect(firstLeaf.openFile).toHaveBeenCalledTimes(2);
-      // Second leaf should never be used
-      expect(secondLeaf.openFile).not.toHaveBeenCalled();
+      // Should call getLeaf each time to avoid stale leaf references
+      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(2);
+      expect(app.workspace.getLeaf).toHaveBeenNthCalledWith(2, "split", "vertical");
+      // Second file should open in the second leaf returned by getLeaf
+      expect(secondLeaf.openFile).toHaveBeenCalledWith(secondProject);
     });
   });
 

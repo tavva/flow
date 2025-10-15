@@ -483,11 +483,10 @@ export class SphereView extends ItemView {
     }
 
     try {
-      // Reuse the right pane if it exists, otherwise create a new split
-      if (!this.rightPaneLeaf) {
-        this.rightPaneLeaf = this.app.workspace.getLeaf("split", "vertical");
-      }
-      await this.rightPaneLeaf.openFile(file);
+      // Always get a fresh leaf - the cached leaf may have been closed or detached
+      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      await leaf.openFile(file);
+      this.rightPaneLeaf = leaf;
     } catch (error) {
       console.error(`Failed to open project file: ${filePath}`, error);
     }

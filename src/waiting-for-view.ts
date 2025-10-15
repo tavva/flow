@@ -251,13 +251,13 @@ export class WaitingForView extends ItemView {
     }
 
     try {
-      if (!this.rightPaneLeaf) {
-        this.rightPaneLeaf = this.app.workspace.getLeaf("split", "vertical");
-      }
-      await this.rightPaneLeaf.openFile(file);
+      // Always get a fresh leaf - the cached leaf may have been closed or detached
+      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      await leaf.openFile(file);
+      this.rightPaneLeaf = leaf;
 
       if (lineNumber !== undefined) {
-        const view = this.rightPaneLeaf.view;
+        const view = leaf.view;
         if (view && "editor" in view) {
           const editor = (view as any).editor;
           if (editor) {
