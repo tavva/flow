@@ -183,6 +183,8 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
 
       const textDiv = originalBox.createDiv();
       textDiv.addClass("flow-gtd-original-text");
+      textDiv.style.userSelect = "text";
+      textDiv.style.cursor = "text";
       textDiv.setText(item.original);
     } else {
       // Prominent box for non-refined items
@@ -202,6 +204,8 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       const textDiv = originalBox.createDiv();
       textDiv.style.color = "var(--text-normal)";
       textDiv.style.lineHeight = "1.6";
+      textDiv.style.userSelect = "text";
+      textDiv.style.cursor = "text";
       textDiv.setText(item.original);
     }
 
