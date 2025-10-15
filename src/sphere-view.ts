@@ -147,7 +147,8 @@ export class SphereView extends ItemView {
         project: node.project,
         priority: this.normalizePriority(node.project.priority),
         depth: node.depth,
-      }));
+      }))
+      .sort((a, b) => this.compareProjects(a, b));
 
     const projectsNeedingNextActions = projectSummaries.filter(
       ({ project }) => !project.nextActions || project.nextActions.length === 0

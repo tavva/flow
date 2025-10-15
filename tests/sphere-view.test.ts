@@ -273,6 +273,75 @@ describe("SphereView", () => {
     });
   });
 
+  describe("project sorting", () => {
+    it("should sort projects by priority, then alphabetically", async () => {
+      const projects = [
+        {
+          file: "Charlie.md",
+          title: "Charlie Project",
+          tags: ["project/work"],
+          status: "live" as const,
+          priority: 3,
+          nextActions: ["Charlie action"],
+          mtime: Date.now(),
+        },
+        {
+          file: "Alpha.md",
+          title: "Alpha Project",
+          tags: ["project/work"],
+          status: "live" as const,
+          priority: 1,
+          nextActions: ["Alpha action"],
+          mtime: Date.now(),
+        },
+        {
+          file: "Zulu.md",
+          title: "Zulu Project",
+          tags: ["project/work"],
+          status: "live" as const,
+          priority: undefined,
+          nextActions: ["Zulu action"],
+          mtime: Date.now(),
+        },
+        {
+          file: "Bravo.md",
+          title: "Bravo Project",
+          tags: ["project/work"],
+          status: "live" as const,
+          priority: 1,
+          nextActions: ["Bravo action"],
+          mtime: Date.now(),
+        },
+        {
+          file: "Delta.md",
+          title: "Delta Project",
+          tags: ["project/work"],
+          status: "live" as const,
+          priority: null,
+          nextActions: ["Delta action"],
+          mtime: Date.now(),
+        },
+      ];
+
+      mockScanner.scanProjects.mockResolvedValue(projects);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(5);
+      // Priority 1 projects alphabetically (Alpha, Bravo)
+      expect(data.projects[0].project.title).toBe("Alpha Project");
+      expect(data.projects[1].project.title).toBe("Bravo Project");
+      // Priority 3 project
+      expect(data.projects[2].project.title).toBe("Charlie Project");
+      // No priority projects alphabetically (Delta, Zulu)
+      expect(data.projects[3].project.title).toBe("Delta Project");
+      expect(data.projects[4].project.title).toBe("Zulu Project");
+    });
+  });
+
   describe("planning mode", () => {
     it("should toggle planning mode on and off", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
