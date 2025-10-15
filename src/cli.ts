@@ -160,6 +160,7 @@ import { FlowProjectScanner } from "./flow-scanner";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 import { Marked } from "marked";
 import { markedTerminal } from "marked-terminal";
+import { withRetry } from "./network-retry";
 
 // ANSI color codes
 const colors = {
@@ -259,14 +260,29 @@ export async function runREPL(
       // Show thinking indicator
       process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
 
-      // Get AI response
-      const response = await languageModelClient.sendMessage({
-        model,
-        maxTokens: 4000,
-        messages,
-      });
+      // Get AI response with retry
+      const response = await withRetry(
+        () =>
+          languageModelClient.sendMessage({
+            model,
+            maxTokens: 4000,
+            messages,
+          }),
+        { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+        (attempt, delayMs) => {
+          // Clear thinking indicator
+          readline.clearLine(process.stdout, 0);
+          readline.cursorTo(process.stdout, 0);
 
-      // Clear thinking indicator
+          // Show retry message
+          const delaySec = (delayMs / 1000).toFixed(1);
+          process.stdout.write(
+            `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+          );
+        }
+      );
+
+      // Clear any indicator (thinking or retry)
       readline.clearLine(process.stdout, 0);
       readline.cursorTo(process.stdout, 0);
 
@@ -280,7 +296,7 @@ export async function runREPL(
       const rendered = marked.parse(response) as string;
       console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
     } catch (error) {
-      // Clear thinking indicator on error
+      // Clear any indicator on error
       readline.clearLine(process.stdout, 0);
       readline.cursorTo(process.stdout, 0);
 

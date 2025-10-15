@@ -1,9 +1,11 @@
-import { parseCliArgs, loadPluginSettings, buildSystemPrompt } from "../src/cli";
+import { parseCliArgs, loadPluginSettings, buildSystemPrompt, runREPL } from "../src/cli";
 import { FlowProject } from "../src/types";
 import { GTDContext } from "../src/gtd-context-scanner";
+import { LanguageModelClient } from "../src/language-model";
 import * as fs from "fs";
 
 jest.mock("fs");
+jest.mock("readline");
 
 describe("CLI argument parsing", () => {
   it("should parse vault path and sphere", () => {
@@ -173,5 +175,81 @@ describe("System prompt generation", () => {
     const prompt = buildSystemPrompt(projects, "work", gtdContext);
 
     expect(prompt).toContain("work sphere");
+  });
+});
+
+describe("REPL network retry", () => {
+  let mockClient: LanguageModelClient;
+  let originalStdout: any;
+  let stdoutOutput: string[];
+  let mockRl: any;
+  let lineHandler: any;
+
+  beforeEach(() => {
+    stdoutOutput = [];
+    originalStdout = process.stdout.write;
+    process.stdout.write = jest.fn((chunk: any) => {
+      stdoutOutput.push(chunk.toString());
+      return true;
+    }) as any;
+
+    // Create a mock readline interface
+    lineHandler = null;
+    mockRl = {
+      prompt: jest.fn(),
+      on: jest.fn((event: string, handler: any) => {
+        if (event === "line") {
+          lineHandler = handler;
+        }
+        return mockRl;
+      }),
+      close: jest.fn(),
+      clearLine: jest.fn(),
+      cursorTo: jest.fn(),
+    };
+
+    const readline = require("readline");
+    readline.createInterface = jest.fn(() => mockRl);
+    readline.clearLine = jest.fn();
+    readline.cursorTo = jest.fn();
+  });
+
+  afterEach(() => {
+    process.stdout.write = originalStdout;
+    jest.clearAllMocks();
+  });
+
+  it("should retry on network errors with user feedback", async () => {
+    mockClient = {
+      sendMessage: jest
+        .fn()
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValue("Test response"),
+    };
+
+    const gtdContext: GTDContext = {
+      nextActions: [],
+      somedayItems: [],
+      inboxItems: [],
+    };
+
+    // Run REPL (doesn't return, so we don't await)
+    runREPL(mockClient, "test-model", "test prompt", gtdContext, 0, "work");
+
+    // Wait for REPL to set up
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    // Simulate user input
+    if (lineHandler) {
+      await lineHandler("test question");
+    }
+
+    // Wait for async operations to complete (including retry delay)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    expect(mockClient.sendMessage).toHaveBeenCalledTimes(2);
+    const output = stdoutOutput.join("");
+    expect(output).toContain("Network error");
+    expect(output).toContain("Retrying");
   });
 });
