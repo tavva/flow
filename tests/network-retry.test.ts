@@ -25,3 +25,19 @@ describe("withRetry", () => {
     expect(mockFn).toHaveBeenCalledTimes(3);
   });
 });
+
+describe("isRetryableError", () => {
+  it("should identify network errors as retryable", () => {
+    expect(isRetryableError(new Error("fetch failed"))).toBe(true);
+    expect(isRetryableError(new Error("Network error occurred"))).toBe(true);
+    expect(isRetryableError(new Error("timeout exceeded"))).toBe(true);
+    expect(isRetryableError(new Error("ECONNREFUSED"))).toBe(true);
+    expect(isRetryableError(new Error("ENOTFOUND"))).toBe(true);
+  });
+
+  it("should identify non-network errors as non-retryable", () => {
+    expect(isRetryableError(new Error("Invalid API key"))).toBe(false);
+    expect(isRetryableError(new Error("Validation failed"))).toBe(false);
+    expect(isRetryableError(new Error("Unauthorized"))).toBe(false);
+  });
+});

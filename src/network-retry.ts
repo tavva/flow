@@ -52,5 +52,15 @@ export function isRetryableError(error: unknown): boolean {
   }
 
   const message = error.message.toLowerCase();
-  return message.includes("network");
+  const retryableKeywords = [
+    "fetch",
+    "network",
+    "timeout",
+    "econnrefused",
+    "enotfound",
+    "econnreset",
+    "etimedout",
+  ];
+
+  return retryableKeywords.some((keyword) => message.includes(keyword));
 }
