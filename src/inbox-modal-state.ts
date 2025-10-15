@@ -16,6 +16,7 @@ export class InboxModalState {
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
+  public isBulkRefining = false;
 
   private uniqueIdCounter = 0;
 
@@ -96,6 +97,9 @@ export class InboxModalState {
       return;
     }
 
+    this.isBulkRefining = true;
+    this.requestRender("editable");
+
     let successCount = 0;
 
     const processItem = async (index: number) => {
@@ -146,6 +150,7 @@ export class InboxModalState {
 
     await Promise.all(unprocessedIndexes.map((index) => processItem(index)));
 
+    this.isBulkRefining = false;
     this.requestRender("editable");
     new Notice(`✅ Processed ${successCount} of ${unprocessedIndexes.length} items`);
   }

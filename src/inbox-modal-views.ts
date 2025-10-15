@@ -98,10 +98,15 @@ export function renderEditableItemsView(
       headerRight.style.flexShrink = "0";
 
       const refineAllBtn = headerRight.createEl("button", {
-        text: `✨ Refine all (${unprocessedCount})`,
+        text: state.isBulkRefining
+          ? `⏳ Refining ${unprocessedCount} items...`
+          : `✨ Refine all (${unprocessedCount})`,
         cls: "flow-gtd-refine-all-button",
       });
       refineAllBtn.setAttribute("type", "button");
+      refineAllBtn.disabled = state.isBulkRefining;
+      refineAllBtn.style.cursor = state.isBulkRefining ? "not-allowed" : "pointer";
+      refineAllBtn.style.opacity = state.isBulkRefining ? "0.6" : "1";
       refineAllBtn.addEventListener("click", () => state.refineAllWithAI());
     }
   }
