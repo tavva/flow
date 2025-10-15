@@ -33,6 +33,9 @@ export async function withRetry<T>(
       await sleep(delayMs);
     }
   }
+
+  // This should never be reached, but TypeScript needs this for type safety
+  throw lastError;
 }
 
 function calculateDelay(attempt: number, options: RetryOptions): number {
