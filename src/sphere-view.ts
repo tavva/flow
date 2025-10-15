@@ -115,7 +115,9 @@ export class SphereView extends ItemView {
     const allProjects = await this.scanner.scanProjects();
     const sphereProjects = allProjects.filter(
       (project) =>
-        project.tags.some((tag) => this.matchesSphereTag(tag)) && project.status === "live"
+        project.tags.some((tag) => this.matchesSphereTag(tag)) &&
+        project.status === "live" &&
+        project.file !== this.settings.projectTemplateFilePath
     );
 
     const projectSummaries = sphereProjects
