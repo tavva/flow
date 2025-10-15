@@ -419,7 +419,7 @@ status: live
       await fileWriter.createProject(result, "test", [], [], "[[Parent Project]]");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      expect(content).toContain("parent-project: [[Parent Project]]");
+      expect(content).toContain('parent-project: "[[Parent Project]]"');
     });
 
     it("should add parent-project to frontmatter when creating sub-project with fallback", async () => {
@@ -446,7 +446,7 @@ status: live
       await fileWriter.createProject(result, "test", [], [], "[[Parent Project]]");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      expect(content).toContain("parent-project: [[Parent Project]]");
+      expect(content).toContain('parent-project: "[[Parent Project]]"');
     });
   });
 

@@ -34,6 +34,14 @@ describe("extractParentPath", () => {
   it("should handle whitespace inside brackets", () => {
     expect(extractParentPath("[[  Parent Project  ]]")).toBe("Parent Project.md");
   });
+
+  it("should handle non-string input gracefully (YAML array parsing)", () => {
+    // When YAML parses `parent-project: [[Project]]` without quotes,
+    // it can interpret it as an array
+    expect(extractParentPath(["Project"] as any)).toBeNull();
+    expect(extractParentPath({} as any)).toBeNull();
+    expect(extractParentPath(123 as any)).toBeNull();
+  });
 });
 
 describe("buildProjectHierarchy", () => {

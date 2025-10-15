@@ -242,7 +242,7 @@ export class FileWriter {
         const beforeEnd = frontmatterEnd.substring(0, frontmatterEndIndex);
         const afterEnd = templateContent.substring(frontmatterEndMatch.index! + frontmatterEnd.length);
 
-        templateContent = beforeEnd + `parent-project: ${parentProject}\n---` + afterEnd;
+        templateContent = beforeEnd + `parent-project: "${parentProject}"\n---` + afterEnd;
       }
     }
 
@@ -315,7 +315,7 @@ ${sphereTagsList}
 status: ${this.settings.defaultStatus}`;
 
     if (parentProject) {
-      content += `\nparent-project: ${parentProject}`;
+      content += `\nparent-project: "${parentProject}"`;
     }
 
     content += `

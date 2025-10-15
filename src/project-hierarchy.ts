@@ -15,7 +15,7 @@ export interface ProjectNode {
  * Converts "[[Project Name]]" or "[[folder/Project Name]]" to file path
  */
 export function extractParentPath(parentProject: string): string | null {
-  if (!parentProject) {
+  if (!parentProject || typeof parentProject !== "string") {
     return null;
   }
 
