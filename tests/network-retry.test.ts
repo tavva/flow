@@ -40,6 +40,33 @@ describe("withRetry", () => {
     await expect(withRetry(mockFn, options)).rejects.toThrow("Invalid API key");
     expect(mockFn).toHaveBeenCalledTimes(1);
   });
+
+  it("should call onRetry callback with attempt and delay", async () => {
+    const mockFn = jest
+      .fn()
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValue("success");
+    const onRetry = jest.fn();
+    const options: RetryOptions = { maxAttempts: 3, baseDelayMs: 100, maxDelayMs: 1000 };
+
+    await withRetry(mockFn, options, onRetry);
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    expect(onRetry).toHaveBeenCalledWith(1, expect.any(Number));
+    const delayMs = onRetry.mock.calls[0][1];
+    expect(delayMs).toBeGreaterThanOrEqual(0);
+    expect(delayMs).toBeLessThanOrEqual(100);
+  });
+
+  it("should not call onRetry on first attempt", async () => {
+    const mockFn = jest.fn().mockResolvedValue("success");
+    const onRetry = jest.fn();
+    const options: RetryOptions = { maxAttempts: 3, baseDelayMs: 100, maxDelayMs: 1000 };
+
+    await withRetry(mockFn, options, onRetry);
+
+    expect(onRetry).not.toHaveBeenCalled();
+  });
 });
 
 describe("isRetryableError", () => {
