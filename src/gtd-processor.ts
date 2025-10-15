@@ -90,7 +90,7 @@ export class GTDProcessor {
         : "";
 
     const projectHintContext = projectHint
-      ? `\n\nCRITICAL: The user has provided a hint that this item relates to a project matching "${projectHint.projectHint}". Look through the existing projects list below and find the best match for this hint (it doesn't need to be an exact match - e.g., "AI demo" could match "Record an AI demo for the leadership team"). You MUST set recommendedAction to "add-to-project" and include the matched project in suggestedProjects with high confidence. The actual item content (with the hint prefix removed) is: "${projectHint.cleanedItem}"`
+      ? `\n\nCRITICAL: The user has provided a hint that this item relates to a project whose TITLE contains the text "${projectHint.projectHint}". Look through the existing projects list below and find the project whose title contains or closely matches this text. Prioritise exact matches and substring matches over conceptual similarity (e.g., hint "AI demo" should match project "Record an AI demo for the leadership team" because the title contains "AI demo", NOT a dashboard project just because dashboards relate to data flow). You MUST set recommendedAction to "add-to-project" and include the matched project in suggestedProjects with high confidence. The actual item content (with the hint prefix removed) is: "${projectHint.cleanedItem}"`
       : "";
 
     return `You are a GTD (Getting Things Done) coach. You must use British English spelling and grammar in all responses. A user has captured this item in their inbox:
