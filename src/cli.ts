@@ -84,6 +84,11 @@ export function buildSystemPrompt(
 
   prompt += `Important: You are read-only. Provide advice and recommendations, but you cannot edit files.\n\n`;
 
+  prompt += `Communication Style:\n`;
+  prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
+  prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
+  prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
+
   prompt += `GTD Quality Standards:\n`;
   prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
   prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
@@ -222,27 +227,39 @@ export async function runREPL(
   const showPrompt = () => {
     const lines = inputBuffer.split("\n");
     const currentLineIndex = inputBuffer.substring(0, cursorPosition).split("\n").length - 1;
-    const currentLine = lines[currentLineIndex] || "";
     const cursorInLine =
       cursorPosition - inputBuffer.substring(0, cursorPosition).lastIndexOf("\n") - 1;
 
-    // Clear screen and redraw
-    readline.clearScreenDown(process.stdout);
-    readline.cursorTo(process.stdout, 0);
+    // For multiline: we need to track where we started
+    // For single line: just update in place
 
-    // Show prompt and first line
-    process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}\n`);
+    if (lines.length === 1) {
+      // Simple case: single line
+      // Move to start of current line, clear it, rewrite
+      readline.cursorTo(process.stdout, 0);
+      readline.clearLine(process.stdout, 0);
+      process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}`);
+      // Position cursor at correct column
+      readline.cursorTo(process.stdout, 5 + cursorInLine);
+    } else {
+      // Multiline case: need to redraw all lines
+      // Clear from cursor to end of screen
+      readline.clearScreenDown(process.stdout);
+      readline.cursorTo(process.stdout, 0);
 
-    // Show continuation lines
-    for (let i = 1; i < lines.length; i++) {
-      process.stdout.write(`${colors.user}...  ${colors.reset}${lines[i] || ""}\n`);
+      // Write all lines
+      process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}`);
+      for (let i = 1; i < lines.length; i++) {
+        process.stdout.write(`\n${colors.user}...  ${colors.reset}${lines[i] || ""}`);
+      }
+
+      // Move cursor to correct position
+      // Go back to start of first line, then move down to current line, then to column
+      const visualColumn = 5 + cursorInLine;
+      readline.cursorTo(process.stdout, 0);
+      readline.moveCursor(process.stdout, 0, -(lines.length - 1 - currentLineIndex));
+      readline.cursorTo(process.stdout, visualColumn);
     }
-
-    // Position cursor correctly
-    const visualLine = currentLineIndex + 1; // +1 because first line has prompt
-    const visualColumn = currentLineIndex === 0 ? 5 + cursorInLine : 5 + cursorInLine; // "You: " or "...  " = 5 chars
-    readline.cursorTo(process.stdout, visualColumn);
-    readline.moveCursor(process.stdout, 0, -(lines.length - visualLine));
   };
 
   const handleSubmit = async () => {
