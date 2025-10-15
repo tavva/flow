@@ -8,20 +8,24 @@ import {
   ProcessingAction,
 } from "./types";
 import { GTDResponseValidationError } from "./errors";
+import { filterTemplates, filterLiveProjects } from "./project-filters";
 
 export class GTDProcessor {
   private client: LanguageModelClient;
   private availableSpheres: string[];
   private model: string;
+  private projectTemplateFilePath: string;
 
   constructor(
     client: LanguageModelClient,
     spheres: string[] = ["personal", "work"],
-    model: string = "claude-sonnet-4-20250514"
+    model: string = "claude-sonnet-4-20250514",
+    projectTemplateFilePath: string = "Templates/Project.md"
   ) {
     this.client = client;
     this.availableSpheres = spheres;
     this.model = model;
+    this.projectTemplateFilePath = projectTemplateFilePath;
   }
 
   /**
@@ -234,10 +238,8 @@ Examples:
   }
 
   private filterLiveProjects(projects: FlowProject[]): FlowProject[] {
-    return projects.filter((project) => {
-      const status = typeof project.status === "string" ? project.status.trim().toLowerCase() : "";
-      return status === "" || status === "live";
-    });
+    const withoutTemplates = filterTemplates(projects, this.projectTemplateFilePath);
+    return filterLiveProjects(withoutTemplates);
   }
 
   /**

@@ -11,6 +11,7 @@ import { InboxItemPersistenceService } from "./inbox-item-persistence";
 import { DeletionOffsetManager } from "./deletion-offset-manager";
 import { buildProjectTitlePrompt as defaultProjectTitlePromptBuilder } from "./project-title-prompt";
 import { EditableItem, ProcessingOutcome } from "./inbox-types";
+import { filterTemplates, filterLiveProjects } from "./project-filters";
 
 interface ControllerDependencies {
   processor?: GTDProcessor;
@@ -33,14 +34,17 @@ export class InboxProcessingController {
   private persistence: InboxItemPersistenceService;
   private createDeletionManager: (offsets: Map<string, number>) => DeletionOffsetManager;
   private projectTitlePromptBuilder: (originalItem: string) => string;
+  private settings: PluginSettings;
 
   constructor(app: App, settings: PluginSettings, dependencies: ControllerDependencies = {}) {
+    this.settings = settings;
     this.processor =
       dependencies.processor ??
       new GTDProcessor(
         dependencies.client ?? createLanguageModelClient(settings),
         settings.spheres,
-        getModelForSettings(settings)
+        getModelForSettings(settings),
+        settings.projectTemplateFilePath
       );
     this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
     this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
@@ -61,10 +65,8 @@ export class InboxProcessingController {
 
   async loadExistingProjects(): Promise<FlowProject[]> {
     const projects = await this.scanner.scanProjects();
-    return projects.filter((project) => {
-      const status = typeof project.status === "string" ? project.status.trim().toLowerCase() : "";
-      return status === "" || status === "live";
-    });
+    const withoutTemplates = filterTemplates(projects, this.settings.projectTemplateFilePath);
+    return filterLiveProjects(withoutTemplates);
   }
 
   async loadExistingPersons(): Promise<PersonNote[]> {
