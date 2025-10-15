@@ -33,6 +33,8 @@ describe("isRetryableError", () => {
     expect(isRetryableError(new Error("timeout exceeded"))).toBe(true);
     expect(isRetryableError(new Error("ECONNREFUSED"))).toBe(true);
     expect(isRetryableError(new Error("ENOTFOUND"))).toBe(true);
+    expect(isRetryableError(new Error("ECONNRESET"))).toBe(true);
+    expect(isRetryableError(new Error("ETIMEDOUT"))).toBe(true);
   });
 
   it("should identify non-network errors as non-retryable", () => {
