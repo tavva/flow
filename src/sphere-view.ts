@@ -143,20 +143,23 @@ export class SphereView extends ItemView {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
+    // Add planning mode controls
+    const planningControls = container.createDiv({ cls: "flow-gtd-sphere-planning-controls" });
+
+    // Add planning mode banner if active
+    if (this.planningMode) {
+      const banner = planningControls.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
+      banner.setText("Click actions to add/remove from hotlist");
+    }
+
     // Add planning mode toggle button
-    const toggleBtn = container.createEl("button", {
+    const toggleBtn = planningControls.createEl("button", {
       cls: "flow-gtd-sphere-planning-toggle",
       text: this.planningMode ? "Exit Planning Mode" : "Planning Mode",
     });
     toggleBtn.addEventListener("click", () => {
       this.togglePlanningMode();
     });
-
-    // Add planning mode banner if active
-    if (this.planningMode) {
-      const banner = container.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
-      banner.setText("Planning Mode - Click actions to add/remove from hotlist");
-    }
 
     // Add planning mode background class
     if (this.planningMode) {
