@@ -71,7 +71,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     });
 
     const inboxCommands: InboxCommandConfig[] = [
-      { id: "process-inbox", name: "Process Inbox Files" },
+      { id: "process-inbox", name: "Process inbox files" },
     ];
 
     inboxCommands.forEach((config) => this.registerInboxCommand(config));
@@ -80,7 +80,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Add project review command
     this.addCommand({
       id: "flow-review-projects",
-      name: "Review Projects",
+      name: "Review projects",
       callback: () => {
         this.openReviewModal();
       },
@@ -104,7 +104,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Add waiting for view command
     this.addCommand({
       id: "open-waiting-for-view",
-      name: "Open Waiting For view",
+      name: "Open waiting for view",
       callback: () => {
         this.activateWaitingForView();
       },
@@ -113,7 +113,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Add hotlist command
     this.addCommand({
       id: "open-hotlist",
-      name: "Open Hotlist",
+      name: "Open hotlist",
       callback: () => {
         this.activateHotlistView();
       },
