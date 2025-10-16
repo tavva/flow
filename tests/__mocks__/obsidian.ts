@@ -39,6 +39,7 @@ export class Workspace {
   setActiveLeaf = jest.fn();
   getRightLeaf = jest.fn();
   detachLeavesOfType = jest.fn();
+  on = jest.fn(() => ({ unload: jest.fn() }));
 }
 
 export class App {

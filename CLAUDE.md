@@ -110,6 +110,7 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files by searching for checkbox patterns
 - **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change, searches for moved lines
 - **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in right sidebar with actions grouped by project/sphere
+- **HotlistEditorMenu** (`src/hotlist-editor-menu.ts`) - Right-click context menu for adding/removing actions from hotlist
 - **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from hotlist
 - **Commands** - "Open Hotlist" command (`open-hotlist`) and ribbon icon with `list-checks` icon
 - **Hotlist Item Actions** - Mark complete, convert to waiting-for, or remove from hotlist
@@ -117,13 +118,21 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 
 **Workflow:**
 
-1. Open a sphere view (work, personal, etc.)
-2. Click "Planning Mode" button to enter planning mode
-3. Click next actions from projects or general actions to add them to the hotlist
-4. Selected actions show visual indicator (checkmark)
-5. Exit planning mode when done selecting
-6. Open hotlist view to see curated list of actions
-7. Work through hotlist, marking complete or converting to waiting-for
+1. **Via Sphere View (Planning Mode):**
+   - Open a sphere view (work, personal, etc.)
+   - Click "Planning Mode" button to enter planning mode
+   - Click next actions from projects or general actions to add them to the hotlist
+   - Selected actions show visual indicator (checkmark)
+   - Exit planning mode when done selecting
+
+2. **Via Context Menu (Direct from Files):**
+   - Right-click on any checkbox line in a project or next actions file
+   - Select "Add to Hotlist" or "Remove from Hotlist" from context menu
+   - Sphere is automatically determined from project tags or inline #sphere/X tags
+
+3. **Using the Hotlist:**
+   - Open hotlist view to see curated list of actions
+   - Work through hotlist, marking complete or converting to waiting-for
 
 **Storage:**
 
@@ -261,6 +270,7 @@ The plugin supports multiple LLM providers through a factory pattern:
 - `hotlist-validator.test.ts` - Hotlist item validation and line finding
 - `hotlist-view.test.ts` - Hotlist view rendering and interactions
 - `hotlist-integration.test.ts` - End-to-end hotlist workflows
+- `hotlist-editor-menu.test.ts` - Context menu checkbox detection and hotlist operations
 - `action-line-finder.test.ts` - Action line number detection
 - `sphere-view.test.ts` - Sphere view and planning mode
 - `waiting-for-scanner.test.ts` - Waiting-for item scanning

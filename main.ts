@@ -9,6 +9,7 @@ import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { HotlistView, HOTLIST_VIEW_TYPE } from "./src/hotlist-view";
 import { shouldClearHotlist, archiveClearedTasks } from "./src/hotlist-auto-clear";
+import { registerHotlistEditorMenu } from "./src/hotlist-editor-menu";
 
 type InboxCommandConfig = {
   id: string;
@@ -118,6 +119,16 @@ export default class FlowGTDCoachPlugin extends Plugin {
         this.activateHotlistView();
       },
     });
+
+    // Register hotlist editor menu (right-click context menu)
+    this.registerEvent(
+      registerHotlistEditorMenu(
+        this.app,
+        this.settings,
+        this.saveSettings.bind(this),
+        this.refreshHotlistView.bind(this)
+      )
+    );
 
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
@@ -362,5 +373,18 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.settings.lastHotlistClearTimestamp = Date.now();
     this.settings.hotlistClearedNotificationDismissed = false; // Reset so user sees notification
     await this.saveSettings();
+  }
+
+  private async refreshHotlistView(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
+
+    if (leaves.length > 0) {
+      for (const leaf of leaves) {
+        if (leaf.view && "onOpen" in leaf.view) {
+          await (leaf.view as any).onOpen();
+        }
+      }
+    }
   }
 }
