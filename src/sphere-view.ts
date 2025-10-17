@@ -391,7 +391,7 @@ export class SphereView extends ItemView {
   private extractGeneralNextActions(content: string): string[] {
     const lines = content.split(/\r?\n/);
     const actions: string[] = [];
-    const checkboxPattern = /^[-*]\s*\[(?: |x|X)\]\s*(.+)$/;
+    const checkboxPattern = /^[-*]\s*\[ \]\s*(.+)$/;
     const normalizedSphere = this.normalizeSphereValue(this.sphere);
 
     for (const line of lines) {

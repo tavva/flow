@@ -66,8 +66,8 @@ status: live
 # Project 1
 
 ## Next actions
-- Call dentist
-- Buy groceries
+- [ ] Call dentist
+- [ ] Buy groceries
 
 ## Future next actions
 - Plan vacation
@@ -188,10 +188,10 @@ status: live
           frontmatter: { tags: "project/personal" },
         };
         const mockContent = `## Next actions
-- First action
-- Second action with details
+- [ ] First action
+- [ ] Second action with details
   - Sub item (should be ignored)
-- Third action
+- [ ] Third action
 
 ## Future next actions
 - Future action 1
@@ -210,13 +210,38 @@ status: live
         expect((result as any)?.futureNextActions).toBeUndefined();
       });
 
+      it("should filter out completed checkbox items", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/personal" },
+        };
+        const mockContent = `## Next actions
+- [ ] Incomplete task 1
+- [x] Completed task (should be filtered)
+- [ ] Incomplete task 2
+- [X] Completed task uppercase (should be filtered)
+- [ ] Incomplete task 3
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.nextActions).toEqual([
+          "Incomplete task 1",
+          "Incomplete task 2",
+          "Incomplete task 3",
+        ]);
+      });
+
       it("should match section headings regardless of case", async () => {
         const mockFile = new MockTFile("project.md", "Project") as TFile;
         const mockMetadata: Partial<CachedMetadata> = {
           frontmatter: { tags: "project/personal" },
         };
         const mockContent = `## Next Actions
-- Mixed Case Action
+- [ ] Mixed Case Action
 
 ## FUTURE NEXT ACTIONS
 - Uppercase Future Action
@@ -239,8 +264,8 @@ status: live
         const mockContent = `# Main Title
 
 ## Next actions
-- Action 1
-- Action 2
+- [ ] Action 1
+- [ ] Action 2
 
 ### Subsection
 This should not be included

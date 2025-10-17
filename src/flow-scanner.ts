@@ -120,8 +120,8 @@ export class FlowProjectScanner {
       }
 
       if (inSection) {
-        // Extract list items
-        const itemMatch = line.match(/^[-*]\s+(?:\[[ xX]\]\s+)?(.+)$/);
+        // Extract only incomplete checkbox items (skip completed tasks)
+        const itemMatch = line.match(/^[-*]\s+\[[ ]\]\s+(.+)$/);
         if (itemMatch) {
           items.push(itemMatch[1].trim());
         }
