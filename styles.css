@@ -902,7 +902,15 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-gtd-sphere-next-actions li {
-        margin-bottom: 6px;
+        padding: 2px 8px;
+        margin-bottom: 2px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+}
+
+.flow-gtd-sphere-next-actions li:hover {
+        background-color: var(--background-modifier-hover);
 }
 
 .flow-gtd-sphere-empty {
