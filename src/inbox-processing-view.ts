@@ -13,11 +13,13 @@ export class InboxProcessingView extends ItemView {
   private state: InboxModalState;
   private renderTimeout?: NodeJS.Timeout;
   private pendingTarget: RenderTarget = "inbox";
+  private saveSettings: () => Promise<void>;
 
-  constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
-    const controller = new InboxProcessingController(this.app, settings);
+    this.saveSettings = saveSettings;
+    const controller = new InboxProcessingController(this.app, settings, {}, saveSettings);
     this.state = new InboxModalState(controller, settings, (target, options) =>
       this.requestRender(target, options?.immediate === true)
     );

@@ -377,6 +377,15 @@ function renderEditableItemContent(
   if (item.selectedAction !== "add-to-project" && item.selectedAction !== "trash") {
     renderSphereSelector(itemEl, item, state);
   }
+
+  // Show hotlist checkbox for actions that create next actions
+  if (
+    item.selectedAction === "create-project" ||
+    item.selectedAction === "add-to-project" ||
+    item.selectedAction === "next-actions-file"
+  ) {
+    renderHotlistCheckbox(itemEl, item, state);
+  }
 }
 
 function renderNextActionsEditor(
@@ -1104,4 +1113,32 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
       recommendedText.setText(`${capitalizedRecommended} recommended based on context`);
     }
   }
+}
+
+function renderHotlistCheckbox(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const hotlistContainer = container.createDiv("flow-gtd-hotlist-checkbox");
+  hotlistContainer.style.marginTop = "12px";
+  hotlistContainer.style.display = "flex";
+  hotlistContainer.style.alignItems = "center";
+  hotlistContainer.style.gap = "8px";
+
+  const checkbox = hotlistContainer.createEl("input", {
+    type: "checkbox",
+  });
+  checkbox.id = state.getUniqueId("add-to-hotlist");
+  checkbox.checked = item.addToHotlist || false;
+  checkbox.addEventListener("change", (e) => {
+    item.addToHotlist = (e.target as HTMLInputElement).checked;
+  });
+
+  const label = hotlistContainer.createEl("label");
+  label.setAttribute("for", checkbox.id);
+  label.setText("Add to hotlist");
+  label.style.cursor = "pointer";
+  label.style.fontSize = "14px";
+  label.style.color = "var(--text-normal)";
 }

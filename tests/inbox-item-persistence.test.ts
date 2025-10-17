@@ -16,7 +16,7 @@ describe("InboxItemPersistenceService", () => {
 
   beforeEach(() => {
     writerMocks = {
-      createProject: jest.fn(),
+      createProject: jest.fn().mockResolvedValue({ path: "Projects/Test.md" }),
       addNextActionToProject: jest.fn(),
       addToNextActionsFile: jest.fn(),
       addToSomedayFile: jest.fn(),

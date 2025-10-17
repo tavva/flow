@@ -36,7 +36,12 @@ export class InboxProcessingController {
   private projectTitlePromptBuilder: (originalItem: string) => string;
   private settings: PluginSettings;
 
-  constructor(app: App, settings: PluginSettings, dependencies: ControllerDependencies = {}) {
+  constructor(
+    app: App,
+    settings: PluginSettings,
+    dependencies: ControllerDependencies = {},
+    saveSettings?: () => Promise<void>
+  ) {
     this.settings = settings;
     this.processor =
       dependencies.processor ??
@@ -55,7 +60,8 @@ export class InboxProcessingController {
         : new InboxScanner(app, settings)
     ) as InboxScanner;
     this.persistence =
-      dependencies.persistenceService ?? new InboxItemPersistenceService(this.writer);
+      dependencies.persistenceService ??
+      new InboxItemPersistenceService(this.writer, app, settings, saveSettings);
     this.createDeletionManager =
       dependencies.deletionOffsetManagerFactory ??
       ((offsets) => new DeletionOffsetManager(offsets));

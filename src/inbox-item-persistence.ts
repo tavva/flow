@@ -1,7 +1,9 @@
+import { App } from "obsidian";
 import { FileWriter } from "./file-writer";
 import { GTDResponseValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
-import { GTDProcessingResult } from "./types";
+import { GTDProcessingResult, PluginSettings, HotlistItem } from "./types";
+import { ActionLineFinder } from "./action-line-finder";
 
 const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "create-project",
@@ -16,14 +18,24 @@ const ACTIONS_REQUIRING_SPHERES: readonly string[] = [
 ];
 
 export class InboxItemPersistenceService {
-  constructor(private readonly writer: FileWriter) {}
+  constructor(
+    private readonly writer: FileWriter,
+    private readonly app?: App,
+    private readonly settings?: PluginSettings,
+    private readonly saveSettings?: () => Promise<void>
+  ) {}
 
   async persist(item: EditableItem): Promise<void> {
     const finalNextActions = this.resolveFinalNextActions(item);
     this.validateFinalNextActions(item, finalNextActions);
     this.validateSphereSelection(item);
     const result = this.buildResultForSaving(item, finalNextActions);
-    await this.writeResult(item, finalNextActions, result);
+    const writtenFilePath = await this.writeResult(item, finalNextActions, result);
+
+    // Add to hotlist if requested and dependencies are available
+    if (item.addToHotlist && writtenFilePath && this.app && this.settings && this.saveSettings) {
+      await this.addActionsToHotlist(writtenFilePath, finalNextActions, item);
+    }
   }
 
   private resolveFinalNextActions(item: EditableItem): string[] {
@@ -98,27 +110,28 @@ export class InboxItemPersistenceService {
     item: EditableItem,
     finalNextActions: string[],
     resultForSaving: GTDProcessingResult
-  ): Promise<void> {
+  ): Promise<string | null> {
     // Ensure waitingFor array is properly initialized
     const waitingFor = item.waitingFor || [];
     // Extend or trim to match finalNextActions length
     const finalWaitingFor = finalNextActions.map((_, i) => waitingFor[i] || false);
 
     switch (item.selectedAction) {
-      case "create-project":
+      case "create-project": {
         // Convert parent project to wikilink format if present
         const parentProjectLink = item.parentProject
           ? `[[${item.parentProject.title}]]`
           : undefined;
 
-        await this.writer.createProject(
+        const file = await this.writer.createProject(
           resultForSaving,
           item.original,
           item.selectedSpheres,
           finalWaitingFor,
           parentProjectLink
         );
-        break;
+        return file.path;
+      }
 
       case "add-to-project":
         if (item.selectedProject) {
@@ -127,10 +140,10 @@ export class InboxItemPersistenceService {
             finalNextActions,
             finalWaitingFor
           );
+          return item.selectedProject.file;
         } else {
           throw new Error("No project selected");
         }
-        break;
 
       case "next-actions-file":
         await this.writer.addToNextActionsFile(
@@ -138,11 +151,11 @@ export class InboxItemPersistenceService {
           item.selectedSpheres,
           finalWaitingFor
         );
-        break;
+        return this.settings?.nextActionsFilePath || null;
 
       case "someday-file":
         await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
-        break;
+        return null;
 
       case "reference":
         if (item.selectedProject) {
@@ -153,7 +166,7 @@ export class InboxItemPersistenceService {
         } else {
           throw new Error("No project selected for reference item");
         }
-        break;
+        return null;
 
       case "person":
         if (item.selectedPerson) {
@@ -162,11 +175,46 @@ export class InboxItemPersistenceService {
         } else {
           throw new Error("No person selected for person item");
         }
-        break;
+        return null;
 
       case "trash":
       case "discard":
-        break;
+        return null;
     }
+  }
+
+  private async addActionsToHotlist(
+    filePath: string,
+    actions: string[],
+    item: EditableItem
+  ): Promise<void> {
+    if (!this.app || !this.settings || !this.saveSettings) {
+      return;
+    }
+
+    const finder = new ActionLineFinder(this.app);
+    const primarySphere = item.selectedSpheres[0];
+    const isGeneral = filePath === (this.settings.nextActionsFilePath?.trim() || "Next actions.md");
+
+    // Add each action to the hotlist
+    for (const action of actions) {
+      const result = await finder.findActionLine(filePath, action);
+
+      if (result.found && result.lineNumber && result.lineContent) {
+        const hotlistItem: HotlistItem = {
+          file: filePath,
+          lineNumber: result.lineNumber,
+          lineContent: result.lineContent,
+          text: action,
+          sphere: primarySphere || "personal",
+          isGeneral,
+          addedAt: Date.now(),
+        };
+
+        this.settings.hotlist.push(hotlistItem);
+      }
+    }
+
+    await this.saveSettings();
   }
 }

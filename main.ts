@@ -44,7 +44,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Register the inbox processing view
     this.registerView(INBOX_PROCESSING_VIEW_TYPE, (leaf) => {
-      return new InboxProcessingView(leaf, this.settings);
+      return new InboxProcessingView(leaf, this.settings, this.saveSettings.bind(this));
     });
 
     // Register the waiting for view

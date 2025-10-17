@@ -19,6 +19,7 @@ export interface EditableItem {
   hasAIRequest?: boolean;
   parentProject?: FlowProject; // Parent project if creating as sub-project
   isSubProject?: boolean; // Whether to create as sub-project
+  addToHotlist?: boolean; // Whether to add next actions to hotlist after creation
 }
 
 export interface ProcessingOutcome {
