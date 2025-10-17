@@ -409,5 +409,31 @@ describe("SphereView", () => {
       expect((view as any).isOnHotlist("Projects/Test.md", 6)).toBe(false);
       expect((view as any).isOnHotlist("Projects/Other.md", 5)).toBe(false);
     });
+
+    it("should toggle hotlist item off when clicked again (add then remove)", async () => {
+      settings.hotlist = [];
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // First click: add to hotlist
+      await (view as any).addToHotlist(
+        "Toggle action",
+        "Projects/Toggle.md",
+        10,
+        "- [ ] Toggle action",
+        "work",
+        false
+      );
+
+      expect(settings.hotlist).toHaveLength(1);
+      expect(settings.hotlist[0].text).toBe("Toggle action");
+      expect(mockSaveSettings).toHaveBeenCalledTimes(1);
+
+      // Second click: remove from hotlist
+      await (view as any).removeFromHotlist("Projects/Toggle.md", 10);
+
+      expect(settings.hotlist).toHaveLength(0);
+      expect(mockSaveSettings).toHaveBeenCalledTimes(2);
+    });
   });
 });
