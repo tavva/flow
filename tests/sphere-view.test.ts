@@ -342,25 +342,19 @@ describe("SphereView", () => {
     });
   });
 
-  describe("planning mode", () => {
-    it("should toggle planning mode on and off", () => {
+  describe("always-on hotlist toggle", () => {
+    it("should not have planning mode property", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      expect((view as any).planningMode).toBe(false);
-
-      (view as any).togglePlanningMode();
-      expect((view as any).planningMode).toBe(true);
-
-      (view as any).togglePlanningMode();
-      expect((view as any).planningMode).toBe(false);
+      // After removing planning mode, this property should not exist
+      expect((view as any).planningMode).toBeUndefined();
     });
 
-    it("should add action to hotlist when clicked in planning mode", async () => {
+    it("should add action to hotlist when clicked", async () => {
       settings.hotlist = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
-      (view as any).planningMode = true;
 
       await (view as any).addToHotlist(
         "Test action",
@@ -376,7 +370,7 @@ describe("SphereView", () => {
       expect(settings.hotlist[0].file).toBe("Projects/Test.md");
     });
 
-    it("should remove action from hotlist when clicked again in planning mode", async () => {
+    it("should remove action from hotlist when clicked again", async () => {
       settings.hotlist = [
         {
           file: "Projects/Test.md",
@@ -390,7 +384,6 @@ describe("SphereView", () => {
       ];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
-      (view as any).planningMode = true;
 
       await (view as any).removeFromHotlist("Projects/Test.md", 5);
 

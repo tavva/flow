@@ -25,7 +25,6 @@ export class SphereView extends ItemView {
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
-  private planningMode: boolean = false;
   private saveSettings: () => Promise<void>;
 
   constructor(
@@ -40,35 +39,6 @@ export class SphereView extends ItemView {
     this.scanner = new FlowProjectScanner(this.app);
     this.lineFinder = new ActionLineFinder(this.app);
     this.saveSettings = saveSettings;
-  }
-
-  private async togglePlanningMode() {
-    this.planningMode = !this.planningMode;
-
-    // If entering planning mode, open hotlist view
-    if (this.planningMode) {
-      await this.openHotlistView();
-    }
-
-    this.onOpen();
-  }
-
-  private async openHotlistView() {
-    const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType("flow-gtd-hotlist-view");
-
-    if (leaves.length > 0) {
-      workspace.revealLeaf(leaves[0]);
-    } else {
-      const leaf = workspace.getRightLeaf(false);
-      if (leaf) {
-        await leaf.setViewState({
-          type: "flow-gtd-hotlist-view",
-          active: true,
-        });
-        workspace.revealLeaf(leaf);
-      }
-    }
   }
 
   getViewType(): string {
@@ -168,29 +138,6 @@ export class SphereView extends ItemView {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
-    // Add planning mode controls
-    const planningControls = container.createDiv({ cls: "flow-gtd-sphere-planning-controls" });
-
-    // Add planning mode banner if active
-    if (this.planningMode) {
-      const banner = planningControls.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
-      banner.setText("Click actions to add/remove from hotlist");
-    }
-
-    // Add planning mode toggle button
-    const toggleBtn = planningControls.createEl("button", {
-      cls: "flow-gtd-sphere-planning-toggle",
-      text: this.planningMode ? "Exit Planning Mode" : "Planning Mode",
-    });
-    toggleBtn.addEventListener("click", () => {
-      this.togglePlanningMode();
-    });
-
-    // Add planning mode background class
-    if (this.planningMode) {
-      container.addClass("flow-gtd-sphere-planning-active");
-    }
-
     this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
     this.renderProjectsSection(container, data.projects);
     this.renderGeneralNextActionsSection(
@@ -266,33 +213,29 @@ export class SphereView extends ItemView {
         const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
         project.nextActions.forEach((action, index) => {
           const item = list.createEl("li", { text: action });
+          item.style.cursor = "pointer";
 
-          // In planning mode, make actions clickable
-          if (this.planningMode) {
-            item.style.cursor = "pointer";
+          item.addEventListener("click", async () => {
+            // Find the exact line number for this action
+            const lineResult = await this.lineFinder.findActionLine(project.file, action);
+            if (!lineResult.found) {
+              console.error("Could not find line for action:", action);
+              return;
+            }
 
-            item.addEventListener("click", async () => {
-              // Find the exact line number for this action
-              const lineResult = await this.lineFinder.findActionLine(project.file, action);
-              if (!lineResult.found) {
-                console.error("Could not find line for action:", action);
-                return;
-              }
-
-              if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
-                await this.removeFromHotlist(project.file, lineResult.lineNumber!);
-              } else {
-                await this.addToHotlist(
-                  action,
-                  project.file,
-                  lineResult.lineNumber!,
-                  lineResult.lineContent!,
-                  this.sphere,
-                  false
-                );
-              }
-            });
-          }
+            if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
+              await this.removeFromHotlist(project.file, lineResult.lineNumber!);
+            } else {
+              await this.addToHotlist(
+                action,
+                project.file,
+                lineResult.lineNumber!,
+                lineResult.lineContent!,
+                this.sphere,
+                false
+              );
+            }
+          });
         });
       } else {
         this.renderEmptyMessage(wrapper, "No next actions captured yet.");
@@ -322,33 +265,29 @@ export class SphereView extends ItemView {
 
     actions.forEach((action, index) => {
       const item = list.createEl("li", { text: action });
+      item.style.cursor = "pointer";
 
-      // In planning mode, make actions clickable
-      if (this.planningMode) {
-        item.style.cursor = "pointer";
+      item.addEventListener("click", async () => {
+        // Find the exact line number for this action
+        const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
+        if (!lineResult.found) {
+          console.error("Could not find line for action:", action);
+          return;
+        }
 
-        item.addEventListener("click", async () => {
-          // Find the exact line number for this action
-          const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
-          if (!lineResult.found) {
-            console.error("Could not find line for action:", action);
-            return;
-          }
-
-          if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
-            await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!);
-          } else {
-            await this.addToHotlist(
-              action,
-              nextActionsFile,
-              lineResult.lineNumber!,
-              lineResult.lineContent!,
-              this.sphere,
-              true
-            );
-          }
-        });
-      }
+        if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
+          await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!);
+        } else {
+          await this.addToHotlist(
+            action,
+            nextActionsFile,
+            lineResult.lineNumber!,
+            lineResult.lineContent!,
+            this.sphere,
+            true
+          );
+        }
+      });
     });
   }
 
