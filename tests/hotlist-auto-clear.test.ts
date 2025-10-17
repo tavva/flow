@@ -181,7 +181,10 @@ describe("archiveClearedTasks", () => {
       mockFile,
       expect.stringContaining("- [ ] Task one")
     );
-    expect(mockVault.modify).toHaveBeenCalledWith(mockFile, expect.stringContaining(existingContent));
+    expect(mockVault.modify).toHaveBeenCalledWith(
+      mockFile,
+      expect.stringContaining(existingContent)
+    );
   });
 
   it("handles empty hotlist gracefully", async () => {

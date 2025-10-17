@@ -1115,11 +1115,7 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
   }
 }
 
-function renderHotlistCheckbox(
-  container: HTMLElement,
-  item: EditableItem,
-  state: InboxModalState
-) {
+function renderHotlistCheckbox(container: HTMLElement, item: EditableItem, state: InboxModalState) {
   const hotlistContainer = container.createDiv("flow-gtd-hotlist-checkbox");
   hotlistContainer.style.marginTop = "12px";
   hotlistContainer.style.display = "flex";

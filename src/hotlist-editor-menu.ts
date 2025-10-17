@@ -4,6 +4,7 @@
 import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
 import { HotlistItem, PluginSettings } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
+import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
 
 /**
  * Check if a line contains a checkbox (task)
@@ -115,7 +116,14 @@ export function registerHotlistEditorMenu(
         .setIcon(onHotlist ? "x" : "plus")
         .onClick(async () => {
           if (onHotlist) {
-            await removeFromHotlist(filePath, lineNumber, settings, saveSettings, refreshHotlistView);
+            await removeFromHotlist(
+              app,
+              filePath,
+              lineNumber,
+              settings,
+              saveSettings,
+              refreshHotlistView
+            );
           } else {
             await addToHotlist(
               app,
@@ -166,6 +174,7 @@ async function addToHotlist(
 
   settings.hotlist.push(item);
   await saveSettings();
+  await activateHotlistView(app);
   await refreshHotlistView();
 }
 
@@ -173,6 +182,7 @@ async function addToHotlist(
  * Remove an action from the hotlist
  */
 async function removeFromHotlist(
+  app: App,
   filePath: string,
   lineNumber: number,
   settings: PluginSettings,
@@ -183,5 +193,30 @@ async function removeFromHotlist(
     (item) => !(item.file === filePath && item.lineNumber === lineNumber)
   );
   await saveSettings();
+  await activateHotlistView(app);
   await refreshHotlistView();
+}
+
+/**
+ * Activate (open/reveal) the hotlist view in the right sidebar
+ */
+async function activateHotlistView(app: App): Promise<void> {
+  const { workspace } = app;
+
+  let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+
+  if (!leaf) {
+    const rightLeaf = workspace.getRightLeaf(false);
+    if (rightLeaf) {
+      await rightLeaf.setViewState({
+        type: HOTLIST_VIEW_TYPE,
+        active: true,
+      });
+      leaf = rightLeaf;
+    }
+  }
+
+  if (leaf) {
+    workspace.revealLeaf(leaf);
+  }
 }

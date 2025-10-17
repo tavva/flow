@@ -101,11 +101,7 @@ describe("hotlist-editor-menu", () => {
         },
       });
 
-      const sphere = await determineActionSphere(
-        mockApp,
-        "Projects/Test.md",
-        "- [ ] Some action"
-      );
+      const sphere = await determineActionSphere(mockApp, "Projects/Test.md", "- [ ] Some action");
 
       expect(sphere).toBe("work");
     });

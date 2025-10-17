@@ -706,14 +706,13 @@ Clarify what it refers to before proceeding.",
 
       mockClient.sendMessage.mockResolvedValue(mockResponseFuzzy);
 
-      const resultFuzzy = await processor.processInboxItem(
-        "AI demo: do the thing",
-        projects
-      );
+      const resultFuzzy = await processor.processInboxItem("AI demo: do the thing", projects);
 
       expect(resultFuzzy.recommendedAction).toBe("add-to-project");
       expect(resultFuzzy.suggestedProjects).toHaveLength(1);
-      expect(resultFuzzy.suggestedProjects![0].project.title).toBe("Record an AI demo for the leadership team");
+      expect(resultFuzzy.suggestedProjects![0].project.title).toBe(
+        "Record an AI demo for the leadership team"
+      );
     });
   });
 

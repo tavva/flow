@@ -3,6 +3,7 @@ import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, HotlistItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { buildProjectHierarchy, flattenHierarchy, ProjectNode } from "./project-hierarchy";
+import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -107,11 +108,12 @@ export class SphereView extends ItemView {
 
     // Then filter to only sphere projects with live status
     const projectSummaries = flattenedHierarchy
-      .filter((node) =>
-        node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
-        node.project.status === "live" &&
-        !node.project.file.startsWith("Templates/") &&
-        node.project.file !== this.settings.projectTemplateFilePath
+      .filter(
+        (node) =>
+          node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
+          node.project.status === "live" &&
+          !node.project.file.startsWith("Templates/") &&
+          node.project.file !== this.settings.projectTemplateFilePath
       )
       .map((node) => ({
         project: node.project,
@@ -217,8 +219,7 @@ export class SphereView extends ItemView {
 
           // Check if this action is in the hotlist and add CSS class if so
           const inHotlist = this.settings.hotlist.some(
-            (hotlistItem) =>
-              hotlistItem.file === project.file && hotlistItem.text === action
+            (hotlistItem) => hotlistItem.file === project.file && hotlistItem.text === action
           );
           if (inHotlist) {
             item.addClass("sphere-action-in-hotlist");
@@ -278,8 +279,7 @@ export class SphereView extends ItemView {
 
       // Check if this action is in the hotlist and add CSS class if so
       const inHotlist = this.settings.hotlist.some(
-        (hotlistItem) =>
-          hotlistItem.file === nextActionsFile && hotlistItem.text === action
+        (hotlistItem) => hotlistItem.file === nextActionsFile && hotlistItem.text === action
       );
       if (inHotlist) {
         item.addClass("sphere-action-in-hotlist");
@@ -470,6 +470,7 @@ export class SphereView extends ItemView {
 
     this.settings.hotlist.push(item);
     await this.saveSettings();
+    await this.activateHotlistView();
     await this.refreshHotlistView();
   }
 
@@ -478,6 +479,7 @@ export class SphereView extends ItemView {
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
     await this.saveSettings();
+    await this.activateHotlistView();
     await this.refreshHotlistView();
   }
 
@@ -487,9 +489,30 @@ export class SphereView extends ItemView {
     );
   }
 
+  private async activateHotlistView(): Promise<void> {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({
+          type: HOTLIST_VIEW_TYPE,
+          active: true,
+        });
+        leaf = rightLeaf;
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
   private async refreshHotlistView(): Promise<void> {
     const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType("flow-gtd-hotlist-view");
+    const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
 
     if (leaves.length > 0) {
       for (const leaf of leaves) {

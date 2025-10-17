@@ -20,16 +20,19 @@ We implemented a hierarchical sub-projects feature for the Flow GTD Coach plugin
 ## What Works Now
 
 ### ✅ Core Infrastructure
+
 - `src/types.ts`: FlowProject interface has `parentProject?: string` field
 - `src/project-hierarchy.ts`: Complete hierarchy building with cycle detection, depth tracking, and action aggregation
 - All 260 tests passing
 - Build successful
 
 ### ✅ File Operations
+
 - `src/file-writer.ts`: Can write `parent-project` frontmatter when creating projects
 - `src/flow-scanner.ts`: Reads parent-project from frontmatter, provides `scanProjectTree()` method
 
 ### ✅ UI Views - All Working
+
 1. **Sphere View** (`src/sphere-view.ts`):
    - Shows hierarchical indentation (24px per depth level)
    - Builds hierarchy from ALL projects first, then filters to sphere
@@ -46,6 +49,7 @@ We implemented a hierarchical sub-projects feature for the Flow GTD Coach plugin
    - Displays depth information
 
 ### ✅ AI Integration
+
 - `src/gtd-processor.ts`: Updated prompts and parsing for sub-project suggestions
 - AI can suggest `asSubProject: true` with `parentProject` path
 - `ProjectSuggestion` interface includes sub-project fields
@@ -53,6 +57,7 @@ We implemented a hierarchical sub-projects feature for the Flow GTD Coach plugin
 ## Manual Testing Performed
 
 Ben tested by manually adding frontmatter:
+
 - ✅ Hotlist displays parent context with correct styling
 - ✅ Sphere view shows nested hierarchy with indentation
 - ✅ All views handle sub-projects correctly
@@ -62,11 +67,13 @@ Ben tested by manually adding frontmatter:
 These are **nice-to-have** improvements, not blockers:
 
 ### 1. Inbox Modal Sub-Project Creation Flow
+
 **File**: `src/inbox-modal.ts`
 
 **Current State**: AI can suggest sub-projects, but UI doesn't support creating them yet
 
 **What's Needed**:
+
 - When AI suggests `asSubProject: true`, show parent context in project suggestions
 - When user selects a sub-project suggestion, pass `parentProject` to file-writer
 - UI indication that this will be created as a sub-project
@@ -74,36 +81,40 @@ These are **nice-to-have** improvements, not blockers:
 **Complexity**: Medium - requires modal UI changes and workflow adjustments
 
 ### 2. Comprehensive Hierarchy Tests
+
 **File**: `tests/project-hierarchy.test.ts` (doesn't exist yet)
 
 **What's Needed**:
+
 ```typescript
 describe("buildProjectHierarchy", () => {
-  it("should detect cycles and prevent infinite loops")
-  it("should calculate correct depth for nested sub-projects")
-  it("should aggregate next actions from all descendants")
-  it("should handle missing parent references gracefully")
-  it("should build correct tree with multiple roots")
-})
+  it("should detect cycles and prevent infinite loops");
+  it("should calculate correct depth for nested sub-projects");
+  it("should aggregate next actions from all descendants");
+  it("should handle missing parent references gracefully");
+  it("should build correct tree with multiple roots");
+});
 
 describe("flattenHierarchy", () => {
-  it("should flatten in correct depth-first order")
-  it("should preserve depth information")
-})
+  it("should flatten in correct depth-first order");
+  it("should preserve depth information");
+});
 
 describe("getProjectDisplayName", () => {
-  it("should return primary name and parent context")
-  it("should handle projects without parents")
-  it("should handle missing parent files")
-})
+  it("should return primary name and parent context");
+  it("should handle projects without parents");
+  it("should handle missing parent files");
+});
 ```
 
 **Complexity**: Low - straightforward unit tests
 
 ### 3. Documentation Update
+
 **File**: `CLAUDE.md`
 
 **What's Needed**:
+
 - Add section on sub-projects architecture
 - Document frontmatter parent-project field
 - Explain hierarchy building approach
@@ -139,9 +150,9 @@ if (displayName.parent) {
     text: ` (${displayName.parent})`,
     cls: "flow-gtd-hotlist-parent-context",
   });
-  parentSpan.style.fontSize = "0.85em";      // Smaller
-  parentSpan.style.opacity = "0.7";          // Dimmed
-  parentSpan.style.fontWeight = "normal";    // Not bold
+  parentSpan.style.fontSize = "0.85em"; // Smaller
+  parentSpan.style.opacity = "0.7"; // Dimmed
+  parentSpan.style.fontWeight = "normal"; // Not bold
 }
 ```
 
@@ -194,6 +205,7 @@ Description of the sub-project...
 ## Testing Verification
 
 All existing tests pass (260 tests):
+
 - `npm test` - ✅ All passing
 - `npm run build` - ✅ Successful
 - Manual testing - ✅ UI displays correctly
@@ -201,6 +213,7 @@ All existing tests pass (260 tests):
 ## Files Changed
 
 ### Core Implementation (8 files)
+
 1. `src/types.ts` - Added parentProject field
 2. `src/project-hierarchy.ts` - **NEW FILE** - Hierarchy logic
 3. `src/flow-scanner.ts` - Extract parent-project from frontmatter
@@ -211,6 +224,7 @@ All existing tests pass (260 tests):
 8. `src/gtd-processor.ts` - Sub-project suggestions
 
 ### Tests Updated (1 file)
+
 1. `tests/hotlist-view.test.ts` - Added scanner mock
 
 ## Next Session Action Items
@@ -232,6 +246,7 @@ All existing tests pass (260 tests):
    - Requires more thought about UX flow
 
 **If no enhancements needed:**
+
 - Feature is ready to use as-is
 - Ben can create sub-projects manually via frontmatter
 - All views work correctly

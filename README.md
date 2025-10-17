@@ -60,25 +60,31 @@ Capture thoughts, tasks, and ideas instantly:
 Capture techniques for different platforms:
 
 Two articles covering Quick Capture methods:
+
 - https://obsidian.rocks/obsidian-quick-capture/
 - https://obsidian.rocks/obsidian-mobile-quick-capture/
 
 **General:**
+
 - https://obsidian.md/clipper
 
 **Mac:**
+
 - https://actions.work/actions-for-obsidian
 - https://www.raycast.com/KevinBatdorf/obsidian
 
 **Windows:**
+
 - Nothing here yet, please let us know if you have a good quick capture method!
 
 **iOS:**
+
 - https://actions.work/actions-for-obsidian
 - https://www.notesightlabs.com/funnel
 - https://www.icloud.com/shortcuts/9a6af22443414858bb6adade86a30f85
 
 **Android:**
+
 - https://play.google.com/store/apps/details?id=net.dinglisch.android.taskerm&hl=en_GB
 - https://play.google.com/store/apps/details?id=net.gsantner.markor
 - https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
@@ -98,6 +104,7 @@ AI processes your inbox according to GTD principles:
 **AI Recommendations:**
 
 AI provides two signals:
+
 - **Recommended Action**: Primary instruction (_Create New Project_, _Add to Project_, _File to Reference_) applied directly
 - **Suggested Projects/People**: Optional matches with confidence levels for manual redirection
 
@@ -119,7 +126,7 @@ creation-date: 2025-10-05 18:59
 priority: 2
 tags: project/personal
 status: live
-parent-project: "[[Parent Project]]"  # optional, for sub-projects
+parent-project: "[[Parent Project]]" # optional, for sub-projects
 ---
 
 # Project Title
@@ -147,11 +154,13 @@ Plan your day and maintain focus:
 GTD "Waiting For" lists use `[w]` checkbox status:
 
 **Creating:**
+
 - AI detects items requiring others during inbox processing
 - Mark actions manually in inbox modal
 - Use "Cycle task status" command on existing tasks
 
 **Viewing:**
+
 - Dedicated Waiting For view shows all `[w]` items across your vault
 - Groups items by project
 - Click items to jump to source file
@@ -232,6 +241,7 @@ Process your inbox regularly (daily recommended):
 **Processing from Inbox Folders:**
 
 Process entire folders of captured items:
+
 - Run "Process Inbox Folders" command
 - Select items from your configured inbox folder
 - Process them as individual captures
@@ -250,6 +260,7 @@ Decide what to work on today:
 **Using the Hotlist:**
 
 Your focused list of actions for today or this week:
+
 - Click action text to open the source file
 - Mark actions complete when done
 - Convert to waiting-for if blocked
@@ -258,6 +269,7 @@ Your focused list of actions for today or this week:
 **Reviewing Sphere Views:**
 
 Sphere views show all projects and actions within a life area:
+
 - Project hierarchy with sub-projects indented
 - Next actions aggregated from projects
 - Toggle between spheres
@@ -298,6 +310,7 @@ AI categorises items according to GTD:
 Flow helps to enforce GTD quality standards:
 
 **Next Actions MUST:**
+
 - Start with an action verb
 - Be specific and completable in one sitting
 - Include context (who, where, what specifically)
@@ -305,15 +318,18 @@ Flow helps to enforce GTD quality standards:
 - Avoid vague terms ("something", "maybe", "stuff")
 
 Examples:
+
 - ✓ Good: "Call Dr. Smith's office at 555-0123 to schedule cleaning"
 - ✗ Bad: "dentist"
 
 **Project Outcomes MUST:**
+
 - Be stated as completed outcomes (past tense ideal)
 - Be clear and measurable
 - Define "done"
 
 Examples:
+
 - ✓ Good: "Website redesign complete and deployed"
 - ✗ Bad: "Work on website"
 

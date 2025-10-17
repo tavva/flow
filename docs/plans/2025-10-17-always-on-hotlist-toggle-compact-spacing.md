@@ -13,6 +13,7 @@
 ## Task 1: Read Current Implementation
 
 **Files:**
+
 - Read: `src/sphere-view.ts`
 - Read: `src/hotlist-editor-menu.ts`
 - Read: `tests/sphere-view.test.ts`
@@ -20,6 +21,7 @@
 **Step 1: Read sphere view implementation**
 
 Read `src/sphere-view.ts` to understand:
+
 - Current planning mode implementation
 - How actions are rendered
 - Click handler logic
@@ -28,12 +30,14 @@ Read `src/sphere-view.ts` to understand:
 **Step 2: Read hotlist editor menu**
 
 Read `src/hotlist-editor-menu.ts` to understand:
+
 - How hotlist add/remove works
 - Methods available for toggling hotlist membership
 
 **Step 3: Read existing tests**
 
 Read `tests/sphere-view.test.ts` to understand:
+
 - Current test coverage
 - Planning mode tests to remove
 - Test structure to follow
@@ -43,6 +47,7 @@ Read `tests/sphere-view.test.ts` to understand:
 ## Task 2: Remove Planning Mode State
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 
 **Step 1: Write failing test for always-on click behavior**
@@ -76,6 +81,7 @@ Expected: FAIL (planning mode check prevents hotlist toggle)
 **Step 3: Remove planning mode property and toggle button**
 
 In `src/sphere-view.ts`, remove:
+
 - `private planningMode: boolean = false;` property declaration
 - Planning mode toggle button rendering code
 - Any UI text/labels related to planning mode
@@ -115,6 +121,7 @@ git commit -m "refactor: remove planning mode, make hotlist toggle always active
 ## Task 3: Add Hotlist Visual Indicators
 
 **Files:**
+
 - Modify: `src/sphere-view.ts`
 - Modify: `styles.css`
 
@@ -128,22 +135,24 @@ it("should apply CSS class to actions in hotlist", async () => {
   const mockPlugin = createMockPlugin();
 
   // Pre-populate hotlist with one item
-  mockPlugin.settings.hotlistItems = [{
-    file: "Projects/Test Project.md",
-    lineNumber: 10,
-    lineContent: "- [ ] Test action",
-    text: "Test action",
-    sphere: "work",
-    isGeneral: false,
-    addedAt: Date.now()
-  }];
+  mockPlugin.settings.hotlistItems = [
+    {
+      file: "Projects/Test Project.md",
+      lineNumber: 10,
+      lineContent: "- [ ] Test action",
+      text: "Test action",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: Date.now(),
+    },
+  ];
 
   const view = new SphereView(mockApp, mockPlugin, "work");
   await view.render();
 
   const actionButtons = view.containerEl.querySelectorAll(".sphere-action");
-  const hotlistAction = Array.from(actionButtons).find(
-    el => el.textContent?.includes("Test action")
+  const hotlistAction = Array.from(actionButtons).find((el) =>
+    el.textContent?.includes("Test action")
   );
 
   expect(hotlistAction?.classList.contains("sphere-action-in-hotlist")).toBe(true);
@@ -221,6 +230,7 @@ git commit -m "feat: add visual indicators for hotlist items in sphere view"
 ## Task 4: Reduce Button Spacing for Compact Layout
 
 **Files:**
+
 - Modify: `styles.css`
 
 **Step 1: Identify current button padding**
@@ -252,6 +262,7 @@ In `styles.css`, update `.sphere-action` button styles:
 **Step 3: Visual verification**
 
 Manual test:
+
 1. Run `npm run dev`
 2. Open Obsidian
 3. Open a sphere view
@@ -271,11 +282,13 @@ git commit -m "style: reduce button padding for more compact sphere view"
 ## Task 5: Update and Clean Up Tests
 
 **Files:**
+
 - Modify: `tests/sphere-view.test.ts`
 
 **Step 1: Remove planning mode tests**
 
 In `tests/sphere-view.test.ts`, delete all tests related to:
+
 - Planning mode toggle button
 - Planning mode state changes
 - Conditional click behavior based on planning mode
@@ -327,6 +340,7 @@ git commit -m "test: update sphere view tests for always-on hotlist toggle"
 ## Task 6: Final Verification
 
 **Files:**
+
 - All modified files
 
 **Step 1: Run build**
@@ -354,6 +368,7 @@ Expected: All tests pass, coverage >= 80%
 **Step 4: Final commit if any fixes needed**
 
 If manual testing revealed issues:
+
 ```bash
 git add <files>
 git commit -m "fix: address issues found in manual testing"

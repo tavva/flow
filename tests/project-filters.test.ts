@@ -1,4 +1,8 @@
-import { filterTemplates, filterLiveProjects, filterLiveNonTemplateProjects } from "../src/project-filters";
+import {
+  filterTemplates,
+  filterLiveProjects,
+  filterLiveNonTemplateProjects,
+} from "../src/project-filters";
 import { FlowProject } from "../src/types";
 
 describe("project-filters", () => {

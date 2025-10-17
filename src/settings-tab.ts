@@ -317,7 +317,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Archive file")
-      .setDesc("File path where cleared hotlist items will be archived. Disabled if auto-clear is off.")
+      .setDesc(
+        "File path where cleared hotlist items will be archived. Disabled if auto-clear is off."
+      )
       .addText((text) =>
         text
           .setPlaceholder("Hotlist Archive.md")

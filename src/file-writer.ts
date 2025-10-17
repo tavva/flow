@@ -39,7 +39,13 @@ export class FileWriter {
       throw new Error(`File ${filePath} already exists`);
     }
 
-    const content = await this.buildProjectContent(result, originalItem, spheres, waitingFor, parentProject);
+    const content = await this.buildProjectContent(
+      result,
+      originalItem,
+      spheres,
+      waitingFor,
+      parentProject
+    );
     const file = await this.app.vault.create(filePath, content);
 
     return file;
@@ -202,7 +208,13 @@ export class FileWriter {
 
     if (!templateFile || !(templateFile instanceof TFile)) {
       // Fallback to hardcoded template if template file doesn't exist
-      return this.buildProjectContentFallback(result, originalItem, spheres, waitingFor, parentProject);
+      return this.buildProjectContentFallback(
+        result,
+        originalItem,
+        spheres,
+        waitingFor,
+        parentProject
+      );
     }
 
     let templateContent = await this.app.vault.read(templateFile);
@@ -240,7 +252,9 @@ export class FileWriter {
         const frontmatterEnd = frontmatterEndMatch[0];
         const frontmatterEndIndex = frontmatterEnd.lastIndexOf("---");
         const beforeEnd = frontmatterEnd.substring(0, frontmatterEndIndex);
-        const afterEnd = templateContent.substring(frontmatterEndMatch.index! + frontmatterEnd.length);
+        const afterEnd = templateContent.substring(
+          frontmatterEndMatch.index! + frontmatterEnd.length
+        );
 
         templateContent = beforeEnd + `parent-project: "${parentProject}"\n---` + afterEnd;
       }

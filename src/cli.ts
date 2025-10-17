@@ -390,22 +390,24 @@ export async function runREPL(
         if (escapeTimeout) clearTimeout(escapeTimeout);
         escapeBuffer = "";
         // Shift+Enter adds newline (chat pattern)
-        inputBuffer = inputBuffer.slice(0, cursorPosition) + "\n" + inputBuffer.slice(cursorPosition);
+        inputBuffer =
+          inputBuffer.slice(0, cursorPosition) + "\n" + inputBuffer.slice(cursorPosition);
         cursorPosition++;
         showPrompt();
         return;
       }
 
       // If we have a complete escape sequence that's not Shift+Enter, process it
-      if (
-        key === "~" ||
-        (escapeBuffer.length >= 3 && !escapeBuffer.includes("["))
-      ) {
+      if (key === "~" || (escapeBuffer.length >= 3 && !escapeBuffer.includes("["))) {
         if (escapeTimeout) clearTimeout(escapeTimeout);
 
         // Arrow keys
-        if (escapeBuffer === "\x1b[A" || escapeBuffer === "\x1b[B" ||
-            escapeBuffer === "\x1b[C" || escapeBuffer === "\x1b[D") {
+        if (
+          escapeBuffer === "\x1b[A" ||
+          escapeBuffer === "\x1b[B" ||
+          escapeBuffer === "\x1b[C" ||
+          escapeBuffer === "\x1b[D"
+        ) {
           // Ignore arrow keys for now
           escapeBuffer = "";
           return;
