@@ -215,6 +215,15 @@ export class SphereView extends ItemView {
           const item = list.createEl("li", { text: action });
           item.style.cursor = "pointer";
 
+          // Check if this action is in the hotlist and add CSS class if so
+          const inHotlist = this.settings.hotlist.some(
+            (hotlistItem) =>
+              hotlistItem.file === project.file && hotlistItem.text === action
+          );
+          if (inHotlist) {
+            item.addClass("sphere-action-in-hotlist");
+          }
+
           item.addEventListener("click", async () => {
             // Find the exact line number for this action
             const lineResult = await this.lineFinder.findActionLine(project.file, action);
@@ -266,6 +275,15 @@ export class SphereView extends ItemView {
     actions.forEach((action, index) => {
       const item = list.createEl("li", { text: action });
       item.style.cursor = "pointer";
+
+      // Check if this action is in the hotlist and add CSS class if so
+      const inHotlist = this.settings.hotlist.some(
+        (hotlistItem) =>
+          hotlistItem.file === nextActionsFile && hotlistItem.text === action
+      );
+      if (inHotlist) {
+        item.addClass("sphere-action-in-hotlist");
+      }
 
       item.addEventListener("click", async () => {
         // Find the exact line number for this action
