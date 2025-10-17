@@ -18,6 +18,7 @@ describe("HotlistView", () => {
       hotlistAutoClearTime: "03:00",
       hotlistArchiveFile: "Hotlist Archive.md",
       lastHotlistClearTimestamp: 0,
+      lastHotlistArchiveSucceeded: false,
       hotlistClearedNotificationDismissed: false,
     };
     mockApp = {
@@ -132,14 +133,26 @@ describe("HotlistView", () => {
   });
 
   describe("Clear notification", () => {
-    it("should show notification when items were recently cleared", () => {
+    it("should show notification when items were recently cleared and archiving succeeded", () => {
       const now = Date.now();
       mockSettings.lastHotlistClearTimestamp = now - 1000; // Cleared 1 second ago
+      mockSettings.lastHotlistArchiveSucceeded = true;
       mockSettings.hotlistClearedNotificationDismissed = false;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
       expect(shouldShow).toBe(true);
+    });
+
+    it("should not show notification when archiving failed", () => {
+      const now = Date.now();
+      mockSettings.lastHotlistClearTimestamp = now - 1000; // Cleared 1 second ago
+      mockSettings.lastHotlistArchiveSucceeded = false;
+      mockSettings.hotlistClearedNotificationDismissed = false;
+
+      const shouldShow = (view as any).shouldShowClearNotification();
+
+      expect(shouldShow).toBe(false);
     });
 
     it("should not show notification when dismissed", () => {
@@ -162,7 +175,7 @@ describe("HotlistView", () => {
     });
 
     it("should not show notification when cleared more than 24 hours ago", () => {
-      const dayAndAHalfAgo = Date.now() - (36 * 60 * 60 * 1000);
+      const dayAndAHalfAgo = Date.now() - 36 * 60 * 60 * 1000;
       mockSettings.lastHotlistClearTimestamp = dayAndAHalfAgo;
       mockSettings.hotlistClearedNotificationDismissed = false;
 

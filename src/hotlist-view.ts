@@ -360,6 +360,11 @@ export class HotlistView extends ItemView {
       return false;
     }
 
+    // Don't show if archiving failed
+    if (!this.settings.lastHotlistArchiveSucceeded) {
+      return false;
+    }
+
     // Only show notification within 24 hours of clearing
     const hoursSinceClear =
       (Date.now() - this.settings.lastHotlistClearTimestamp) / (1000 * 60 * 60);

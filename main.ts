@@ -27,9 +27,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     await this.checkAndClearHotlist();
 
     // Set up periodic check (every hour)
-    this.autoClearInterval = window.setInterval(async () => {
-      await this.checkAndClearHotlist();
-    }, 60 * 60 * 1000); // 1 hour
+    this.autoClearInterval = window.setInterval(
+      async () => {
+        await this.checkAndClearHotlist();
+      },
+      60 * 60 * 1000
+    ); // 1 hour
 
     // Register the sphere view
     this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
@@ -355,6 +358,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     // Archive the tasks if archive file is configured
+    let archiveSucceeded = false;
     if (this.settings.hotlistArchiveFile && this.settings.hotlist.length > 0) {
       try {
         await archiveClearedTasks(
@@ -363,14 +367,17 @@ export default class FlowGTDCoachPlugin extends Plugin {
           this.settings.hotlistArchiveFile,
           new Date()
         );
+        archiveSucceeded = true;
       } catch (error) {
         console.error("Failed to archive cleared hotlist tasks", error);
+        archiveSucceeded = false;
       }
     }
 
     // Clear the hotlist
     this.settings.hotlist = [];
     this.settings.lastHotlistClearTimestamp = Date.now();
+    this.settings.lastHotlistArchiveSucceeded = archiveSucceeded;
     this.settings.hotlistClearedNotificationDismissed = false; // Reset so user sees notification
     await this.saveSettings();
   }

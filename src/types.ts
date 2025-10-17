@@ -94,6 +94,7 @@ export interface PluginSettings {
   hotlistAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
   hotlistArchiveFile: string; // Path to archive file for cleared tasks
   lastHotlistClearTimestamp: number; // Timestamp of last auto-clear
+  lastHotlistArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
   hotlistClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
 }
 
@@ -117,6 +118,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   hotlistAutoClearTime: "03:00",
   hotlistArchiveFile: "Hotlist Archive.md",
   lastHotlistClearTimestamp: 0,
+  lastHotlistArchiveSucceeded: false,
   hotlistClearedNotificationDismissed: false,
 };
 
