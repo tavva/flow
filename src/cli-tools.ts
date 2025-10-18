@@ -254,7 +254,6 @@ export class ToolExecutor {
       tags: [],
       status: "live",
       nextActions: [],
-      waitingFor: [],
     };
 
     await this.fileWriter.addNextActionToProject(

@@ -324,4 +324,42 @@ describe("OpenAICompatibleClient - Tool Support", () => {
       "OpenAI-compatible API request failed"
     );
   });
+
+  it("should handle malformed JSON in tool arguments", async () => {
+    const client = getOpenAICompatibleClient(mockConfig);
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: "Using tool",
+              tool_calls: [
+                {
+                  id: "call_1",
+                  type: "function",
+                  function: {
+                    name: "test_tool",
+                    arguments: "not valid json{",
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      }),
+    });
+
+    const request: LanguageModelRequest = {
+      model: "gpt-4",
+      maxTokens: 1000,
+      messages: [{ role: "user", content: "Test" }],
+    };
+
+    await expect(client.sendMessageWithTools!(request, [])).rejects.toThrow(
+      "Failed to parse tool arguments for test_tool"
+    );
+  });
 });

@@ -108,7 +108,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
     const choice = data.choices?.[0];
     const message = choice?.message;
 
-    if (!message || message.content === undefined) {
+    if (!message || message.content === undefined || message.content === null) {
       throw new Error("OpenAI-compatible response did not include a message");
     }
 
@@ -214,10 +214,18 @@ export class OpenAICompatibleClient implements LanguageModelClient {
     const toolCalls: ToolCall[] = [];
     if (message.tool_calls) {
       for (const toolCall of message.tool_calls) {
+        let parsedInput: Record<string, unknown>;
+        try {
+          parsedInput = JSON.parse(toolCall.function.arguments);
+        } catch (error) {
+          throw new Error(
+            `Failed to parse tool arguments for ${toolCall.function.name}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
         toolCalls.push({
           id: toolCall.id,
           name: toolCall.function.name,
-          input: JSON.parse(toolCall.function.arguments),
+          input: parsedInput,
         });
       }
     }
