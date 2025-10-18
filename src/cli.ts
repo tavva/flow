@@ -165,13 +165,16 @@ export function buildSystemPrompt(
 }
 
 import * as readline from "readline";
-import { LanguageModelClient, ChatMessage } from "./language-model";
+import { LanguageModelClient, ChatMessage, ToolCallResponse, ToolResult } from "./language-model";
 import { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 import { Marked } from "marked";
 import { markedTerminal } from "marked-terminal";
 import { withRetry } from "./network-retry";
+import { presentToolCallsForApproval } from "./cli-approval";
+import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
+import { FileWriter } from "./file-writer";
 
 // ANSI color codes
 const colors = {
@@ -182,15 +185,72 @@ const colors = {
   dim: "\x1b[2m", // Dim for thinking indicator
 };
 
+async function handleToolCalls(
+  response: ToolCallResponse,
+  messages: ChatMessage[],
+  client: LanguageModelClient,
+  model: string,
+  mockApp: App,
+  settings: PluginSettings
+): Promise<void> {
+  const { content, toolCalls } = response;
+
+  // Present tools for approval
+  const approval = await presentToolCallsForApproval(toolCalls!, content);
+
+  // Create FileWriter instance
+  const fileWriter = new FileWriter(mockApp, settings);
+
+  // Execute approved tools
+  const toolExecutor = new ToolExecutor(mockApp, fileWriter, settings);
+  const toolResults: ToolResult[] = [];
+
+  for (const toolCall of toolCalls!) {
+    if (approval.approvedToolIds.includes(toolCall.id)) {
+      const result = await toolExecutor.executeTool(toolCall);
+      toolResults.push(result);
+
+      // Show result to user
+      if (result.is_error) {
+        console.log(`  ✗ ${result.content}`);
+      } else {
+        console.log(`  ${result.content}`);
+      }
+    } else {
+      // Tool was rejected by user
+      toolResults.push({
+        tool_use_id: toolCall.id,
+        content: "User declined this change",
+        is_error: false,
+      });
+    }
+  }
+
+  // For now, just acknowledge tool execution
+  // TODO: Send tool results back to LLM in next iteration (multi-turn support)
+  const summary = `Completed ${approval.approvedToolIds.length} of ${toolCalls!.length} suggested changes.`;
+  messages.push({ role: "assistant", content: summary });
+  console.log(`\n${colors.assistant}Coach:${colors.reset} ${summary}\n`);
+}
+
 export async function runREPL(
   languageModelClient: LanguageModelClient,
   model: string,
   systemPrompt: string,
   gtdContext: GTDContext,
   projectCount: number,
-  sphere: string
+  sphere: string,
+  mockApp: App,
+  settings: PluginSettings
 ): Promise<void> {
   const messages: ChatMessage[] = [];
+
+  // Check if client supports tools
+  const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
+
+  if (!supportsTools) {
+    console.log("Note: Tool support not available with current LLM provider.\n");
+  }
 
   // Configure markdown renderer
   const marked = new Marked();
@@ -316,48 +376,68 @@ export async function runREPL(
       // Show thinking indicator
       process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
 
-      // Get AI response with retry
-      const response = await withRetry(
-        () =>
-          languageModelClient.sendMessage({
-            model,
-            maxTokens: 4000,
-            messages,
-          }),
-        { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
-        (attempt, delayMs) => {
-          // Clear thinking indicator
-          readline.clearLine(process.stdout, 0);
-          readline.cursorTo(process.stdout, 0);
+      let response: string | ToolCallResponse;
 
-          // Show retry message
-          const delaySec = (delayMs / 1000).toFixed(1);
-          process.stdout.write(
-            `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
-          );
-        }
-      );
+      if (supportsTools) {
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessageWithTools!(
+              { model, maxTokens: 4000, messages },
+              CLI_TOOLS
+            ),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+          (attempt, delayMs) => {
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+            const delaySec = (delayMs / 1000).toFixed(1);
+            process.stdout.write(
+              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+            );
+          }
+        );
+      } else {
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessage({
+              model,
+              maxTokens: 4000,
+              messages,
+            }),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+          (attempt, delayMs) => {
+            readline.clearLine(process.stdout, 0);
+            readline.cursorTo(process.stdout, 0);
+            const delaySec = (delayMs / 1000).toFixed(1);
+            process.stdout.write(
+              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+            );
+          }
+        );
+      }
 
       // Clear any indicator (thinking or retry)
       readline.clearLine(process.stdout, 0);
       readline.cursorTo(process.stdout, 0);
 
-      // Add assistant message
-      messages.push({
-        role: "assistant",
-        content: response,
-      });
+      // Handle tool response
+      if (typeof response !== "string" && response.toolCalls) {
+        await handleToolCalls(response, messages, languageModelClient, model, mockApp, settings);
+      } else {
+        // Regular text response
+        const text = typeof response === "string" ? response : response.content || "";
+        messages.push({ role: "assistant", content: text });
 
-      // Render markdown response
-      let rendered = marked.parse(response) as string;
+        // Render markdown response
+        let rendered = marked.parse(text) as string;
 
-      // Workaround for marked-terminal bug #371: bold/italic not processed in list items
-      // Manually convert **text** to bold and *text* or _text_ to italic
-      rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m"); // bold
-      rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
-      rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
+        // Workaround for marked-terminal bug #371: bold/italic not processed in list items
+        // Manually convert **text** to bold and *text* or _text_ to italic
+        rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m"); // bold
+        rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
+        rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
 
-      console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
+        console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
+      }
     } catch (error) {
       // Clear any indicator on error
       readline.clearLine(process.stdout, 0);
@@ -682,7 +762,9 @@ export async function main() {
       systemPrompt,
       gtdContext,
       projects.length,
-      args.sphere
+      args.sphere,
+      mockApp as any,
+      settings
     );
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
