@@ -6,6 +6,9 @@
 
 **Tech Stack:** TypeScript, async/await, multi-turn conversation handling
 
+**IMPORTANT - Settings Persistence:**
+The ToolExecutor modifies `settings.hotlist` when executing `move_to_hotlist` tool. This integration task MUST call a settings persistence function after tool execution to ensure hotlist changes are saved. Without this, hotlist modifications will be lost when the CLI exits.
+
 ---
 
 ### Step 1: Write failing integration test
