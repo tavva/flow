@@ -2,7 +2,7 @@
 // ABOUTME: ToolExecutor routes tool calls to appropriate file operations
 import { App, TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
-import { PluginSettings, FlowProject } from "./types";
+import { PluginSettings, FlowProject, HotlistItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 
 export const CLI_TOOLS: ToolDefinition[] = [
@@ -134,8 +134,44 @@ export class ToolExecutor {
       throw new Error(`Project file not found: ${project_path}`);
     }
 
-    // TODO: Implement hotlist addition (Task 4)
-    // For now, return success stub
+    // Read file to find action and its line number
+    const content = await this.app.vault.read(file);
+    const lines = content.split(/\r?\n/);
+
+    let lineNumber: number | null = null;
+    let lineContent: string | null = null;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Match uncompleted action checkboxes with the action text
+      if (line.match(/^- \[ \]/) && line.includes(action_text)) {
+        lineNumber = i + 1; // 1-indexed
+        lineContent = line;
+        break;
+      }
+    }
+
+    if (lineNumber === null || lineContent === null) {
+      throw new Error(`Action "${action_text}" not found in ${project_path}`);
+    }
+
+    // Extract sphere from project tags
+    const cache = this.app.metadataCache.getFileCache(file);
+    const tags = cache?.frontmatter?.tags || [];
+    const tagsArray = Array.isArray(tags) ? tags : [tags];
+    const sphereTag = tagsArray.find((tag: string) => tag.startsWith("project/"));
+    const sphere = sphereTag ? sphereTag.replace("project/", "") : "personal";
+
+    // Add to hotlist
+    this.settings.hotlist.push({
+      file: project_path,
+      lineNumber,
+      lineContent,
+      text: action_text,
+      sphere,
+      isGeneral: false,
+      addedAt: Date.now(),
+    });
 
     return {
       tool_use_id: toolCall.id,
@@ -155,8 +191,27 @@ export class ToolExecutor {
       throw new Error(`Project file not found: ${project_path}`);
     }
 
-    // TODO: Implement action update (Task 4)
-    // For now, just validate file exists
+    let content = await this.app.vault.read(file);
+    const lines = content.split(/\r?\n/);
+
+    let found = false;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Match checkbox lines containing old action text
+      if (line.match(/^- \[(?: |w)\]/) && line.includes(old_action)) {
+        // Replace old action with new action, preserving checkbox and tags
+        lines[i] = line.replace(old_action, new_action);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      throw new Error(`Action "${old_action}" not found in ${project_path}`);
+    }
+
+    content = lines.join("\n");
+    await this.app.vault.modify(file, content);
 
     return {
       tool_use_id: toolCall.id,
@@ -171,8 +226,28 @@ export class ToolExecutor {
       is_waiting?: boolean;
     };
 
-    // TODO: Implement via FileWriter (Task 4)
-    // For now, return success stub
+    const file = this.app.vault.getAbstractFileByPath(project_path);
+    if (!(file instanceof TFile)) {
+      throw new Error(`Project file not found: ${project_path}`);
+    }
+
+    // Construct minimal FlowProject object for FileWriter
+    const project: FlowProject = {
+      file: project_path,
+      title: file.basename,
+      description: "",
+      priority: 2,
+      tags: [],
+      status: "live",
+      nextActions: [],
+      waitingFor: [],
+    };
+
+    await this.fileWriter.addNextActionToProject(
+      project,
+      action_text,
+      [is_waiting || false]
+    );
 
     return {
       tool_use_id: toolCall.id,
@@ -191,8 +266,9 @@ export class ToolExecutor {
       throw new Error(`Project file not found: ${project_path}`);
     }
 
-    // TODO: Implement frontmatter update (Task 4)
-    // For now, just validate file exists
+    await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+      frontmatter.status = new_status;
+    });
 
     return {
       tool_use_id: toolCall.id,

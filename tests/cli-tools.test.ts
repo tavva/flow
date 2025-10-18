@@ -71,6 +71,9 @@ describe("ToolExecutor", () => {
       fileManager: {
         processFrontMatter: jest.fn(),
       },
+      metadataCache: {
+        getFileCache: jest.fn(),
+      },
     } as any;
 
     mockFileWriter = {
@@ -116,6 +119,10 @@ describe("ToolExecutor", () => {
     const mockFile = new TFile();
     mockFile.path = "Projects/Test.md";
     (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+    (mockApp.vault.read as jest.Mock).mockResolvedValue("## Next actions\n- [ ] Test action");
+    (mockApp.metadataCache.getFileCache as jest.Mock).mockReturnValue({
+      frontmatter: { tags: ["project/work"] },
+    });
 
     const result = await executor.executeTool(toolCall);
 
@@ -159,6 +166,12 @@ describe("ToolExecutor", () => {
         is_waiting: false,
       },
     };
+
+    // Mock file exists
+    const mockFile = new TFile();
+    mockFile.path = "Projects/Test.md";
+    mockFile.basename = "Test";
+    (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
 
     const result = await executor.executeTool(toolCall);
 
