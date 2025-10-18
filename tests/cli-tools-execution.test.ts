@@ -123,6 +123,35 @@ tags:
 
       expect(mockSettings.hotlist[0].sphere).toBe("personal");
     });
+
+    it("should reject duplicate hotlist additions", async () => {
+      const mockFile = new TFile();
+      mockFile.path = "Projects/Test.md";
+      (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockApp.vault.read as jest.Mock).mockResolvedValue("## Next actions\n- [ ] Test action");
+      (mockApp.metadataCache.getFileCache as jest.Mock).mockReturnValue({
+        frontmatter: { tags: ["project/work"] },
+      });
+
+      // Add action first time
+      const toolCall: ToolCall = {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: {
+          project_path: "Projects/Test.md",
+          action_text: "Test action",
+        },
+      };
+
+      await executor.executeTool(toolCall);
+      expect(mockSettings.hotlist).toHaveLength(1);
+
+      // Try to add same action again
+      const result = await executor.executeTool(toolCall);
+      expect(result.is_error).toBe(true);
+      expect(result.content).toContain("already in hotlist");
+      expect(mockSettings.hotlist).toHaveLength(1); // Still only one
+    });
   });
 
   describe("updateNextAction", () => {
@@ -186,6 +215,36 @@ tags: [project/work]
 
       expect(result.is_error).toBe(true);
       expect(result.content).toContain("not found");
+    });
+
+    it("should use exact match to avoid partial matches", async () => {
+      const mockFile = new TFile();
+      mockFile.path = "Projects/Test.md";
+      const originalContent = `## Next actions
+- [ ] Call client
+- [ ] Call client about project
+`;
+
+      (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockApp.vault.read as jest.Mock).mockResolvedValue(originalContent);
+
+      const toolCall: ToolCall = {
+        id: "call_1",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test.md",
+          old_action: "Call client",
+          new_action: "Call specific client",
+        },
+      };
+
+      const result = await executor.executeTool(toolCall);
+
+      expect(result.is_error).not.toBe(true);
+      expect(mockApp.vault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("- [ ] Call specific client\n- [ ] Call client about project")
+      );
     });
   });
 

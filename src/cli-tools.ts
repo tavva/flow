@@ -162,6 +162,14 @@ export class ToolExecutor {
     const sphereTag = tagsArray.find((tag: string) => tag.startsWith("project/"));
     const sphere = sphereTag ? sphereTag.replace("project/", "") : "personal";
 
+    // Check for duplicates before adding
+    const alreadyExists = this.settings.hotlist.some(
+      (item) => item.file === project_path && item.text === action_text
+    );
+    if (alreadyExists) {
+      throw new Error(`Action "${action_text}" is already in hotlist`);
+    }
+
     // Add to hotlist
     this.settings.hotlist.push({
       file: project_path,
@@ -197,12 +205,18 @@ export class ToolExecutor {
     let found = false;
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      // Match checkbox lines containing old action text
-      if (line.match(/^- \[(?: |w)\]/) && line.includes(old_action)) {
-        // Replace old action with new action, preserving checkbox and tags
-        lines[i] = line.replace(old_action, new_action);
-        found = true;
-        break;
+      // Match checkbox lines - extract just the action text for exact matching
+      const checkboxMatch = line.match(/^- \[(?: |w|x)\] (.+)$/);
+      if (checkboxMatch) {
+        const actionTextInLine = checkboxMatch[1];
+        // Exact match on action text (ignoring trailing tags like #sphere/work)
+        const actionWithoutTags = actionTextInLine.replace(/#\w+\/\w+\s*$/, "").trim();
+        if (actionWithoutTags === old_action || actionTextInLine === old_action) {
+          // Replace old action with new action, preserving checkbox and tags
+          lines[i] = line.replace(old_action, new_action);
+          found = true;
+          break;
+        }
       }
     }
 
