@@ -82,7 +82,13 @@ export function buildSystemPrompt(
   prompt += `- Answer methodology questions about GTD principles and best practices\n`;
   prompt += `- Identify issues: projects with no next actions, vague actions, unclear outcomes\n\n`;
 
-  prompt += `Important: You are read-only. Provide advice and recommendations, but you cannot edit files.\n\n`;
+  prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
+  prompt += `- Move important actions to the hotlist for today\n`;
+  prompt += `- Improve vague or unclear next actions to be more specific\n`;
+  prompt += `- Add missing next actions to projects\n`;
+  prompt += `- Update project status (archive completed projects, etc.)\n\n`;
+  prompt += `When you identify improvements, use the available tools to suggest changes. `;
+  prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
 
   prompt += `Communication Style:\n`;
   prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
