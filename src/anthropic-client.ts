@@ -1,6 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { APIConnectionTimeoutError, APIError } from "@anthropic-ai/sdk/error";
-import { LanguageModelClient, LanguageModelRequest } from "./language-model";
+import {
+  LanguageModelClient,
+  LanguageModelRequest,
+  ToolDefinition,
+  ToolCallResponse,
+  ToolCall,
+} from "./language-model";
 
 export type MessageCreateParams = Anthropic.Messages.MessageCreateParamsNonStreaming;
 export type MessageResponse = Anthropic.Messages.Message;
@@ -364,6 +370,62 @@ class AnthropicLanguageModelClient implements LanguageModelClient {
     }
 
     return content.text;
+  }
+
+  async sendMessageWithTools(
+    request: LanguageModelRequest,
+    tools: ToolDefinition[]
+  ): Promise<ToolCallResponse> {
+    const systemMessages: string[] = [];
+    const anthropicMessages = request.messages
+      .filter((message) => {
+        if (message.role === "system") {
+          systemMessages.push(message.content);
+          return false;
+        }
+        return true;
+      })
+      .map((message) => ({
+        role: message.role as "user" | "assistant",
+        content: message.content,
+      }));
+
+    // Convert tools to Anthropic format
+    const anthropicTools = tools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      input_schema: tool.input_schema,
+    }));
+
+    const response = await this.client.createMessage({
+      model: request.model,
+      max_tokens: request.maxTokens,
+      messages: anthropicMessages,
+      system: systemMessages.length > 0 ? systemMessages.join("\n\n") : undefined,
+      tools: anthropicTools,
+    });
+
+    // Parse response for tool calls
+    const textContent: string[] = [];
+    const toolCalls: ToolCall[] = [];
+
+    for (const block of response.content) {
+      if (block.type === "text") {
+        textContent.push(block.text);
+      } else if (block.type === "tool_use") {
+        toolCalls.push({
+          id: block.id,
+          name: block.name,
+          input: block.input as Record<string, unknown>,
+        });
+      }
+    }
+
+    return {
+      content: textContent.length > 0 ? textContent.join("\n") : undefined,
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      stopReason: response.stop_reason === "tool_use" ? "tool_use" : "end_turn",
+    };
   }
 }
 
