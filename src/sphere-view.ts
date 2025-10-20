@@ -1,0 +1,555 @@
+import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { FlowProjectScanner } from "./flow-scanner";
+import { FlowProject, PluginSettings, HotlistItem } from "./types";
+import { ActionLineFinder } from "./action-line-finder";
+import { buildProjectHierarchy, flattenHierarchy, ProjectNode } from "./project-hierarchy";
+import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
+
+export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
+
+interface SphereProjectSummary {
+  project: FlowProject;
+  priority: number | null;
+  depth: number; // Hierarchy depth: 0 for root, 1+ for sub-projects
+}
+
+interface SphereViewData {
+  projects: SphereProjectSummary[];
+  projectsNeedingNextActions: SphereProjectSummary[];
+  generalNextActions: string[];
+  generalNextActionsNotice?: string;
+}
+
+export class SphereView extends ItemView {
+  private readonly scanner: FlowProjectScanner;
+  private readonly lineFinder: ActionLineFinder;
+  private sphere: string;
+  private settings: PluginSettings;
+  private rightPaneLeaf: WorkspaceLeaf | null = null;
+  private saveSettings: () => Promise<void>;
+
+  constructor(
+    leaf: WorkspaceLeaf,
+    sphere: string,
+    settings: PluginSettings,
+    saveSettings: () => Promise<void>
+  ) {
+    super(leaf);
+    this.sphere = sphere;
+    this.settings = settings;
+    this.scanner = new FlowProjectScanner(this.app);
+    this.lineFinder = new ActionLineFinder(this.app);
+    this.saveSettings = saveSettings;
+  }
+
+  getViewType(): string {
+    return SPHERE_VIEW_TYPE;
+  }
+
+  getDisplayText(): string {
+    return `${this.getDisplaySphereName()} Sphere`;
+  }
+
+  getIcon(): string {
+    return "circle";
+  }
+
+  async onOpen() {
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.addClass("flow-gtd-sphere-view");
+
+    const loadingEl = container.createDiv({ cls: "flow-gtd-sphere-loading" });
+    loadingEl.setText("Loading sphere view...");
+
+    try {
+      const data = await this.loadSphereData();
+      loadingEl.remove();
+      this.renderContent(container as HTMLElement, data);
+    } catch (error) {
+      console.error("Failed to load sphere view", error);
+      loadingEl.setText("Unable to load sphere details. Check the console for more information.");
+    }
+  }
+
+  async onClose() {
+    // Cleanup if needed
+  }
+
+  // Save state for persistence across Obsidian reloads
+  getState() {
+    return {
+      sphere: this.sphere,
+    };
+  }
+
+  // Restore state when Obsidian reloads
+  async setState(state: { sphere?: string }, result: any) {
+    if (state?.sphere) {
+      this.sphere = state.sphere;
+    }
+    await super.setState(state, result);
+  }
+
+  // Method to update the sphere and refresh the view
+  async setSphere(sphere: string, settings: PluginSettings, saveSettings: () => Promise<void>) {
+    this.sphere = sphere;
+    this.settings = settings;
+    this.saveSettings = saveSettings;
+    await this.onOpen();
+  }
+
+  private async loadSphereData(): Promise<SphereViewData> {
+    const allProjects = await this.scanner.scanProjects();
+
+    // Build hierarchy from ALL projects first (so parent relationships are preserved)
+    const hierarchy = buildProjectHierarchy(allProjects);
+    const flattenedHierarchy = flattenHierarchy(hierarchy);
+
+    // Then filter to only sphere projects with live status
+    const projectSummaries = flattenedHierarchy
+      .filter(
+        (node) =>
+          node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
+          node.project.status === "live" &&
+          !node.project.file.startsWith("Templates/") &&
+          node.project.file !== this.settings.projectTemplateFilePath
+      )
+      .map((node) => ({
+        project: node.project,
+        priority: this.normalizePriority(node.project.priority),
+        depth: node.depth,
+      }))
+      .sort((a, b) => this.compareProjects(a, b));
+
+    const projectsNeedingNextActions = projectSummaries.filter(
+      ({ project }) => !project.nextActions || project.nextActions.length === 0
+    );
+
+    const { generalNextActions, generalNextActionsNotice } = await this.readGeneralNextActions();
+
+    return {
+      projects: projectSummaries,
+      projectsNeedingNextActions,
+      generalNextActions,
+      generalNextActionsNotice,
+    };
+  }
+
+  private renderContent(container: HTMLElement, data: SphereViewData) {
+    const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
+    titleEl.setText(this.getDisplaySphereName());
+
+    this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
+    this.renderProjectsSection(container, data.projects);
+    this.renderGeneralNextActionsSection(
+      container,
+      data.generalNextActions,
+      data.generalNextActionsNotice
+    );
+  }
+
+  private renderProjectsNeedingActionsSection(
+    container: HTMLElement,
+    projects: SphereProjectSummary[]
+  ) {
+    const section = this.createSection(container, "Projects needing next actions");
+
+    if (projects.length === 0) {
+      this.renderEmptyMessage(section, "All projects have next actions recorded.");
+      return;
+    }
+
+    const listEl = section.createEl("ul", { cls: "flow-gtd-sphere-list" });
+    projects.forEach(({ project }) => {
+      const item = listEl.createEl("li", { cls: "flow-gtd-sphere-list-item" });
+      const link = item.createEl("a", {
+        text: project.title,
+        cls: "flow-gtd-sphere-project-link",
+      });
+      link.style.cursor = "pointer";
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openProjectFile(project.file);
+      });
+    });
+  }
+
+  private renderProjectsSection(container: HTMLElement, projects: SphereProjectSummary[]) {
+    const section = this.createSection(container, "Projects");
+
+    if (projects.length === 0) {
+      this.renderEmptyMessage(section, "No projects are tagged with this sphere yet.");
+      return;
+    }
+
+    projects.forEach(({ project, priority, depth }) => {
+      const wrapper = section.createDiv({ cls: "flow-gtd-sphere-project" });
+
+      // Apply indentation based on hierarchy depth
+      if (depth > 0) {
+        wrapper.style.marginLeft = `${depth * 32}px`;
+        wrapper.style.width = `calc(100% - ${depth * 32}px)`;
+        wrapper.addClass("flow-gtd-sphere-subproject");
+      }
+
+      const header = wrapper.createDiv({ cls: "flow-gtd-sphere-project-header" });
+
+      const titleLink = header.createEl("a", {
+        text: project.title,
+        cls: "flow-gtd-sphere-project-title flow-gtd-sphere-project-link",
+      });
+      titleLink.style.cursor = "pointer";
+      titleLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openProjectFile(project.file);
+      });
+      if (priority !== null) {
+        header.createSpan({
+          cls: "flow-gtd-sphere-project-priority",
+          text: `Priority ${priority}`,
+        });
+      }
+
+      if (project.nextActions && project.nextActions.length > 0) {
+        const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+        project.nextActions.forEach((action, index) => {
+          const item = list.createEl("li", { text: action });
+          item.style.cursor = "pointer";
+
+          // Check if this action is in the hotlist and add CSS class if so
+          const inHotlist = this.settings.hotlist.some(
+            (hotlistItem) => hotlistItem.file === project.file && hotlistItem.text === action
+          );
+          if (inHotlist) {
+            item.addClass("sphere-action-in-hotlist");
+          }
+
+          item.addEventListener("click", async (e) => {
+            // Capture element reference before any async operations
+            const clickedElement = e.currentTarget as HTMLElement;
+
+            // Find the exact line number for this action
+            const lineResult = await this.lineFinder.findActionLine(project.file, action);
+            if (!lineResult.found) {
+              console.error("Could not find line for action:", action);
+              return;
+            }
+
+            if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
+              await this.removeFromHotlist(project.file, lineResult.lineNumber!, clickedElement);
+            } else {
+              await this.addToHotlist(
+                action,
+                project.file,
+                lineResult.lineNumber!,
+                lineResult.lineContent!,
+                this.sphere,
+                false,
+                clickedElement
+              );
+            }
+          });
+        });
+      } else {
+        this.renderEmptyMessage(wrapper, "No next actions captured yet.");
+      }
+    });
+  }
+
+  private renderGeneralNextActionsSection(
+    container: HTMLElement,
+    actions: string[],
+    notice?: string
+  ) {
+    const section = this.createSection(container, "General next actions");
+
+    if (notice) {
+      const noticeEl = section.createDiv({ cls: "flow-gtd-sphere-notice" });
+      noticeEl.setText(notice);
+    }
+
+    if (actions.length === 0) {
+      this.renderEmptyMessage(section, "No general next actions tagged for this sphere.");
+      return;
+    }
+
+    const list = section.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+    const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
+
+    actions.forEach((action, index) => {
+      const item = list.createEl("li", { text: action });
+      item.style.cursor = "pointer";
+
+      // Check if this action is in the hotlist and add CSS class if so
+      const inHotlist = this.settings.hotlist.some(
+        (hotlistItem) => hotlistItem.file === nextActionsFile && hotlistItem.text === action
+      );
+      if (inHotlist) {
+        item.addClass("sphere-action-in-hotlist");
+      }
+
+      item.addEventListener("click", async (e) => {
+        // Capture element reference before any async operations
+        const clickedElement = e.currentTarget as HTMLElement;
+
+        // Find the exact line number for this action
+        const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
+        if (!lineResult.found) {
+          console.error("Could not find line for action:", action);
+          return;
+        }
+
+        if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
+          await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!, clickedElement);
+        } else {
+          await this.addToHotlist(
+            action,
+            nextActionsFile,
+            lineResult.lineNumber!,
+            lineResult.lineContent!,
+            this.sphere,
+            true,
+            clickedElement
+          );
+        }
+      });
+    });
+  }
+
+  private createSection(container: HTMLElement, title: string): HTMLElement {
+    const section = container.createDiv({ cls: "flow-gtd-sphere-section" });
+    section.createEl("h3", { text: title, cls: "flow-gtd-sphere-section-title" });
+    return section;
+  }
+
+  private renderEmptyMessage(container: HTMLElement, message: string) {
+    container.createDiv({ cls: "flow-gtd-sphere-empty" }).setText(message);
+  }
+
+  private compareProjects(a: SphereProjectSummary, b: SphereProjectSummary): number {
+    if (a.priority !== null && b.priority !== null && a.priority !== b.priority) {
+      return a.priority - b.priority;
+    }
+
+    if (a.priority !== null && b.priority === null) {
+      return -1;
+    }
+
+    if (a.priority === null && b.priority !== null) {
+      return 1;
+    }
+
+    return a.project.title.localeCompare(b.project.title);
+  }
+
+  private normalizePriority(priority: FlowProject["priority"]): number | null {
+    if (typeof priority === "number" && Number.isFinite(priority)) {
+      return priority;
+    }
+    return null;
+  }
+
+  private matchesSphereTag(tag: string): boolean {
+    const normalizedTag = tag.replace(/^#/, "").toLowerCase();
+    if (!normalizedTag.startsWith("project/")) {
+      return false;
+    }
+
+    const sphereTag = normalizedTag.slice("project/".length);
+    return this.normalizeSphereValue(sphereTag) === this.normalizeSphereValue(this.sphere);
+  }
+
+  private normalizeSphereValue(value: string): string {
+    return value.trim().toLowerCase().replace(/\s+/g, "-");
+  }
+
+  private async readGeneralNextActions(): Promise<{
+    generalNextActions: string[];
+    generalNextActionsNotice?: string;
+  }> {
+    const path = this.settings.nextActionsFilePath?.trim();
+    if (!path) {
+      return {
+        generalNextActions: [],
+        generalNextActionsNotice: "Next actions file path is not configured in settings.",
+      };
+    }
+
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) {
+      return {
+        generalNextActions: [],
+        generalNextActionsNotice: `Next actions file "${path}" was not found in the vault.`,
+      };
+    }
+
+    try {
+      const content = await this.app.vault.read(file);
+      return { generalNextActions: this.extractGeneralNextActions(content) };
+    } catch (error) {
+      console.error("Failed to read next actions file", error);
+      return {
+        generalNextActions: [],
+        generalNextActionsNotice: "Unable to read next actions file.",
+      };
+    }
+  }
+
+  private extractGeneralNextActions(content: string): string[] {
+    const lines = content.split(/\r?\n/);
+    const actions: string[] = [];
+    const checkboxPattern = /^[-*]\s*\[([ xXw])\]\s*(.+)$/;
+    const normalizedSphere = this.normalizeSphereValue(this.sphere);
+
+    for (const line of lines) {
+      const match = line.match(checkboxPattern);
+      if (!match) {
+        continue;
+      }
+
+      const checkboxStatus = match[1];
+      let rawText = match[2];
+
+      // Skip completed items ([x] or [X])
+      if (checkboxStatus === "x" || checkboxStatus === "X") {
+        continue;
+      }
+
+      let belongsToSphere = false;
+
+      rawText = rawText.replace(/#sphere\/([^\s]+)/gi, (fullMatch, captured) => {
+        if (this.normalizeSphereValue(String(captured)) === normalizedSphere) {
+          belongsToSphere = true;
+          return "";
+        }
+        return fullMatch;
+      });
+
+      if (!belongsToSphere) {
+        continue;
+      }
+
+      const cleaned = rawText.replace(/\s{2,}/g, " ").trim();
+      if (cleaned.length > 0) {
+        actions.push(cleaned);
+      }
+    }
+
+    return actions;
+  }
+
+  private getDisplaySphereName(): string {
+    return this.sphere
+      .split(/[-_\s]+/)
+      .filter((part) => part.length > 0)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+  }
+
+  private async openProjectFile(filePath: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+
+    if (!(file instanceof TFile)) {
+      console.error(`Project file not found: ${filePath}`);
+      return;
+    }
+
+    try {
+      // Always get a fresh leaf - the cached leaf may have been closed or detached
+      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      await leaf.openFile(file);
+      this.rightPaneLeaf = leaf;
+    } catch (error) {
+      console.error(`Failed to open project file: ${filePath}`, error);
+    }
+  }
+
+  private async addToHotlist(
+    text: string,
+    file: string,
+    lineNumber: number,
+    lineContent: string,
+    sphere: string,
+    isGeneral: boolean,
+    element?: HTMLElement
+  ): Promise<void> {
+    const item: HotlistItem = {
+      file,
+      lineNumber,
+      lineContent,
+      text,
+      sphere,
+      isGeneral,
+      addedAt: Date.now(),
+    };
+
+    this.settings.hotlist.push(item);
+    await this.saveSettings();
+    await this.activateHotlistView();
+    await this.refreshHotlistView();
+
+    // Update styling on the specific element instead of refreshing entire view
+    if (element) {
+      element.classList.add("sphere-action-in-hotlist");
+    }
+  }
+
+  private async removeFromHotlist(
+    file: string,
+    lineNumber: number,
+    element?: HTMLElement
+  ): Promise<void> {
+    this.settings.hotlist = this.settings.hotlist.filter(
+      (item) => !(item.file === file && item.lineNumber === lineNumber)
+    );
+    await this.saveSettings();
+    await this.activateHotlistView();
+    await this.refreshHotlistView();
+
+    // Update styling on the specific element instead of refreshing entire view
+    if (element) {
+      element.classList.remove("sphere-action-in-hotlist");
+    }
+  }
+
+  private isOnHotlist(file: string, lineNumber: number): boolean {
+    return this.settings.hotlist.some(
+      (item) => item.file === file && item.lineNumber === lineNumber
+    );
+  }
+
+  private async activateHotlistView(): Promise<void> {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        await rightLeaf.setViewState({
+          type: HOTLIST_VIEW_TYPE,
+          active: true,
+        });
+        leaf = rightLeaf;
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  private async refreshHotlistView(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
+
+    if (leaves.length > 0) {
+      for (const leaf of leaves) {
+        if (leaf.view && "onOpen" in leaf.view) {
+          await (leaf.view as any).onOpen();
+        }
+      }
+    }
+  }
+}

@@ -1,44 +1,21 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "inlineSourceMap": true,
+    "inlineSources": true,
     "module": "ESNext",
     "target": "ES2020",
     "allowJs": false,
     "noImplicitAny": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitReturns": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "lib": ["DOM", "ESNext"],
-    "types": ["svelte", "jest"],
-    "allowSyntheticDefaultImports": true,
+    "strictNullChecks": true,
+    "lib": ["DOM", "ES2020"],
     "skipLibCheck": true,
-    "noEmitOnError": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-	"paths": {
-      "main.js": ["src/main.ts"]
-    },
-	"outDir": "./dist"
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
-  "exclude": ["node_modules", "dist", "scripts", "tests"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "tests"]
 }
- //  "compilerOptions": {
- //    "baseUrl": "src",
-	// "rootDir": "src",
-	// "outDir": ".",
- //    "module": "nodenext",
- //    "target": "es6",
- //    "allowJs": false,
- //    "noImplicitAny": true,
- //    "moduleResolution": "nodenext",
- //    "importHelpers": true,
- //    "isolatedModules": false,
-	// "strictNullChecks": true
- //  },

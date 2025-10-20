@@ -1,64 +1,31 @@
 # Repository Guidelines
 
-## Project Structure & Modules
-- `src/` – TypeScript plugin code and Svelte UI.
-  - `components/` (Svelte, PascalCase), `views/`, `modals/`, `settings/`, `styles/` (SCSS), `templates/`, `typings/`.
-  - Entrypoint: `src/main.ts`. Styles root: `src/styles.scss`.
-- `tests/` – Jest tests and fixtures (e.g., `tests/DefaultTestVault`).
-- `docs/` – User-facing documentation.
-- Build outputs bundle to the repo root (e.g., `main.js`). Plugin manifest: `manifest.json`.
+## Project Structure & Module Organization
 
-## Build, Test, and Dev Commands
-- `npm run dev` – Start esbuild in watch mode for local development.
-- `npm run build` – Type-checks with `tsc` then creates a production bundle.
-- `npm run typecheck` – Type-check only, no emit.
-- `npm test` – Runs Jest with `ts-jest` (ESM enabled).
-- `npm run verify` – Runs type-check/build then tests (definition of done).
-- `npm run format` – Formats TS/JS/JSON/Svelte via Prettier.
-Note: Node 20 is required (`.mise.toml`).
+Flow GTD Coach is an Obsidian plugin written in TypeScript. Core services live in `src/` (e.g., `flow-scanner.ts`, `inbox-scanner.ts`, `gtd-processor.ts`) with shared contracts in `src/types.ts`. UI wiring stays in `src/main.ts`, and modal styles belong in `styles.css`. Jest specs mirror source files under `tests/` with Obsidian shims in `tests/__mocks__/obsidian.ts`.
 
-## Coding Style & Naming
-- Indentation: 4 spaces (`.editorconfig`); Markdown/JSON/YAML use 2.
-- Prettier: no semicolons, single quotes, Svelte plugin. Run `npm run format`.
-- ESLint: TypeScript rules enabled; unused vars flagged; TS comments allowed.
-- Naming: TypeScript files `camelCase` (e.g., `utils.ts`), Svelte `PascalCase` (e.g., `PlanningView.svelte`), SCSS `kebab-case`.
+## Build, Test, and Development Commands
+
+- `npm run dev` — build bundle with esbuild in watch mode; keep it running during active development.
+- `npm run build` — perform a type check via `tsc` then emit the production bundle to `dist/`.
+- `npm run format` — auto-format all code with Prettier (run before committing).
+- `npm run format:check` — verify code formatting without modifying files.
+- `npm test` / `npm run test:watch` / `npm run test:coverage` — execute Jest suites; coverage thresholds are enforced at 80% across metrics.
+- `npm run evaluate` — launch scripted AI evaluations (requires Anthropic credentials).
+- `npm run version` — bump manifest metadata and stage `manifest.json` plus `versions.json` for release.
+
+## Coding Style & Naming Conventions
+
+Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. The CI pipeline will fail if code is not properly formatted. Avoid introducing Unicode unless already present.
 
 ## Testing Guidelines
-- Framework: Jest + `ts-jest` in Node environment.
-- Locations: `**/tests/**/*.test.ts` or colocated `*.test.ts` (see `jest.config.ts`).
-- Aim for meaningful unit tests around utilities and view logic. Include minimal vault fixtures under `tests/` when needed.
-- Run locally with `npm test`.
 
-## Test-Driven Development (TDD)
-- Default to TDD for all features and fixes. Write a failing test first, then implement the smallest change to make it pass, and finally refactor.
-- Where to put tests:
-  - Unit tests live under `tests/` or as colocated `*.test.ts` next to the code.
-  - Prefer testing pure logic (utilities, view-model/state, parsing). For Svelte UI, extract logic into testable modules when possible. Avoid DOM/JSDOM reliance since Jest runs in Node env.
-- Workflow:
-  1) Add/adjust a test that expresses the desired behavior (red) → `npm test`
-  2) Implement the minimal code to satisfy the test (green) → `npm test`
-  3) Refactor safely → `npm run typecheck` and `npm test`
-  4) Before marking done, run `npm run verify` (type-check/build + tests) and `npm run format`
-- Bug fixes: first reproduce with a failing test; only then apply the fix.
-- Mocks/stubs:
-  - Externalized modules (e.g., `obsidian`, `electron`) should be mocked. Add light stubs under `tests/__mocks__/` or use `jest.mock` as needed.
-  - For filesystem-like behavior, prefer minimal fixtures under `tests/` (e.g., `tests/DefaultTestVault`).
-- PR expectations: every new behavior or bug fix includes appropriate tests authored prior to implementation wherever feasible.
-
-## Definition of Done (Agent + Devs)
-- Every feature or bugfix must pass both:
-  - Type-check/build: `npm run build` (or `npm run typecheck` during iteration)
-  - Tests: `npm test`
-- TDD: new or changed behavior is covered by tests authored before implementation wherever feasible
-- Do not mark a task complete until both pass locally.
-- CI enforces this on pushes and PRs (see `.github/workflows/ci.yaml`).
+Tests reside in `tests/` alongside the mirrored file name (e.g., `tests/flow-scanner.test.ts`). Use Jest with ts-jest, and extend the mocks in `tests/__mocks__/obsidian.ts` when Obsidian APIs change. Ensure new behavior covers both success and failure cases, and maintain ≥80% branch, line, function, and statement coverage by running `npm run test:coverage`.
 
 ## Commit & Pull Request Guidelines
-- Commits: short, imperative mood; include scope when helpful.
-  - Examples: `Fix processing view sort`, `Add focus area suggester`.
-- PRs: clear description, linked issues, screenshots/GIFs for UI changes, test plan, and notes on docs updates.
-- Ensure `npm run build`, `npm test`, and `npm run format` pass before requesting review.
 
-## Security & Configuration
-- Environment: `dotenv` loads `.env` from the Obsidian plugin folder during development; do not commit secrets.
-- Externalized modules (`obsidian`, `electron`, etc.) are not bundled; ensure runtime availability when testing inside Obsidian.
+Write imperative commit subjects such as "Add inbox batching." Group related changes, avoid committing build artifacts, and run `npm run format` and `npm run build` before requesting review. Pull requests should summarize scope, note manual testing, attach UI screenshots when relevant, and link issues using `Fixes #123` syntax.
+
+## Security & Configuration Tips
+
+Never commit Anthropic keys or other secrets. Store API keys via the plugin settings tab. Document new configuration defaults in the settings UI or `README.md` so agents and maintainers stay aligned.

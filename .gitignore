@@ -1,31 +1,31 @@
-# vscode
-.vscode 
+.mise.toml
 
-# Intellij
-*.iml
-.idea
+# Node modules
+node_modules/
 
-# npm
-node_modules
-
-# Don't include the compiled files in the repo.
-# They should be uploaded to GitHub releases instead.
+# Build outputs
 main.js
-styles.css
+main.js.map
+*.js.map
 
-# Exclude sourcemaps
-*.map
+# Test coverage
+coverage/
 
-# Exclude environment variables
-.env
+# IDE
+.vscode/
+.idea/
 
-# obsidian
-data.json
-
-# Exclude macOS Finder (System Explorer) View States
+# OS
 .DS_Store
+Thumbs.db
 
-# Exclude environment variables
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
 .env
+.env.local
 
-dist
+# Data files
+data.json

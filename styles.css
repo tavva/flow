@@ -1,0 +1,1252 @@
+/* Flow GTD Coach Plugin Styles */
+
+.flow-gtd-inbox-modal {
+	padding: 20px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+/* Override Obsidian's modal width for our inbox modal */
+.modal:has(.flow-gtd-inbox-modal) {
+	width: 90vw !important;
+	max-width: 1200px !important;
+}
+
+.flow-gtd-description {
+	color: var(--text-muted);
+	margin-bottom: 20px;
+}
+
+.flow-gtd-mode-toggle {
+	margin-bottom: 20px;
+}
+
+.flow-gtd-textarea {
+	width: 100%;
+	min-height: 200px;
+	padding: 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	font-size: 14px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	resize: vertical;
+}
+
+
+.flow-gtd-items-list {
+	margin: 20px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.flow-gtd-editable-item {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px;
+	border: 2px solid var(--background-modifier-border);
+	border-radius: 12px;
+	background-color: var(--background-primary);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	transition: box-shadow 0.2s ease;
+	margin-bottom: 24px;
+}
+
+.flow-gtd-editable-item:hover {
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-item-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.flow-gtd-ai-refine-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 16px;
+	background-color: var(--interactive-accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.flow-gtd-ai-refine-button:hover {
+	opacity: 0.9;
+}
+
+.flow-gtd-refine-all-button {
+	padding: 8px 20px;
+	background-color: var(--interactive-accent);
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-refine-all-button:hover {
+	opacity: 0.9;
+	box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.flow-gtd-item-index {
+	font-weight: 600;
+	color: var(--text-faint);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.flow-gtd-item-pill {
+	padding: 4px 12px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	border: 1px solid var(--background-modifier-border);
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.flow-gtd-item-pill-success {
+	background-color: rgba(76, 175, 80, 0.1);
+	color: var(--color-green);
+	border-color: rgba(76, 175, 80, 0.3);
+}
+
+.flow-gtd-item-pill-warn {
+	color: var(--color-orange);
+	border-color: var(--color-orange);
+}
+
+.flow-gtd-item-pill-create-project {
+	color: var(--color-blue);
+	border-color: var(--color-blue);
+}
+
+.flow-gtd-item-pill-add-to-project {
+	color: var(--color-cyan);
+	border-color: var(--color-cyan);
+}
+
+.flow-gtd-item-pill-next-actions-file {
+	color: var(--color-green);
+	border-color: var(--color-green);
+}
+
+.flow-gtd-item-pill-someday-file {
+	color: var(--color-yellow);
+	border-color: var(--color-yellow);
+}
+
+.flow-gtd-item-pill-reference {
+	color: var(--color-purple);
+	border-color: var(--color-purple);
+}
+
+.flow-gtd-item-pill-person {
+	color: var(--color-pink);
+	border-color: var(--color-pink);
+}
+
+.flow-gtd-item-pill-trash {
+	color: var(--color-red);
+	border-color: var(--color-red);
+}
+
+.flow-gtd-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px;
+	margin-bottom: 8px;
+	background-color: var(--background-secondary);
+	border-radius: 4px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-item-text {
+	flex: 1;
+	margin-right: 10px;
+	min-width: 0;
+	word-wrap: break-word;
+	overflow-wrap: break-word;
+}
+
+.flow-gtd-delete-btn {
+	background-color: var(--background-modifier-error);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	width: 24px;
+	height: 24px;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.flow-gtd-delete-btn:hover {
+	opacity: 0.8;
+}
+
+.flow-gtd-empty-state {
+	text-align: center;
+	padding: 40px 20px;
+}
+
+.flow-gtd-empty {
+	color: var(--text-muted);
+	font-size: 16px;
+}
+
+.flow-gtd-progress {
+        margin: 16px 0;
+        padding: 16px;
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 8px;
+        background-color: var(--background-primary-alt);
+}
+
+.flow-gtd-progress-text {
+        margin-bottom: 12px;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 500;
+}
+
+.flow-gtd-progress-bar {
+        width: 100%;
+        height: 12px;
+        background-color: var(--background-secondary);
+        border-radius: 999px;
+        overflow: hidden;
+        display: flex;
+}
+
+.flow-gtd-progress-segment {
+        height: 100%;
+        transition: width 0.3s ease;
+}
+
+.flow-gtd-progress-segment-complete {
+        background-color: var(--color-green);
+}
+
+.flow-gtd-progress-segment-in-flight {
+        background-color: var(--color-orange);
+}
+
+.flow-gtd-progress-segment-pending {
+        background-color: var(--text-muted);
+}
+
+.flow-gtd-progress-legend {
+        margin-top: 12px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+}
+
+.flow-gtd-progress-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-muted);
+}
+
+.flow-gtd-progress-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        display: inline-block;
+}
+
+.flow-gtd-progress-swatch-complete {
+        background-color: var(--color-green);
+}
+
+.flow-gtd-progress-swatch-in-flight {
+        background-color: var(--color-orange);
+}
+
+.flow-gtd-progress-swatch-pending {
+        background-color: var(--text-muted);
+}
+
+.flow-gtd-progress-legend-label {
+        font-weight: 500;
+}
+
+.flow-gtd-current-item {
+	background-color: var(--background-primary-alt);
+	padding: 20px;
+	border-radius: 8px;
+	margin: 20px 0;
+	border: 2px solid var(--interactive-accent);
+}
+
+.flow-gtd-label {
+	font-size: 12px;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.flow-gtd-current-text {
+	font-size: 18px;
+	font-weight: 500;
+	margin: 0;
+}
+
+.flow-gtd-buttons {
+	margin: 20px 0;
+}
+
+.flow-gtd-complete {
+	text-align: center;
+	padding: 40px 20px;
+}
+
+.flow-gtd-complete-text {
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--text-success);
+}
+
+.flow-gtd-processed-list {
+	margin: 20px 0;
+}
+
+.flow-gtd-processed-item {
+	padding: 15px;
+	margin-bottom: 12px;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 4px solid var(--interactive-accent);
+}
+
+.flow-gtd-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	margin-bottom: 8px;
+	text-transform: uppercase;
+}
+
+.flow-gtd-badge-next-action {
+	background-color: var(--text-success);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-project {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-reference {
+	background-color: var(--text-accent);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-badge-someday {
+	background-color: var(--text-muted);
+	color: var(--text-on-accent);
+}
+
+.flow-gtd-action {
+	font-size: 14px;
+	font-weight: 500;
+	margin: 8px 0;
+}
+
+.flow-gtd-suggestions {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-suggestion {
+	padding: 8px;
+	margin: 4px 0;
+	background-color: var(--background-primary);
+	border-radius: 4px;
+	font-size: 13px;
+}
+
+.flow-gtd-confidence {
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+.flow-gtd-info {
+	padding: 15px;
+	background-color: var(--background-secondary);
+	border-radius: 6px;
+	border-left: 4px solid var(--interactive-accent);
+}
+
+.flow-gtd-info ul {
+	margin-left: 20px;
+}
+
+.flow-gtd-info li {
+	margin: 8px 0;
+}
+
+/* Editable fields */
+.flow-gtd-action-editor {
+	margin: 8px 0 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.flow-gtd-actions-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.flow-gtd-add-action-btn {
+	width: 100%;
+	padding: 12px;
+	border: 2px dashed var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: transparent;
+	color: var(--text-muted);
+	font-size: 14px;
+	cursor: pointer;
+	transition: border-color 0.2s ease, color 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.flow-gtd-add-action-btn:hover {
+	border-color: var(--background-modifier-border-hover);
+	color: var(--text-normal);
+}
+
+.flow-gtd-actions-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.flow-gtd-action-item {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary);
+	transition: border-color 0.2s ease;
+	position: relative;
+}
+
+.flow-gtd-action-item:hover {
+	border-color: var(--background-modifier-border-hover);
+}
+
+.flow-gtd-action-item:hover .flow-gtd-action-remove {
+	opacity: 1;
+}
+
+.flow-gtd-action-number {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(33, 150, 243, 0.1);
+	color: var(--color-blue);
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 600;
+	margin-top: 2px;
+}
+
+.flow-gtd-action-remove {
+	flex-shrink: 0;
+	border: none;
+	background: none;
+	color: var(--text-faint);
+	border-radius: 4px;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.flow-gtd-action-remove:hover {
+	background: rgba(244, 67, 54, 0.1);
+	color: var(--color-red);
+}
+
+/* Legacy class for backwards compatibility */
+.flow-gtd-remove-action-btn {
+	border: none;
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	border-radius: 999px;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	line-height: 1;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.flow-gtd-remove-action-btn:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.flow-gtd-action-input,
+.flow-gtd-project-title-input,
+.flow-gtd-project-input {
+	width: 100%;
+	padding: 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+	font-family: var(--font-text);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-gtd-action-input:focus,
+.flow-gtd-project-title-input:focus,
+.flow-gtd-project-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.flow-gtd-project-title-editor {
+	margin: 12px 0;
+	padding: 12px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+}
+
+.flow-gtd-project-title-label-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.flow-gtd-ai-suggest-button {
+	margin-top: 8px;
+}
+
+.flow-gtd-section-label {
+	display: block;
+	margin-top: 4px;
+	margin-bottom: 2px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: var(--text-faint);
+	text-transform: uppercase;
+}
+
+.flow-gtd-original-box {
+	padding: 16px;
+	border-radius: 8px;
+	background-color: rgba(33, 150, 243, 0.05);
+	border: 1px solid rgba(33, 150, 243, 0.15);
+}
+
+.theme-dark .flow-gtd-original-box {
+	background-color: rgba(33, 150, 243, 0.08);
+	border-color: rgba(33, 150, 243, 0.2);
+}
+
+.flow-gtd-original-text {
+	margin: 0;
+	padding: 0;
+	font-size: 14px;
+	line-height: 1.45;
+	color: var(--text-normal);
+}
+
+.flow-gtd-refine-button {
+	border: 1px solid var(--background-modifier-border);
+	background-color: var(--background-primary);
+	border-radius: 8px;
+	padding: 4px 10px;
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+	color: var(--text-normal);
+	transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.flow-gtd-refine-button:hover {
+	background-color: var(--background-modifier-hover);
+	border-color: var(--interactive-accent);
+}
+
+/* AI Recommendations and selectors */
+.flow-gtd-recommendation {
+	margin: 12px 0;
+	padding: 10px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+	border-left: 3px solid var(--interactive-accent);
+}
+
+.flow-gtd-ai-recommendation {
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.flow-gtd-recommendation-reason {
+	font-size: 13px;
+	color: var(--text-muted);
+	margin: 0;
+}
+
+.flow-gtd-action-selector,
+.flow-gtd-project-selector {
+	margin: 12px 0;
+}
+
+.flow-gtd-person-selector {
+	margin: 12px 0;
+}
+
+.flow-gtd-inline-field {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.flow-gtd-inline-label {
+	margin: 0;
+	white-space: nowrap;
+}
+
+.flow-gtd-inline-control {
+	flex: 1 1 220px;
+	max-width: 320px;
+	min-width: 160px;
+}
+
+.flow-gtd-inline-select,
+.flow-gtd-inline-select select,
+select.flow-gtd-inline-select,
+.flow-gtd-action-selector select,
+.flow-gtd-project-selector select,
+.flow-gtd-person-selector select {
+	width: 100%;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary) !important;
+	color: var(--text-normal) !important;
+	padding: 10px 12px !important;
+	font-size: 14px !important;
+	font-family: var(--font-interface) !important;
+	line-height: 1.5 !important;
+	height: auto !important;
+	min-height: 44px !important;
+	transition: border-color 0.2s ease, box-shadow 0.2s ease;
+	-webkit-text-fill-color: var(--text-normal) !important;
+	opacity: 1 !important;
+	box-sizing: border-box !important;
+}
+
+.flow-gtd-inline-select:focus,
+.flow-gtd-inline-select select:focus,
+select.flow-gtd-inline-select:focus,
+.flow-gtd-action-selector select:focus,
+.flow-gtd-project-selector select:focus,
+.flow-gtd-person-selector select:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.flow-gtd-inline-select option,
+.flow-gtd-inline-select select option,
+select.flow-gtd-inline-select option,
+.flow-gtd-action-selector select option,
+.flow-gtd-project-selector select option,
+.flow-gtd-person-selector select option {
+	color: var(--text-normal) !important;
+	background-color: var(--background-primary) !important;
+	padding: 8px;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+/* Dark theme overrides */
+.theme-dark .flow-gtd-inline-select,
+.theme-dark .flow-gtd-inline-select select,
+.theme-dark select.flow-gtd-inline-select,
+.theme-dark .flow-gtd-action-selector select,
+.theme-dark .flow-gtd-project-selector select,
+.theme-dark .flow-gtd-person-selector select {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+.theme-dark .flow-gtd-inline-select option,
+.theme-dark .flow-gtd-inline-select select option,
+.theme-dark select.flow-gtd-inline-select option,
+.theme-dark .flow-gtd-action-selector select option,
+.theme-dark .flow-gtd-project-selector select option,
+.theme-dark .flow-gtd-person-selector select option {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+}
+
+/* Ultra-specific overrides for select visibility */
+.flow-gtd-editable-item select,
+.flow-gtd-action-selector > div > select,
+.flow-gtd-project-selector > div > select,
+.flow-gtd-person-selector > div > select,
+.flow-gtd-project-section select {
+	color: var(--text-normal) !important;
+	-webkit-text-fill-color: var(--text-normal) !important;
+	opacity: 1 !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
+	padding: 10px 12px !important;
+	height: auto !important;
+	min-height: 44px !important;
+	box-sizing: border-box !important;
+}
+
+@media (max-width: 600px) {
+	.flow-gtd-inline-control {
+		flex-basis: 100%;
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	.flow-gtd-inline-label {
+		flex: 1 1 100%;
+	}
+}
+
+.flow-gtd-sphere-selector {
+	margin: 12px 0;
+}
+
+.flow-gtd-sphere-recommendation {
+	margin-bottom: 8px;
+	padding: 8px;
+	background-color: var(--background-primary-alt);
+	border-radius: 4px;
+}
+
+.flow-gtd-sphere-recommendation-text {
+	font-size: 13px;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.flow-gtd-sphere-buttons {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.flow-gtd-sphere-button {
+	padding: 8px 24px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: rgba(0, 0, 0, 0.05);
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+}
+
+.flow-gtd-sphere-button:hover {
+	background-color: rgba(0, 0, 0, 0.08);
+}
+
+.flow-gtd-sphere-button.selected {
+	background-color: var(--text-normal);
+	color: var(--background-primary);
+	border-color: var(--text-normal);
+}
+
+.theme-dark .flow-gtd-sphere-button {
+	background-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .flow-gtd-sphere-button:hover {
+	background-color: rgba(255, 255, 255, 0.12);
+}
+
+.theme-dark .flow-gtd-sphere-button.selected {
+        background-color: var(--text-normal);
+        color: var(--background-primary);
+}
+
+.flow-gtd-sphere-view {
+        padding: 24px;
+        overflow-y: auto;
+        height: 100%;
+}
+
+.flow-gtd-sphere-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 16px;
+}
+
+.flow-gtd-sphere-section {
+        margin-bottom: 24px;
+        padding: 16px;
+        border-radius: 12px;
+        background-color: var(--background-primary-alt);
+        border: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-sphere-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+        color: var(--text-normal);
+}
+
+.flow-gtd-sphere-list {
+        margin: 0;
+        padding-left: 20px;
+}
+
+.flow-gtd-sphere-list-item {
+        margin-bottom: 6px;
+}
+
+.flow-gtd-sphere-project {
+        padding: 12px;
+        border-radius: 10px;
+        background-color: var(--background-primary);
+        border: 1px solid var(--background-modifier-border);
+        margin-bottom: 12px;
+}
+
+.flow-gtd-sphere-subproject {
+        border-left: 3px solid var(--interactive-accent);
+        background-color: var(--background-secondary);
+}
+
+.flow-gtd-sphere-project-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 8px;
+}
+
+.flow-gtd-sphere-project-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-normal);
+}
+
+.flow-gtd-sphere-project-priority {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+}
+
+.flow-gtd-sphere-next-actions {
+        margin: 0;
+        padding-left: 20px;
+}
+
+.flow-gtd-sphere-next-actions li {
+        padding: 2px 8px;
+        margin-bottom: 2px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.2s ease;
+}
+
+.flow-gtd-sphere-next-actions li:hover {
+        background-color: var(--background-modifier-hover);
+}
+
+.flow-gtd-sphere-empty {
+        font-size: 13px;
+        color: var(--text-muted);
+}
+
+.flow-gtd-sphere-notice {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+}
+
+.flow-gtd-sphere-loading {
+        font-size: 14px;
+        color: var(--text-muted);
+}
+
+.flow-gtd-sphere-project-link {
+        color: var(--text-accent);
+        text-decoration: none;
+        cursor: pointer;
+        transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.flow-gtd-sphere-project-link:hover {
+        color: var(--interactive-accent);
+        text-decoration: underline;
+}
+
+/* Waiting For View */
+.flow-gtd-waiting-for-view {
+	padding: 20px;
+}
+
+.flow-gtd-waiting-for-title {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+}
+
+.flow-gtd-waiting-for-loading {
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.flow-gtd-waiting-for-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 20px 0;
+}
+
+.flow-gtd-waiting-for-file-section {
+	margin-bottom: 30px;
+}
+
+.flow-gtd-waiting-for-file-header {
+	margin-bottom: 10px;
+	font-size: 1.1em;
+}
+
+.flow-gtd-waiting-for-file-link {
+	color: var(--text-accent);
+	text-decoration: none;
+}
+
+.flow-gtd-waiting-for-file-link:hover {
+	text-decoration: underline;
+}
+
+.flow-gtd-waiting-for-items {
+	list-style: none;
+	padding-left: 0;
+	margin-left: 20px;
+}
+
+.flow-gtd-waiting-for-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.flow-gtd-waiting-for-item-text {
+	flex: 1;
+	color: var(--text-normal);
+}
+
+.flow-gtd-waiting-for-item-text:hover {
+	color: var(--text-accent);
+}
+
+.flow-gtd-waiting-for-item-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.flow-gtd-waiting-for-action-btn {
+	padding: 4px 8px;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 0.9em;
+}
+
+.flow-gtd-waiting-for-action-btn:hover {
+	background: var(--interactive-hover);
+}
+
+/* Waiting For Toggle in Inbox Modal */
+.flow-gtd-next-action-waiting-toggle {
+	padding: 4px 8px;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	opacity: 0.6;
+	font-size: 16px;
+	transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.flow-gtd-next-action-waiting-toggle:hover {
+	opacity: 1;
+	background: var(--interactive-hover);
+}
+
+.flow-gtd-next-action-waiting-toggle.active {
+	opacity: 1;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+/* Hotlist View Styles */
+.flow-gtd-hotlist-view {
+	padding: 20px;
+}
+
+.flow-gtd-hotlist-title {
+	margin-bottom: 20px;
+	color: var(--text-normal);
+}
+
+.flow-gtd-hotlist-empty {
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 20px 0;
+	text-align: center;
+}
+
+.flow-gtd-hotlist-section {
+	margin-bottom: 30px;
+}
+
+.flow-gtd-hotlist-section-title {
+	font-size: 18px;
+	font-weight: 600;
+	margin-bottom: 16px;
+	padding-bottom: 8px;
+	border-bottom: 2px solid var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.flow-gtd-hotlist-file-section,
+.flow-gtd-hotlist-sphere-section {
+	margin-bottom: 24px;
+}
+
+.flow-gtd-hotlist-file-header,
+.flow-gtd-hotlist-sphere-header {
+	font-size: 15px;
+	font-weight: 600;
+	margin-bottom: 12px;
+	color: var(--text-accent);
+}
+
+.flow-gtd-hotlist-file-link {
+	color: var(--text-accent);
+	text-decoration: none;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.flow-gtd-hotlist-file-link:hover {
+	text-decoration: underline;
+	color: var(--interactive-accent);
+}
+
+.flow-gtd-hotlist-items {
+	list-style: none;
+	padding-left: 0;
+	margin: 0;
+}
+
+.flow-gtd-hotlist-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px;
+	margin-bottom: 8px;
+	border-radius: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-gtd-hotlist-item:hover {
+	background: var(--background-secondary-alt);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-hotlist-item-text {
+	flex: 1;
+	cursor: pointer;
+	color: var(--text-normal);
+	font-size: 14px;
+	margin-right: 12px;
+	min-width: 0;
+	word-break: break-word;
+	overflow-wrap: break-word;
+}
+
+.flow-gtd-hotlist-item-text:hover {
+	color: var(--text-accent);
+}
+
+.flow-gtd-hotlist-item-actions {
+	display: flex;
+	gap: 6px;
+	flex-shrink: 0;
+}
+
+.flow-gtd-hotlist-action-btn {
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 16px;
+	line-height: 1;
+	transition: all 0.2s ease;
+	min-width: 36px;
+	text-align: center;
+}
+
+.flow-gtd-hotlist-action-btn:hover {
+	background: var(--interactive-hover);
+	border-color: var(--interactive-accent);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-hotlist-action-btn:active {
+	transform: translateY(0);
+}
+
+/* Planning Mode Styles */
+.flow-gtd-sphere-planning-controls {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 24px;
+}
+
+.flow-gtd-sphere-planning-toggle {
+	padding: 10px 20px;
+	border: 2px solid var(--interactive-accent);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	border-radius: 8px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 14px;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.flow-gtd-sphere-planning-toggle:hover {
+	background: var(--background-secondary);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-sphere-planning-banner {
+	flex: 1;
+	padding: 10px 16px;
+	background: var(--background-modifier-info);
+	border: 2px solid var(--interactive-accent);
+	border-radius: 8px;
+	font-weight: 500;
+	font-size: 14px;
+	color: var(--text-normal);
+	text-align: center;
+}
+
+.flow-gtd-sphere-planning-active {
+	background: var(--background-secondary);
+}
+
+.flow-gtd-sphere-planning-active .flow-gtd-sphere-next-actions li {
+	cursor: pointer;
+	padding: 8px 12px;
+	border-radius: 6px;
+	margin-bottom: 8px;
+	transition: background-color 0.2s ease, transform 0.1s ease;
+	border: 1px solid transparent;
+}
+
+.flow-gtd-sphere-planning-active .flow-gtd-sphere-next-actions li:hover {
+	background: var(--background-modifier-hover);
+	border-color: var(--background-modifier-border);
+	transform: translateX(4px);
+}
+
+.flow-gtd-hotlist-indicator {
+	background: var(--background-modifier-success);
+	font-weight: 600;
+	border-color: var(--color-green) !important;
+}
+
+.flow-gtd-hotlist-indicator::before {
+	content: "✓ ";
+	color: var(--color-green);
+	font-weight: 700;
+	margin-right: 4px;
+}
+
+/* Sphere view: Visual indicator for actions in hotlist */
+.sphere-action-in-hotlist {
+	background-color: rgba(33, 150, 243, 0.15);
+	border-radius: 4px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.sphere-action-in-hotlist:hover {
+	background-color: rgba(33, 150, 243, 0.25);
+}
