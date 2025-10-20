@@ -524,6 +524,20 @@ export class HotlistView extends ItemView {
         !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
     await this.saveSettings();
+    await this.refreshSphereViews();
     await this.onOpen(); // Re-render
+  }
+
+  private async refreshSphereViews(): Promise<void> {
+    const { workspace } = this.app;
+    const leaves = workspace.getLeavesOfType("flow-gtd-sphere-view");
+
+    if (leaves.length > 0) {
+      for (const leaf of leaves) {
+        if (leaf.view && "onOpen" in leaf.view) {
+          await (leaf.view as any).onOpen();
+        }
+      }
+    }
   }
 }

@@ -30,6 +30,7 @@ describe("HotlistView", () => {
       },
       workspace: {
         getLeaf: jest.fn(),
+        getLeavesOfType: jest.fn().mockReturnValue([]),
       },
       metadataCache: {
         on: jest.fn(),
@@ -130,6 +131,34 @@ describe("HotlistView", () => {
 
     expect(mockSaveSettings).toHaveBeenCalled();
     expect(mockSettings.hotlist).toHaveLength(0);
+  });
+
+  it("should refresh sphere views when removing item from hotlist", async () => {
+    const item: HotlistItem = {
+      file: "Test.md",
+      lineNumber: 5,
+      lineContent: "- [ ] Test action",
+      text: "Test action",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: 123456,
+    };
+    mockSettings.hotlist = [item];
+
+    // Mock sphere view leaves
+    const mockSphereView = {
+      onOpen: jest.fn(),
+    };
+    mockApp.workspace.getLeavesOfType = jest.fn().mockReturnValue([
+      {
+        view: mockSphereView,
+      },
+    ]);
+
+    await (view as any).removeFromHotlist(item);
+
+    expect(mockApp.workspace.getLeavesOfType).toHaveBeenCalledWith("flow-gtd-sphere-view");
+    expect(mockSphereView.onOpen).toHaveBeenCalled();
   });
 
   describe("Clear notification", () => {
