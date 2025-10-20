@@ -42,6 +42,11 @@ export class HotlistView extends ItemView {
     }
   }
 
+  private extractCheckboxStatus(lineContent: string): string {
+    const match = lineContent.match(/^[-*]\s*\[(.)\]/);
+    return match ? match[1] : " ";
+  }
+
   getViewType(): string {
     return HOTLIST_VIEW_TYPE;
   }
@@ -158,8 +163,9 @@ export class HotlistView extends ItemView {
 
           if (lineIndex >= 0 && lineIndex < lines.length) {
             const line = lines[lineIndex];
-            // If marked as complete [x] or waiting [w], remove from hotlist
-            if (line.match(/\[x\]/i) || line.match(/\[w\]/i)) {
+            // If marked as complete [x], remove from hotlist
+            // Note: We keep waiting-for [w] items in the hotlist
+            if (line.match(/\[x\]/i)) {
               needsSettingsSave = true;
               continue;
             }
@@ -313,9 +319,29 @@ export class HotlistView extends ItemView {
   private renderItem(container: HTMLElement, item: HotlistItem) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-hotlist-item" });
 
+    // Check if this is a waiting-for item
+    const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
+    const isWaitingFor = checkboxStatus.toLowerCase() === "w";
+
+    // Add clock emoji for waiting-for items (outside the item box)
+    if (isWaitingFor) {
+      const clockSpan = itemEl.createSpan({
+        cls: "flow-gtd-hotlist-waiting-indicator",
+        text: "🕐 ",
+      });
+      clockSpan.style.marginRight = "8px";
+    }
+
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
+
+    // Gray out waiting-for items
+    if (isWaitingFor) {
+      textSpan.style.opacity = "0.6";
+      textSpan.style.fontStyle = "italic";
+    }
+
     textSpan.addEventListener("click", () => {
       this.openFile(item.file, item.lineNumber);
     });
@@ -331,14 +357,17 @@ export class HotlistView extends ItemView {
       await this.markItemComplete(item);
     });
 
-    const waitingBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
-      text: "⏸",
-    });
-    waitingBtn.title = "Convert to waiting for";
-    waitingBtn.addEventListener("click", async () => {
-      await this.convertToWaitingFor(item);
-    });
+    // Only show "Convert to waiting for" button for non-waiting items
+    if (!isWaitingFor) {
+      const waitingBtn = actionsSpan.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
+        text: "⏸",
+      });
+      waitingBtn.title = "Convert to waiting for";
+      waitingBtn.addEventListener("click", async () => {
+        await this.convertToWaitingFor(item);
+      });
+    }
 
     const removeBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-hotlist-action-btn",

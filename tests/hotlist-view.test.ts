@@ -161,6 +161,97 @@ describe("HotlistView", () => {
     expect(mockSphereView.onOpen).toHaveBeenCalled();
   });
 
+  describe("Waiting-for items", () => {
+    it("should keep waiting-for items during refresh (not remove them like completed items)", async () => {
+      // This test verifies that [w] items are NOT removed during refresh
+      // Currently the code DOES remove them (line 162 in hotlist-view.ts checks for [w])
+      // We want to change this behavior
+
+      const waitingItem: HotlistItem = {
+        file: "Test.md",
+        lineNumber: 5,
+        lineContent: "- [w] Waiting for response from client",
+        text: "Waiting for response from client",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      const regularItem: HotlistItem = {
+        file: "Test.md",
+        lineNumber: 6,
+        lineContent: "- [ ] Regular action",
+        text: "Regular action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      mockSettings.hotlist = [waitingItem, regularItem];
+
+      // Create a proper TFile mock
+      const { TFile } = require("obsidian");
+      const mockFile = new TFile();
+      mockFile.path = "Test.md";
+
+      const fileContent = [
+        "# Test Project",
+        "",
+        "## Next actions",
+        "",
+        "- [w] Waiting for response from client",
+        "- [ ] Regular action",
+      ].join("\n");
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockFile);
+      mockApp.vault.read.mockResolvedValue(fileContent);
+
+      // Mock validator to return found for both items
+      (view as any).validator = {
+        validateItem: jest
+          .fn()
+          .mockResolvedValueOnce({ found: true, updatedLineNumber: 5 })
+          .mockResolvedValueOnce({ found: true, updatedLineNumber: 6 }),
+      };
+
+      // Mock container element for rendering
+      (view as any).containerEl = {
+        children: [
+          null,
+          {
+            empty: jest.fn(),
+            addClass: jest.fn(),
+            createDiv: jest.fn().mockReturnValue({
+              setText: jest.fn(),
+              createEl: jest.fn(),
+            }),
+            createEl: jest.fn().mockReturnValue({
+              setText: jest.fn(),
+            }),
+          },
+        ],
+      };
+
+      await (view as any).refresh();
+
+      // Both items should remain in the hotlist (waiting-for items should NOT be removed)
+      expect(mockSettings.hotlist).toHaveLength(2);
+      const waitingItemStillThere = mockSettings.hotlist.find((i: HotlistItem) =>
+        i.lineContent.includes("[w]")
+      );
+      expect(waitingItemStillThere).toBeDefined();
+    });
+
+    it("should extract checkbox status from line content", () => {
+      const extractCheckboxStatus = (view as any).extractCheckboxStatus;
+
+      expect(extractCheckboxStatus("- [ ] Regular action")).toBe(" ");
+      expect(extractCheckboxStatus("- [w] Waiting action")).toBe("w");
+      expect(extractCheckboxStatus("- [x] Completed action")).toBe("x");
+      expect(extractCheckboxStatus("* [X] Completed with asterisk")).toBe("X");
+    });
+  });
+
   describe("Clear notification", () => {
     it("should show notification when items were recently cleared and archiving succeeded", () => {
       const now = Date.now();
