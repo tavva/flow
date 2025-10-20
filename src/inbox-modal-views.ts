@@ -21,20 +21,28 @@ export function renderInboxView(
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
-  contentEl.createEl("h2", { text: "📥 Inbox Files Processing" });
-
   if (isLoading) {
-    contentEl.createEl("p", {
-      text: "Processing files from your Flow inbox folders...",
-      cls: "flow-gtd-description",
-    });
+    const loadingContainer = contentEl.createDiv("flow-gtd-loading-state");
+    loadingContainer.style.textAlign = "center";
+    loadingContainer.style.padding = "48px 24px";
+    loadingContainer.style.display = "flex";
+    loadingContainer.style.alignItems = "center";
+    loadingContainer.style.justifyContent = "center";
+    loadingContainer.style.minHeight = "200px";
 
-    const inboxContainer = contentEl.createDiv("flow-gtd-inbox-info");
-    inboxContainer.createEl("p", {
-      text: "Loading items from your Flow inbox folders...",
-      cls: "flow-gtd-description",
-    });
-  } else {
+    const waveIcon = loadingContainer.createEl("div");
+    waveIcon.style.fontSize = "64px";
+    waveIcon.setText("👋");
+  } else if (contentEl.querySelector(".flow-gtd-loading-state")) {
+    // Remove loading state if it exists
+    contentEl.querySelector(".flow-gtd-loading-state")?.remove();
+  }
+
+  if (!isLoading) {
+    contentEl.createEl("h2", { text: "📥 Inbox Files Processing" });
+  }
+
+  if (!isLoading && contentEl.children.length === 1) {
     // Empty state
     const emptyStateContainer = contentEl.createDiv("flow-gtd-empty-state");
     emptyStateContainer.style.textAlign = "center";
