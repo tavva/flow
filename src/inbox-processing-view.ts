@@ -42,9 +42,9 @@ export class InboxProcessingView extends ItemView {
     container.empty();
     container.addClass("flow-gtd-inbox-modal");
 
-    await this.state.loadReferenceData();
-
     renderInboxView(container as HTMLElement, this.state, { isLoading: true });
+
+    await this.state.loadReferenceData();
     await this.state.loadInboxItems();
   }
 
