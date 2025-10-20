@@ -225,7 +225,7 @@ export class SphereView extends ItemView {
             item.addClass("sphere-action-in-hotlist");
           }
 
-          item.addEventListener("click", async () => {
+          item.addEventListener("click", async (e) => {
             // Find the exact line number for this action
             const lineResult = await this.lineFinder.findActionLine(project.file, action);
             if (!lineResult.found) {
@@ -233,8 +233,9 @@ export class SphereView extends ItemView {
               return;
             }
 
+            const clickedElement = e.currentTarget as HTMLElement;
             if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
-              await this.removeFromHotlist(project.file, lineResult.lineNumber!);
+              await this.removeFromHotlist(project.file, lineResult.lineNumber!, clickedElement);
             } else {
               await this.addToHotlist(
                 action,
@@ -242,7 +243,8 @@ export class SphereView extends ItemView {
                 lineResult.lineNumber!,
                 lineResult.lineContent!,
                 this.sphere,
-                false
+                false,
+                clickedElement
               );
             }
           });
@@ -285,7 +287,7 @@ export class SphereView extends ItemView {
         item.addClass("sphere-action-in-hotlist");
       }
 
-      item.addEventListener("click", async () => {
+      item.addEventListener("click", async (e) => {
         // Find the exact line number for this action
         const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
         if (!lineResult.found) {
@@ -293,8 +295,9 @@ export class SphereView extends ItemView {
           return;
         }
 
+        const clickedElement = e.currentTarget as HTMLElement;
         if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
-          await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!);
+          await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!, clickedElement);
         } else {
           await this.addToHotlist(
             action,
@@ -302,7 +305,8 @@ export class SphereView extends ItemView {
             lineResult.lineNumber!,
             lineResult.lineContent!,
             this.sphere,
-            true
+            true,
+            clickedElement
           );
         }
       });
@@ -463,7 +467,8 @@ export class SphereView extends ItemView {
     lineNumber: number,
     lineContent: string,
     sphere: string,
-    isGeneral: boolean
+    isGeneral: boolean,
+    element?: HTMLElement
   ): Promise<void> {
     const item: HotlistItem = {
       file,
@@ -479,15 +484,29 @@ export class SphereView extends ItemView {
     await this.saveSettings();
     await this.activateHotlistView();
     await this.refreshHotlistView();
+
+    // Update styling on the specific element instead of refreshing entire view
+    if (element) {
+      element.addClass("sphere-action-in-hotlist");
+    }
   }
 
-  private async removeFromHotlist(file: string, lineNumber: number): Promise<void> {
+  private async removeFromHotlist(
+    file: string,
+    lineNumber: number,
+    element?: HTMLElement
+  ): Promise<void> {
     this.settings.hotlist = this.settings.hotlist.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
     await this.saveSettings();
     await this.activateHotlistView();
     await this.refreshHotlistView();
+
+    // Update styling on the specific element instead of refreshing entire view
+    if (element) {
+      element.removeClass("sphere-action-in-hotlist");
+    }
   }
 
   private isOnHotlist(file: string, lineNumber: number): boolean {

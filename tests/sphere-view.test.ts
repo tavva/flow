@@ -493,5 +493,82 @@ describe("SphereView", () => {
       expect(settings.hotlist).toHaveLength(0);
       expect(mockSaveSettings).toHaveBeenCalledTimes(2);
     });
+
+    it("should add CSS class to element when adding to hotlist", async () => {
+      settings.hotlist = [];
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Create a mock HTML element with addClass method
+      const mockElement = {
+        addClass: jest.fn(),
+        removeClass: jest.fn(),
+      } as any;
+
+      await (view as any).addToHotlist(
+        "Test action",
+        "Projects/Test.md",
+        5,
+        "- [ ] Test action",
+        "work",
+        false,
+        mockElement
+      );
+
+      // CSS class should be added to the element
+      expect(mockElement.addClass).toHaveBeenCalledWith("sphere-action-in-hotlist");
+    });
+
+    it("should remove CSS class from element when removing from hotlist", async () => {
+      settings.hotlist = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Test action",
+          text: "Test action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Create a mock HTML element with removeClass method
+      const mockElement = {
+        addClass: jest.fn(),
+        removeClass: jest.fn(),
+      } as any;
+
+      await (view as any).removeFromHotlist("Projects/Test.md", 5, mockElement);
+
+      // CSS class should be removed from the element
+      expect(mockElement.removeClass).toHaveBeenCalledWith("sphere-action-in-hotlist");
+    });
+
+    it("should not refresh view when element is provided", async () => {
+      settings.hotlist = [];
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const mockElement = {
+        addClass: jest.fn(),
+        removeClass: jest.fn(),
+      } as any;
+      const onOpenSpy = jest.spyOn(view, "onOpen");
+
+      await (view as any).addToHotlist(
+        "Test action",
+        "Projects/Test.md",
+        5,
+        "- [ ] Test action",
+        "work",
+        false,
+        mockElement
+      );
+
+      // View should NOT refresh when element is provided
+      expect(onOpenSpy).not.toHaveBeenCalled();
+    });
   });
 });
