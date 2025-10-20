@@ -144,4 +144,67 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(rightLeaf, { focus: true });
     });
   });
+
+  describe("openSphereView - hotlist integration", () => {
+    it("should open hotlist view when opening sphere view if hotlist not already open", async () => {
+      // Setup: No existing sphere or hotlist views
+      const sphereLeaf = new WorkspaceLeaf();
+      const rightLeaf = new WorkspaceLeaf();
+
+      // Mock sphere view with required methods
+      const mockSphereView = {
+        setSphere: jest.fn().mockResolvedValue(undefined),
+      };
+      sphereLeaf.view = mockSphereView as any;
+
+      (mockApp.workspace.getLeavesOfType as jest.Mock).mockImplementation((type: string) => {
+        if (type === SPHERE_VIEW_TYPE) return [];
+        if (type === HOTLIST_VIEW_TYPE) return []; // No hotlist open
+        return [];
+      });
+
+      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(sphereLeaf);
+      (mockApp.workspace.getRightLeaf as jest.Mock).mockReturnValue(rightLeaf);
+
+      // Execute: Open a sphere view
+      await (plugin as any).openSphereView("personal");
+
+      // Verify: Should open both sphere view and hotlist view
+      expect(sphereLeaf.setViewState).toHaveBeenCalledWith({
+        type: SPHERE_VIEW_TYPE,
+        active: true,
+      });
+
+      expect(rightLeaf.setViewState).toHaveBeenCalledWith({
+        type: HOTLIST_VIEW_TYPE,
+        active: true,
+      });
+    });
+
+    it("should not open hotlist view when opening sphere view if hotlist already open", async () => {
+      // Setup: Existing hotlist view
+      const sphereLeaf = new WorkspaceLeaf();
+      const existingHotlistLeaf = new WorkspaceLeaf();
+
+      // Mock sphere view with required methods
+      const mockSphereView = {
+        setSphere: jest.fn().mockResolvedValue(undefined),
+      };
+      sphereLeaf.view = mockSphereView as any;
+
+      (mockApp.workspace.getLeavesOfType as jest.Mock).mockImplementation((type: string) => {
+        if (type === SPHERE_VIEW_TYPE) return [];
+        if (type === HOTLIST_VIEW_TYPE) return [existingHotlistLeaf]; // Hotlist already open
+        return [];
+      });
+
+      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(sphereLeaf);
+
+      // Execute: Open a sphere view
+      await (plugin as any).openSphereView("personal");
+
+      // Verify: Should only reveal existing hotlist, not create new one
+      expect(mockApp.workspace.getRightLeaf).not.toHaveBeenCalled();
+    });
+  });
 });

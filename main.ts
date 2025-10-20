@@ -255,6 +255,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
         this.app.workspace.revealLeaf(leaf);
         this.app.workspace.setActiveLeaf(leaf, { focus: true });
         await view.onOpen(); // Refresh the view with latest data
+        // Open hotlist if not already open
+        await this.activateHotlistView();
         return;
       }
     }
@@ -269,6 +271,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Update the view with the correct sphere
     const view = leaf.view as SphereView;
     await view.setSphere(sphere, this.settings, this.saveSettings.bind(this));
+
+    // Open hotlist if not already open
+    await this.activateHotlistView();
   }
 
   private getDisplaySphereName(sphere: string): string {
