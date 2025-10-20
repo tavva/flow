@@ -541,9 +541,22 @@ export class HotlistView extends ItemView {
     const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
 
     if (lineIndex >= 0 && lineIndex < lines.length) {
-      lines[lineIndex] = lines[lineIndex].replace(/\[ \]/i, "[w]");
+      const updatedLine = lines[lineIndex].replace(/\[ \]/i, "[w]");
+      lines[lineIndex] = updatedLine;
       await this.app.vault.modify(file, lines.join("\n"));
-      await this.removeFromHotlist(item);
+
+      // Update the item's lineContent in the hotlist instead of removing it
+      const hotlistIndex = this.settings.hotlist.findIndex(
+        (i) =>
+          i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
+      );
+
+      if (hotlistIndex !== -1) {
+        this.settings.hotlist[hotlistIndex].lineContent = updatedLine;
+        await this.saveSettings();
+        await this.refreshSphereViews();
+        await this.onOpen(); // Re-render
+      }
     }
   }
 

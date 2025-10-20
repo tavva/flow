@@ -242,6 +242,71 @@ describe("HotlistView", () => {
       expect(waitingItemStillThere).toBeDefined();
     });
 
+    it("should keep item in hotlist when converting to waiting-for", async () => {
+      const regularItem: HotlistItem = {
+        file: "Test.md",
+        lineNumber: 5,
+        lineContent: "- [ ] Call client about proposal",
+        text: "Call client about proposal",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      mockSettings.hotlist = [regularItem];
+
+      // Create a proper TFile mock
+      const { TFile } = require("obsidian");
+      const mockFile = new TFile();
+      mockFile.path = "Test.md";
+
+      const fileContent = [
+        "# Test Project",
+        "",
+        "## Next actions",
+        "",
+        "- [ ] Call client about proposal",
+      ].join("\n");
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockFile);
+      mockApp.vault.read.mockResolvedValue(fileContent);
+
+      // Mock validator to return found
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true, updatedLineNumber: 5 }),
+      };
+
+      // Mock the methods that would be called after conversion (onOpen, refreshSphereViews)
+      // to avoid rendering issues in tests
+      const originalOnOpen = (view as any).onOpen;
+      const originalRefreshSphereViews = (view as any).refreshSphereViews;
+      (view as any).onOpen = jest.fn();
+      (view as any).refreshSphereViews = jest.fn();
+
+      await (view as any).convertToWaitingFor(regularItem);
+
+      // Item should still be in hotlist
+      expect(mockSettings.hotlist).toHaveLength(1);
+      expect(mockSettings.hotlist[0].file).toBe("Test.md");
+      expect(mockSettings.hotlist[0].lineNumber).toBe(5);
+
+      // lineContent should be updated to show [w] status
+      expect(mockSettings.hotlist[0].lineContent).toBe("- [w] Call client about proposal");
+
+      // File should have been modified with [w] checkbox
+      expect(mockApp.vault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("- [w] Call client about proposal")
+      );
+
+      // Settings should be saved
+      expect(mockSaveSettings).toHaveBeenCalled();
+
+      // Restore original methods
+      (view as any).onOpen = originalOnOpen;
+      (view as any).refreshSphereViews = originalRefreshSphereViews;
+    });
+
     it("should extract checkbox status from line content", () => {
       const extractCheckboxStatus = (view as any).extractCheckboxStatus;
 
