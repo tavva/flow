@@ -1241,13 +1241,12 @@ select.flow-gtd-inline-select option,
 
 /* Sphere view: Visual indicator for actions in hotlist */
 .sphere-action-in-hotlist {
-	background-color: var(--interactive-accent);
-	opacity: 0.15;
+	background-color: rgba(33, 150, 243, 0.15);
 	border-radius: 4px;
 	padding-left: 4px;
 	padding-right: 4px;
 }
 
 .sphere-action-in-hotlist:hover {
-	opacity: 0.25;
+	background-color: rgba(33, 150, 243, 0.25);
 }

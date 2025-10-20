@@ -226,6 +226,9 @@ export class SphereView extends ItemView {
           }
 
           item.addEventListener("click", async (e) => {
+            // Capture element reference before any async operations
+            const clickedElement = e.currentTarget as HTMLElement;
+
             // Find the exact line number for this action
             const lineResult = await this.lineFinder.findActionLine(project.file, action);
             if (!lineResult.found) {
@@ -233,7 +236,6 @@ export class SphereView extends ItemView {
               return;
             }
 
-            const clickedElement = e.currentTarget as HTMLElement;
             if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
               await this.removeFromHotlist(project.file, lineResult.lineNumber!, clickedElement);
             } else {
@@ -288,6 +290,9 @@ export class SphereView extends ItemView {
       }
 
       item.addEventListener("click", async (e) => {
+        // Capture element reference before any async operations
+        const clickedElement = e.currentTarget as HTMLElement;
+
         // Find the exact line number for this action
         const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
         if (!lineResult.found) {
@@ -295,7 +300,6 @@ export class SphereView extends ItemView {
           return;
         }
 
-        const clickedElement = e.currentTarget as HTMLElement;
         if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
           await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!, clickedElement);
         } else {
@@ -487,7 +491,7 @@ export class SphereView extends ItemView {
 
     // Update styling on the specific element instead of refreshing entire view
     if (element) {
-      element.addClass("sphere-action-in-hotlist");
+      element.classList.add("sphere-action-in-hotlist");
     }
   }
 
@@ -505,7 +509,7 @@ export class SphereView extends ItemView {
 
     // Update styling on the specific element instead of refreshing entire view
     if (element) {
-      element.removeClass("sphere-action-in-hotlist");
+      element.classList.remove("sphere-action-in-hotlist");
     }
   }
 

@@ -499,10 +499,12 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      // Create a mock HTML element with addClass method
+      // Create a mock HTML element with classList
       const mockElement = {
-        addClass: jest.fn(),
-        removeClass: jest.fn(),
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn(),
+        },
       } as any;
 
       await (view as any).addToHotlist(
@@ -516,7 +518,7 @@ describe("SphereView", () => {
       );
 
       // CSS class should be added to the element
-      expect(mockElement.addClass).toHaveBeenCalledWith("sphere-action-in-hotlist");
+      expect(mockElement.classList.add).toHaveBeenCalledWith("sphere-action-in-hotlist");
     });
 
     it("should remove CSS class from element when removing from hotlist", async () => {
@@ -534,16 +536,18 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      // Create a mock HTML element with removeClass method
+      // Create a mock HTML element with classList
       const mockElement = {
-        addClass: jest.fn(),
-        removeClass: jest.fn(),
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn(),
+        },
       } as any;
 
       await (view as any).removeFromHotlist("Projects/Test.md", 5, mockElement);
 
       // CSS class should be removed from the element
-      expect(mockElement.removeClass).toHaveBeenCalledWith("sphere-action-in-hotlist");
+      expect(mockElement.classList.remove).toHaveBeenCalledWith("sphere-action-in-hotlist");
     });
 
     it("should not refresh view when element is provided", async () => {
@@ -552,8 +556,10 @@ describe("SphereView", () => {
       view.app = app;
 
       const mockElement = {
-        addClass: jest.fn(),
-        removeClass: jest.fn(),
+        classList: {
+          add: jest.fn(),
+          remove: jest.fn(),
+        },
       } as any;
       const onOpenSpy = jest.spyOn(view, "onOpen");
 
