@@ -120,10 +120,16 @@ export class FlowProjectScanner {
       }
 
       if (inSection) {
-        // Extract only incomplete checkbox items (skip completed tasks)
-        const itemMatch = line.match(/^[-*]\s+\[[ ]\]\s+(.+)$/);
+        // Extract list items, excluding completed ones
+        const itemMatch = line.match(/^[-*]\s+(?:\[([ xXw])\]\s+)?(.+)$/);
         if (itemMatch) {
-          items.push(itemMatch[1].trim());
+          const checkboxStatus = itemMatch[1];
+          const text = itemMatch[2].trim();
+
+          // Only include items that are not completed ([x] or [X])
+          if (!checkboxStatus || checkboxStatus === " " || checkboxStatus === "w") {
+            items.push(text);
+          }
         }
       }
     }

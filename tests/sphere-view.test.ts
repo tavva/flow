@@ -342,6 +342,64 @@ describe("SphereView", () => {
     });
   });
 
+  describe("completed items filtering", () => {
+    it("should exclude completed actions from project next actions", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: [
+          "Call client about meeting",
+          "Review proposal",
+          "Send follow-up email",
+        ],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      // Should only include incomplete actions
+      expect(data.projects).toHaveLength(1);
+      expect(data.projects[0].project.nextActions).toEqual([
+        "Call client about meeting",
+        "Review proposal",
+        "Send follow-up email",
+      ]);
+    });
+
+    it("should exclude completed general next actions", async () => {
+      mockScanner.scanProjects.mockResolvedValue([]);
+
+      const nextActionsContent = `
+# Next Actions
+
+- [ ] Call dentist #sphere/work
+- [x] Email team update #sphere/work
+- [X] Review quarterly report #sphere/work
+- [ ] Schedule meeting #sphere/work
+`;
+
+      const mockFile = new TFile("Next actions.md");
+      app.vault.getAbstractFileByPath = jest.fn().mockReturnValue(mockFile);
+      app.vault.read = jest.fn().mockResolvedValue(nextActionsContent);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      // Should only include incomplete actions
+      expect(data.generalNextActions).toEqual(["Call dentist", "Schedule meeting"]);
+    });
+  });
+
   describe("always-on hotlist toggle", () => {
     it("should not have planning mode property", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);

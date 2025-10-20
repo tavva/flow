@@ -210,17 +210,16 @@ status: live
         expect((result as any)?.futureNextActions).toBeUndefined();
       });
 
-      it("should filter out completed checkbox items", async () => {
+      it("should exclude completed actions with [x] or [X] checkboxes", async () => {
         const mockFile = new MockTFile("project.md", "Project") as TFile;
         const mockMetadata: Partial<CachedMetadata> = {
-          frontmatter: { tags: "project/personal" },
+          frontmatter: { tags: "project/work" },
         };
         const mockContent = `## Next actions
-- [ ] Incomplete task 1
-- [x] Completed task (should be filtered)
-- [ ] Incomplete task 2
-- [X] Completed task uppercase (should be filtered)
-- [ ] Incomplete task 3
+- [ ] Incomplete action
+- [x] Completed action lowercase
+- [X] Completed action uppercase
+- [ ] Another incomplete action
 `;
 
         (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
@@ -229,9 +228,8 @@ status: live
         const result = await scanner.parseProjectFile(mockFile);
 
         expect(result?.nextActions).toEqual([
-          "Incomplete task 1",
-          "Incomplete task 2",
-          "Incomplete task 3",
+          "Incomplete action",
+          "Another incomplete action",
         ]);
       });
 
