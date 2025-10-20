@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying curated hotlist of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, EventRef, setIcon } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { HotlistItem, PluginSettings, FlowProject } from "./types";
 import { HotlistValidator, ValidationResult } from "./hotlist-validator";
@@ -55,6 +55,13 @@ export class HotlistView extends ItemView {
   }
 
   async onOpen() {
+    const container = this.containerEl.children[1];
+    container.empty();
+    container.addClass("flow-gtd-hotlist-view");
+
+    // Show loading state immediately
+    this.renderLoadingState(container as HTMLElement);
+
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
 
@@ -71,7 +78,7 @@ export class HotlistView extends ItemView {
       }
     });
 
-    const container = this.containerEl.children[1];
+    // Clear container and render actual content
     container.empty();
     container.addClass("flow-gtd-hotlist-view");
 
@@ -341,6 +348,24 @@ export class HotlistView extends ItemView {
     removeBtn.addEventListener("click", async () => {
       await this.removeFromHotlist(item);
     });
+  }
+
+  private renderLoadingState(container: HTMLElement) {
+    const loadingContainer = container.createDiv("flow-gtd-hotlist-loading");
+    loadingContainer.style.textAlign = "center";
+    loadingContainer.style.padding = "48px 24px";
+    loadingContainer.style.display = "flex";
+    loadingContainer.style.alignItems = "center";
+    loadingContainer.style.justifyContent = "center";
+    loadingContainer.style.minHeight = "200px";
+
+    const waveIcon = loadingContainer.createEl("div");
+    waveIcon.style.width = "64px";
+    waveIcon.style.height = "64px";
+    waveIcon.style.display = "flex";
+    waveIcon.style.alignItems = "center";
+    waveIcon.style.justifyContent = "center";
+    setIcon(waveIcon, "waves");
   }
 
   private renderEmptyMessage(container: HTMLElement) {

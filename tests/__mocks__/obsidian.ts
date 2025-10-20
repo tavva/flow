@@ -179,18 +179,21 @@ export class ItemView {
       setText: jest.fn(),
       createDiv: jest.fn(() => ({
         setText: jest.fn(),
-        createDiv: jest.fn(() => ({ setText: jest.fn() })),
+        createDiv: jest.fn(() => ({ setText: jest.fn(), style: {} })),
         createEl: jest.fn(() => ({
           setText: jest.fn(),
           createEl: jest.fn(() => ({
             setText: jest.fn(),
             addEventListener: jest.fn(),
+            style: {},
           })),
           addEventListener: jest.fn(),
+          style: {},
         })),
         addClass: jest.fn(),
         remove: jest.fn(),
         addEventListener: jest.fn(),
+        style: {},
       })),
       createEl: jest.fn(() => ({
         setText: jest.fn(),
@@ -198,7 +201,9 @@ export class ItemView {
         createEl: jest.fn(() => ({
           setText: jest.fn(),
           addEventListener: jest.fn(),
+          style: {},
         })),
+        style: {},
       })),
       addClass: jest.fn(),
     };
@@ -229,5 +234,12 @@ export class ItemView {
 
   onClose(): Promise<void> {
     return Promise.resolve();
+  }
+}
+
+export function setIcon(element: HTMLElement, iconId: string): void {
+  // Mock implementation - just sets a data attribute for testing
+  if (element) {
+    (element as any).dataset = { icon: iconId };
   }
 }
