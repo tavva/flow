@@ -1,4 +1,4 @@
-import { DropdownComponent, Setting } from "obsidian";
+import { DropdownComponent, Setting, setIcon } from "obsidian";
 import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
 import { getActionLabel } from "./inbox-modal-utils";
@@ -31,8 +31,12 @@ export function renderInboxView(
     loadingContainer.style.minHeight = "200px";
 
     const waveIcon = loadingContainer.createEl("div");
-    waveIcon.style.fontSize = "64px";
-    waveIcon.setText("👋");
+    waveIcon.style.width = "64px";
+    waveIcon.style.height = "64px";
+    waveIcon.style.display = "flex";
+    waveIcon.style.alignItems = "center";
+    waveIcon.style.justifyContent = "center";
+    setIcon(waveIcon, "waves");
   } else if (contentEl.querySelector(".flow-gtd-loading-state")) {
     // Remove loading state if it exists
     contentEl.querySelector(".flow-gtd-loading-state")?.remove();
