@@ -321,6 +321,100 @@ Some content here.
         expect(result?.nextActions).toEqual([]);
         expect((result as any)?.futureNextActions).toBeUndefined();
       });
+
+      it("should extract milestones section as raw text", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work" },
+        };
+        const mockContent = `---
+tags: project/work
+---
+
+# Ship AI Feature
+
+## Milestones
+
+- Final launch: March 2026
+- Review by James [[James Smith]]: 2025-12-12 - needs architecture and implementation
+- Beta testing complete: early Feb 2026
+
+## Next actions
+- [ ] Draft architecture doc
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.milestones).toBe(
+          `- Final launch: March 2026
+- Review by James [[James Smith]]: 2025-12-12 - needs architecture and implementation
+- Beta testing complete: early Feb 2026`
+        );
+      });
+
+      it("should return undefined for milestones when section is missing", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work" },
+        };
+        const mockContent = `## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.milestones).toBeUndefined();
+      });
+
+      it("should return undefined for milestones when section is empty", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work" },
+        };
+        const mockContent = `## Milestones
+
+## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.milestones).toBeUndefined();
+      });
+
+      it("should handle freeform milestone text without list formatting", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work" },
+        };
+        const mockContent = `## Milestones
+
+Launch in Q1 2026
+Get James to review by end of year - he needs to see the architecture first
+
+## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.milestones).toBe(
+          `Launch in Q1 2026
+Get James to review by end of year - he needs to see the architecture first`
+        );
+      });
     });
 
     describe("searchProjects", () => {

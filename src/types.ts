@@ -9,6 +9,7 @@ export interface FlowProject {
   mtime?: number; // File modification time in milliseconds
   nextActions: string[];
   parentProject?: string; // Wikilink to parent project, e.g., "[[Engineering AI Strategy]]"
+  milestones?: string; // Raw text from ## Milestones section
 }
 
 export interface PersonNote {

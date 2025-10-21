@@ -54,6 +54,7 @@ export class FlowProjectScanner {
       mtime: file.stat.mtime,
       nextActions: this.extractSection(content, "## Next actions"),
       parentProject: frontmatter["parent-project"],
+      milestones: this.extractSectionText(content, "## Milestones"),
     };
   }
 
@@ -135,6 +136,43 @@ export class FlowProjectScanner {
     }
 
     return items;
+  }
+
+  /**
+   * Extracts raw text content from a markdown section
+   */
+  private extractSectionText(content: string, heading: string): string | undefined {
+    const lines = content.split("\n");
+    const sectionLines: string[] = [];
+    let inSection = false;
+    let sectionLevel = 0;
+    const normalizedHeading = heading.replace(/^#+\s+/, "").toLowerCase();
+
+    for (const line of lines) {
+      // Check if this is a heading line
+      const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const title = headingMatch[2].trim();
+
+        if (title.toLowerCase() === normalizedHeading) {
+          inSection = true;
+          sectionLevel = level;
+          continue;
+        } else if (inSection && level <= sectionLevel) {
+          // We've hit another section at the same or higher level
+          break;
+        }
+      }
+
+      if (inSection) {
+        sectionLines.push(line);
+      }
+    }
+
+    const text = sectionLines.join("\n").trim();
+    return text.length > 0 ? text : undefined;
   }
 
   /**

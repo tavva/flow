@@ -124,6 +124,14 @@ export function buildSystemPrompt(
         prompt += `${indent}(Sub-project at depth ${node.depth})\n`;
       }
 
+      if (project.milestones) {
+        prompt += `${indent}Milestones:\n`;
+        const milestoneLines = project.milestones.split("\n");
+        for (const line of milestoneLines) {
+          prompt += `${indent}${line}\n`;
+        }
+      }
+
       if (project.nextActions && project.nextActions.length > 0) {
         prompt += `${indent}Next Actions (${project.nextActions.length}):\n`;
         for (const action of project.nextActions) {
