@@ -990,13 +990,28 @@ select.flow-gtd-inline-select option,
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--background-modifier-border);
+	padding: 12px;
+	margin-bottom: 8px;
+	border-radius: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flow-gtd-waiting-for-item:hover {
+	background: var(--background-secondary-alt);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .flow-gtd-waiting-for-item-text {
 	flex: 1;
+	cursor: pointer;
 	color: var(--text-normal);
+	font-size: 14px;
+	margin-right: 12px;
+	min-width: 0;
+	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .flow-gtd-waiting-for-item-text:hover {
@@ -1005,20 +1020,33 @@ select.flow-gtd-inline-select option,
 
 .flow-gtd-waiting-for-item-actions {
 	display: flex;
-	gap: 8px;
+	gap: 6px;
+	flex-shrink: 0;
 }
 
 .flow-gtd-waiting-for-action-btn {
-	padding: 4px 8px;
-	background: var(--interactive-normal);
+	padding: 6px 12px;
 	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	border-radius: 6px;
 	cursor: pointer;
-	font-size: 0.9em;
+	font-size: 16px;
+	line-height: 1;
+	transition: all 0.2s ease;
+	min-width: 36px;
+	text-align: center;
 }
 
 .flow-gtd-waiting-for-action-btn:hover {
 	background: var(--interactive-hover);
+	border-color: var(--interactive-accent);
+	transform: translateY(-1px);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-waiting-for-action-btn:active {
+	transform: translateY(0);
 }
 
 /* Waiting For Toggle in Inbox Modal */
