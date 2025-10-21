@@ -313,14 +313,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     let leaf = workspace.getLeavesOfType(WAITING_FOR_VIEW_TYPE)[0];
 
     if (!leaf) {
-      const rightLeaf = workspace.getRightLeaf(false);
-      if (rightLeaf) {
-        await rightLeaf.setViewState({
-          type: WAITING_FOR_VIEW_TYPE,
-          active: true,
-        });
-        leaf = rightLeaf;
-      }
+      leaf = workspace.getLeaf("tab");
+      await leaf.setViewState({
+        type: WAITING_FOR_VIEW_TYPE,
+        active: true,
+      });
     }
 
     if (leaf) {

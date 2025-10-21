@@ -89,22 +89,22 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     it("should create new waiting-for view if none exists", async () => {
       // Setup: No existing leaves
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([]);
-      const rightLeaf = new WorkspaceLeaf();
-      (mockApp.workspace.getRightLeaf as jest.Mock).mockReturnValue(rightLeaf);
+      const tabLeaf = new WorkspaceLeaf();
+      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(tabLeaf);
 
       // Execute
       await plugin.activateWaitingForView();
 
-      // Verify: Should create view in right leaf
-      expect(mockApp.workspace.getRightLeaf).toHaveBeenCalledWith(false);
-      expect(rightLeaf.setViewState).toHaveBeenCalledWith({
+      // Verify: Should create view in new tab
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("tab");
+      expect(tabLeaf.setViewState).toHaveBeenCalledWith({
         type: WAITING_FOR_VIEW_TYPE,
         active: true,
       });
 
       // Verify: Should reveal and focus the new leaf
-      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(rightLeaf);
-      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(rightLeaf, { focus: true });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(tabLeaf);
+      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(tabLeaf, { focus: true });
     });
   });
 
