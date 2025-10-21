@@ -750,4 +750,122 @@ Some notes here`;
       expect(newContent).toContain("- [ ] Existing item 2");
     });
   });
+
+  describe("mark as done functionality", () => {
+    it("creates completed actions with completion date in next actions file", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "next-action",
+        nextAction: "Call dentist",
+        reasoning: "Need to schedule appointment",
+        recommendedAction: "next-actions-file",
+        recommendedActionReasoning: "Single action",
+      };
+
+      await fileWriter.addToNextActionsFile(["Call dentist"], ["personal"], [false], [true]);
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toMatch(/- \[x\] Call dentist ✅ \d{4}-\d{2}-\d{2}/);
+    });
+
+    it("creates completed actions with completion date in new projects", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Website redesign complete",
+        nextAction: "Review mockups",
+        reasoning: "Multi-step project",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Multiple steps needed",
+      };
+
+      const file = await fileWriter.createProject(
+        result,
+        "Redesign website",
+        ["work"],
+        [false],
+        undefined,
+        [true]
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toMatch(/- \[x\] Review mockups ✅ \d{4}-\d{2}-\d{2}/);
+    });
+
+    it("creates completed actions when adding to existing project", async () => {
+      const project: FlowProject = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        nextActions: [],
+      };
+
+      const existingContent = `---
+tags:
+  - project/work
+---
+
+# Test Project
+
+## Next actions
+
+- [ ] Existing action
+`;
+
+      class MockTFile extends TFile {}
+      const mockFile = new MockTFile();
+      mockFile.path = "Projects/Test.md";
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
+
+      await fileWriter.addNextActionToProject(project, ["New completed action"], [false], [true]);
+
+      expect(mockVault.modify).toHaveBeenCalled();
+      const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
+      expect(newContent).toMatch(/- \[x\] New completed action ✅ \d{4}-\d{2}-\d{2}/);
+      expect(newContent).toContain("- [ ] Existing action");
+    });
+
+    it("prioritizes markAsDone over waitingFor", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Important task"],
+        ["work"],
+        [true], // waitingFor
+        [true] // markAsDone - this should take precedence
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toMatch(/- \[x\] Important task ✅ \d{4}-\d{2}-\d{2}/);
+      expect(content).not.toContain("- [w]");
+    });
+
+    it("handles mixed completion states in multiple actions", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Done task", "Waiting task", "Regular task"],
+        ["work"],
+        [false, true, false], // waitingFor
+        [true, false, false] // markAsDone
+      );
+
+      // Each action creates a separate call (3 total)
+      expect(mockVault.create).toHaveBeenCalledTimes(3);
+
+      // Check first call - done task
+      const [, content1] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content1).toMatch(/- \[x\] Done task ✅ \d{4}-\d{2}-\d{2}/);
+
+      // Check second call (actually calls modify since file now exists after first create)
+      // But in the mock, we're always creating, so check the pattern
+      const allCalls = (mockVault.create as jest.Mock).mock.calls;
+      const allContent = allCalls.map((call: any[]) => call[1]).join("\n");
+
+      expect(allContent).toMatch(/- \[x\] Done task ✅ \d{4}-\d{2}-\d{2}/);
+      expect(allContent).toContain("- [w] Waiting task");
+      expect(allContent).toContain("- [ ] Regular task");
+    });
+  });
 });

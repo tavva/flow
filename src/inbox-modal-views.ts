@@ -1128,25 +1128,74 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
 }
 
 function renderHotlistCheckbox(container: HTMLElement, item: EditableItem, state: InboxModalState) {
-  const hotlistContainer = container.createDiv("flow-gtd-hotlist-checkbox");
-  hotlistContainer.style.marginTop = "12px";
+  const checkboxesContainer = container.createDiv("flow-gtd-action-checkboxes");
+  checkboxesContainer.style.marginTop = "12px";
+  checkboxesContainer.style.display = "flex";
+  checkboxesContainer.style.gap = "24px";
+
+  // Add to hotlist checkbox
+  const hotlistContainer = checkboxesContainer.createDiv("flow-gtd-hotlist-checkbox");
   hotlistContainer.style.display = "flex";
   hotlistContainer.style.alignItems = "center";
   hotlistContainer.style.gap = "8px";
 
-  const checkbox = hotlistContainer.createEl("input", {
+  const hotlistCheckbox = hotlistContainer.createEl("input", {
     type: "checkbox",
   });
-  checkbox.id = state.getUniqueId("add-to-hotlist");
-  checkbox.checked = item.addToHotlist || false;
-  checkbox.addEventListener("change", (e) => {
-    item.addToHotlist = (e.target as HTMLInputElement).checked;
+  hotlistCheckbox.id = state.getUniqueId("add-to-hotlist");
+  hotlistCheckbox.checked = item.addToHotlist || false;
+
+  const hotlistLabel = hotlistContainer.createEl("label");
+  hotlistLabel.setAttribute("for", hotlistCheckbox.id);
+  hotlistLabel.setText("Add to hotlist");
+  hotlistLabel.style.cursor = "pointer";
+  hotlistLabel.style.fontSize = "14px";
+  hotlistLabel.style.color = "var(--text-normal)";
+
+  // Mark as done checkbox
+  const doneContainer = checkboxesContainer.createDiv("flow-gtd-mark-done-checkbox");
+  doneContainer.style.display = "flex";
+  doneContainer.style.alignItems = "center";
+  doneContainer.style.gap = "8px";
+
+  const doneCheckbox = doneContainer.createEl("input", {
+    type: "checkbox",
+  });
+  doneCheckbox.id = state.getUniqueId("mark-as-done");
+  // Initialize markAsDone array if not exists (single item for now, will be expanded for multiple actions)
+  if (!item.markAsDone) {
+    item.markAsDone = [];
+  }
+  doneCheckbox.checked = item.markAsDone[0] || false;
+
+  const doneLabel = doneContainer.createEl("label");
+  doneLabel.setAttribute("for", doneCheckbox.id);
+  doneLabel.setText("Mark as done");
+  doneLabel.style.cursor = "pointer";
+  doneLabel.style.fontSize = "14px";
+  doneLabel.style.color = "var(--text-normal)";
+
+  // Mutual exclusion: when one is checked, uncheck the other
+  hotlistCheckbox.addEventListener("change", (e) => {
+    const isChecked = (e.target as HTMLInputElement).checked;
+    item.addToHotlist = isChecked;
+
+    if (isChecked && item.markAsDone && item.markAsDone[0]) {
+      item.markAsDone[0] = false;
+      doneCheckbox.checked = false;
+    }
   });
 
-  const label = hotlistContainer.createEl("label");
-  label.setAttribute("for", checkbox.id);
-  label.setText("Add to hotlist");
-  label.style.cursor = "pointer";
-  label.style.fontSize = "14px";
-  label.style.color = "var(--text-normal)";
+  doneCheckbox.addEventListener("change", (e) => {
+    const isChecked = (e.target as HTMLInputElement).checked;
+    if (!item.markAsDone) {
+      item.markAsDone = [];
+    }
+    item.markAsDone[0] = isChecked;
+
+    if (isChecked && item.addToHotlist) {
+      item.addToHotlist = false;
+      hotlistCheckbox.checked = false;
+    }
+  });
 }

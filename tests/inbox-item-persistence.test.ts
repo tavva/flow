@@ -47,8 +47,9 @@ describe("InboxItemPersistenceService", () => {
       expect.any(Object),
       "Plan offsite",
       ["work"],
-      [false, false],
-      undefined // parentProject
+      [false, false], // waitingFor
+      undefined, // parentProject
+      [false, false] // markAsDone
     );
   });
 
@@ -141,5 +142,114 @@ describe("InboxItemPersistenceService", () => {
       "At least one sphere must be selected for this action."
     );
     expect(writerMocks.addToSomedayFile).not.toHaveBeenCalled();
+  });
+
+  it("passes markAsDone array when creating a project with completed actions", async () => {
+    const item: EditableItem = {
+      original: "Plan offsite",
+      isAIProcessed: false,
+      selectedAction: "create-project",
+      selectedSpheres: ["work"],
+      editedNames: ["Finalize venue", "Publish agenda"],
+      markAsDone: [true, false],
+    };
+
+    await service.persist(item);
+
+    expect(writerMocks.createProject).toHaveBeenCalledWith(
+      expect.any(Object),
+      "Plan offsite",
+      ["work"],
+      [false, false], // waitingFor
+      undefined, // parentProject
+      [true, false] // markAsDone
+    );
+  });
+
+  it("passes markAsDone array when adding to next actions file", async () => {
+    const item: EditableItem = {
+      original: "Call dentist",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["personal"],
+      editedName: "Call dentist to schedule cleaning",
+      markAsDone: [true],
+    };
+
+    await service.persist(item);
+
+    expect(writerMocks.addToNextActionsFile).toHaveBeenCalledWith(
+      ["Call dentist to schedule cleaning"],
+      ["personal"],
+      [false], // waitingFor
+      [true] // markAsDone
+    );
+  });
+
+  it("passes markAsDone array when adding to project", async () => {
+    const mockProject = {
+      file: "Projects/Test.md",
+      title: "Test Project",
+      tags: ["project/work"],
+      nextActions: [],
+    };
+
+    const item: EditableItem = {
+      original: "Review document",
+      isAIProcessed: false,
+      selectedAction: "add-to-project",
+      selectedSpheres: ["work"],
+      selectedProject: mockProject,
+      editedNames: ["Review document", "Provide feedback"],
+      markAsDone: [false, true],
+    };
+
+    await service.persist(item);
+
+    expect(writerMocks.addNextActionToProject).toHaveBeenCalledWith(
+      mockProject,
+      ["Review document", "Provide feedback"],
+      [false, false], // waitingFor
+      [false, true] // markAsDone
+    );
+  });
+
+  it("does not add completed items to hotlist", async () => {
+    const mockApp = {
+      vault: {
+        getAbstractFileByPath: jest.fn(),
+        read: jest.fn(),
+      },
+    };
+
+    const mockSettings = {
+      nextActionsFilePath: "Next actions.md",
+      hotlist: [],
+    };
+
+    const mockSaveSettings = jest.fn();
+
+    const serviceWithHotlist = new InboxItemPersistenceService(
+      writerMocks as unknown as FileWriter,
+      mockApp as any,
+      mockSettings as any,
+      mockSaveSettings
+    );
+
+    const item: EditableItem = {
+      original: "Call dentist",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["personal"],
+      editedName: "Call dentist",
+      addToHotlist: true,
+      markAsDone: [true],
+    };
+
+    await serviceWithHotlist.persist(item);
+
+    // Should not attempt to add to hotlist because item is marked as done
+    expect(mockSettings.hotlist.length).toBe(0);
+    expect(mockSaveSettings).not.toHaveBeenCalled();
   });
 });

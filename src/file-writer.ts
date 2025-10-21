@@ -16,7 +16,8 @@ export class FileWriter {
     originalItem: string,
     spheres: string[] = [],
     waitingFor: boolean[] = [],
-    parentProject?: string
+    parentProject?: string,
+    markAsDone: boolean[] = []
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
@@ -44,7 +45,8 @@ export class FileWriter {
       originalItem,
       spheres,
       waitingFor,
-      parentProject
+      parentProject,
+      markAsDone
     );
     const file = await this.app.vault.create(filePath, content);
 
@@ -74,16 +76,33 @@ export class FileWriter {
   async addToNextActionsFile(
     actions: string | string[],
     spheres: string[] = [],
-    waitingFor: boolean[] = []
+    waitingFor: boolean[] = [],
+    markAsDone: boolean[] = []
   ): Promise<void> {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
 
     for (let i = 0; i < actionsArray.length; i++) {
       const action = actionsArray[i];
+      const isDone = markAsDone[i] || false;
       const isWaiting = waitingFor[i] || false;
-      const checkbox = isWaiting ? "- [w]" : "- [ ]";
-      const content = sphereTags ? `${checkbox} ${action} ${sphereTags}` : `${checkbox} ${action}`;
+
+      let checkbox: string;
+      let actionText = action;
+
+      if (isDone) {
+        checkbox = "- [x]";
+        const completionDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+        actionText = `${action} ✅ ${completionDate}`;
+      } else if (isWaiting) {
+        checkbox = "- [w]";
+      } else {
+        checkbox = "- [ ]";
+      }
+
+      const content = sphereTags
+        ? `${checkbox} ${actionText} ${sphereTags}`
+        : `${checkbox} ${actionText}`;
       await this.appendToFile(this.settings.nextActionsFilePath, content);
     }
   }
@@ -123,7 +142,8 @@ export class FileWriter {
   async addNextActionToProject(
     project: FlowProject,
     actions: string | string[],
-    waitingFor: boolean[] = []
+    waitingFor: boolean[] = [],
+    markAsDone: boolean[] = []
   ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
@@ -136,7 +156,8 @@ export class FileWriter {
     for (let i = 0; i < actionsArray.length; i++) {
       const action = actionsArray[i];
       const isWaiting = waitingFor[i] || false;
-      content = this.addActionToSection(content, "## Next actions", action, isWaiting);
+      const isDone = markAsDone[i] || false;
+      content = this.addActionToSection(content, "## Next actions", action, isWaiting, isDone);
     }
 
     await this.app.vault.modify(file, content);
@@ -200,7 +221,8 @@ export class FileWriter {
     originalItem: string,
     spheres: string[] = [],
     waitingFor: boolean[] = [],
-    parentProject?: string
+    parentProject?: string,
+    markAsDone: boolean[] = []
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
       this.settings.projectTemplateFilePath
@@ -213,7 +235,8 @@ export class FileWriter {
         originalItem,
         spheres,
         waitingFor,
-        parentProject
+        parentProject,
+        markAsDone
       );
     }
 
@@ -273,15 +296,43 @@ export class FileWriter {
         actionsText =
           result.nextActions
             .map((action, i) => {
+              const isDone = markAsDone[i] || false;
               const isWaiting = waitingFor[i] || false;
-              const checkbox = isWaiting ? "- [w]" : "- [ ]";
-              return `${checkbox} ${action}`;
+
+              let checkbox: string;
+              let actionText = action;
+
+              if (isDone) {
+                checkbox = "- [x]";
+                const completionDate = new Date().toISOString().split("T")[0];
+                actionText = `${action} ✅ ${completionDate}`;
+              } else if (isWaiting) {
+                checkbox = "- [w]";
+              } else {
+                checkbox = "- [ ]";
+              }
+
+              return `${checkbox} ${actionText}`;
             })
             .join("\n") + "\n";
       } else if (result.nextAction) {
+        const isDone = markAsDone[0] || false;
         const isWaiting = waitingFor[0] || false;
-        const checkbox = isWaiting ? "- [w]" : "- [ ]";
-        actionsText = `${checkbox} ${result.nextAction}\n`;
+
+        let checkbox: string;
+        let actionText = result.nextAction;
+
+        if (isDone) {
+          checkbox = "- [x]";
+          const completionDate = new Date().toISOString().split("T")[0];
+          actionText = `${result.nextAction} ✅ ${completionDate}`;
+        } else if (isWaiting) {
+          checkbox = "- [w]";
+        } else {
+          checkbox = "- [ ]";
+        }
+
+        actionsText = `${checkbox} ${actionText}\n`;
       }
 
       // Replace "## Next actions\n<any whitespace>" with "## Next actions\n<actions>\n"
@@ -300,7 +351,8 @@ export class FileWriter {
     originalItem: string,
     spheres: string[] = [],
     waitingFor: boolean[] = [],
-    parentProject?: string
+    parentProject?: string,
+    markAsDone: boolean[] = []
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
@@ -349,15 +401,43 @@ ${originalItemDescription}
       content +=
         result.nextActions
           .map((action, i) => {
+            const isDone = markAsDone[i] || false;
             const isWaiting = waitingFor[i] || false;
-            const checkbox = isWaiting ? "- [w]" : "- [ ]";
-            return `${checkbox} ${action}`;
+
+            let checkbox: string;
+            let actionText = action;
+
+            if (isDone) {
+              checkbox = "- [x]";
+              const completionDate = new Date().toISOString().split("T")[0];
+              actionText = `${action} ✅ ${completionDate}`;
+            } else if (isWaiting) {
+              checkbox = "- [w]";
+            } else {
+              checkbox = "- [ ]";
+            }
+
+            return `${checkbox} ${actionText}`;
           })
           .join("\n") + "\n";
     } else {
+      const isDone = markAsDone[0] || false;
       const isWaiting = waitingFor[0] || false;
-      const checkbox = isWaiting ? "- [w]" : "- [ ]";
-      content += `${checkbox} ${result.nextAction}\n`;
+
+      let checkbox: string;
+      let actionText = result.nextAction;
+
+      if (isDone) {
+        checkbox = "- [x]";
+        const completionDate = new Date().toISOString().split("T")[0];
+        actionText = `${result.nextAction} ✅ ${completionDate}`;
+      } else if (isWaiting) {
+        checkbox = "- [w]";
+      } else {
+        checkbox = "- [ ]";
+      }
+
+      content += `${checkbox} ${actionText}\n`;
     }
 
     content += `
@@ -378,14 +458,15 @@ ${originalItemDescription}
     content: string,
     sectionHeading: string,
     action: string,
-    isWaiting: boolean = false
+    isWaiting: boolean = false,
+    isDone: boolean = false
   ): string {
     const lines = content.split("\n");
     const sectionIndex = this.findSectionIndex(lines, sectionHeading);
 
     if (sectionIndex === -1) {
       // Section doesn't exist, create it at the end
-      return this.createSectionWithAction(content, sectionHeading, action, isWaiting);
+      return this.createSectionWithAction(content, sectionHeading, action, isWaiting, isDone);
     }
 
     // Find where to insert the action (after the heading, before next section)
@@ -397,8 +478,20 @@ ${originalItemDescription}
     }
 
     // Insert the action
-    const checkbox = isWaiting ? "- [w]" : "- [ ]";
-    lines.splice(insertIndex, 0, `${checkbox} ${action}`);
+    let checkbox: string;
+    let actionText = action;
+
+    if (isDone) {
+      checkbox = "- [x]";
+      const completionDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      actionText = `${action} ✅ ${completionDate}`;
+    } else if (isWaiting) {
+      checkbox = "- [w]";
+    } else {
+      checkbox = "- [ ]";
+    }
+
+    lines.splice(insertIndex, 0, `${checkbox} ${actionText}`);
 
     return lines.join("\n");
   }
@@ -453,7 +546,8 @@ ${originalItemDescription}
     content: string,
     sectionHeading: string,
     action: string,
-    isWaiting: boolean = false
+    isWaiting: boolean = false,
+    isDone: boolean = false
   ): string {
     // Add section at the end of the file
     let newContent = content.trim();
@@ -462,8 +556,20 @@ ${originalItemDescription}
       newContent += "\n";
     }
 
-    const checkbox = isWaiting ? "- [w]" : "- [ ]";
-    newContent += `\n${sectionHeading}\n${checkbox} ${action}\n`;
+    let checkbox: string;
+    let actionText = action;
+
+    if (isDone) {
+      checkbox = "- [x]";
+      const completionDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+      actionText = `${action} ✅ ${completionDate}`;
+    } else if (isWaiting) {
+      checkbox = "- [w]";
+    } else {
+      checkbox = "- [ ]";
+    }
+
+    newContent += `\n${sectionHeading}\n${checkbox} ${actionText}\n`;
 
     return newContent;
   }

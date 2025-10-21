@@ -53,7 +53,8 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
     expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
       project,
       ["Edited first action", "Edited second action"],
-      [false, false]
+      [false, false], // waitingFor
+      [false, false] // markAsDone
     );
   });
 
@@ -92,7 +93,8 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
     expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
       project,
       ["Single edited action"],
-      [false]
+      [false], // waitingFor
+      [false] // markAsDone
     );
   });
 
@@ -131,7 +133,8 @@ describe("InboxItemPersistenceService - add-to-project with next actions", () =>
     expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
       project,
       ["First AI action", "Second AI action"],
-      [false, false]
+      [false, false], // waitingFor
+      [false, false] // markAsDone
     );
   });
 });

@@ -13,6 +13,7 @@ export interface EditableItem {
   editedName?: string;
   editedNames?: string[]; // Support multiple edited next actions
   waitingFor?: boolean[]; // Track waiting-for status for each next action
+  markAsDone?: boolean[]; // Track mark-as-done status for each next action
   editedProjectTitle?: string;
   projectPriority?: number;
   isProcessing?: boolean;

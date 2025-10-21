@@ -33,7 +33,16 @@ export class InboxItemPersistenceService {
     const writtenFilePath = await this.writeResult(item, finalNextActions, result);
 
     // Add to hotlist if requested and dependencies are available
-    if (item.addToHotlist && writtenFilePath && this.app && this.settings && this.saveSettings) {
+    // Don't add completed items to hotlist (they're already done)
+    const hasCompletedItems = item.markAsDone && item.markAsDone.some((done) => done === true);
+    if (
+      item.addToHotlist &&
+      !hasCompletedItems &&
+      writtenFilePath &&
+      this.app &&
+      this.settings &&
+      this.saveSettings
+    ) {
       await this.addActionsToHotlist(writtenFilePath, finalNextActions, item);
     }
   }
@@ -116,6 +125,11 @@ export class InboxItemPersistenceService {
     // Extend or trim to match finalNextActions length
     const finalWaitingFor = finalNextActions.map((_, i) => waitingFor[i] || false);
 
+    // Ensure markAsDone array is properly initialized
+    const markAsDone = item.markAsDone || [];
+    // Extend or trim to match finalNextActions length
+    const finalMarkAsDone = finalNextActions.map((_, i) => markAsDone[i] || false);
+
     switch (item.selectedAction) {
       case "create-project": {
         // Convert parent project to wikilink format if present
@@ -128,7 +142,8 @@ export class InboxItemPersistenceService {
           item.original,
           item.selectedSpheres,
           finalWaitingFor,
-          parentProjectLink
+          parentProjectLink,
+          finalMarkAsDone
         );
         return file.path;
       }
@@ -138,7 +153,8 @@ export class InboxItemPersistenceService {
           await this.writer.addNextActionToProject(
             item.selectedProject,
             finalNextActions,
-            finalWaitingFor
+            finalWaitingFor,
+            finalMarkAsDone
           );
           return item.selectedProject.file;
         } else {
@@ -149,7 +165,8 @@ export class InboxItemPersistenceService {
         await this.writer.addToNextActionsFile(
           finalNextActions,
           item.selectedSpheres,
-          finalWaitingFor
+          finalWaitingFor,
+          finalMarkAsDone
         );
         return this.settings?.nextActionsFilePath || null;
 
