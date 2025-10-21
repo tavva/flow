@@ -54,8 +54,8 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     mockLeaf = new WorkspaceLeaf();
 
     plugin = new FlowGTDCoachPlugin(mockApp, {
-      id: "flow-gtd-coach",
-      name: "Flow GTD Coach",
+      id: "flow",
+      name: "Flow",
       version: "0.1.0",
       minAppVersion: "0.15.0",
       description: "Test",

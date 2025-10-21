@@ -1,5 +1,5 @@
 {
-  "name": "flow-gtd-coach",
+  "name": "flow",
   "version": "0.1.0",
   "description": "GTD coach for Flow-based Obsidian vaults",
   "main": "main.js",
