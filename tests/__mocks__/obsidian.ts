@@ -29,6 +29,7 @@ export class WorkspaceLeaf {
   openFile = jest.fn();
   view: any = null;
   setViewState = jest.fn();
+  detach = jest.fn();
 }
 
 export class Workspace {

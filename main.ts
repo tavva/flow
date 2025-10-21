@@ -310,20 +310,21 @@ export default class FlowGTDCoachPlugin extends Plugin {
   async activateWaitingForView() {
     const { workspace } = this.app;
 
-    let leaf = workspace.getLeavesOfType(WAITING_FOR_VIEW_TYPE)[0];
-
-    if (!leaf) {
-      leaf = workspace.getLeaf("tab");
-      await leaf.setViewState({
-        type: WAITING_FOR_VIEW_TYPE,
-        active: true,
-      });
+    // Close any existing leaves (they might be in the sidebar from before the fix)
+    const existingLeaves = workspace.getLeavesOfType(WAITING_FOR_VIEW_TYPE);
+    for (const leaf of existingLeaves) {
+      leaf.detach();
     }
 
-    if (leaf) {
-      workspace.revealLeaf(leaf);
-      workspace.setActiveLeaf(leaf, { focus: true });
-    }
+    // Always create a new leaf in the main window
+    const leaf = workspace.getLeaf("tab");
+    await leaf.setViewState({
+      type: WAITING_FOR_VIEW_TYPE,
+      active: true,
+    });
+
+    workspace.revealLeaf(leaf);
+    workspace.setActiveLeaf(leaf, { focus: true });
   }
 
   async activateHotlistView() {
