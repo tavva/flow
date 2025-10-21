@@ -40,15 +40,16 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(anthropicContainer)
       .setName("Anthropic API Key")
       .setDesc("Enter your Anthropic API key to enable AI-powered GTD processing")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("sk-ant-...")
           .setValue(this.plugin.settings.anthropicApiKey)
           .onChange(async (value) => {
             this.plugin.settings.anthropicApiKey = value;
             await this.plugin.saveSettings();
-          })
-      )
+          });
+        text.inputEl.type = "password";
+      })
       .addButton((button) =>
         button.setButtonText("Get API Key").onClick(() => {
           window.open("https://console.anthropic.com/settings/keys", "_blank");
@@ -79,15 +80,16 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(openAIContainer)
       .setName("OpenAI-compatible API Key")
       .setDesc("Enter the API key for your OpenAI-compatible provider (e.g., OpenRouter).")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("sk-or-v1-...")
           .setValue(this.plugin.settings.openaiApiKey)
           .onChange(async (value) => {
             this.plugin.settings.openaiApiKey = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        text.inputEl.type = "password";
+      });
 
     new Setting(openAIContainer)
       .setName("OpenAI-compatible Base URL")
