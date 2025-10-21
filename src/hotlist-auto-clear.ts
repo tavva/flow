@@ -81,7 +81,13 @@ export async function archiveClearedTasks(
   if (items.length === 0) {
     tasksContent = "No items were in the hotlist.\n\n";
   } else {
-    tasksContent = items.map((item) => item.lineContent).join("\n") + "\n\n";
+    tasksContent =
+      items
+        .map((item) => {
+          // Strip checkbox markers from archived items
+          return item.lineContent.replace(/^(\s*-\s*)\[[^\]]*\]\s*/, "$1");
+        })
+        .join("\n") + "\n\n";
   }
 
   const newContent = heading + tasksContent;

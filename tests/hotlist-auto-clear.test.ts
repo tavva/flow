@@ -142,11 +142,11 @@ describe("archiveClearedTasks", () => {
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- [ ] Do something")
+      expect.stringContaining("- Do something")
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- [ ] Call someone")
+      expect.stringContaining("- Call someone")
     );
   });
 
@@ -179,7 +179,7 @@ describe("archiveClearedTasks", () => {
     );
     expect(mockVault.modify).toHaveBeenCalledWith(
       mockFile,
-      expect.stringContaining("- [ ] Task one")
+      expect.stringContaining("- Task one")
     );
     expect(mockVault.modify).toHaveBeenCalledWith(
       mockFile,
@@ -230,5 +230,55 @@ describe("archiveClearedTasks", () => {
       archiveFilePath,
       expect.stringContaining("## Cleared 5 January 2025 at 09:30")
     );
+  });
+
+  it("strips checkbox markers from archived items", async () => {
+    const items: HotlistItem[] = [
+      {
+        file: "Projects/Test.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Do something important",
+        text: "Do something important",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Next actions.md",
+        lineNumber: 5,
+        lineContent: "- [x] Already completed",
+        text: "Already completed",
+        sphere: "personal",
+        isGeneral: true,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Next actions.md",
+        lineNumber: 6,
+        lineContent: "- [w] Waiting for response",
+        text: "Waiting for response",
+        sphere: "work",
+        isGeneral: true,
+        addedAt: Date.now(),
+      },
+    ];
+
+    const archiveFilePath = "Hotlist Archive.md";
+    const clearTime = new Date("2025-10-15T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Should contain plain list items without checkbox markers
+    expect(createdContent).toContain("- Do something important");
+    expect(createdContent).toContain("- Already completed");
+    expect(createdContent).toContain("- Waiting for response");
+
+    // Should NOT contain checkbox markers
+    expect(createdContent).not.toContain("- [ ]");
+    expect(createdContent).not.toContain("- [x]");
+    expect(createdContent).not.toContain("- [w]");
   });
 });
