@@ -87,6 +87,8 @@ export class SphereView extends ItemView {
   async setState(state: { sphere?: string }, result: any) {
     if (state?.sphere) {
       this.sphere = state.sphere;
+      // Refresh the view to show the correct sphere
+      await this.onOpen();
     }
     await super.setState(state, result);
   }

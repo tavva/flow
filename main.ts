@@ -36,10 +36,13 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Register the sphere view
     this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
-      // Create with default sphere - will be updated when opened
+      // Check if there's saved state for this leaf
+      const state = (leaf as any).getViewState?.()?.state;
+      const sphere = state?.sphere || this.settings.spheres[0] || "personal";
+
       return new SphereView(
         leaf,
-        this.settings.spheres[0] || "personal",
+        sphere,
         this.settings,
         this.saveSettings.bind(this)
       );
