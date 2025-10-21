@@ -112,9 +112,7 @@ describe("CLI REPL - Tool Integration", () => {
     mockFile.path = "Projects/Test.md";
     (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
 
-    (mockApp.vault.read as jest.Mock).mockResolvedValue(
-      "## Next actions\n- [ ] Test action"
-    );
+    (mockApp.vault.read as jest.Mock).mockResolvedValue("## Next actions\n- [ ] Test action");
 
     (mockApp.metadataCache.getFileCache as jest.Mock).mockReturnValue({
       frontmatter: { tags: ["project/work"] },
@@ -143,9 +141,7 @@ describe("CLI REPL - Tool Integration", () => {
       approvedToolIds: [],
     });
 
-    const approval = await cliApproval.presentToolCallsForApproval(
-      toolCallResponse.toolCalls!
-    );
+    const approval = await cliApproval.presentToolCallsForApproval(toolCallResponse.toolCalls!);
 
     expect(approval.approvedToolIds).toHaveLength(0);
   });

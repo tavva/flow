@@ -1,9 +1,5 @@
 import { getAnthropicClient, resetSharedAnthropicClient } from "../src/anthropic-client";
-import {
-  LanguageModelRequest,
-  ToolDefinition,
-  ToolCallResponse,
-} from "../src/language-model";
+import { LanguageModelRequest, ToolDefinition, ToolCallResponse } from "../src/language-model";
 
 describe("AnthropicClient - Tool Support", () => {
   const mockApiKey = "test-api-key";

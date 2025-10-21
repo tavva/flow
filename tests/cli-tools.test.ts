@@ -146,9 +146,7 @@ describe("ToolExecutor", () => {
     const mockFile = new TFile();
     mockFile.path = "Projects/Test.md";
     (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
-    (mockApp.vault.read as jest.Mock).mockResolvedValue(
-      "## Next actions\n- [ ] Do something"
-    );
+    (mockApp.vault.read as jest.Mock).mockResolvedValue("## Next actions\n- [ ] Do something");
 
     const result = await executor.executeTool(toolCall);
 

@@ -109,19 +109,19 @@ Expected: FAIL - prompt still says "read-only"
 Find the section that says:
 
 ```typescript
-  prompt += `Important: You are read-only. Provide advice and recommendations, but you cannot edit files.\n\n`;
+prompt += `Important: You are read-only. Provide advice and recommendations, but you cannot edit files.\n\n`;
 ```
 
 Replace it with:
 
 ```typescript
-  prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
-  prompt += `- Move important actions to the hotlist for today\n`;
-  prompt += `- Improve vague or unclear next actions to be more specific\n`;
-  prompt += `- Add missing next actions to projects\n`;
-  prompt += `- Update project status (archive completed projects, etc.)\n\n`;
-  prompt += `When you identify improvements, use the available tools to suggest changes. `;
-  prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
+prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
+prompt += `- Move important actions to the hotlist for today\n`;
+prompt += `- Improve vague or unclear next actions to be more specific\n`;
+prompt += `- Add missing next actions to projects\n`;
+prompt += `- Update project status (archive completed projects, etc.)\n\n`;
+prompt += `When you identify improvements, use the available tools to suggest changes. `;
+prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
 ```
 
 ### Step 4: Run test to verify it passes

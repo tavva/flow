@@ -131,9 +131,7 @@ describe("CLI REPL - Tool Integration", () => {
       path: "Projects/Test.md",
     } as TFile);
 
-    (mockApp.vault.read as jest.Mock).mockResolvedValue(
-      "## Next actions\n- [ ] Test action"
-    );
+    (mockApp.vault.read as jest.Mock).mockResolvedValue("## Next actions\n- [ ] Test action");
 
     (mockApp.metadataCache.getFileCache as jest.Mock).mockReturnValue({
       frontmatter: { tags: ["project/work"] },
@@ -162,9 +160,7 @@ describe("CLI REPL - Tool Integration", () => {
       approvedToolIds: [],
     });
 
-    const approval = await cliApproval.presentToolCallsForApproval(
-      toolCallResponse.toolCalls!
-    );
+    const approval = await cliApproval.presentToolCallsForApproval(toolCallResponse.toolCalls!);
 
     expect(approval.approvedToolIds).toHaveLength(0);
   });
@@ -232,14 +228,14 @@ export async function runREPL(
 At the beginning of `runREPL`, after the function signature:
 
 ```typescript
-  const messages: ChatMessage[] = [];
+const messages: ChatMessage[] = [];
 
-  // Check if client supports tools
-  const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
+// Check if client supports tools
+const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
 
-  if (!supportsTools) {
-    console.log("Note: Tool support not available with current LLM provider.\n");
-  }
+if (!supportsTools) {
+  console.log("Note: Tool support not available with current LLM provider.\n");
+}
 ```
 
 ### Step 5: Update handleSubmit to use tools
@@ -249,71 +245,68 @@ At the beginning of `runREPL`, after the function signature:
 Find the `handleSubmit` function inside `runREPL`. Replace the section that calls the LLM:
 
 ```typescript
-    try {
-      // Show thinking indicator
-      process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
+try {
+  // Show thinking indicator
+  process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
 
-      let response: string | ToolCallResponse;
+  let response: string | ToolCallResponse;
 
-      if (supportsTools) {
-        response = await withRetry(
-          () =>
-            languageModelClient.sendMessageWithTools!(
-              { model, maxTokens: 4000, messages },
-              CLI_TOOLS
-            ),
-          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
-          (attempt, delayMs) => {
-            readline.clearLine(process.stdout, 0);
-            readline.cursorTo(process.stdout, 0);
-            const delaySec = (delayMs / 1000).toFixed(1);
-            process.stdout.write(
-              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
-            );
-          }
-        );
-      } else {
-        response = await withRetry(
-          () =>
-            languageModelClient.sendMessage({
-              model,
-              maxTokens: 4000,
-              messages,
-            }),
-          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
-          (attempt, delayMs) => {
-            readline.clearLine(process.stdout, 0);
-            readline.cursorTo(process.stdout, 0);
-            const delaySec = (delayMs / 1000).toFixed(1);
-            process.stdout.write(
-              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
-            );
-          }
+  if (supportsTools) {
+    response = await withRetry(
+      () =>
+        languageModelClient.sendMessageWithTools!({ model, maxTokens: 4000, messages }, CLI_TOOLS),
+      { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+      (attempt, delayMs) => {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        const delaySec = (delayMs / 1000).toFixed(1);
+        process.stdout.write(
+          `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
         );
       }
-
-      // Clear any indicator (thinking or retry)
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
-
-      // Handle tool response
-      if (typeof response !== "string" && response.toolCalls) {
-        await handleToolCalls(response, messages, languageModelClient, model, mockApp, settings);
-      } else {
-        // Regular text response
-        const text = typeof response === "string" ? response : response.content || "";
-        messages.push({ role: "assistant", content: text });
-        console.log(`${colors.assistant}Coach:${colors.reset}\n${marked.parse(text)}`);
+    );
+  } else {
+    response = await withRetry(
+      () =>
+        languageModelClient.sendMessage({
+          model,
+          maxTokens: 4000,
+          messages,
+        }),
+      { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+      (attempt, delayMs) => {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+        const delaySec = (delayMs / 1000).toFixed(1);
+        process.stdout.write(
+          `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+        );
       }
-    } catch (error) {
-      // Clear any indicator on error
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
+    );
+  }
 
-      console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
-      // Remove the user message that caused the error
-      messages.pop();
-    }
+  // Clear any indicator (thinking or retry)
+  readline.clearLine(process.stdout, 0);
+  readline.cursorTo(process.stdout, 0);
+
+  // Handle tool response
+  if (typeof response !== "string" && response.toolCalls) {
+    await handleToolCalls(response, messages, languageModelClient, model, mockApp, settings);
+  } else {
+    // Regular text response
+    const text = typeof response === "string" ? response : response.content || "";
+    messages.push({ role: "assistant", content: text });
+    console.log(`${colors.assistant}Coach:${colors.reset}\n${marked.parse(text)}`);
+  }
+} catch (error) {
+  // Clear any indicator on error
+  readline.clearLine(process.stdout, 0);
+  readline.cursorTo(process.stdout, 0);
+
+  console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
+  // Remove the user message that caused the error
+  messages.pop();
+}
 ```
 
 ### Step 6: Implement handleToolCalls function
@@ -393,17 +386,17 @@ import { FileWriter } from "./file-writer";
 Find the `main()` function and update the `runREPL` call:
 
 ```typescript
-  // Run REPL
-  await runREPL(
-    languageModelClient,
-    model,
-    systemPrompt,
-    gtdContext,
-    projects.length,
-    args.sphere,
-    mockApp as any,
-    settings
-  );
+// Run REPL
+await runREPL(
+  languageModelClient,
+  model,
+  systemPrompt,
+  gtdContext,
+  projects.length,
+  args.sphere,
+  mockApp as any,
+  settings
+);
 ```
 
 ### Step 9: Run test to verify it passes
@@ -428,6 +421,7 @@ node dist/main.js --vault ~/path/to/vault --sphere work
 ```
 
 Test interaction:
+
 1. Ask "What projects need attention?"
 2. Verify tool support note appears or doesn't based on provider
 3. Exit with Ctrl+C

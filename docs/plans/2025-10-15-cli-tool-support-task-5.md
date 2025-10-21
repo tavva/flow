@@ -14,11 +14,7 @@
 
 ```typescript
 import { getAnthropicClient, resetSharedAnthropicClient } from "../src/anthropic-client";
-import {
-  LanguageModelRequest,
-  ToolDefinition,
-  ToolCallResponse,
-} from "../src/language-model";
+import { LanguageModelRequest, ToolDefinition, ToolCallResponse } from "../src/language-model";
 
 describe("AnthropicClient - Tool Support", () => {
   const mockApiKey = "test-api-key";
@@ -327,7 +323,13 @@ Add the method to the `AnthropicLanguageModelClient` class after the `sendMessag
 Update the import from language-model:
 
 ```typescript
-import { LanguageModelClient, LanguageModelRequest, ToolDefinition, ToolCallResponse, ToolCall } from "./language-model";
+import {
+  LanguageModelClient,
+  LanguageModelRequest,
+  ToolDefinition,
+  ToolCallResponse,
+  ToolCall,
+} from "./language-model";
 ```
 
 ### Step 5: Run test to verify it passes

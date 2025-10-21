@@ -204,9 +204,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
     if (typeof message.content === "string") {
       textContent = message.content;
     } else if (Array.isArray(message.content)) {
-      const parts = message.content
-        .filter((part) => part.type === "text")
-        .map((part) => part.text);
+      const parts = message.content.filter((part) => part.type === "text").map((part) => part.text);
       textContent = parts.length > 0 ? parts.join("\n") : undefined;
     }
 

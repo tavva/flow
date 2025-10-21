@@ -117,7 +117,7 @@ export interface ToolCallResponse {
 
 export interface LanguageModelClient {
   sendMessage(request: LanguageModelRequest): Promise<string>;
-  
+
   // Optional - for tool support
   sendMessageWithTools?(
     request: LanguageModelRequest,
@@ -143,15 +143,15 @@ export const CLI_TOOLS: ToolDefinition[] = [
       properties: {
         project_path: {
           type: "string",
-          description: "File path to the project containing the action"
+          description: "File path to the project containing the action",
         },
         action_text: {
           type: "string",
-          description: "Full text of the action to add to hotlist (without checkbox)"
-        }
+          description: "Full text of the action to add to hotlist (without checkbox)",
+        },
       },
-      required: ["project_path", "action_text"]
-    }
+      required: ["project_path", "action_text"],
+    },
   },
   {
     name: "update_next_action",
@@ -161,19 +161,19 @@ export const CLI_TOOLS: ToolDefinition[] = [
       properties: {
         project_path: {
           type: "string",
-          description: "File path to the project containing the action"
+          description: "File path to the project containing the action",
         },
         old_action: {
           type: "string",
-          description: "Current text of the action to update"
+          description: "Current text of the action to update",
         },
         new_action: {
           type: "string",
-          description: "Improved text for the action"
-        }
+          description: "Improved text for the action",
+        },
       },
-      required: ["project_path", "old_action", "new_action"]
-    }
+      required: ["project_path", "old_action", "new_action"],
+    },
   },
   {
     name: "add_next_action_to_project",
@@ -183,19 +183,19 @@ export const CLI_TOOLS: ToolDefinition[] = [
       properties: {
         project_path: {
           type: "string",
-          description: "File path to the project"
+          description: "File path to the project",
         },
         action_text: {
           type: "string",
-          description: "Text of the new next action"
+          description: "Text of the new next action",
         },
         is_waiting: {
           type: "boolean",
-          description: "Whether this is a waiting-for action (default false)"
-        }
+          description: "Whether this is a waiting-for action (default false)",
+        },
       },
-      required: ["project_path", "action_text"]
-    }
+      required: ["project_path", "action_text"],
+    },
   },
   {
     name: "update_project_status",
@@ -205,16 +205,16 @@ export const CLI_TOOLS: ToolDefinition[] = [
       properties: {
         project_path: {
           type: "string",
-          description: "File path to the project"
+          description: "File path to the project",
         },
         new_status: {
           type: "string",
-          description: "New status value (archived, hold, live, etc.)"
-        }
+          description: "New status value (archived, hold, live, etc.)",
+        },
       },
-      required: ["project_path", "new_status"]
-    }
-  }
+      required: ["project_path", "new_status"],
+    },
+  },
 ];
 
 export class ToolExecutor {
@@ -239,14 +239,14 @@ export class ToolExecutor {
           return {
             tool_use_id: toolCall.id,
             content: `Unknown tool: ${toolCall.name}`,
-            is_error: true
+            is_error: true,
           };
       }
     } catch (error) {
       return {
         tool_use_id: toolCall.id,
         content: `Error: ${error instanceof Error ? error.message : String(error)}`,
-        is_error: true
+        is_error: true,
       };
     }
   }
@@ -260,10 +260,10 @@ export class ToolExecutor {
     // Implementation: Add to hotlist using FileWriter or new helper
     // Extract sphere from project tags
     // Return success message
-    
+
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added "${action_text}" to hotlist`
+      content: `✓ Added "${action_text}" to hotlist`,
     };
   }
 
@@ -276,10 +276,10 @@ export class ToolExecutor {
 
     // Implementation: Read project file, find old action, replace with new
     // Use similar logic to review-modal.ts updateNextAction method
-    
+
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Updated action in ${project_path}`
+      content: `✓ Updated action in ${project_path}`,
     };
   }
 
@@ -292,10 +292,10 @@ export class ToolExecutor {
 
     // Implementation: Use FileWriter.addNextActionToProject
     // Need to construct minimal FlowProject object from path
-    
+
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added action to ${project_path}`
+      content: `✓ Added action to ${project_path}`,
     };
   }
 
@@ -307,10 +307,10 @@ export class ToolExecutor {
 
     // Implementation: Update frontmatter status field
     // Use similar logic to review-modal.ts updateProjectStatus method
-    
+
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Updated ${project_path} status to ${new_status}`
+      content: `✓ Updated ${project_path} status to ${new_status}`,
     };
   }
 }
@@ -348,43 +348,41 @@ export async function presentToolCallsForApproval(
 
 async function inlineApproval(toolCall: ToolCall): Promise<ApprovalResult> {
   console.log(`Coach suggests: ${formatToolCallDescription(toolCall)}\n`);
-  
+
   const answer = await promptUser("Apply this change? (y/n/skip): ");
-  
+
   if (answer === "y" || answer === "yes") {
     return { approvedToolIds: [toolCall.id] };
   }
-  
+
   return { approvedToolIds: [] };
 }
 
 async function batchApproval(toolCalls: ToolCall[]): Promise<ApprovalResult> {
   console.log(`\nCoach suggests ${toolCalls.length} improvements:\n`);
-  
+
   toolCalls.forEach((toolCall, index) => {
     console.log(`${index + 1}. ${formatToolCallDescription(toolCall)}\n`);
   });
-  
-  const answer = await promptUser(
-    "Enter numbers to apply (e.g., '1,3' or 'all' or 'none'): "
-  );
-  
+
+  const answer = await promptUser("Enter numbers to apply (e.g., '1,3' or 'all' or 'none'): ");
+
   if (answer === "all") {
-    return { approvedToolIds: toolCalls.map(tc => tc.id) };
+    return { approvedToolIds: toolCalls.map((tc) => tc.id) };
   }
-  
+
   if (answer === "none" || answer === "") {
     return { approvedToolIds: [] };
   }
-  
+
   // Parse comma-separated numbers
   const selectedIndices = answer
     .split(",")
-    .map(s => parseInt(s.trim(), 10) - 1)
-    .filter(i => i >= 0 && i < toolCalls.length);
-  
+    .map((s) => parseInt(s.trim(), 10) - 1)
+    .filter((i) => i >= 0 && i < toolCalls.length);
+
   return {
-    approvedToolIds: selectedIndices.map(i => toolCalls[i].id)
+    approvedToolIds: selectedIndices.map((i) => toolCalls[i].id),
   };
 }
 
@@ -406,9 +404,9 @@ function formatToolCallDescription(toolCall: ToolCall): string {
 async function promptUser(question: string): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
-  
+
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
@@ -434,45 +432,44 @@ export async function runREPL(
   settings: PluginSettings // Need to pass through for ToolExecutor
 ): Promise<void> {
   const messages: ChatMessage[] = [];
-  
+
   // Check if client supports tools
   const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
-  
+
   if (!supportsTools) {
     console.log("Note: Tool support not available with current LLM provider.\n");
   }
-  
+
   // ... existing REPL setup ...
-  
+
   const handleSubmit = async () => {
     // ... existing input handling ...
-    
+
     try {
       process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
-      
+
       let response: string | ToolCallResponse;
-      
+
       if (supportsTools) {
         response = await withRetry(
-          () => languageModelClient.sendMessageWithTools!(
-            { model, maxTokens: 4000, messages },
-            CLI_TOOLS
-          ),
+          () =>
+            languageModelClient.sendMessageWithTools!(
+              { model, maxTokens: 4000, messages },
+              CLI_TOOLS
+            )
           // ... retry config ...
         );
       } else {
         response = await withRetry(
-          () => languageModelClient.sendMessage(
-            { model, maxTokens: 4000, messages }
-          ),
+          () => languageModelClient.sendMessage({ model, maxTokens: 4000, messages })
           // ... retry config ...
         );
       }
-      
+
       // Clear thinking indicator
       readline.clearLine(process.stdout, 0);
       readline.cursorTo(process.stdout, 0);
-      
+
       // Handle tool response
       if (typeof response !== "string" && response.toolCalls) {
         await handleToolCalls(response, messages, languageModelClient, model);
@@ -482,14 +479,13 @@ export async function runREPL(
         messages.push({ role: "assistant", content: text });
         console.log(`${colors.assistant}Coach:${colors.reset}\n${marked.parse(text)}`);
       }
-      
     } catch (error) {
       // ... error handling ...
     }
-    
+
     showPrompt();
   };
-  
+
   // ... rest of REPL ...
 }
 
@@ -500,19 +496,19 @@ async function handleToolCalls(
   model: string
 ): Promise<void> {
   const { content, toolCalls } = response;
-  
+
   // Present tools for approval
   const approval = await presentToolCallsForApproval(toolCalls!, content);
-  
+
   // Execute approved tools
   const toolExecutor = new ToolExecutor(mockApp, fileWriter, settings);
   const toolResults: ToolResult[] = [];
-  
+
   for (const toolCall of toolCalls!) {
     if (approval.approvedToolIds.includes(toolCall.id)) {
       const result = await toolExecutor.executeTool(toolCall);
       toolResults.push(result);
-      
+
       // Show result to user
       if (result.is_error) {
         console.log(`  ✗ ${result.content}`);
@@ -524,15 +520,15 @@ async function handleToolCalls(
       toolResults.push({
         tool_use_id: toolCall.id,
         content: "User declined this change",
-        is_error: false
+        is_error: false,
       });
     }
   }
-  
+
   // Send tool results back to LLM for final response
   // This requires storing tool calls and results in message history
   // Format depends on provider (Anthropic vs OpenAI)
-  
+
   // ... implementation to send tool results and get final response ...
 }
 ```
@@ -666,8 +662,8 @@ async sendMessageWithTools(
     }
   }
 
-  const content = typeof message.content === "string" 
-    ? message.content 
+  const content = typeof message.content === "string"
+    ? message.content
     : message.content?.filter(p => p.type === "text").map(p => p.text).join("\n");
 
   return {
@@ -686,18 +682,20 @@ async sendMessageWithTools(
 2. **LLM Response:**
    - Text: "I notice several actions could be more specific. Here are my suggestions:"
    - Tool Calls: [
-       `update_next_action(...)`,
-       `update_next_action(...)`
+     `update_next_action(...)`,
+     `update_next_action(...)`
      ]
 3. **Approval Handler** shows batch UI:
+
    ```
    Coach suggests 2 improvements:
-   
+
    1. Rename "gym" → "Call gym at 555-9999..."
    2. Rename "fix bug" → "Fix login timeout..."
-   
+
    Apply which? (1,2 or 'all'): 1,2
    ```
+
 4. **Tool Executor** executes tools #1 and #2, returns results
 5. **REPL → LLM** with tool results
 6. **LLM Final Response:** "Great! I've updated both actions..."
@@ -710,18 +708,20 @@ async sendMessageWithTools(
 Need to properly format message history for each provider:
 
 **Anthropic format:**
+
 ```
-[user message] → 
-[assistant with tool_use blocks] → 
-[user with tool_result blocks] → 
+[user message] →
+[assistant with tool_use blocks] →
+[user with tool_result blocks] →
 [assistant final response]
 ```
 
 **OpenAI format:**
+
 ```
-[user message] → 
-[assistant with tool_calls] → 
-[tool messages with results] → 
+[user message] →
+[assistant with tool_calls] →
+[tool messages with results] →
 [assistant final response]
 ```
 
@@ -742,6 +742,7 @@ Need to properly format message history for each provider:
 ### Hotlist Integration
 
 Review `src/hotlist-view.ts` for:
+
 - `HotlistItem` structure (file, lineNumber, lineContent, text, sphere, addedAt)
 - Validation logic for checking if action exists at line number
 - How hotlist is stored in settings and persisted
@@ -767,6 +768,7 @@ Implement similar logic in tool executor or extend FileWriter with `addToHotlist
 ## Next Steps
 
 Hand off to writing-plans chat mode to create detailed implementation plan with:
+
 - Exact code snippets for each change
 - Test specifications
 - Dependency order and parallelization opportunities

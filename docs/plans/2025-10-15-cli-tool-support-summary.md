@@ -14,9 +14,11 @@ This implementation adds tool calling capabilities to the CLI GTD coach, allowin
 All tasks follow TDD approach: write test → verify failure → implement → verify pass → commit.
 
 ### Task 1: Add Tool Types to Language Model Interface
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-1.md`
 
 Add TypeScript interfaces for tool support to `src/language-model.ts`:
+
 - `ToolDefinition` - schema for tool parameters
 - `ToolCall` - LLM's request to call a tool
 - `ToolResult` - execution result to return to LLM
@@ -29,9 +31,11 @@ Add TypeScript interfaces for tool support to `src/language-model.ts`:
 ---
 
 ### Task 2: Create CLI Approval Handler
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-2.md`
 
 Create `src/cli-approval.ts` with approval UI:
+
 - `presentToolCallsForApproval()` - main function
 - Inline mode for single tool (y/n/skip)
 - Batch mode for multiple tools (numbered selection)
@@ -44,14 +48,17 @@ Create `src/cli-approval.ts` with approval UI:
 ---
 
 ### Task 3: Create Tool Definitions and Executor
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-3.md`
 
 Create `src/cli-tools.ts` with:
+
 - `CLI_TOOLS` array defining 4 tools
 - `ToolExecutor` class routing to appropriate methods
 - Stub implementations (real logic in Task 4)
 
 Tools:
+
 1. `move_to_hotlist` - Add action to hotlist
 2. `update_next_action` - Rename/improve action
 3. `add_next_action_to_project` - Add new action
@@ -63,9 +70,11 @@ Tools:
 ---
 
 ### Task 4: Implement Tool Execution Logic
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-4.md`
 
 Fill in ToolExecutor method implementations:
+
 - `moveToHotlist()` - Find action, extract sphere, add to settings
 - `updateNextAction()` - Find and replace action text in file
 - `addNextActionToProject()` - Use FileWriter to add action
@@ -77,9 +86,11 @@ Fill in ToolExecutor method implementations:
 ---
 
 ### Task 5: Add Tool Support to Anthropic Client
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-5.md`
 
 Implement `sendMessageWithTools()` in `src/anthropic-client.ts`:
+
 - Convert tools to Anthropic format
 - Parse `tool_use` content blocks from response
 - Combine multiple text blocks
@@ -91,9 +102,11 @@ Implement `sendMessageWithTools()` in `src/anthropic-client.ts`:
 ---
 
 ### Task 6: Add Tool Support to OpenAI Compatible Client
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-6.md`
 
 Implement `sendMessageWithTools()` in `src/openai-compatible-client.ts`:
+
 - Convert tools to OpenAI function format
 - Parse `tool_calls` from response message
 - Handle string and array content formats
@@ -105,9 +118,11 @@ Implement `sendMessageWithTools()` in `src/openai-compatible-client.ts`:
 ---
 
 ### Task 7: Update System Prompt for Tool Usage
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-7.md`
 
 Update `buildSystemPrompt()` in `src/cli.ts`:
+
 - Remove "read-only" language
 - List 4 tool capabilities
 - Mention user approval required
@@ -119,9 +134,11 @@ Update `buildSystemPrompt()` in `src/cli.ts`:
 ---
 
 ### Task 8: Integrate Tool Calling into REPL
+
 **File:** `docs/plans/2025-10-15-cli-tool-support-task-8.md`
 
 Update `runREPL()` in `src/cli.ts`:
+
 - Add App and PluginSettings parameters
 - Detect if client supports tools
 - Call `sendMessageWithTools()` when available
@@ -136,20 +153,26 @@ Update `runREPL()` in `src/cli.ts`:
 ## Execution Order
 
 ### Phase 1: Parallel Foundation (Tasks 1-3, 7)
+
 Can be executed in parallel by different developers:
+
 - Task 1: Type definitions
 - Task 2: Approval handler
 - Task 3: Tool definitions/executor skeleton
 - Task 7: System prompt
 
 ### Phase 2: Implementation (Tasks 4-6)
+
 Can be executed in parallel:
+
 - Task 4: Tool execution logic
 - Task 5: Anthropic client
 - Task 6: OpenAI client
 
 ### Phase 3: Integration (Task 8)
+
 Requires all previous tasks:
+
 - Task 8: Wire everything together in REPL
 
 ## Total Estimated Time
@@ -164,6 +187,7 @@ Requires all previous tasks:
 ## Testing Strategy
 
 Each task includes:
+
 - Unit tests for new components
 - Integration tests where applicable
 - Regression testing via `npm test`
@@ -193,6 +217,7 @@ Each task includes:
 ## Files Created/Modified
 
 ### New Files (8)
+
 - `src/cli-tools.ts`
 - `src/cli-approval.ts`
 - `tests/language-model.test.ts`
@@ -205,6 +230,7 @@ Each task includes:
 - `tests/cli-repl-tools.test.ts`
 
 ### Modified Files (4)
+
 - `src/language-model.ts` - Add tool types
 - `src/anthropic-client.ts` - Add sendMessageWithTools
 - `src/openai-compatible-client.ts` - Add sendMessageWithTools
@@ -222,6 +248,7 @@ Each task includes:
 ## Rollback Plan
 
 If issues discovered after release:
+
 1. Revert commits for Task 8 (disables tool calling in REPL)
 2. System reverts to read-only mode
 3. All other code remains (foundation for future retry)

@@ -1,2 +1,1 @@
-export const openPlanningView = () => {}
-
+export const openPlanningView = () => {};

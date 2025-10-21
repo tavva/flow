@@ -1,6 +1,1 @@
-[
-  "flow",
-  "obsidian-tasks-plugin",
-  "dataview",
-  "templater-obsidian"
-]
+["flow", "obsidian-tasks-plugin", "dataview", "templater-obsidian"]

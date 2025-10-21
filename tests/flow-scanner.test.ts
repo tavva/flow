@@ -227,10 +227,7 @@ status: live
 
         const result = await scanner.parseProjectFile(mockFile);
 
-        expect(result?.nextActions).toEqual([
-          "Incomplete action",
-          "Another incomplete action",
-        ]);
+        expect(result?.nextActions).toEqual(["Incomplete action", "Another incomplete action"]);
       });
 
       it("should match section headings regardless of case", async () => {

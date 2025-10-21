@@ -256,11 +256,7 @@ export class ToolExecutor {
       nextActions: [],
     };
 
-    await this.fileWriter.addNextActionToProject(
-      project,
-      action_text,
-      [is_waiting || false]
-    );
+    await this.fileWriter.addNextActionToProject(project, action_text, [is_waiting || false]);
 
     return {
       tool_use_id: toolCall.id,

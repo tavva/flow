@@ -13,6 +13,7 @@ This is a **well-architected, professionally structured codebase** with excellen
 ### Overall Assessment
 
 **Strengths:**
+
 - ✅ Clean layered architecture with no circular dependencies
 - ✅ Excellent test coverage (40 test files, 80% threshold)
 - ✅ Consistent design patterns throughout
@@ -20,6 +21,7 @@ This is a **well-architected, professionally structured codebase** with excellen
 - ✅ Good error handling with custom error types
 
 **Areas for Improvement:**
+
 - ⚠️ Minor code duplication in filtering logic
 - ⚠️ Unused validation exports
 - ⚠️ Complex rate limiting logic could be extracted
@@ -48,6 +50,7 @@ Layer 0: Utilities & Types
 ```
 
 **Strengths:**
+
 - Strict unidirectional dependencies (no cycles)
 - Clear separation of concerns
 - Easy to test and maintain
@@ -55,6 +58,7 @@ Layer 0: Utilities & Types
 ### 1.2 Design Patterns ✅ **VERY GOOD**
 
 **Patterns Used Correctly:**
+
 1. **Factory Pattern** (`llm-factory.ts`) - LLM provider abstraction
 2. **Scanner Pattern** - Consistent data access layer
 3. **Dependency Injection** - Testability in controllers
@@ -114,6 +118,7 @@ src/
 **Location:** `src/validation.ts` (all exports)
 
 All 7 validation functions are **ONLY used in tests**, never in production code:
+
 - `validateApiKey()` - Line 8
 - `validatePriority()` - Line 27
 - `validateStatus()` - Line 42
@@ -123,6 +128,7 @@ All 7 validation functions are **ONLY used in tests**, never in production code:
 - `validateNextAction()` - Line 113
 
 **Recommendation:**
+
 ```typescript
 // Option 1: Move to test utilities if truly unused in production
 // tests/test-utils/validation.ts
@@ -153,6 +159,7 @@ if (!validation.valid) {
 #### Issue #2: Duplicate Filtering Logic
 
 **Location 1:** `src/gtd-processor.ts:240-243`
+
 ```typescript
 private filterLiveProjects(projects: FlowProject[]): FlowProject[] {
   const withoutTemplates = filterTemplates(projects, this.projectTemplateFilePath);
@@ -161,6 +168,7 @@ private filterLiveProjects(projects: FlowProject[]): FlowProject[] {
 ```
 
 **Location 2:** `src/inbox-processing-controller.ts:74-75`
+
 ```typescript
 const withoutTemplates = filterTemplates(projects, this.settings.projectTemplateFilePath);
 return filterLiveProjects(withoutTemplates);
@@ -191,6 +199,7 @@ return filterLiveNonTemplateProjects(projects, this.settings.projectTemplateFile
 The `RateLimitedAnthropicClient` class contains complex token bucket algorithm with exponential backoff, EWMA latency tracking, and adaptive rate limiting.
 
 **Recommendation:**
+
 ```typescript
 // Extract to separate class
 // src/rate-limiter.ts
@@ -227,6 +236,7 @@ export class RateLimitedAnthropicClient {
 **File:** `src/gtd-processor.ts` (887 lines)
 
 **Strengths:**
+
 - Comprehensive prompt engineering with GTD principles
 - Robust JSON parsing with sanitization (`sanitizeModelResponse`)
 - Thorough validation with detailed error messages
@@ -234,6 +244,7 @@ export class RateLimitedAnthropicClient {
 - Handles edge cases well (missing project outcomes, etc.)
 
 **Areas for Improvement:**
+
 1. **Long validation function** (lines 437-793, 356 lines)
    - Consider extracting to `GTDResponseValidator` class
    - Break into smaller validation methods
@@ -241,11 +252,13 @@ export class RateLimitedAnthropicClient {
 2. **Magic numbers:**
    ```typescript
    const SIMILARITY_THRESHOLD = 0.6; // Line 305
-   projects.slice(0, 20) // Line 206 - why 20?
+   projects.slice(0, 20); // Line 206 - why 20?
    ```
+
    - Move to constants with explanatory comments
 
 **Recommendation:**
+
 ```typescript
 // Extract validation
 class GTDResponseValidator {
@@ -263,19 +276,23 @@ class GTDResponseValidator {
 **File:** `src/flow-scanner.ts` (193 lines)
 
 **Strengths:**
+
 - Clean, focused responsibility
 - Good section extraction logic
 - Handles edge cases (empty sections, nested headings)
 - Integrates well with hierarchy building
 
 **Minor Issue:**
+
 ```typescript
 // Line 124: Regex for checkbox detection
 const itemMatch = line.match(/^[-*]\s+(?:\[([ xXw])\]\s+)?(.+)$/);
 ```
 
 **Recommendation:**
+
 - Extract regex patterns to constants:
+
 ```typescript
 const CHECKBOX_LINE_PATTERN = /^[-*]\s+(?:\[([ xXw])\]\s+)?(.+)$/;
 const HEADING_PATTERN = /^(#{1,6})\s+(.+)$/;
@@ -288,11 +305,13 @@ const HEADING_PATTERN = /^(#{1,6})\s+(.+)$/;
 **File:** `src/file-writer.ts` (540 lines)
 
 **Strengths:**
+
 - Comprehensive file operations
 - Template support with variable replacement
 - Good error handling
 
 **Issues:**
+
 1. **Recursive folder creation** (lines 54-68) - Could use Obsidian's built-in method if available
 2. **Duplicate section creation methods:**
    - `createSectionWithAction` (lines 452-469)
@@ -302,6 +321,7 @@ const HEADING_PATTERN = /^(#{1,6})\s+(.+)$/;
    Could be consolidated into one method with type parameter
 
 **Recommendation:**
+
 ```typescript
 private createSectionWithContent(
   content: string,
@@ -333,6 +353,7 @@ private createSectionWithContent(
 **File:** `src/project-hierarchy.ts` (247 lines)
 
 **Strengths:**
+
 - Cycle detection prevents infinite loops
 - Dual lookup by file path and title
 - Recursive depth calculation
@@ -349,10 +370,12 @@ private createSectionWithContent(
 **File:** `src/hotlist-validator.ts` (49 lines)
 
 **Strengths:**
+
 - Simple, focused responsibility
 - Handles file not found gracefully
 
 **Potential Optimization:**
+
 - Could be optimized for bulk validation to avoid reading the same file multiple times:
 
 ```typescript
@@ -383,11 +406,13 @@ async validateItems(items: HotlistItem[]): Promise<Map<HotlistItem, ValidationRe
 **Files:** `sphere-view.ts`, `hotlist-view.ts`, `waiting-for-view.ts`
 
 **Strengths:**
+
 - Event-driven refresh with debouncing
 - Clean state management
 - Good separation of rendering logic
 
 **Issues:**
+
 1. **Duplicate refresh logic** across `hotlist-view.ts` and `waiting-for-view.ts`
 2. **Hard-coded debounce times:**
    ```typescript
@@ -444,12 +469,14 @@ export class HotlistView extends BaseVaultView {
 **File:** `src/inbox-modal-state.ts`
 
 **Strengths:**
+
 - Clean separation of state from rendering
 - Proper async handling
 - Good error handling with user feedback
 - Clear separation of concerns
 
 **Minor Issue:**
+
 - State class mixes data and operations
 - For more complex workflows, could benefit from state machine pattern (e.g., XState)
 
@@ -483,28 +510,40 @@ export class FileNotFoundError extends Error {
 }
 
 export class InvalidProjectStructureError extends Error {
-  constructor(public projectPath: string, reason: string) {
+  constructor(
+    public projectPath: string,
+    reason: string
+  ) {
     super(`Invalid project structure in ${projectPath}: ${reason}`);
     this.name = "InvalidProjectStructureError";
   }
 }
 
 export class LLMAPIError extends Error {
-  constructor(public provider: string, public originalError: Error) {
+  constructor(
+    public provider: string,
+    public originalError: Error
+  ) {
     super(`${provider} API error: ${originalError.message}`);
     this.name = "LLMAPIError";
   }
 }
 
 export class HotlistValidationError extends Error {
-  constructor(public item: HotlistItem, reason: string) {
+  constructor(
+    public item: HotlistItem,
+    reason: string
+  ) {
     super(`Hotlist item validation failed: ${reason}`);
     this.name = "HotlistValidationError";
   }
 }
 
 export class InboxScannerError extends Error {
-  constructor(message: string, public folderPath?: string) {
+  constructor(
+    message: string,
+    public folderPath?: string
+  ) {
     super(message);
     this.name = "InboxScannerError";
   }
@@ -516,11 +555,13 @@ export class InboxScannerError extends Error {
 ### 4.2 Error Handling Patterns ✅ **GOOD**
 
 **Strengths:**
+
 - Try-catch blocks in critical paths
 - User-friendly error messages via `Notice`
 - Console logging for debugging
 
 **Example of good error handling:**
+
 ```typescript
 // inbox-modal-state.ts:54-62
 async loadReferenceData() {
@@ -536,6 +577,7 @@ async loadReferenceData() {
 
 **Could Be Improved:**
 Some error paths only log to console without user feedback:
+
 ```typescript
 // sphere-view.ts:69-72
 catch (error) {
@@ -545,6 +587,7 @@ catch (error) {
 ```
 
 Better to show specific error:
+
 ```typescript
 catch (error) {
   const message = error instanceof Error ? error.message : String(error);
@@ -560,11 +603,13 @@ catch (error) {
 ### 5.1 Test Coverage ✅ **EXCELLENT**
 
 **Metrics:**
+
 - **40 test files** covering major components
 - **80% coverage threshold** enforced (branches, functions, lines, statements)
 - Jest with ts-jest for TypeScript support
 
 **Test Files Include:**
+
 - **Core logic:** `gtd-processor.test.ts`, `file-writer.test.ts`, `flow-scanner.test.ts`
 - **Integration:** `hotlist-integration.test.ts`, `inbox-processing-controller.test.ts`
 - **UI:** `sphere-view.test.ts`, `hotlist-view.test.ts`, `waiting-for-view.test.ts`
@@ -575,12 +620,14 @@ catch (error) {
 ### 5.2 Test Quality ✅ **VERY GOOD**
 
 **Strengths:**
+
 - Comprehensive mocking (`tests/__mocks__/obsidian.ts`)
 - Integration tests for complex workflows
 - Edge case testing
 - Network error handling tests
 
 **Test Configuration:**
+
 ```javascript
 // jest.config.js
 coverageThreshold: {
@@ -620,6 +667,7 @@ async scanProjects(): Promise<FlowProject[]> {
 **Impact:** In large vaults (thousands of files), this could be slow.
 
 **Recommendation:**
+
 - Add caching layer with invalidation on file changes
 - Use Dataview API when available for faster queries
 - Consider lazy loading for views
@@ -638,7 +686,7 @@ class FlowProjectScanner {
     const projects = await this.scanProjectsUncached();
 
     // Update cache
-    this.cache = new Map(projects.map(p => [p.file, p]));
+    this.cache = new Map(projects.map((p) => [p.file, p]));
     this.cacheInvalidated = false;
 
     return projects;
@@ -659,6 +707,7 @@ class FlowProjectScanner {
 **Impact:** Views could be slow with hundreds of projects
 
 **Recommendation:**
+
 - Add virtual scrolling or pagination for large lists
 - Limit initial render to top N items
 - Add "Load more" button
@@ -710,12 +759,14 @@ const filePath = `${folderPath}/${sanitized}.md`;
 ### 8.1 Code Documentation ✅ **VERY GOOD**
 
 **Strengths:**
+
 - JSDoc comments on most public methods
 - ABOUTME comments at top of key files (excellent practice!)
 - Inline comments for complex logic
 - Clear variable and function names
 
 **Examples of good documentation:**
+
 ```typescript
 // project-hierarchy.ts:1-2
 // ABOUTME: Builds and manages hierarchical project relationships based on parent-project frontmatter.
@@ -734,6 +785,7 @@ function wouldCreateCycle(
 ### 8.2 README/CLAUDE.md ✅ **EXCELLENT**
 
 The `CLAUDE.md` file is exceptional:
+
 - Comprehensive project overview
 - Development workflow documented
 - Architecture explanation with layer descriptions
@@ -751,9 +803,11 @@ The `CLAUDE.md` file is exceptional:
 ### Priority 1: Must-Do (Quick Wins - < 2 hours total)
 
 #### 1. Fix code duplication in filter logic (15 minutes)
+
 **Files:** `src/gtd-processor.ts`, `src/inbox-processing-controller.ts`
 
 Replace duplicate filtering with `filterLiveNonTemplateProjects()`:
+
 ```typescript
 // gtd-processor.ts:240-243
 import { filterLiveNonTemplateProjects } from "./project-filters";
@@ -770,9 +824,11 @@ async loadExistingProjects(): Promise<FlowProject[]> {
 ```
 
 #### 2. Add input validation in UI (30 minutes)
+
 **Files:** `src/settings-tab.ts`, `src/inbox-modal-state.ts`
 
 Add validation before processing user input:
+
 ```typescript
 // settings-tab.ts
 import { validateApiKey } from "./validation";
@@ -788,9 +844,11 @@ if (this.plugin.settings.llmProvider === "anthropic") {
 ```
 
 #### 3. Add more custom error types (30 minutes)
+
 **File:** `src/errors.ts`
 
 Expand error types for better error handling:
+
 ```typescript
 export class FileNotFoundError extends Error {
   constructor(public filePath: string) {
@@ -800,14 +858,20 @@ export class FileNotFoundError extends Error {
 }
 
 export class LLMAPIError extends Error {
-  constructor(public provider: string, public originalError: Error) {
+  constructor(
+    public provider: string,
+    public originalError: Error
+  ) {
     super(`${provider} API error: ${originalError.message}`);
     this.name = "LLMAPIError";
   }
 }
 
 export class InvalidProjectStructureError extends Error {
-  constructor(public projectPath: string, reason: string) {
+  constructor(
+    public projectPath: string,
+    reason: string
+  ) {
     super(`Invalid project structure in ${projectPath}: ${reason}`);
     this.name = "InvalidProjectStructureError";
   }
@@ -819,9 +883,11 @@ export class InvalidProjectStructureError extends Error {
 ### Priority 2: Should-Do (Improvements - 2-4 hours each)
 
 #### 4. Extract validation logic from GTDProcessor (2 hours)
+
 **File:** `src/gtd-processor.ts`
 
 Create `GTDResponseValidator` class to break up 356-line validation function:
+
 ```typescript
 // src/gtd-response-validator.ts
 export class GTDResponseValidator {
@@ -843,9 +909,11 @@ export class GTDResponseValidator {
 ```
 
 #### 5. Add caching to scanners (3 hours)
+
 **File:** `src/flow-scanner.ts`
 
 Implement cache with file change invalidation:
+
 ```typescript
 export class FlowProjectScanner {
   private projectCache = new Map<string, FlowProject>();
@@ -872,7 +940,7 @@ export class FlowProjectScanner {
     }
 
     const projects = await this.scanProjectsUncached();
-    this.projectCache = new Map(projects.map(p => [p.file, p]));
+    this.projectCache = new Map(projects.map((p) => [p.file, p]));
     this.cacheValid = true;
 
     return projects;
@@ -881,9 +949,11 @@ export class FlowProjectScanner {
 ```
 
 #### 6. Create BaseVaultView (2 hours)
+
 **File:** `src/base-vault-view.ts`
 
 Extract common refresh/event logic:
+
 ```typescript
 export abstract class BaseVaultView extends ItemView {
   protected modifyEventRef: EventRef | null = null;
@@ -918,24 +988,29 @@ export abstract class BaseVaultView extends ItemView {
 ### Priority 3: Nice-to-Have (Enhancements - 4+ hours each)
 
 #### 7. Extract rate limiter (4 hours)
+
 **Files:** `src/rate-limiter.ts`, `src/anthropic-client.ts`
 
 Separate `AdaptiveRateLimiter` class for reusability.
 
 #### 8. Add pagination to views (4 hours)
+
 **Files:** `src/sphere-view.ts`, `src/hotlist-view.ts`
 
 Implement virtual scrolling or pagination for large project lists.
 
 #### 9. Comprehensive input validation (4 hours)
+
 **Files:** Multiple UI components
 
 Add validation at all UI boundaries with user feedback.
 
 #### 10. Extract regex constants (1 hour)
+
 **Files:** `src/flow-scanner.ts`, `src/hotlist-editor-menu.ts`
 
 Move regex patterns to constants:
+
 ```typescript
 // src/constants.ts
 export const REGEX = {
@@ -988,22 +1063,23 @@ export const REGEX = {
 ## 11. Conclusion
 
 This is a **high-quality, production-ready codebase** with excellent architectural decisions and comprehensive testing. The issues identified are minor and mostly relate to:
+
 - Code duplication (easy fix)
 - Unused validation code (design decision needed)
 - Potential performance improvements (nice-to-have)
 
 ### Scoring Breakdown
 
-| Category | Score | Notes |
-|----------|-------|-------|
-| Architecture | 9.5/10 | Clean layers, no cycles, excellent patterns |
-| Code Quality | 8.0/10 | Minor duplication, unused code |
-| Testing | 9.0/10 | 40 test files, 80% coverage threshold |
-| Documentation | 9.5/10 | Exceptional CLAUDE.md, good comments |
-| Error Handling | 7.5/10 | Limited custom errors, good practices |
-| Performance | 8.0/10 | Works well, room for optimization |
-| Security | 8.5/10 | Good API key handling, needs input validation |
-| Maintainability | 9.0/10 | Clear structure, well-organized |
+| Category        | Score  | Notes                                         |
+| --------------- | ------ | --------------------------------------------- |
+| Architecture    | 9.5/10 | Clean layers, no cycles, excellent patterns   |
+| Code Quality    | 8.0/10 | Minor duplication, unused code                |
+| Testing         | 9.0/10 | 40 test files, 80% coverage threshold         |
+| Documentation   | 9.5/10 | Exceptional CLAUDE.md, good comments          |
+| Error Handling  | 7.5/10 | Limited custom errors, good practices         |
+| Performance     | 8.0/10 | Works well, room for optimization             |
+| Security        | 8.5/10 | Good API key handling, needs input validation |
+| Maintainability | 9.0/10 | Clear structure, well-organized               |
 
 ### Final Score: **8.5/10** ⭐⭐⭐⭐
 
@@ -1012,6 +1088,7 @@ This is a **high-quality, production-ready codebase** with excellent architectur
 ### Key Takeaways
 
 ✅ **Strengths:**
+
 - Exceptionally well-architected for an Obsidian plugin
 - Comprehensive test coverage with proper mocking
 - Consistent use of design patterns
@@ -1019,6 +1096,7 @@ This is a **high-quality, production-ready codebase** with excellent architectur
 - Type-safe with comprehensive interfaces
 
 ⚠️ **Quick Wins Available:**
+
 - 15 min: Fix filter code duplication
 - 30 min: Add input validation
 - 30 min: Add custom error types

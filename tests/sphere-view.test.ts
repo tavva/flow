@@ -350,11 +350,7 @@ describe("SphereView", () => {
         tags: ["project/work"],
         status: "live" as const,
         priority: 1,
-        nextActions: [
-          "Call client about meeting",
-          "Review proposal",
-          "Send follow-up email",
-        ],
+        nextActions: ["Call client about meeting", "Review proposal", "Send follow-up email"],
         mtime: Date.now(),
       };
 

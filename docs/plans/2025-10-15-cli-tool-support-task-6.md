@@ -14,10 +14,7 @@
 
 ```typescript
 import { getOpenAICompatibleClient } from "../src/openai-compatible-client";
-import {
-  LanguageModelRequest,
-  ToolDefinition,
-} from "../src/language-model";
+import { LanguageModelRequest, ToolDefinition } from "../src/language-model";
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -313,9 +310,7 @@ describe("OpenAICompatibleClient - Tool Support", () => {
       messages: [{ role: "user", content: "Test" }],
     };
 
-    await expect(client.sendMessageWithTools!(request, [])).rejects.toThrow(
-      "Network error"
-    );
+    await expect(client.sendMessageWithTools!(request, [])).rejects.toThrow("Network error");
   });
 
   it("should handle API errors", async () => {
@@ -355,7 +350,13 @@ Expected: FAIL - sendMessageWithTools is undefined
 Add to the imports at top:
 
 ```typescript
-import { LanguageModelClient, LanguageModelRequest, ToolDefinition, ToolCallResponse, ToolCall } from "./language-model";
+import {
+  LanguageModelClient,
+  LanguageModelRequest,
+  ToolDefinition,
+  ToolCallResponse,
+  ToolCall,
+} from "./language-model";
 ```
 
 Add the method to the `OpenAICompatibleClient` class after the `sendMessage` method:

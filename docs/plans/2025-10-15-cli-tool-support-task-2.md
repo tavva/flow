@@ -251,9 +251,7 @@ async function batchApproval(toolCalls: ToolCall[]): Promise<ApprovalResult> {
     console.log(`${index + 1}. ${formatToolCallDescription(toolCall)}\n`);
   });
 
-  const answer = await promptUser(
-    "Enter numbers to apply (e.g., '1,3' or 'all' or 'none'): "
-  );
+  const answer = await promptUser("Enter numbers to apply (e.g., '1,3' or 'all' or 'none'): ");
 
   if (answer === "all") {
     return { approvedToolIds: toolCalls.map((tc) => tc.id) };
