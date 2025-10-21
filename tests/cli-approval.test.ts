@@ -30,7 +30,11 @@ describe("CLI Approval Handler", () => {
 
   it("should handle single tool approval with 'y'", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: { action_text: "Test action" } },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test action", project_path: "Projects/Test.md" },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -44,7 +48,15 @@ describe("CLI Approval Handler", () => {
 
   it("should handle single tool approval with 'yes'", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "update_next_action", input: { new_action: "Better text" } },
+      {
+        id: "call_1",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test.md",
+          old_action: "Original text",
+          new_action: "Better text",
+        },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -57,7 +69,11 @@ describe("CLI Approval Handler", () => {
 
   it("should handle single tool rejection with 'n'", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: { action_text: "Test" } },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test", project_path: "Projects/Test.md" },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -70,9 +86,25 @@ describe("CLI Approval Handler", () => {
 
   it("should handle batch approval with 'all'", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
-      { id: "call_3", name: "add_next_action_to_project", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
+      {
+        id: "call_3",
+        name: "add_next_action_to_project",
+        input: { project_path: "Projects/Test3.md", action_text: "New action" },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -85,8 +117,20 @@ describe("CLI Approval Handler", () => {
 
   it("should handle batch approval with 'none'", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -99,8 +143,20 @@ describe("CLI Approval Handler", () => {
 
   it("should handle batch approval with empty string (none)", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -113,9 +169,25 @@ describe("CLI Approval Handler", () => {
 
   it("should handle batch approval with comma-separated numbers", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
-      { id: "call_3", name: "add_next_action_to_project", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
+      {
+        id: "call_3",
+        name: "add_next_action_to_project",
+        input: { project_path: "Projects/Test3.md", action_text: "New action" },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -128,9 +200,25 @@ describe("CLI Approval Handler", () => {
 
   it("should handle batch approval with spaces in numbers", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
-      { id: "call_3", name: "add_next_action_to_project", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
+      {
+        id: "call_3",
+        name: "add_next_action_to_project",
+        input: { project_path: "Projects/Test3.md", action_text: "New action" },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -143,8 +231,20 @@ describe("CLI Approval Handler", () => {
 
   it("should ignore invalid numbers in batch selection", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: {} },
-      { id: "call_2", name: "update_next_action", input: {} },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
+      },
+      {
+        id: "call_2",
+        name: "update_next_action",
+        input: {
+          project_path: "Projects/Test2.md",
+          old_action: "Old",
+          new_action: "New",
+        },
+      },
     ];
 
     mockQuestion.mockImplementation((prompt: string, callback: (answer: string) => void) => {
@@ -157,7 +257,11 @@ describe("CLI Approval Handler", () => {
 
   it("should include context text when provided", async () => {
     const toolCalls: ToolCall[] = [
-      { id: "call_1", name: "move_to_hotlist", input: { action_text: "Test" } },
+      {
+        id: "call_1",
+        name: "move_to_hotlist",
+        input: { action_text: "Test", project_path: "Projects/Test.md" },
+      },
     ];
 
     let capturedOutput = "";
