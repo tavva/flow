@@ -1,4 +1,4 @@
-import { App, TFile, CachedMetadata } from "obsidian";
+import type { App, TFile, CachedMetadata } from "obsidian";
 import { FlowProject } from "./types";
 import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
 

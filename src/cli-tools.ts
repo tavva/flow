@@ -1,6 +1,6 @@
 // ABOUTME: Defines 4 CLI tools for LLM to suggest vault modifications
 // ABOUTME: ToolExecutor routes tool calls to appropriate file operations
-import { App, TFile } from "obsidian";
+import type { App, TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
 import { PluginSettings, FlowProject, HotlistItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";

@@ -1,7 +1,7 @@
 // ABOUTME: Scans vault for GTD context files (next actions, someday, inbox).
 // ABOUTME: Provides comprehensive GTD system state to the CLI coach.
 
-import { App, TFile } from "obsidian";
+import type { App, TFile } from "obsidian";
 import { PluginSettings } from "./types";
 
 export interface GTDContext {

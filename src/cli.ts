@@ -31,11 +31,11 @@ export function parseCliArgs(args: string[]): CliArgs {
 }
 
 export function loadPluginSettings(vaultPath: string): PluginSettings {
-  const settingsPath = path.join(vaultPath, ".obsidian", "plugins", "flow-coach", "data.json");
+  const settingsPath = path.join(vaultPath, ".obsidian", "plugins", "flow", "data.json");
 
   if (!fs.existsSync(settingsPath)) {
     throw new Error(
-      "Plugin settings not found. Please configure the Flow GTD Coach plugin in Obsidian first."
+      "Plugin settings not found. Please configure the Flow plugin in Obsidian first."
     );
   }
 
@@ -174,7 +174,7 @@ export function buildSystemPrompt(
 
 import * as readline from "readline";
 import { LanguageModelClient, ChatMessage, ToolCallResponse, ToolResult } from "./language-model";
-import { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
+import type { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 import { Marked } from "marked";
