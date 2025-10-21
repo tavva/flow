@@ -82,7 +82,7 @@ export function registerHotlistEditorMenu(
   saveSettings: () => Promise<void>,
   refreshHotlistView: () => Promise<void>
 ) {
-  return app.workspace.on("editor-menu", async (menu: Menu, editor: Editor, view: MarkdownView) => {
+  return app.workspace.on("editor-menu", (menu: Menu, editor: Editor, view: MarkdownView) => {
     const cursor = editor.getCursor();
     const line = editor.getLine(cursor.line);
 
@@ -99,8 +99,33 @@ export function registerHotlistEditorMenu(
     const filePath = file.path;
     const lineNumber = cursor.line + 1; // Convert to 1-indexed
 
-    // Determine the sphere for this action
-    const sphere = await determineActionSphere(app, filePath, line);
+    // Determine the sphere synchronously
+    const cache = app.metadataCache.getFileCache(file);
+    let sphere: string | null = null;
+
+    // Check if this is a project file (has project/* tags)
+    if (cache?.frontmatter?.tags) {
+      const tags = Array.isArray(cache.frontmatter.tags)
+        ? cache.frontmatter.tags
+        : [cache.frontmatter.tags];
+
+      for (const tag of tags) {
+        const normalizedTag = tag.replace(/^#/, "");
+        if (normalizedTag.startsWith("project/")) {
+          sphere = normalizedTag.slice("project/".length);
+          break;
+        }
+      }
+    }
+
+    // Check for inline #sphere/X tag in the line
+    if (!sphere) {
+      const sphereTagMatch = line.match(/#sphere\/([^\s]+)/i);
+      if (sphereTagMatch) {
+        sphere = sphereTagMatch[1];
+      }
+    }
+
     if (!sphere) {
       // No sphere found, can't add to hotlist
       return;
