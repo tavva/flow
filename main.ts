@@ -60,7 +60,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     );
 
     // Add ribbon icon
-    this.addRibbonIcon("inbox", "Flow GTD: Process Inbox", () => {
+    this.addRibbonIcon("inbox", "Flow: Process Inbox", () => {
       this.openInboxProcessingView();
     });
 

@@ -15,7 +15,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Flow GTD Coach Settings" });
+    containerEl.createEl("h2", { text: "Flow Settings" });
 
     new Setting(containerEl)
       .setName("AI Provider")
