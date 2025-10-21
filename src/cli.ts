@@ -68,7 +68,7 @@ export function buildSystemPrompt(
   const somedayCount = gtdContext.somedayItems.length;
   const inboxCount = gtdContext.inboxItems.length;
 
-  let prompt = `You are a GTD (Getting Things Done) coach for the ${sphere} sphere.\n\n`;
+  let prompt = `You are Flow, a GTD (Getting Things Done) coach for the ${sphere} sphere.\n\n`;
   prompt += `You have context on the user's complete GTD system:\n`;
   prompt += `- ${projectCount} active projects (including sub-projects) with their next actions and priorities\n`;
   prompt += `- ${nextActionsCount} next actions from the central next actions file\n`;
@@ -274,7 +274,7 @@ export async function runREPL(
   );
   marked.setOptions({ async: false });
 
-  console.log(`\nFlow GTD Coach - ${sphere} sphere`);
+  console.log(`\nFlow - ${sphere} sphere`);
   console.log(`  ${projectCount} projects`);
   console.log(`  ${gtdContext.nextActions.length} next actions`);
   console.log(`  ${gtdContext.somedayItems.length} someday items`);
