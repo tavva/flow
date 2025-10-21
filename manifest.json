@@ -1,10 +1,10 @@
 {
 	"id": "flow",
 	"name": "Flow",
-	"version": "0.1.0",
+	"version": "0.7.0",
 	"minAppVersion": "0.15.0",
-	"description": "GTD coach for Flow-based Obsidian vaults. Process inbox items and intelligently route them to projects with quality next actions.",
-	"author": "Ben",
-	"authorUrl": "",
+	"description": "Implements key processes in David Allen's Getting Things Done (GTD) methodology (Closed source)",
+	"author": "Ben Phillips",
+	"authorUrl": "https://ben-phillips.net",
 	"isDesktopOnly": false
 }
