@@ -250,6 +250,7 @@ export class RateLimitedAnthropicClient {
    - Break into smaller validation methods
 
 2. **Magic numbers:**
+
    ```typescript
    const SIMILARITY_THRESHOLD = 0.6; // Line 305
    projects.slice(0, 20); // Line 206 - why 20?
