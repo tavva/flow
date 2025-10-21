@@ -8,6 +8,7 @@ jest.mock("readline");
 describe("CLI Approval Handler", () => {
   let mockQuestion: jest.Mock;
   let mockClose: jest.Mock;
+  let consoleLogSpy: jest.SpyInstance;
 
   beforeEach(() => {
     mockQuestion = jest.fn();
@@ -17,10 +18,14 @@ describe("CLI Approval Handler", () => {
       question: mockQuestion,
       close: mockClose,
     });
+
+    // Suppress console.log output during tests
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    consoleLogSpy.mockRestore();
   });
 
   it("should return empty array for no tool calls", async () => {

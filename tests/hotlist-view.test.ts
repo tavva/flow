@@ -214,22 +214,21 @@ describe("HotlistView", () => {
           .mockResolvedValueOnce({ found: true, updatedLineNumber: 6 }),
       };
 
+      // Create a recursive mock for DOM elements
+      const createMockElement = (): any => ({
+        setText: jest.fn(),
+        addClass: jest.fn(),
+        createDiv: jest.fn(createMockElement),
+        createEl: jest.fn(createMockElement),
+        createSpan: jest.fn(createMockElement),
+        addEventListener: jest.fn(),
+        style: {},
+        empty: jest.fn(),
+      });
+
       // Mock container element for rendering
       (view as any).containerEl = {
-        children: [
-          null,
-          {
-            empty: jest.fn(),
-            addClass: jest.fn(),
-            createDiv: jest.fn().mockReturnValue({
-              setText: jest.fn(),
-              createEl: jest.fn(),
-            }),
-            createEl: jest.fn().mockReturnValue({
-              setText: jest.fn(),
-            }),
-          },
-        ],
+        children: [null, createMockElement()],
       };
 
       await (view as any).refresh();
