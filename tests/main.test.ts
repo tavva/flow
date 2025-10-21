@@ -76,8 +76,8 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       // Setup: Existing leaf with waiting-for view (might be in sidebar)
       const oldLeaf = new WorkspaceLeaf();
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([oldLeaf]);
-      const tabLeaf = new WorkspaceLeaf();
-      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(tabLeaf);
+      const newLeaf = new WorkspaceLeaf();
+      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(newLeaf);
 
       // Execute
       await plugin.activateWaitingForView();
@@ -85,37 +85,37 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       // Verify: Should detach old leaf
       expect(oldLeaf.detach).toHaveBeenCalled();
 
-      // Verify: Should create view in new tab
-      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("tab");
-      expect(tabLeaf.setViewState).toHaveBeenCalledWith({
+      // Verify: Should create view in main window (not sidebar)
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith(false);
+      expect(newLeaf.setViewState).toHaveBeenCalledWith({
         type: WAITING_FOR_VIEW_TYPE,
         active: true,
       });
 
       // Verify: Should reveal and focus the new leaf
-      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(tabLeaf);
-      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(tabLeaf, { focus: true });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(newLeaf);
+      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(newLeaf, { focus: true });
     });
 
     it("should create new waiting-for view if none exists", async () => {
       // Setup: No existing leaves
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([]);
-      const tabLeaf = new WorkspaceLeaf();
-      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(tabLeaf);
+      const newLeaf = new WorkspaceLeaf();
+      (mockApp.workspace.getLeaf as jest.Mock).mockReturnValue(newLeaf);
 
       // Execute
       await plugin.activateWaitingForView();
 
-      // Verify: Should create view in new tab
-      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("tab");
-      expect(tabLeaf.setViewState).toHaveBeenCalledWith({
+      // Verify: Should create view in main window (not sidebar)
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith(false);
+      expect(newLeaf.setViewState).toHaveBeenCalledWith({
         type: WAITING_FOR_VIEW_TYPE,
         active: true,
       });
 
       // Verify: Should reveal and focus the new leaf
-      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(tabLeaf);
-      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(tabLeaf, { focus: true });
+      expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(newLeaf);
+      expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(newLeaf, { focus: true });
     });
   });
 

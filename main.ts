@@ -316,8 +316,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
       leaf.detach();
     }
 
-    // Always create a new leaf in the main window
-    const leaf = workspace.getLeaf("tab");
+    // Create a new leaf in the main window (not sidebar)
+    // Use getLeaf(false) to get a leaf in the main area, not the sidebar
+    const leaf = workspace.getLeaf(false);
     await leaf.setViewState({
       type: WAITING_FOR_VIEW_TYPE,
       active: true,
