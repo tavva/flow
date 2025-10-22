@@ -1,73 +1,99 @@
+// ABOUTME: Custom mock for ink-testing-library v4 to work around Jest's poor ESM support.
+// ABOUTME: ink-testing-library v4 is pure ESM and depends on ink v5, both of which use import.meta.
+//
+// This mock provides a minimal render() function that uses React's testing utilities
+// to render Ink components in a Jest-compatible way. When the project migrates to
+// Vitest (which has proper ESM support), this mock can be removed.
+//
+// See tests/README.md for more details on the testing approach.
+
 import React from "react";
+import { create, ReactTestRenderer } from "react-test-renderer";
 
-export function render(element: React.ReactElement) {
-  let lastOutput = "";
+export interface RenderResult {
+  lastFrame: () => string;
+  frames: string[];
+  unmount: () => void;
+  rerender: (tree: React.ReactElement) => void;
+  stdin: {
+    write: (data: string) => void;
+  };
+  stdout: string;
+  stderr: string;
+}
 
-  // Simple mock that captures the rendered output
-  const captureOutput = (node: React.ReactElement): string => {
-    if (typeof node === "string") {
-      return node;
+/**
+ * Minimal render() implementation for testing Ink components.
+ *
+ * This is a simplified version of ink-testing-library's render() that:
+ * - Uses react-test-renderer to render the component tree
+ * - Captures the output as a string (lastFrame)
+ * - Provides a stub stdin for simulating input
+ * - Doesn't support actual terminal rendering or interaction
+ *
+ * Limitations:
+ * - No actual useInput() hook functionality
+ * - No terminal layout calculations
+ * - No ANSI color support in output
+ */
+export function render(tree: React.ReactElement): RenderResult {
+  let renderer: ReactTestRenderer | null = null;
+  const frames: string[] = [];
+
+  // Render the component tree
+  renderer = create(tree);
+
+  // Extract text content from the rendered component
+  const extractText = (node: any): string => {
+    if (typeof node === "string" || typeof node === "number") {
+      return String(node);
     }
-
-    if (!node || !node.props) {
-      return "";
+    if (!node) return "";
+    if (Array.isArray(node)) {
+      return node.map(extractText).join("");
     }
-
-    let output = "";
-
-    // Handle Text components
-    if (node.type && typeof node.type === "function" && node.type.name === "Text") {
-      if (typeof node.props.children === "string") {
-        output += node.props.children;
-      } else if (Array.isArray(node.props.children)) {
-        output += node.props.children.join("");
+    if (typeof node === "object") {
+      // Handle React test renderer output structure
+      if (node.children) {
+        return extractText(node.children);
+      }
+      if (node.props?.children) {
+        return extractText(node.props.children);
       }
     }
+    return "";
+  };
 
-    // Handle Box components - recursively process children
-    if (node.props.children) {
-      if (typeof node.props.children === "string") {
-        output += node.props.children;
-      } else if (Array.isArray(node.props.children)) {
-        output += node.props.children
-          .map((child: any) => {
-            if (typeof child === "string") {
-              return child;
-            }
-            if (React.isValidElement(child)) {
-              return captureOutput(child);
-            }
-            return "";
-          })
-          .join("");
-      } else if (React.isValidElement(node.props.children)) {
-        output += captureOutput(node.props.children);
-      }
-    }
-
+  const getFrame = (): string => {
+    if (!renderer) return "";
+    const json = renderer.toJSON();
+    const output = extractText(json);
     return output;
   };
 
-  // Attempt to render the element tree
-  try {
-    // For functional components, call them to get the rendered output
-    if (typeof element.type === "function") {
-      const rendered = element.type(element.props);
-      lastOutput = captureOutput(rendered);
-    } else {
-      lastOutput = captureOutput(element);
-    }
-  } catch (e) {
-    // If rendering fails, just capture whatever we can from props
-    lastOutput = JSON.stringify(element.props);
-  }
+  const currentFrame = getFrame();
+  frames.push(currentFrame);
 
   return {
-    lastFrame: () => lastOutput,
-    frames: [lastOutput],
+    lastFrame: () => frames[frames.length - 1] || "",
+    frames,
+    unmount: () => {
+      if (renderer) {
+        renderer.unmount();
+        renderer = null;
+      }
+    },
+    rerender: (newTree: React.ReactElement) => {
+      if (renderer) {
+        renderer.update(newTree);
+        const frame = getFrame();
+        frames.push(frame);
+      }
+    },
     stdin: {
       write: jest.fn(),
     },
-    unmount: jest.fn(),
+    stdout: "",
+    stderr: "",
   };
 }

@@ -12,13 +12,15 @@ module.exports = {
         isolatedModules: true,
       },
     ],
+    "^.+\\.jsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "<rootDir>/tsconfig.test.json",
+        isolatedModules: true,
+      },
+    ],
   },
-  transformIgnorePatterns: [
-    "node_modules/(?!(ink|ink-testing-library|chalk|ansi-escapes|ansi-styles|cli-cursor|cli-boxes|widest-line|wrap-ansi|string-width|strip-ansi|ansi-regex|yoga-wasm-web)/)",
-  ],
-  moduleNameMapper: {
-    "^ink-testing-library$": "<rootDir>/tests/__mocks__/ink-testing-library",
-  },
+  transformIgnorePatterns: [],
   collectCoverageFrom: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts", "!src/**/index.ts"],
   coverageThreshold: {
     global: {
@@ -29,4 +31,9 @@ module.exports = {
     },
   },
   moduleFileExtensions: ["ts", "tsx", "js", "json"],
+  // Use manual mocks from tests/__mocks__/ for ESM packages that Jest can't handle
+  moduleNameMapper: {
+    "^ink$": "<rootDir>/tests/__mocks__/ink.tsx",
+    "^ink-testing-library$": "<rootDir>/tests/__mocks__/ink-testing-library/index.ts",
+  },
 };
