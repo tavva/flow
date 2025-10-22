@@ -79,7 +79,7 @@ describe("Plugin settings loading", () => {
     const result = loadPluginSettings("/path/to/vault");
 
     expect(fs.readFileSync).toHaveBeenCalledWith(
-      "/path/to/vault/.obsidian/plugins/flow-coach/data.json",
+      "/path/to/vault/.obsidian/plugins/flow/data.json",
       "utf-8"
     );
     expect(result.llmProvider).toBe("anthropic");
