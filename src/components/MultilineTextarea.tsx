@@ -45,6 +45,35 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       return;
     }
 
+    // Handle backspace
+    if (key.backspace || key.delete) {
+      if (cursorCol > 0) {
+        // Delete character before cursor
+        setLines((prevLines) => {
+          const newLines = [...prevLines];
+          const currentLine = newLines[cursorRow];
+          newLines[cursorRow] =
+            currentLine.slice(0, cursorCol - 1) + currentLine.slice(cursorCol);
+          return newLines;
+        });
+        setCursorCol((prev) => prev - 1);
+      } else if (cursorRow > 0) {
+        // Merge with previous line
+        const prevLineLength = lines[cursorRow - 1].length;
+        setLines((prevLines) => {
+          const newLines = [...prevLines];
+          const currentLine = newLines[cursorRow];
+          const prevLine = newLines[cursorRow - 1];
+          newLines[cursorRow - 1] = prevLine + currentLine;
+          newLines.splice(cursorRow, 1);
+          return newLines;
+        });
+        setCursorRow((prev) => prev - 1);
+        setCursorCol(prevLineLength);
+      }
+      return;
+    }
+
     // Handle regular character input
     if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
       setLines((prevLines) => {
