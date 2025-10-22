@@ -13,6 +13,7 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
   const [lines, setLines] = useState<string[]>([""]);
   const [cursorRow, setCursorRow] = useState(0);
   const [cursorCol, setCursorCol] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useInput((input, key) => {
     // Insert newline on Ctrl+Enter or Ctrl+J
@@ -36,6 +37,7 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
     if (key.return && !key.ctrl) {
       const text = lines.join("\n").trim();
       if (text) {
+        setIsSubmitting(true);
         onSubmit(text);
         // Reset state
         setLines([""]);
@@ -112,8 +114,9 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
         const isCurrentLine = index === cursorRow;
 
         // Build line with cursor inserted at correct position
+        // Don't show cursor when submitting (about to unmount)
         let displayContent;
-        if (isCurrentLine) {
+        if (isCurrentLine && !isSubmitting) {
           const before = line.slice(0, cursorCol);
           const after = line.slice(cursorCol);
           displayContent = (
