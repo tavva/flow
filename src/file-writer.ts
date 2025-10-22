@@ -123,8 +123,8 @@ export class FileWriter {
     for (const item of itemsArray) {
       const reminderSuffix = reminderDate ? ` 📅 ${reminderDate}` : "";
       const content = sphereTags
-        ? `- ${item}${reminderSuffix} ${sphereTags}`
-        : `- ${item}${reminderSuffix}`;
+        ? `- [ ] ${item}${reminderSuffix} ${sphereTags}`
+        : `- [ ] ${item}${reminderSuffix}`;
       await this.appendToFile(this.settings.somedayFilePath, content);
     }
   }

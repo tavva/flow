@@ -109,7 +109,7 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 
 - **Editable Items** - When processing items to the Someday/Maybe file, you can edit the item text and add/remove multiple items
 - **Date Picker UI** - A date picker allows setting reminder dates for all items
-- **Format** - Reminder dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- Learn Spanish 📅 2026-01-12 #sphere/personal`)
+- **Format** - Reminder dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal`)
 - **Integration** - Works with the Reminders plugin for Obsidian to surface items at the appropriate time
 - **Validation** - The `validateReminderDate()` function ensures dates are valid and properly formatted
 - **Optional** - Reminder dates are optional; items can be added to Someday/Maybe without a date
@@ -117,9 +117,9 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 
 **Example Someday/Maybe entries:**
 ```markdown
-- Write a book 📅 2026-06-01 #sphere/personal
-- Learn Spanish #sphere/personal
-- Organize team retreat 📅 2026-03-15 #sphere/work
+- [ ] Write a book 📅 2026-06-01 #sphere/personal
+- [ ] Learn Spanish #sphere/personal
+- [ ] Organize team retreat 📅 2026-03-15 #sphere/work
 ```
 
 ### Hotlist Support

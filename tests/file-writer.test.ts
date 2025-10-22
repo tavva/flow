@@ -877,7 +877,7 @@ tags:
       const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
       expect(filePath).toBe("Someday.md");
-      expect(content).toBe("- Learn Spanish #sphere/personal\n");
+      expect(content).toBe("- [ ] Learn Spanish #sphere/personal\n");
     });
 
     it("should add item with reminder date to someday file", async () => {
@@ -887,7 +887,7 @@ tags:
       const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
       expect(filePath).toBe("Someday.md");
-      expect(content).toBe("- Learn Spanish 📅 2026-01-12 #sphere/personal\n");
+      expect(content).toBe("- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal\n");
     });
 
     it("should add item with reminder date but no spheres", async () => {
@@ -896,7 +896,7 @@ tags:
       expect(mockVault.create).toHaveBeenCalled();
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-      expect(content).toBe("- Write a book 📅 2025-06-01\n");
+      expect(content).toBe("- [ ] Write a book 📅 2025-06-01\n");
     });
 
     it("should add item without reminder date or spheres", async () => {
@@ -905,7 +905,7 @@ tags:
       expect(mockVault.create).toHaveBeenCalled();
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-      expect(content).toBe("- Start a podcast\n");
+      expect(content).toBe("- [ ] Start a podcast\n");
     });
 
     it("should add item with reminder date and multiple spheres", async () => {
@@ -918,13 +918,13 @@ tags:
       expect(mockVault.create).toHaveBeenCalled();
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-      expect(content).toBe("- Organize team retreat 📅 2026-03-15 #sphere/work #sphere/personal\n");
+      expect(content).toBe("- [ ] Organize team retreat 📅 2026-03-15 #sphere/work #sphere/personal\n");
     });
 
     it("should append to existing someday file", async () => {
       const mockFile = new TFile();
-      const existingContent = `- Learn French #sphere/personal
-- Write book #sphere/personal
+      const existingContent = `- [ ] Learn French #sphere/personal
+- [ ] Write book #sphere/personal
 `;
 
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
@@ -935,9 +935,9 @@ tags:
       expect(mockVault.modify).toHaveBeenCalled();
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 
-      expect(newContent).toContain("- Learn French #sphere/personal");
-      expect(newContent).toContain("- Write book #sphere/personal");
-      expect(newContent).toContain("- Learn Spanish 📅 2026-01-12 #sphere/personal");
+      expect(newContent).toContain("- [ ] Learn French #sphere/personal");
+      expect(newContent).toContain("- [ ] Write book #sphere/personal");
+      expect(newContent).toContain("- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal");
     });
 
     it("should add multiple items to someday file", async () => {
@@ -950,9 +950,9 @@ tags:
       expect(mockVault.create).toHaveBeenCalledTimes(3);
 
       const allCalls = (mockVault.create as jest.Mock).mock.calls;
-      expect(allCalls[0][1]).toBe("- Learn Spanish 📅 2026-01-12 #sphere/personal\n");
-      expect(allCalls[1][1]).toBe("- Write a book 📅 2026-01-12 #sphere/personal\n");
-      expect(allCalls[2][1]).toBe("- Start a podcast 📅 2026-01-12 #sphere/personal\n");
+      expect(allCalls[0][1]).toBe("- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal\n");
+      expect(allCalls[1][1]).toBe("- [ ] Write a book 📅 2026-01-12 #sphere/personal\n");
+      expect(allCalls[2][1]).toBe("- [ ] Start a podcast 📅 2026-01-12 #sphere/personal\n");
     });
 
     it("should add multiple items without reminder date", async () => {
@@ -964,8 +964,8 @@ tags:
       expect(mockVault.create).toHaveBeenCalledTimes(2);
 
       const allCalls = (mockVault.create as jest.Mock).mock.calls;
-      expect(allCalls[0][1]).toBe("- Learn Spanish #sphere/personal\n");
-      expect(allCalls[1][1]).toBe("- Write a book #sphere/personal\n");
+      expect(allCalls[0][1]).toBe("- [ ] Learn Spanish #sphere/personal\n");
+      expect(allCalls[1][1]).toBe("- [ ] Write a book #sphere/personal\n");
     });
   });
 });
