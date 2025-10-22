@@ -14,6 +14,20 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
   const [cursorRow, setCursorRow] = useState(0);
   const [cursorCol, setCursorCol] = useState(0);
 
+  useInput((input, key) => {
+    // Handle regular character input
+    if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const currentLine = newLines[cursorRow];
+        newLines[cursorRow] =
+          currentLine.slice(0, cursorCol) + input + currentLine.slice(cursorCol);
+        return newLines;
+      });
+      setCursorCol((prev) => prev + 1);
+    }
+  });
+
   return (
     <Box flexDirection="column">
       <Text>{prompt} (Shift+Enter for new line, Enter to submit)</Text>
