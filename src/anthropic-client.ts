@@ -294,6 +294,11 @@ export class RateLimitedAnthropicClient {
       },
       Math.max(0, targetTime - now)
     );
+    // Prevent this timer from keeping the process alive during tests
+    // In Node.js, timers have an unref() method
+    if (typeof (this.drainTimer as any).unref === "function") {
+      (this.drainTimer as any).unref();
+    }
   }
 
   private timeUntilNextToken(): number {
@@ -336,6 +341,14 @@ export class RateLimitedAnthropicClient {
     }
 
     return meta;
+  }
+
+  cleanup(): void {
+    if (this.drainTimer) {
+      clearTimeout(this.drainTimer);
+      this.drainTimer = null;
+    }
+    this.queue = [];
   }
 }
 
@@ -452,6 +465,9 @@ export function getAnthropicClient(apiKey: string): LanguageModelClient {
 }
 
 export function resetSharedAnthropicClient(): void {
+  if (sharedClient) {
+    sharedClient.cleanup();
+  }
   sharedClient = null;
   sharedApiKey = null;
   sharedAdapter = null;

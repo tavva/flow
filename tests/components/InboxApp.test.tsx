@@ -5,8 +5,10 @@ import { InboxApp } from "../../src/components/InboxApp";
 describe("InboxApp", () => {
   it("should render MultilineTextarea initially", () => {
     const onComplete = jest.fn();
-    const { lastFrame } = render(<InboxApp onComplete={onComplete} />);
+    const { lastFrame, unmount } = render(<InboxApp onComplete={onComplete} />);
 
     expect(lastFrame()).toContain("What's on your mind?");
+
+    unmount();
   });
 });

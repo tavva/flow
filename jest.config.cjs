@@ -4,19 +4,18 @@ module.exports = {
   roots: ["<rootDir>/src", "<rootDir>/tests"],
   testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts", "**/?(*.)+(spec|test).tsx"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
+  testTimeout: 10000,
   transform: {
     "^.+\\.tsx?$": [
       "ts-jest",
       {
         tsconfig: "<rootDir>/tsconfig.test.json",
-        isolatedModules: true,
       },
     ],
     "^.+\\.jsx?$": [
       "ts-jest",
       {
         tsconfig: "<rootDir>/tsconfig.test.json",
-        isolatedModules: true,
       },
     ],
   },

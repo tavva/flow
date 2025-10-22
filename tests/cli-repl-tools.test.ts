@@ -13,6 +13,9 @@ describe("CLI REPL - Tool Integration", () => {
   let mockApp: App;
   let mockSettings: PluginSettings;
   let mockContext: GTDContext;
+  let originalSetRawMode: any;
+  let originalSetEncoding: any;
+  let originalWrite: any;
 
   beforeEach(() => {
     mockClient = {
@@ -44,6 +47,11 @@ describe("CLI REPL - Tool Integration", () => {
       inboxItems: [],
     };
 
+    // Save original methods before mocking
+    originalSetRawMode = process.stdin.setRawMode;
+    originalSetEncoding = (process.stdin as any).setEncoding;
+    originalWrite = process.stdout.write;
+
     // Mock stdin/stdout for REPL
     process.stdin.setRawMode = jest.fn();
     (process.stdin as any).setEncoding = jest.fn();
@@ -52,6 +60,17 @@ describe("CLI REPL - Tool Integration", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+
+    // Restore original methods to prevent handle leaks
+    if (originalSetRawMode !== undefined) {
+      process.stdin.setRawMode = originalSetRawMode;
+    }
+    if (originalSetEncoding !== undefined) {
+      (process.stdin as any).setEncoding = originalSetEncoding;
+    }
+    if (originalWrite !== undefined) {
+      process.stdout.write = originalWrite;
+    }
   });
 
   it("should detect when client supports tools", () => {

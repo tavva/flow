@@ -4,8 +4,10 @@ import { ProcessingIndicator } from "../../src/components/ProcessingIndicator";
 
 describe("ProcessingIndicator", () => {
   it("should display status message", () => {
-    const { lastFrame } = render(<ProcessingIndicator status="Processing..." />);
+    const { lastFrame, unmount } = render(<ProcessingIndicator status="Processing..." />);
 
     expect(lastFrame()).toContain("Processing...");
+
+    unmount();
   });
 });

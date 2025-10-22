@@ -5,7 +5,7 @@ import { MultilineTextarea } from "../../src/components/MultilineTextarea";
 describe("MultilineTextarea", () => {
   it("should render prompt and accept input", () => {
     const onSubmit = jest.fn();
-    const { lastFrame } = render(
+    const { lastFrame, unmount } = render(
       <MultilineTextarea
         prompt="What's on your mind?"
         onSubmit={onSubmit}
@@ -13,6 +13,8 @@ describe("MultilineTextarea", () => {
     );
 
     expect(lastFrame()).toContain("What's on your mind?");
+
+    unmount();
   });
 
   it("should render with initial state", () => {
@@ -20,12 +22,14 @@ describe("MultilineTextarea", () => {
     // via integration testing in Task 10, as our custom ink mocks don't support
     // interactive input testing. See tests/README.md for details.
     const onSubmit = jest.fn();
-    const { lastFrame } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
+    const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component structure
     expect(lastFrame()).toContain("Enter text");
     expect(lastFrame()).toContain("Shift+Enter for new line");
     expect(lastFrame()).toContain(">");
+
+    unmount();
   });
 
   it("should handle Enter key submit (structure test)", () => {
@@ -33,10 +37,12 @@ describe("MultilineTextarea", () => {
     // as our custom ink mocks don't support interactive keyboard event simulation.
     // This test validates that the component structure supports submission.
     const onSubmit = jest.fn();
-    const { lastFrame } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
+    const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component renders with submit capability
     expect(lastFrame()).toContain("Enter to submit");
+
+    unmount();
   });
 
   it("should support Shift+Enter newline (structure test)", () => {
@@ -44,10 +50,12 @@ describe("MultilineTextarea", () => {
     // in Task 10, as our custom ink mocks don't support interactive keyboard event
     // simulation. This test validates that the component structure supports multiline input.
     const onSubmit = jest.fn();
-    const { lastFrame } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
+    const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component renders with newline instructions
     expect(lastFrame()).toContain("Shift+Enter for new line");
+
+    unmount();
   });
 
   it("should handle backspace (structure test)", () => {
@@ -55,9 +63,11 @@ describe("MultilineTextarea", () => {
     // as our custom ink mocks don't support interactive keyboard event simulation.
     // This test validates that the component structure supports editing.
     const onSubmit = jest.fn();
-    const { lastFrame } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
+    const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component renders (backspace is a standard editing operation)
     expect(lastFrame()).toContain(">");
+
+    unmount();
   });
 });
