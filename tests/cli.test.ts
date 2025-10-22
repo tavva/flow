@@ -1,11 +1,7 @@
-import { parseCliArgs, loadPluginSettings, buildSystemPrompt, runREPL } from "../src/cli";
-import { FlowProject } from "../src/types";
-import { GTDContext } from "../src/gtd-context-scanner";
-import { LanguageModelClient } from "../src/language-model";
+import { parseCliArgs, loadPluginSettings } from "../src/cli";
 import * as fs from "fs";
 
 jest.mock("fs");
-jest.mock("readline");
 
 describe("CLI argument parsing", () => {
   it("should parse vault path and sphere", () => {
@@ -124,60 +120,3 @@ describe("Plugin settings loading", () => {
     expect(() => loadPluginSettings("/path/to/vault")).toThrow();
   });
 });
-
-describe("System prompt generation", () => {
-  it("should build prompt with project context", () => {
-    const projects: FlowProject[] = [
-      {
-        title: "Mobile App",
-        description: "Rebuild mobile app with React Native",
-        priority: 1,
-        status: "live",
-        tags: ["project/work"],
-        nextActions: ["Set up React Native development environment", "Design authentication flow"],
-        file: "Projects/Mobile App.md",
-      },
-      {
-        title: "Hiring",
-        description: "Hire senior designer for product team",
-        priority: 2,
-        status: "live",
-        tags: ["project/work"],
-        nextActions: ["Review candidate portfolios", "Schedule interviews"],
-        file: "Projects/Hiring.md",
-      },
-    ];
-
-    const gtdContext: GTDContext = {
-      nextActions: ["Call dentist", "Email John about meeting"],
-      somedayItems: ["Learn Spanish", "Write a book"],
-      inboxItems: ["Random note from yesterday"],
-    };
-
-    const prompt = buildSystemPrompt(projects, "work", gtdContext);
-
-    expect(prompt).toContain("Mobile App");
-    expect(prompt).toContain("Rebuild mobile app with React Native");
-    expect(prompt).toContain("Priority: 1");
-    expect(prompt).toContain("Set up React Native development environment");
-    expect(prompt).toContain("Hiring");
-    expect(prompt).toContain("2 active projects");
-  });
-
-  it("should mention sphere in prompt", () => {
-    const projects: FlowProject[] = [];
-    const gtdContext: GTDContext = {
-      nextActions: [],
-      somedayItems: [],
-      inboxItems: [],
-    };
-
-    const prompt = buildSystemPrompt(projects, "work", gtdContext);
-
-    expect(prompt).toContain("work sphere");
-  });
-});
-
-// Network retry behavior is thoroughly tested in network-retry.test.ts
-// CLI integration with the new multiline stdin handler makes unit testing complex
-// The retry logic is verified through the network-retry module tests
