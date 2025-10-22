@@ -108,12 +108,32 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
     <Box flexDirection="column">
       <Text>{prompt} (Ctrl+Enter for new line, Enter to submit)</Text>
       <Text>{""}</Text>
-      {lines.map((line, index) => (
-        <Box key={index}>
-          <Text color="cyan">&gt; </Text>
-          <Text>{line}</Text>
-        </Box>
-      ))}
+      {lines.map((line, index) => {
+        const isCurrentLine = index === cursorRow;
+
+        // Build line with cursor inserted at correct position
+        let displayContent;
+        if (isCurrentLine) {
+          const before = line.slice(0, cursorCol);
+          const after = line.slice(cursorCol);
+          displayContent = (
+            <>
+              {before}
+              <Text color="yellow">█</Text>
+              {after}
+            </>
+          );
+        } else {
+          displayContent = line;
+        }
+
+        return (
+          <Box key={index}>
+            <Text color="cyan">&gt; </Text>
+            <Text>{displayContent}</Text>
+          </Box>
+        );
+      })}
     </Box>
   );
 }

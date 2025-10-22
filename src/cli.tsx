@@ -283,6 +283,8 @@ export async function runREPL(
         <InboxApp
           onComplete={(text) => {
             unmount();
+            // Add newline after Ink unmounts to prevent output appearing on same line
+            console.log("");
             resolve(text);
           }}
         />
