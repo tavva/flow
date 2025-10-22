@@ -359,7 +359,9 @@ export async function runREPL(
 
       // Clear thinking indicator
       process.stdout.write("\r");
-      process.stdout.clearLine(0);
+      if (typeof process.stdout.clearLine === 'function') {
+        process.stdout.clearLine(0);
+      }
 
       // Handle tool response
       if (typeof response !== "string" && response.toolCalls) {
@@ -382,7 +384,9 @@ export async function runREPL(
     } catch (error) {
       // Clear thinking indicator on error
       process.stdout.write("\r");
-      process.stdout.clearLine(0);
+      if (typeof process.stdout.clearLine === 'function') {
+        process.stdout.clearLine(0);
+      }
 
       console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
       // Remove the user message that caused the error

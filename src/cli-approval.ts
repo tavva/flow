@@ -83,15 +83,22 @@ function formatToolCallDescription(toolCall: ToolCall): string {
 }
 
 async function promptUser(question: string): Promise<string> {
-  // Restore stdin to normal mode before using readline
-  // (Ink leaves it in raw mode after unmounting)
+  // Restore stdin to cooked mode - Ink leaves it in raw mode
+  // With terminal: false, readline expects stdin in cooked mode for line buffering
   if (process.stdin.isTTY && process.stdin.setRawMode) {
     process.stdin.setRawMode(false);
   }
 
+  // Resume stdin to ensure it's flowing
+  process.stdin.resume();
+
+  // Keep process alive while waiting for input
+  process.stdin.ref();
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
+    terminal: false, // Don't modify terminal settings
   });
 
   return new Promise((resolve) => {
