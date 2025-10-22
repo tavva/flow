@@ -1,5 +1,5 @@
-// ABOUTME: CLI entry point for inbox input using Ink rendering.
-// ABOUTME: Loads Flow projects and GTD context from vault for processing inbox items.
+// ABOUTME: CLI entry point for conversational GTD coaching across all GTD aspects.
+// ABOUTME: Loads Flow projects and GTD context from vault and provides AI-powered advice via REPL with Ink input.
 
 import * as fs from "fs";
 import * as path from "path";
@@ -10,6 +10,14 @@ import { render } from "ink";
 import { InboxApp } from "./components/InboxApp";
 import type { TFile, App, CachedMetadata } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
+import { LanguageModelClient, ChatMessage, ToolCallResponse } from "./language-model";
+import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
+import { Marked } from "marked";
+import { markedTerminal } from "marked-terminal";
+import { withRetry } from "./network-retry";
+import { presentToolCallsForApproval } from "./cli-approval";
+import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
+import { FileWriter } from "./file-writer";
 
 export interface CliArgs {
   vaultPath: string;
@@ -176,6 +184,211 @@ export function buildSystemPrompt(
   return prompt;
 }
 
+// ANSI color codes
+const colors = {
+  reset: "\x1b[0m",
+  assistant: "\x1b[35m", // Magenta for assistant
+  dim: "\x1b[2m", // Dim for thinking indicator
+};
+
+async function handleToolCalls(
+  response: ToolCallResponse,
+  messages: ChatMessage[],
+  mockApp: App,
+  settings: PluginSettings
+): Promise<void> {
+  const { content, toolCalls } = response;
+
+  // Present tools for approval
+  const approval = await presentToolCallsForApproval(toolCalls!, content);
+
+  // Create FileWriter instance
+  const fileWriter = new FileWriter(mockApp, settings);
+
+  // Execute approved tools
+  const toolExecutor = new ToolExecutor(mockApp, fileWriter, settings);
+
+  for (const toolCall of toolCalls!) {
+    if (approval.approvedToolIds.includes(toolCall.id)) {
+      const result = await toolExecutor.executeTool(toolCall);
+
+      // Show result to user
+      if (result.is_error) {
+        console.log(`  ✗ ${result.content}`);
+      } else {
+        console.log(`  ${result.content}`);
+      }
+    }
+  }
+
+  // Acknowledge tool execution
+  const summary = `Completed ${approval.approvedToolIds.length} of ${toolCalls!.length} suggested changes.`;
+  messages.push({ role: "assistant", content: summary });
+  console.log(`\n${colors.assistant}Coach:${colors.reset} ${summary}\n`);
+}
+
+export async function runREPL(
+  languageModelClient: LanguageModelClient,
+  model: string,
+  systemPrompt: string,
+  gtdContext: GTDContext,
+  projectCount: number,
+  sphere: string,
+  mockApp: App,
+  settings: PluginSettings
+): Promise<void> {
+  const messages: ChatMessage[] = [];
+
+  // Check if client supports tools
+  const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
+
+  if (!supportsTools) {
+    console.log("Note: Tool support not available with current LLM provider.\n");
+  }
+
+  // Configure markdown renderer
+  const marked = new Marked();
+  marked.use(
+    markedTerminal({
+      // Use functions for color customization
+      heading: (s: string) => `${colors.assistant}${s}${colors.reset}`,
+      code: (s: string) => `${colors.dim}${s}${colors.reset}`,
+      blockquote: (s: string) => `${colors.dim}${s}${colors.reset}`,
+      strong: (s: string) => `\x1b[1m${s}\x1b[22m`, // Bold
+      em: (s: string) => `\x1b[3m${s}\x1b[23m`, // Italic
+    }) as any
+  );
+  marked.setOptions({ async: false });
+
+  console.log(`\nFlow - ${sphere} sphere`);
+  console.log(`  ${projectCount} projects`);
+  console.log(`  ${gtdContext.nextActions.length} next actions`);
+  console.log(`  ${gtdContext.somedayItems.length} someday items`);
+  console.log(`  ${gtdContext.inboxItems.length} inbox items\n`);
+  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation\n`);
+
+  // Initial system message
+  messages.push({
+    role: "system",
+    content: systemPrompt,
+  });
+
+  // REPL loop
+  while (true) {
+    // Get user input via Ink
+    const userInput = await new Promise<string>((resolve) => {
+      const { unmount } = render(
+        <InboxApp
+          onComplete={(text) => {
+            unmount();
+            resolve(text);
+          }}
+        />
+      );
+    });
+
+    const input = userInput.trim();
+
+    if (input === "exit" || input === "quit") {
+      console.log("Goodbye!");
+      process.exit(0);
+    }
+
+    if (input === "reset") {
+      messages.length = 0;
+      messages.push({
+        role: "system",
+        content: systemPrompt,
+      });
+      console.log("Conversation reset.\n");
+      continue;
+    }
+
+    if (input === "") {
+      continue;
+    }
+
+    // Add user message
+    messages.push({
+      role: "user",
+      content: input,
+    });
+
+    try {
+      // Show thinking indicator
+      process.stdout.write(`${colors.dim}Thinking...${colors.reset}`);
+
+      let response: string | ToolCallResponse;
+
+      if (supportsTools) {
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessageWithTools!(
+              { model, maxTokens: 4000, messages },
+              CLI_TOOLS
+            ),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+          (attempt, delayMs) => {
+            process.stdout.write("\r");
+            const delaySec = (delayMs / 1000).toFixed(1);
+            process.stdout.write(
+              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+            );
+          }
+        );
+      } else {
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessage({
+              model,
+              maxTokens: 4000,
+              messages,
+            }),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+          (attempt, delayMs) => {
+            process.stdout.write("\r");
+            const delaySec = (delayMs / 1000).toFixed(1);
+            process.stdout.write(
+              `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+            );
+          }
+        );
+      }
+
+      // Clear thinking indicator
+      process.stdout.write("\r");
+      process.stdout.clearLine(0);
+
+      // Handle tool response
+      if (typeof response !== "string" && response.toolCalls) {
+        await handleToolCalls(response, messages, mockApp, settings);
+      } else {
+        // Regular text response
+        const text = typeof response === "string" ? response : response.content || "";
+        messages.push({ role: "assistant", content: text });
+
+        // Render markdown response
+        let rendered = marked.parse(text) as string;
+
+        // Workaround for marked-terminal bug: bold/italic not processed in list items
+        rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m"); // bold
+        rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
+        rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
+
+        console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
+      }
+    } catch (error) {
+      // Clear thinking indicator on error
+      process.stdout.write("\r");
+      process.stdout.clearLine(0);
+
+      console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
+      // Remove the user message that caused the error
+      messages.pop();
+    }
+  }
+}
+
 // Mock Obsidian App for CLI usage
 class MockVault {
   private vaultPath: string;
@@ -330,27 +543,46 @@ export async function main() {
       process.exit(1);
     }
 
-    // Validate sphere is provided
-    if (!args.sphere) {
-      console.error("Error: --sphere is required");
-      console.error("Usage: npx tsx src/cli.tsx --vault /path/to/vault --sphere work");
-      process.exit(1);
-    }
-
     // Load plugin settings
     const settings = loadPluginSettings(args.vaultPath);
 
-    // Render Ink app
-    const { waitUntilExit } = render(
-      <InboxApp
-        onComplete={(text) => {
-          console.log(`\nReceived: ${text}`);
-          process.exit(0);
-        }}
-      />
+    // Scan vault for projects
+    const mockApp = new MockApp(args.vaultPath);
+    const scanner = new FlowProjectScanner(mockApp as any);
+    const allProjects = await scanner.scanProjects();
+
+    // Filter by sphere
+    const projects = allProjects.filter((project) =>
+      project.tags.some((tag) => tag === `project/${args.sphere}`)
     );
 
-    await waitUntilExit();
+    if (projects.length === 0) {
+      console.warn(`Warning: No projects found for sphere "${args.sphere}"`);
+      console.warn("Continuing anyway - you can discuss why projects might be missing.\n");
+    }
+
+    // Scan GTD context
+    const gtdScanner = new GTDContextScanner(mockApp as any, settings);
+    const gtdContext = await gtdScanner.scanContext();
+
+    // Build system prompt
+    const systemPrompt = buildSystemPrompt(projects, args.sphere, gtdContext);
+
+    // Create language model
+    const languageModelClient = createLanguageModelClient(settings);
+    const model = getModelForSettings(settings);
+
+    // Run REPL
+    await runREPL(
+      languageModelClient,
+      model,
+      systemPrompt,
+      gtdContext,
+      projects.length,
+      args.sphere,
+      mockApp as any,
+      settings
+    );
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
