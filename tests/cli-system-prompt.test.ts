@@ -77,4 +77,11 @@ describe("CLI System Prompt - Tool Support", () => {
     expect(prompt).toContain("Quality Standards");
     expect(prompt).toContain("start with a verb");
   });
+
+  it("should include project file paths for tool calls", () => {
+    const prompt = buildSystemPrompt(mockProjects, "work", mockContext);
+
+    expect(prompt).toContain("Test Project");
+    expect(prompt).toContain("Projects/Test.md");
+  });
 });

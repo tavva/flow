@@ -130,6 +130,7 @@ export function buildSystemPrompt(
       const indent = "  ".repeat(node.depth);
 
       prompt += `${indent}### ${project.title}\n`;
+      prompt += `${indent}File: ${project.file}\n`;
       prompt += `${indent}Description: ${project.description || "No description"}\n`;
       prompt += `${indent}Priority: ${project.priority} (1=highest, 3=lowest)\n`;
       prompt += `${indent}Status: ${project.status}\n`;
