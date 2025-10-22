@@ -2,12 +2,24 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>/src", "<rootDir>/tests"],
-  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts", "**/?(*.)+(spec|test).tsx"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   transform: {
-    "^.+\\.ts$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.test.json" }],
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "<rootDir>/tsconfig.test.json",
+        isolatedModules: true,
+      },
+    ],
   },
-  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts", "!src/**/index.ts"],
+  transformIgnorePatterns: [
+    "node_modules/(?!(ink|ink-testing-library|chalk|ansi-escapes|ansi-styles|cli-cursor|cli-boxes|widest-line|wrap-ansi|string-width|strip-ansi|ansi-regex|yoga-wasm-web)/)",
+  ],
+  moduleNameMapper: {
+    "^ink-testing-library$": "<rootDir>/tests/__mocks__/ink-testing-library",
+  },
+  collectCoverageFrom: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts", "!src/**/index.ts"],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -16,5 +28,5 @@ module.exports = {
       statements: 80,
     },
   },
-  moduleFileExtensions: ["ts", "js", "json"],
+  moduleFileExtensions: ["ts", "tsx", "js", "json"],
 };
