@@ -15,8 +15,25 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
   const [cursorCol, setCursorCol] = useState(0);
 
   useInput((input, key) => {
-    // Submit on Enter (without Shift)
-    if (key.return && !key.shift) {
+    // Insert newline on Ctrl+Enter or Ctrl+J
+    if ((key.return && key.ctrl) || (input === "\n" && key.ctrl)) {
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const currentLine = newLines[cursorRow];
+        // Split current line at cursor
+        const before = currentLine.slice(0, cursorCol);
+        const after = currentLine.slice(cursorCol);
+        newLines[cursorRow] = before;
+        newLines.splice(cursorRow + 1, 0, after);
+        return newLines;
+      });
+      setCursorRow((prev) => prev + 1);
+      setCursorCol(0);
+      return;
+    }
+
+    // Submit on Enter (without Ctrl)
+    if (key.return && !key.ctrl) {
       const text = lines.join("\n").trim();
       if (text) {
         onSubmit(text);
@@ -28,7 +45,7 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       return;
     }
 
-    // Insert newline on Shift+Enter
+    // Legacy: Also support Shift+Enter for newlines (if terminal supports it)
     if (key.return && key.shift) {
       setLines((prevLines) => {
         const newLines = [...prevLines];
@@ -74,8 +91,8 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       return;
     }
 
-    // Handle regular character input
-    if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
+    // Handle regular character input (including Shift+character for capitals)
+    if (!key.return && !key.ctrl && !key.meta && input.length === 1) {
       setLines((prevLines) => {
         const newLines = [...prevLines];
         const currentLine = newLines[cursorRow];
@@ -89,7 +106,7 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
 
   return (
     <Box flexDirection="column">
-      <Text>{prompt} (Shift+Enter for new line, Enter to submit)</Text>
+      <Text>{prompt} (Ctrl+Enter for new line, Enter to submit)</Text>
       <Text>{""}</Text>
       {lines.map((line, index) => (
         <Box key={index}>
