@@ -15,6 +15,19 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
   const [cursorCol, setCursorCol] = useState(0);
 
   useInput((input, key) => {
+    // Submit on Enter (without Shift)
+    if (key.return && !key.shift) {
+      const text = lines.join("\n").trim();
+      if (text) {
+        onSubmit(text);
+        // Reset state
+        setLines([""]);
+        setCursorRow(0);
+        setCursorCol(0);
+      }
+      return;
+    }
+
     // Handle regular character input
     if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
       setLines((prevLines) => {

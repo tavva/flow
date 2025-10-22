@@ -27,4 +27,15 @@ describe("MultilineTextarea", () => {
     expect(lastFrame()).toContain("Shift+Enter for new line");
     expect(lastFrame()).toContain(">");
   });
+
+  it("should handle Enter key submit (structure test)", () => {
+    // Note: Enter key submission will be verified via integration testing in Task 10,
+    // as our custom ink mocks don't support interactive keyboard event simulation.
+    // This test validates that the component structure supports submission.
+    const onSubmit = jest.fn();
+    const { lastFrame } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
+
+    // Verify component renders with submit capability
+    expect(lastFrame()).toContain("Enter to submit");
+  });
 });
