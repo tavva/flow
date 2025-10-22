@@ -14,7 +14,8 @@
     "test:coverage": "jest --coverage",
     "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
-    "cli": "tsx src/cli.ts"
+    "cli": "node dist/cli.mjs",
+    "build:cli": "node esbuild.cli.mjs"
   },
   "keywords": [
     "obsidian",

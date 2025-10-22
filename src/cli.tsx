@@ -9,7 +9,8 @@ import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
 import { buildProjectHierarchy, flattenHierarchy } from "./project-hierarchy";
 import { render } from "ink";
 import { InboxApp } from "./components/InboxApp";
-import type { TFile, App, CachedMetadata } from "obsidian";
+import type { App, CachedMetadata } from "obsidian";
+import { TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { LanguageModelClient, ChatMessage, ToolCallResponse } from "./language-model";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
@@ -413,14 +414,13 @@ class MockVault {
           const relativePath = path.relative(this.vaultPath, fullPath);
           const stats = fs.statSync(fullPath);
           // Create mock TFile
-          files.push({
+          const tfile = new TFile({
             path: relativePath,
             basename: entry.name.replace(".md", ""),
             extension: "md",
-            stat: {
-              mtime: stats.mtimeMs,
-            },
-          } as TFile);
+          });
+          tfile.stat.mtime = stats.mtimeMs;
+          files.push(tfile);
         }
       }
     };
@@ -441,14 +441,13 @@ class MockVault {
     }
     const stats = fs.statSync(fullPath);
     const basename = filePath.split("/").pop()?.replace(".md", "") || "";
-    return {
+    const tfile = new TFile({
       path: filePath,
       basename: basename,
       extension: "md",
-      stat: {
-        mtime: stats.mtimeMs,
-      },
-    } as TFile;
+    });
+    tfile.stat.mtime = stats.mtimeMs;
+    return tfile;
   }
 }
 
@@ -590,7 +589,7 @@ export async function main() {
   }
 }
 
-// Run if executed directly
-if (require.main === module) {
+// Run if executed directly (ESM check)
+if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
