@@ -40,12 +40,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       const state = (leaf as any).getViewState?.()?.state;
       const sphere = state?.sphere || this.settings.spheres[0] || "personal";
 
-      return new SphereView(
-        leaf,
-        sphere,
-        this.settings,
-        this.saveSettings.bind(this)
-      );
+      return new SphereView(leaf, sphere, this.settings, this.saveSettings.bind(this));
     });
 
     // Register the inbox processing view

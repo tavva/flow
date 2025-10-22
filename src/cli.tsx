@@ -1,11 +1,24 @@
 // ABOUTME: CLI entry point for conversational GTD coaching across all GTD aspects.
-// ABOUTME: Loads Flow projects and GTD context from vault and provides AI-powered advice via REPL.
+// ABOUTME: Loads Flow projects and GTD context from vault and provides AI-powered advice via REPL with Ink input.
 
 import * as fs from "fs";
 import * as path from "path";
+import React from "react";
 import { PluginSettings, FlowProject } from "./types";
 import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
 import { buildProjectHierarchy, flattenHierarchy } from "./project-hierarchy";
+import { render } from "ink";
+import { InboxApp } from "./components/InboxApp";
+import type { TFile, App, CachedMetadata } from "obsidian";
+import { FlowProjectScanner } from "./flow-scanner";
+import { LanguageModelClient, ChatMessage, ToolCallResponse } from "./language-model";
+import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
+import { Marked } from "marked";
+import { markedTerminal } from "marked-terminal";
+import { withRetry } from "./network-retry";
+import { presentToolCallsForApproval } from "./cli-approval";
+import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
+import { FileWriter } from "./file-writer";
 
 export interface CliArgs {
   vaultPath: string;
@@ -172,23 +185,9 @@ export function buildSystemPrompt(
   return prompt;
 }
 
-import * as readline from "readline";
-import { LanguageModelClient, ChatMessage, ToolCallResponse, ToolResult } from "./language-model";
-import type { TFile, App, CachedMetadata, Vault, MetadataCache } from "obsidian";
-import { FlowProjectScanner } from "./flow-scanner";
-import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
-import { Marked } from "marked";
-import { markedTerminal } from "marked-terminal";
-import { withRetry } from "./network-retry";
-import { presentToolCallsForApproval } from "./cli-approval";
-import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
-import { FileWriter } from "./file-writer";
-
 // ANSI color codes
 const colors = {
   reset: "\x1b[0m",
-  user: "\x1b[1m\x1b[36m", // Bold cyan for user
-  userMessage: "\x1b[3m\x1b[36m", // Italic cyan for user message text
   assistant: "\x1b[35m", // Magenta for assistant
   dim: "\x1b[2m", // Dim for thinking indicator
 };
@@ -196,8 +195,6 @@ const colors = {
 async function handleToolCalls(
   response: ToolCallResponse,
   messages: ChatMessage[],
-  client: LanguageModelClient,
-  model: string,
   mockApp: App,
   settings: PluginSettings
 ): Promise<void> {
@@ -211,12 +208,10 @@ async function handleToolCalls(
 
   // Execute approved tools
   const toolExecutor = new ToolExecutor(mockApp, fileWriter, settings);
-  const toolResults: ToolResult[] = [];
 
   for (const toolCall of toolCalls!) {
     if (approval.approvedToolIds.includes(toolCall.id)) {
       const result = await toolExecutor.executeTool(toolCall);
-      toolResults.push(result);
 
       // Show result to user
       if (result.is_error) {
@@ -224,18 +219,10 @@ async function handleToolCalls(
       } else {
         console.log(`  ${result.content}`);
       }
-    } else {
-      // Tool was rejected by user
-      toolResults.push({
-        tool_use_id: toolCall.id,
-        content: "User declined this change",
-        is_error: false,
-      });
     }
   }
 
-  // For now, just acknowledge tool execution
-  // TODO: Send tool results back to LLM in next iteration (multi-turn support)
+  // Acknowledge tool execution
   const summary = `Completed ${approval.approvedToolIds.length} of ${toolCalls!.length} suggested changes.`;
   messages.push({ role: "assistant", content: summary });
   console.log(`\n${colors.assistant}Coach:${colors.reset} ${summary}\n`);
@@ -279,8 +266,7 @@ export async function runREPL(
   console.log(`  ${gtdContext.nextActions.length} next actions`);
   console.log(`  ${gtdContext.somedayItems.length} someday items`);
   console.log(`  ${gtdContext.inboxItems.length} inbox items\n`);
-  console.log(`Press Enter to submit, Shift+Enter for newline`);
-  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation, Ctrl+C to exit\n`);
+  console.log(`Type 'exit' to quit, 'reset' to start fresh conversation\n`);
 
   // Initial system message
   messages.push({
@@ -288,61 +274,21 @@ export async function runREPL(
     content: systemPrompt,
   });
 
-  // Multiline input handling
-  let inputBuffer = "";
-  let cursorPosition = 0;
+  // REPL loop
+  while (true) {
+    // Get user input via Ink
+    const userInput = await new Promise<string>((resolve) => {
+      const { unmount } = render(
+        <InboxApp
+          onComplete={(text) => {
+            unmount();
+            resolve(text);
+          }}
+        />
+      );
+    });
 
-  // Enable raw mode for character-by-character input
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true);
-  }
-  process.stdin.setEncoding("utf8");
-
-  const showPrompt = () => {
-    const lines = inputBuffer.split("\n");
-    const currentLineIndex = inputBuffer.substring(0, cursorPosition).split("\n").length - 1;
-    const cursorInLine =
-      cursorPosition - inputBuffer.substring(0, cursorPosition).lastIndexOf("\n") - 1;
-
-    // For multiline: we need to track where we started
-    // For single line: just update in place
-
-    if (lines.length === 1) {
-      // Simple case: single line
-      // Move to start of current line, clear it, rewrite
-      readline.cursorTo(process.stdout, 0);
-      readline.clearLine(process.stdout, 0);
-      process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}`);
-      // Position cursor at correct column
-      readline.cursorTo(process.stdout, 5 + cursorInLine);
-    } else {
-      // Multiline case: need to redraw all lines
-      // Clear from cursor to end of screen
-      readline.clearScreenDown(process.stdout);
-      readline.cursorTo(process.stdout, 0);
-
-      // Write all lines
-      process.stdout.write(`${colors.user}You: ${colors.reset}${lines[0] || ""}`);
-      for (let i = 1; i < lines.length; i++) {
-        process.stdout.write(`\n${colors.user}...  ${colors.reset}${lines[i] || ""}`);
-      }
-
-      // Move cursor to correct position
-      // Go back to start of first line, then move down to current line, then to column
-      const visualColumn = 5 + cursorInLine;
-      readline.cursorTo(process.stdout, 0);
-      readline.moveCursor(process.stdout, 0, -(lines.length - 1 - currentLineIndex));
-      readline.cursorTo(process.stdout, visualColumn);
-    }
-  };
-
-  const handleSubmit = async () => {
-    const input = inputBuffer.trim();
-    inputBuffer = "";
-    cursorPosition = 0;
-
-    // Move to end and add newlines
-    process.stdout.write("\n\n");
+    const input = userInput.trim();
 
     if (input === "exit" || input === "quit") {
       console.log("Goodbye!");
@@ -356,23 +302,12 @@ export async function runREPL(
         content: systemPrompt,
       });
       console.log("Conversation reset.\n");
-      showPrompt();
-      return;
-    }
-
-    if (input === "list") {
-      console.log('Use your initial prompt to see project list, or ask "list all projects"\n');
-      showPrompt();
-      return;
+      continue;
     }
 
     if (input === "") {
-      showPrompt();
-      return;
+      continue;
     }
-
-    // Echo user message in italic
-    console.log(`${colors.userMessage}${input}${colors.reset}\n`);
 
     // Add user message
     messages.push({
@@ -395,8 +330,7 @@ export async function runREPL(
             ),
           { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
           (attempt, delayMs) => {
-            readline.clearLine(process.stdout, 0);
-            readline.cursorTo(process.stdout, 0);
+            process.stdout.write("\r");
             const delaySec = (delayMs / 1000).toFixed(1);
             process.stdout.write(
               `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
@@ -413,8 +347,7 @@ export async function runREPL(
             }),
           { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
           (attempt, delayMs) => {
-            readline.clearLine(process.stdout, 0);
-            readline.cursorTo(process.stdout, 0);
+            process.stdout.write("\r");
             const delaySec = (delayMs / 1000).toFixed(1);
             process.stdout.write(
               `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
@@ -423,13 +356,13 @@ export async function runREPL(
         );
       }
 
-      // Clear any indicator (thinking or retry)
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
+      // Clear thinking indicator
+      process.stdout.write("\r");
+      process.stdout.clearLine(0);
 
       // Handle tool response
       if (typeof response !== "string" && response.toolCalls) {
-        await handleToolCalls(response, messages, languageModelClient, model, mockApp, settings);
+        await handleToolCalls(response, messages, mockApp, settings);
       } else {
         // Regular text response
         const text = typeof response === "string" ? response : response.content || "";
@@ -438,8 +371,7 @@ export async function runREPL(
         // Render markdown response
         let rendered = marked.parse(text) as string;
 
-        // Workaround for marked-terminal bug #371: bold/italic not processed in list items
-        // Manually convert **text** to bold and *text* or _text_ to italic
+        // Workaround for marked-terminal bug: bold/italic not processed in list items
         rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m"); // bold
         rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
         rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
@@ -447,137 +379,15 @@ export async function runREPL(
         console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
       }
     } catch (error) {
-      // Clear any indicator on error
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
+      // Clear thinking indicator on error
+      process.stdout.write("\r");
+      process.stdout.clearLine(0);
 
       console.error(`\nError: ${error instanceof Error ? error.message : String(error)}\n`);
       // Remove the user message that caused the error
       messages.pop();
     }
-
-    showPrompt();
-  };
-
-  showPrompt();
-
-  // Track if we're in an escape sequence for Shift+Enter detection
-  let escapeBuffer = "";
-  let escapeTimeout: NodeJS.Timeout | null = null;
-
-  process.stdin.on("data", async (key: string) => {
-    // Handle escape sequences with buffering
-    if (escapeBuffer) {
-      escapeBuffer += key;
-
-      // Check for Shift+Enter patterns (adds newline in chat mode)
-      // Different terminals send different sequences:
-      // - Some: ESC + \r or ESC + \n
-      // - Some: ESC[13;2~
-      // - Some: ESC[27;5;13~
-      if (
-        escapeBuffer === "\x1b\r" ||
-        escapeBuffer === "\x1b\n" ||
-        escapeBuffer.includes("[13;2~") ||
-        escapeBuffer.includes("[27;5;13~")
-      ) {
-        if (escapeTimeout) clearTimeout(escapeTimeout);
-        escapeBuffer = "";
-        // Shift+Enter adds newline (chat pattern)
-        inputBuffer =
-          inputBuffer.slice(0, cursorPosition) + "\n" + inputBuffer.slice(cursorPosition);
-        cursorPosition++;
-        showPrompt();
-        return;
-      }
-
-      // If we have a complete escape sequence that's not Shift+Enter, process it
-      if (key === "~" || (escapeBuffer.length >= 3 && !escapeBuffer.includes("["))) {
-        if (escapeTimeout) clearTimeout(escapeTimeout);
-
-        // Arrow keys
-        if (
-          escapeBuffer === "\x1b[A" ||
-          escapeBuffer === "\x1b[B" ||
-          escapeBuffer === "\x1b[C" ||
-          escapeBuffer === "\x1b[D"
-        ) {
-          // Ignore arrow keys for now
-          escapeBuffer = "";
-          return;
-        }
-
-        // Unknown escape sequence, ignore
-        escapeBuffer = "";
-        return;
-      }
-
-      // Reset timeout - wait for complete sequence
-      if (escapeTimeout) clearTimeout(escapeTimeout);
-      escapeTimeout = setTimeout(() => {
-        escapeBuffer = "";
-      }, 100);
-      return;
-    }
-
-    const byte = key.charCodeAt(0);
-
-    // Ctrl+C
-    if (byte === 3) {
-      console.log("\nGoodbye!");
-      process.exit(0);
-    }
-
-    // Ctrl+D (EOF - exit gracefully if buffer empty, otherwise ignore)
-    if (byte === 4) {
-      if (inputBuffer.trim() === "") {
-        console.log("\nGoodbye!");
-        process.exit(0);
-      }
-      return;
-    }
-
-    // Backspace or Delete
-    if (byte === 127 || byte === 8) {
-      if (cursorPosition > 0) {
-        inputBuffer = inputBuffer.slice(0, cursorPosition - 1) + inputBuffer.slice(cursorPosition);
-        cursorPosition--;
-        showPrompt();
-      }
-      return;
-    }
-
-    // ESC - start escape sequence
-    if (byte === 27) {
-      escapeBuffer = key;
-      escapeTimeout = setTimeout(() => {
-        escapeBuffer = "";
-      }, 100);
-      return;
-    }
-
-    // Regular Enter (submit in chat pattern) - byte 13 is \r, byte 10 is \n
-    if (byte === 13 || byte === 10) {
-      await handleSubmit();
-      return;
-    }
-
-    // Regular printable characters
-    if (byte >= 32 && byte <= 126) {
-      inputBuffer = inputBuffer.slice(0, cursorPosition) + key + inputBuffer.slice(cursorPosition);
-      cursorPosition += key.length;
-      showPrompt();
-      return;
-    }
-
-    // Handle other printable UTF-8 characters
-    if (byte > 126) {
-      inputBuffer = inputBuffer.slice(0, cursorPosition) + key + inputBuffer.slice(cursorPosition);
-      cursorPosition += key.length;
-      showPrompt();
-      return;
-    }
-  });
+  }
 }
 
 // Mock Obsidian App for CLI usage

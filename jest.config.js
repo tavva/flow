@@ -2,12 +2,26 @@ module.exports = {
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>/src", "<rootDir>/tests"],
-  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts", "**/?(*.)+(spec|test).tsx"],
   setupFilesAfterEnv: ["<rootDir>/tests/setup.ts"],
   transform: {
-    "^.+\\.ts$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.test.json" }],
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "<rootDir>/tsconfig.test.json",
+        isolatedModules: true,
+      },
+    ],
+    "^.+\\.jsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "<rootDir>/tsconfig.test.json",
+        isolatedModules: true,
+      },
+    ],
   },
-  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts", "!src/**/index.ts"],
+  transformIgnorePatterns: [],
+  collectCoverageFrom: ["src/**/*.ts", "src/**/*.tsx", "!src/**/*.d.ts", "!src/**/index.ts"],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -16,5 +30,10 @@ module.exports = {
       statements: 80,
     },
   },
-  moduleFileExtensions: ["ts", "js", "json"],
+  moduleFileExtensions: ["ts", "tsx", "js", "json"],
+  // Use manual mocks from tests/__mocks__/ for ESM packages that Jest can't handle
+  moduleNameMapper: {
+    "^ink$": "<rootDir>/tests/__mocks__/ink.tsx",
+    "^ink-testing-library$": "<rootDir>/tests/__mocks__/ink-testing-library/index.ts",
+  },
 };

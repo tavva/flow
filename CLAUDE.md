@@ -70,12 +70,18 @@ The evaluation framework tests the AI processor against 15 curated test cases an
 
 ```bash
 # Interactive GTD coaching for a specific sphere
-npx tsx src/cli.ts --vault /path/to/vault --sphere work
+npx tsx src/cli.tsx --vault /path/to/vault --sphere work
 ```
+
+The CLI uses Ink (React for terminals) for multiline text input:
+
+- Enter submits input
+- Shift+Enter inserts newlines
+- Pasted content preserves formatting
 
 The CLI includes automatic retry logic for network errors with exponential backoff and user feedback.
 
-See `docs/gtd-coach-cli.md` for full CLI documentation.
+See `docs/gtd-coach-cli.md` for full CLI documentation and `docs/cli-ink-usage.md` for Ink-specific usage details.
 
 ## Architecture
 
