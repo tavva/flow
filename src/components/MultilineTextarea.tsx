@@ -38,7 +38,10 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       const text = lines.join("\n").trim();
       if (text) {
         setIsSubmitting(true);
-        onSubmit(text);
+        // Give React time to re-render before unmounting
+        setTimeout(() => {
+          onSubmit(text);
+        }, 50);
         // Reset state
         setLines([""]);
         setCursorRow(0);

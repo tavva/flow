@@ -539,6 +539,14 @@ class MockApp {
 }
 
 export async function main() {
+  // Handle Ctrl+C gracefully
+  process.on('SIGINT', () => {
+    // Clear the current line to remove any rendered cursor
+    process.stdout.write('\r\x1b[K');
+    console.log('\nGoodbye!');
+    process.exit(0);
+  });
+
   try {
     // Parse arguments
     const args = parseCliArgs(process.argv.slice(2));

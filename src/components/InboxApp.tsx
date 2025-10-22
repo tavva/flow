@@ -2,7 +2,7 @@
 // ABOUTME: Manages state transitions from input to processing to results display.
 
 import React, { useState } from "react";
-import { Box } from "ink";
+import { Box, Text } from "ink";
 import { MultilineTextarea } from "./MultilineTextarea";
 
 export interface InboxAppProps {
@@ -25,5 +25,9 @@ export function InboxApp({ onComplete }: InboxAppProps) {
     );
   }
 
-  return <Box flexDirection="column">Processing...</Box>;
+  return (
+    <Box flexDirection="column">
+      <Text>Processing...</Text>
+    </Box>
+  );
 }
