@@ -28,6 +28,23 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       return;
     }
 
+    // Insert newline on Shift+Enter
+    if (key.return && key.shift) {
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const currentLine = newLines[cursorRow];
+        // Split current line at cursor
+        const before = currentLine.slice(0, cursorCol);
+        const after = currentLine.slice(cursorCol);
+        newLines[cursorRow] = before;
+        newLines.splice(cursorRow + 1, 0, after);
+        return newLines;
+      });
+      setCursorRow((prev) => prev + 1);
+      setCursorCol(0);
+      return;
+    }
+
     // Handle regular character input
     if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
       setLines((prevLines) => {
