@@ -3,6 +3,7 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import React from "react";
 import { PluginSettings, FlowProject } from "./types";
 import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
 import { buildProjectHierarchy, flattenHierarchy } from "./project-hierarchy";

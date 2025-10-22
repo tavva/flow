@@ -35,11 +35,13 @@ What's on your mind? (Shift+Enter for new line, Enter to submit)
 When testing the CLI manually, verify these scenarios work correctly:
 
 ### Single Line Input
+
 1. Type a single line of text
 2. Press Enter
 3. Verify input is submitted correctly
 
 ### Multiline Input
+
 1. Type first line of text
 2. Press Shift+Enter
 3. Type second line of text
@@ -49,6 +51,7 @@ When testing the CLI manually, verify these scenarios work correctly:
 7. Verify all three lines are submitted with preserved newlines
 
 ### Paste Multiline Content
+
 1. Copy multiline text to clipboard (e.g., from notes app)
 2. Paste into CLI
 3. Verify newlines are preserved correctly
@@ -56,6 +59,7 @@ When testing the CLI manually, verify these scenarios work correctly:
 5. Verify pasted content is submitted correctly
 
 ### Backspace Across Lines
+
 1. Type first line
 2. Press Shift+Enter
 3. Type second line
@@ -64,6 +68,7 @@ When testing the CLI manually, verify these scenarios work correctly:
 6. Verify lines merge correctly at the newline boundary
 
 ### Empty Input
+
 1. Without typing anything, press Enter
 2. Verify empty input is not submitted (component should ignore)
 3. Type whitespace only, press Enter

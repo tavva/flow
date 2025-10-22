@@ -13,12 +13,14 @@
 ## Task 1: Install Dependencies
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `package-lock.json`
 
 **Step 1: Install Ink and React dependencies**
 
 Run:
+
 ```bash
 npm install ink@^5.0.0 react@^18.0.0
 npm install --save-dev @types/react@^18.0.0
@@ -44,6 +46,7 @@ git commit -m "build: add Ink and React dependencies for CLI conversion"
 ## Task 2: Create MultilineTextarea Component (TDD)
 
 **Files:**
+
 - Create: `src/components/MultilineTextarea.tsx`
 - Create: `tests/components/MultilineTextarea.test.tsx`
 
@@ -131,6 +134,7 @@ git commit -m "feat: add basic MultilineTextarea component structure"
 ## Task 3: Add Character Input Handling (TDD)
 
 **Files:**
+
 - Modify: `src/components/MultilineTextarea.tsx`
 - Modify: `tests/components/MultilineTextarea.test.tsx`
 
@@ -217,6 +221,7 @@ git commit -m "feat: add character input handling to MultilineTextarea"
 ## Task 4: Add Enter Key Submit (TDD)
 
 **Files:**
+
 - Modify: `src/components/MultilineTextarea.tsx`
 - Modify: `tests/components/MultilineTextarea.test.tsx`
 
@@ -252,25 +257,25 @@ Expected: FAIL - onSubmit not called
 Modify `src/components/MultilineTextarea.tsx` - add inside `useInput`:
 
 ```typescript
-  useInput((input, key) => {
-    // Submit on Enter (without Shift)
-    if (key.return && !key.shift) {
-      const text = lines.join("\n").trim();
-      if (text) {
-        onSubmit(text);
-        // Reset state
-        setLines([""]);
-        setCursorRow(0);
-        setCursorCol(0);
-      }
-      return;
+useInput((input, key) => {
+  // Submit on Enter (without Shift)
+  if (key.return && !key.shift) {
+    const text = lines.join("\n").trim();
+    if (text) {
+      onSubmit(text);
+      // Reset state
+      setLines([""]);
+      setCursorRow(0);
+      setCursorCol(0);
     }
+    return;
+  }
 
-    // Handle regular character input
-    if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
-      // ... existing code
-    }
-  });
+  // Handle regular character input
+  if (!key.return && !key.shift && !key.ctrl && !key.meta && input.length === 1) {
+    // ... existing code
+  }
+});
 ```
 
 **Step 4: Run test to verify it passes**
@@ -291,6 +296,7 @@ git commit -m "feat: add Enter key submit to MultilineTextarea"
 ## Task 5: Add Shift+Enter Newline (TDD)
 
 **Files:**
+
 - Modify: `src/components/MultilineTextarea.tsx`
 - Modify: `tests/components/MultilineTextarea.test.tsx`
 
@@ -329,32 +335,32 @@ Expected: PASS (structure test)
 Modify `src/components/MultilineTextarea.tsx` - add inside `useInput` before character handling:
 
 ```typescript
-  useInput((input, key) => {
-    // Submit on Enter (without Shift)
-    if (key.return && !key.shift) {
-      // ... existing submit code
-    }
+useInput((input, key) => {
+  // Submit on Enter (without Shift)
+  if (key.return && !key.shift) {
+    // ... existing submit code
+  }
 
-    // Insert newline on Shift+Enter
-    if (key.return && key.shift) {
-      setLines((prevLines) => {
-        const newLines = [...prevLines];
-        const currentLine = newLines[cursorRow];
-        // Split current line at cursor
-        const before = currentLine.slice(0, cursorCol);
-        const after = currentLine.slice(cursorCol);
-        newLines[cursorRow] = before;
-        newLines.splice(cursorRow + 1, 0, after);
-        return newLines;
-      });
-      setCursorRow((prev) => prev + 1);
-      setCursorCol(0);
-      return;
-    }
+  // Insert newline on Shift+Enter
+  if (key.return && key.shift) {
+    setLines((prevLines) => {
+      const newLines = [...prevLines];
+      const currentLine = newLines[cursorRow];
+      // Split current line at cursor
+      const before = currentLine.slice(0, cursorCol);
+      const after = currentLine.slice(cursorCol);
+      newLines[cursorRow] = before;
+      newLines.splice(cursorRow + 1, 0, after);
+      return newLines;
+    });
+    setCursorRow((prev) => prev + 1);
+    setCursorCol(0);
+    return;
+  }
 
-    // Handle regular character input
-    // ... existing code
-  });
+  // Handle regular character input
+  // ... existing code
+});
 ```
 
 **Step 4: Run test to verify it passes**
@@ -375,6 +381,7 @@ git commit -m "feat: add Shift+Enter newline handling to MultilineTextarea"
 ## Task 6: Add Backspace Handling (TDD)
 
 **Files:**
+
 - Modify: `src/components/MultilineTextarea.tsx`
 - Modify: `tests/components/MultilineTextarea.test.tsx`
 
@@ -411,40 +418,39 @@ Expected: FAIL - backspace not handled
 Modify `src/components/MultilineTextarea.tsx` - add inside `useInput` after Shift+Enter:
 
 ```typescript
-  useInput((input, key) => {
-    // ... existing Enter and Shift+Enter handling
+useInput((input, key) => {
+  // ... existing Enter and Shift+Enter handling
 
-    // Handle backspace
-    if (key.backspace || key.delete) {
-      if (cursorCol > 0) {
-        // Delete character before cursor
-        setLines((prevLines) => {
-          const newLines = [...prevLines];
-          const currentLine = newLines[cursorRow];
-          newLines[cursorRow] =
-            currentLine.slice(0, cursorCol - 1) + currentLine.slice(cursorCol);
-          return newLines;
-        });
-        setCursorCol((prev) => prev - 1);
-      } else if (cursorRow > 0) {
-        // Merge with previous line
-        setLines((prevLines) => {
-          const newLines = [...prevLines];
-          const currentLine = newLines[cursorRow];
-          const prevLine = newLines[cursorRow - 1];
-          newLines[cursorRow - 1] = prevLine + currentLine;
-          newLines.splice(cursorRow, 1);
-          return newLines;
-        });
-        setCursorRow((prev) => prev - 1);
-        setCursorCol(lines[cursorRow - 1].length);
-      }
-      return;
+  // Handle backspace
+  if (key.backspace || key.delete) {
+    if (cursorCol > 0) {
+      // Delete character before cursor
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const currentLine = newLines[cursorRow];
+        newLines[cursorRow] = currentLine.slice(0, cursorCol - 1) + currentLine.slice(cursorCol);
+        return newLines;
+      });
+      setCursorCol((prev) => prev - 1);
+    } else if (cursorRow > 0) {
+      // Merge with previous line
+      setLines((prevLines) => {
+        const newLines = [...prevLines];
+        const currentLine = newLines[cursorRow];
+        const prevLine = newLines[cursorRow - 1];
+        newLines[cursorRow - 1] = prevLine + currentLine;
+        newLines.splice(cursorRow, 1);
+        return newLines;
+      });
+      setCursorRow((prev) => prev - 1);
+      setCursorCol(lines[cursorRow - 1].length);
     }
+    return;
+  }
 
-    // Handle regular character input
-    // ... existing code
-  });
+  // Handle regular character input
+  // ... existing code
+});
 ```
 
 **Step 4: Run test to verify it passes**
@@ -465,6 +471,7 @@ git commit -m "feat: add backspace handling to MultilineTextarea"
 ## Task 7: Create InboxApp Root Component (TDD)
 
 **Files:**
+
 - Create: `src/components/InboxApp.tsx`
 - Create: `tests/components/InboxApp.test.tsx`
 
@@ -552,6 +559,7 @@ git commit -m "feat: add InboxApp root component"
 ## Task 8: Create ProcessingIndicator Component (TDD)
 
 **Files:**
+
 - Create: `src/components/ProcessingIndicator.tsx`
 - Create: `tests/components/ProcessingIndicator.test.tsx`
 
@@ -631,6 +639,7 @@ git commit -m "feat: add ProcessingIndicator component with spinner"
 ## Task 9: Convert cli.ts to cli.tsx with Ink Rendering
 
 **Files:**
+
 - Rename: `src/cli.ts` → `src/cli.tsx`
 - Modify: `src/cli.tsx`
 - Modify: `package.json` (update scripts if needed)
@@ -639,6 +648,7 @@ git commit -m "feat: add ProcessingIndicator component with spinner"
 **Step 1: Rename cli.ts to cli.tsx**
 
 Run:
+
 ```bash
 git mv src/cli.ts src/cli.tsx
 ```
@@ -717,6 +727,7 @@ git commit -m "refactor: convert CLI to use Ink rendering instead of readline"
 ## Task 10: Integration Testing and Documentation
 
 **Files:**
+
 - Create: `docs/cli-ink-usage.md`
 - Modify: `CLAUDE.md`
 
@@ -725,6 +736,7 @@ git commit -m "refactor: convert CLI to use Ink rendering instead of readline"
 Run: `npx tsx src/cli.tsx --vault /path/to/test/vault --sphere work`
 
 Test:
+
 1. Type single line text, press Enter → should submit
 2. Type text, press Shift+Enter, type more → should create multiline
 3. Paste multiline content → should preserve newlines
@@ -736,7 +748,7 @@ Expected: All interactions work smoothly
 
 Create `docs/cli-ink-usage.md`:
 
-```markdown
+````markdown
 # CLI Ink Usage
 
 The GTD Coach CLI uses Ink (React for terminals) for a modern input experience.
@@ -746,6 +758,7 @@ The GTD Coach CLI uses Ink (React for terminals) for a modern input experience.
 ```bash
 npx tsx src/cli.tsx --vault /path/to/vault --sphere work
 ```
+````
 
 ## Input Controls
 
@@ -768,7 +781,8 @@ What's on your mind? (Shift+Enter for new line, Enter to submit)
 > Need to follow up on three action items
 > [Press Enter to submit]
 ```
-```
+
+````
 
 **Step 3: Update CLAUDE.md**
 
@@ -780,28 +794,31 @@ Modify `CLAUDE.md` - update the GTD Coach CLI section:
 ```bash
 # Interactive GTD coaching for a specific sphere
 npx tsx src/cli.tsx --vault /path/to/vault --sphere work
-```
+````
 
 The CLI uses Ink (React for terminals) for multiline text input:
+
 - Enter submits input
 - Shift+Enter inserts newlines
 - Pasted content preserves formatting
 
 See `docs/cli-ink-usage.md` for full usage details.
-```
+
+````
 
 **Step 4: Commit documentation**
 
 ```bash
 git add docs/cli-ink-usage.md CLAUDE.md
 git commit -m "docs: add CLI Ink usage documentation"
-```
+````
 
 ---
 
 ## Task 11: Final Testing and Cleanup
 
 **Files:**
+
 - All modified files
 
 **Step 1: Run full test suite**
@@ -825,6 +842,7 @@ Expected: All files formatted
 **Step 4: Final manual test**
 
 Run the CLI with a real vault:
+
 ```bash
 npx tsx src/cli.tsx --vault ~/path/to/actual/vault --sphere work
 ```
@@ -845,6 +863,7 @@ git commit -m "chore: format code and finalize Ink conversion"
 All tasks complete! The CLI now uses Ink for a modern multiline input experience with Shift+Enter for newlines and Enter to submit. All readline and raw terminal mode code has been removed.
 
 **Next steps:**
+
 - Merge to main branch
 - Update any deployment documentation
 - Consider future Ink enhancements (arrow key navigation, cursor display, etc.)

@@ -74,6 +74,7 @@ npx tsx src/cli.tsx --vault /path/to/vault --sphere work
 ```
 
 The CLI uses Ink (React for terminals) for multiline text input:
+
 - Enter submits input
 - Shift+Enter inserts newlines
 - Pasted content preserves formatting

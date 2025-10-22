@@ -10,24 +10,28 @@ Convert the GTD Coach CLI from readline-based input to Ink (React for terminals)
 ## Motivation
 
 Current CLI limitations:
+
 - Single-line input only via readline
 - Pasted multiline content gets truncated or causes errors
 - No way to enter formatted text with newlines
 - Poor user experience for longer inbox items
 
 Primary use cases:
+
 1. Pasting formatted content from other apps (meeting notes, emails)
 2. Writing longer thoughts directly in the CLI with multiple paragraphs
 
 ## Design Decision
 
 **Framework:** Ink (React for terminals)
+
 - Mature, production-ready (used by GitHub Copilot CLI, Cloudflare Wrangler, Prisma)
 - Component-based React paradigm
 - Provides foundation for future TUI expansion
 - Active maintenance with strong ecosystem
 
 **Scope:** Full Ink conversion (not hybrid)
+
 - Replace all readline code with Ink components
 - Cleaner architecture with single UI system
 - Better foundation for future enhancements
@@ -68,11 +72,13 @@ InboxApp (root Ink component)
 ### MultilineTextarea Component
 
 **State:**
+
 - `lines: string[]` - Array of text lines
 - `cursorRow: number` - Current line index
 - `cursorCol: number` - Column position within line
 
 **Key Handling (useInput hook):**
+
 - `Enter` → Submit (call onSubmit callback)
 - `Shift+Enter` → Insert newline (split current line at cursor)
 - `Backspace` → Delete char before cursor, merge lines if at start
@@ -82,11 +88,13 @@ InboxApp (root Ink component)
 - Regular characters → Insert at cursor position
 
 **Paste Detection:**
+
 - Detect paste by checking for newline characters in key event data
 - Insert pasted content at cursor position, preserving newlines
 - Don't auto-submit on paste (user must press Enter)
 
 **Visual Rendering:**
+
 ```
 What's on your mind? (Shift+Enter for new line, Enter to submit)
 
@@ -100,6 +108,7 @@ The `>` prompt on each line provides visual feedback for multiline mode.
 ### Dependencies
 
 **New dependencies:**
+
 - `ink` - Core framework
 - `react` - Peer dependency for Ink
 - `@types/react` - TypeScript types
@@ -119,10 +128,12 @@ src/
 ### Backward Compatibility
 
 **Breaking changes:**
+
 - `--sphere` argument becomes required (no interactive prompt)
 - Remove all readline-based input code
 
 **Unchanged:**
+
 - All AI processing logic
 - File scanning and writing logic
 - Validation logic
@@ -138,15 +149,18 @@ src/
 ## Testing Strategy
 
 ### Unit Tests
+
 - `MultilineTextarea.test.tsx` - Key handling logic, cursor movement, paste detection
 - `InboxApp.test.tsx` - Component integration, state management
 
 ### Integration Tests
+
 - Full flow test with mocked AI processing
 - Argument parsing and validation
 - Error display
 
 ### Manual Testing
+
 - Test across different terminals (iTerm2, Terminal.app, etc.)
 - Verify paste behavior from different sources
 - Test with various content types (plain text, formatted text, code)
@@ -166,6 +180,7 @@ src/
 ## Future Enhancements
 
 Potential TUI features enabled by Ink foundation:
+
 - Visual inbox browser with arrow key navigation
 - Split pane view (projects left, details right)
 - Interactive project/action editing
