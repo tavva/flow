@@ -110,19 +110,23 @@ export class FileWriter {
   }
 
   /**
-   * Add an item to the Someday/Maybe file
+   * Add one or more items to the Someday/Maybe file
    */
   async addToSomedayFile(
-    item: string,
+    items: string | string[],
     spheres: string[] = [],
     reminderDate?: string
   ): Promise<void> {
+    const itemsArray = Array.isArray(items) ? items : [items];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
-    const reminderSuffix = reminderDate ? ` 📅 ${reminderDate}` : "";
-    const content = sphereTags
-      ? `- ${item}${reminderSuffix} ${sphereTags}`
-      : `- ${item}${reminderSuffix}`;
-    await this.appendToFile(this.settings.somedayFilePath, content);
+
+    for (const item of itemsArray) {
+      const reminderSuffix = reminderDate ? ` 📅 ${reminderDate}` : "";
+      const content = sphereTags
+        ? `- ${item}${reminderSuffix} ${sphereTags}`
+        : `- ${item}${reminderSuffix}`;
+      await this.appendToFile(this.settings.somedayFilePath, content);
+    }
   }
 
   /**

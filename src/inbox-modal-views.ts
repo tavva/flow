@@ -381,7 +381,8 @@ function renderEditableItemContent(
     item.selectedAction === "create-project" ||
     item.selectedAction === "add-to-project" ||
     item.selectedAction === "next-actions-file" ||
-    item.selectedAction === "person"
+    item.selectedAction === "person" ||
+    item.selectedAction === "someday-file"
   ) {
     renderNextActionsEditor(itemEl, item, state);
   }

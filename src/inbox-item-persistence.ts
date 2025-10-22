@@ -182,7 +182,7 @@ export class InboxItemPersistenceService {
         return this.settings?.nextActionsFilePath || null;
 
       case "someday-file":
-        await this.writer.addToSomedayFile(item.original, item.selectedSpheres, item.reminderDate);
+        await this.writer.addToSomedayFile(finalNextActions, item.selectedSpheres, item.reminderDate);
         return null;
 
       case "reference":

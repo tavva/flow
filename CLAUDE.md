@@ -107,11 +107,13 @@ The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
 
 The plugin supports adding optional reminder dates to items in the Someday/Maybe file:
 
-- **Date Picker UI** - When processing items to the Someday/Maybe file, a date picker allows setting reminder dates
+- **Editable Items** - When processing items to the Someday/Maybe file, you can edit the item text and add/remove multiple items
+- **Date Picker UI** - A date picker allows setting reminder dates for all items
 - **Format** - Reminder dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- Learn Spanish 📅 2026-01-12 #sphere/personal`)
 - **Integration** - Works with the Reminders plugin for Obsidian to surface items at the appropriate time
 - **Validation** - The `validateReminderDate()` function ensures dates are valid and properly formatted
 - **Optional** - Reminder dates are optional; items can be added to Someday/Maybe without a date
+- **Multiple Items** - You can add multiple items to the Someday/Maybe file in one operation
 
 **Example Someday/Maybe entries:**
 ```markdown

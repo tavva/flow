@@ -939,5 +939,33 @@ tags:
       expect(newContent).toContain("- Write book #sphere/personal");
       expect(newContent).toContain("- Learn Spanish 📅 2026-01-12 #sphere/personal");
     });
+
+    it("should add multiple items to someday file", async () => {
+      await fileWriter.addToSomedayFile(
+        ["Learn Spanish", "Write a book", "Start a podcast"],
+        ["personal"],
+        "2026-01-12"
+      );
+
+      expect(mockVault.create).toHaveBeenCalledTimes(3);
+
+      const allCalls = (mockVault.create as jest.Mock).mock.calls;
+      expect(allCalls[0][1]).toBe("- Learn Spanish 📅 2026-01-12 #sphere/personal\n");
+      expect(allCalls[1][1]).toBe("- Write a book 📅 2026-01-12 #sphere/personal\n");
+      expect(allCalls[2][1]).toBe("- Start a podcast 📅 2026-01-12 #sphere/personal\n");
+    });
+
+    it("should add multiple items without reminder date", async () => {
+      await fileWriter.addToSomedayFile(
+        ["Learn Spanish", "Write a book"],
+        ["personal"]
+      );
+
+      expect(mockVault.create).toHaveBeenCalledTimes(2);
+
+      const allCalls = (mockVault.create as jest.Mock).mock.calls;
+      expect(allCalls[0][1]).toBe("- Learn Spanish #sphere/personal\n");
+      expect(allCalls[1][1]).toBe("- Write a book #sphere/personal\n");
+    });
   });
 });
