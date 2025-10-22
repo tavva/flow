@@ -1,4 +1,5 @@
-import type { App, TFile } from "obsidian";
+import type { App } from "obsidian";
+import { TFile } from "obsidian";
 import { normalizePath } from "./obsidian-compat";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError } from "./errors";

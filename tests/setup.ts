@@ -22,7 +22,8 @@ console.error = (...args: any[]) => {
   if (
     errorString.includes("Invalid hook call") ||
     errorString.includes("Hooks can only be called inside") ||
-    errorString.includes("Warning: Invalid hook call")
+    errorString.includes("Warning: Invalid hook call") ||
+    errorString.includes("not wrapped in act(")
   ) {
     return;
   }
