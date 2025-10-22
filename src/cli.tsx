@@ -459,22 +459,49 @@ class MockVault {
 
 class MockMetadataCache {
   private vault: MockVault;
+  private cache: Map<string, CachedMetadata | null> = new Map();
 
   constructor(vault: MockVault) {
     this.vault = vault;
   }
 
   getFileCache(file: TFile): CachedMetadata | null {
+    // Check cache first
+    if (this.cache.has(file.path)) {
+      return this.cache.get(file.path)!;
+    }
+
     try {
-      // Read file synchronously to extract frontmatter
+      // Quick check: only files starting with "---" have frontmatter
       const fullPath = path.join((this.vault as any).vaultPath, file.path);
-      const content = fs.readFileSync(fullPath, "utf-8");
+      const fd = fs.openSync(fullPath, "r");
+      const startBuffer = Buffer.alloc(3);
+      fs.readSync(fd, startBuffer, 0, 3, 0);
+
+      if (startBuffer.toString() !== "---") {
+        // No frontmatter, cache and return null
+        fs.closeSync(fd);
+        this.cache.set(file.path, null);
+        return null;
+      }
+
+      // Read full file for frontmatter parsing
+      const stats = fs.fstatSync(fd);
+      const fullBuffer = Buffer.alloc(stats.size);
+      fs.readSync(fd, fullBuffer, 0, stats.size, 0);
+      fs.closeSync(fd);
+
+      const content = fullBuffer.toString("utf-8");
       const frontmatter = this.extractFrontmatter(content);
 
-      return {
+      const metadata = {
         frontmatter: frontmatter || undefined,
       } as CachedMetadata;
+
+      this.cache.set(file.path, metadata);
+      return metadata;
     } catch (error) {
+      this.cache.set(file.path, null);
       return null;
     }
   }
