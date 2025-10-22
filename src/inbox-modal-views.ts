@@ -372,6 +372,8 @@ function renderEditableItemContent(
     renderProjectSelectionSection(itemEl, item, state);
   } else if (item.selectedAction === "person") {
     renderPersonSelectionSection(itemEl, item, state);
+  } else if (item.selectedAction === "someday-file") {
+    renderSomedayReminderSection(itemEl, item, state);
   }
 
   // Show next actions editor for actions that use next actions
@@ -1042,6 +1044,53 @@ function renderPersonSelectionSection(
 
   // Only show AI suggestion box for high confidence suggestions
   // (Person dropdown already pre-selects high confidence suggestions above)
+}
+
+function renderSomedayReminderSection(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const reminderSectionEl = container.createDiv("flow-gtd-reminder-section");
+  reminderSectionEl.style.marginTop = "12px";
+
+  const reminderLabel = reminderSectionEl.createEl("label", {
+    text: "Reminder Date (Optional)",
+    cls: "flow-gtd-label",
+  });
+  reminderLabel.style.display = "block";
+  reminderLabel.style.marginBottom = "8px";
+  reminderLabel.style.fontSize = "14px";
+  reminderLabel.style.fontWeight = "600";
+  reminderLabel.style.color = "var(--text-normal)";
+  reminderLabel.style.textTransform = "none";
+
+  const reminderInput = reminderSectionEl.createEl("input", {
+    type: "date",
+    cls: "flow-gtd-reminder-input",
+  });
+  reminderInput.style.width = "100%";
+  reminderInput.style.padding = "8px 12px";
+  reminderInput.style.fontSize = "14px";
+  reminderInput.style.border = "1px solid var(--background-modifier-border)";
+  reminderInput.style.borderRadius = "4px";
+  reminderInput.style.backgroundColor = "var(--background-primary)";
+  reminderInput.style.color = "var(--text-normal)";
+
+  if (item.reminderDate) {
+    reminderInput.value = item.reminderDate;
+  }
+
+  reminderInput.addEventListener("input", (e) => {
+    const value = (e.target as HTMLInputElement).value;
+    item.reminderDate = value || undefined;
+  });
+
+  const helpText = reminderSectionEl.createEl("div");
+  helpText.style.fontSize = "12px";
+  helpText.style.color = "var(--text-muted)";
+  helpText.style.marginTop = "6px";
+  helpText.setText("Set a date to be reminded about this item (works with Reminders plugin)");
 }
 
 function renderSphereSelector(container: HTMLElement, item: EditableItem, state: InboxModalState) {

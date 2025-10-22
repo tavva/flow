@@ -4,6 +4,7 @@ import { GTDResponseValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, HotlistItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
+import { validateReminderDate } from "./validation";
 
 const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "create-project",
@@ -84,6 +85,16 @@ export class InboxItemPersistenceService {
       (!item.selectedSpheres || item.selectedSpheres.length === 0)
     ) {
       throw new GTDResponseValidationError("At least one sphere must be selected for this action.");
+    }
+
+    // Validate reminder date for someday items
+    if (item.selectedAction === "someday-file" && item.reminderDate) {
+      const validation = validateReminderDate(item.reminderDate);
+      if (!validation.valid) {
+        throw new GTDResponseValidationError(
+          `Invalid reminder date: ${validation.error || "Unknown error"}`
+        );
+      }
     }
   }
 
@@ -171,7 +182,7 @@ export class InboxItemPersistenceService {
         return this.settings?.nextActionsFilePath || null;
 
       case "someday-file":
-        await this.writer.addToSomedayFile(item.original, item.selectedSpheres);
+        await this.writer.addToSomedayFile(item.original, item.selectedSpheres, item.reminderDate);
         return null;
 
       case "reference":

@@ -161,3 +161,32 @@ export function validateNextAction(action: string): { valid: boolean; warnings?:
     warnings: warnings.length > 0 ? warnings : undefined,
   };
 }
+
+/**
+ * Validates a reminder date in YYYY-MM-DD format
+ */
+export function validateReminderDate(dateString: string): { valid: boolean; error?: string } {
+  if (!dateString || dateString.trim().length === 0) {
+    return { valid: true }; // Empty is valid (optional field)
+  }
+
+  // Check format YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateString)) {
+    return { valid: false, error: "Date must be in YYYY-MM-DD format" };
+  }
+
+  // Check if it's a valid date
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) {
+    return { valid: false, error: "Invalid date" };
+  }
+
+  // Check if the date reconstructs to the same string (catches invalid dates like 2025-02-30)
+  const reconstructed = date.toISOString().split("T")[0];
+  if (reconstructed !== dateString) {
+    return { valid: false, error: "Invalid date" };
+  }
+
+  return { valid: true };
+}

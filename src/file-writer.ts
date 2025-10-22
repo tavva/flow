@@ -1,4 +1,5 @@
-import type { App, TFile } from "obsidian";
+import type { App } from "obsidian";
+import { TFile } from "obsidian";
 import { normalizePath } from "./obsidian-compat";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError } from "./errors";
@@ -111,9 +112,16 @@ export class FileWriter {
   /**
    * Add an item to the Someday/Maybe file
    */
-  async addToSomedayFile(item: string, spheres: string[] = []): Promise<void> {
+  async addToSomedayFile(
+    item: string,
+    spheres: string[] = [],
+    reminderDate?: string
+  ): Promise<void> {
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
-    const content = sphereTags ? `- ${item} ${sphereTags}` : `- ${item}`;
+    const reminderSuffix = reminderDate ? ` 📅 ${reminderDate}` : "";
+    const content = sphereTags
+      ? `- ${item}${reminderSuffix} ${sphereTags}`
+      : `- ${item}${reminderSuffix}`;
     await this.appendToFile(this.settings.somedayFilePath, content);
   }
 

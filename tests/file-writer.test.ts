@@ -868,4 +868,76 @@ tags:
       expect(allContent).toContain("- [ ] Regular task");
     });
   });
+
+  describe("addToSomedayFile", () => {
+    it("should add item without reminder date to someday file", async () => {
+      await fileWriter.addToSomedayFile("Learn Spanish", ["personal"]);
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      expect(filePath).toBe("Someday.md");
+      expect(content).toBe("- Learn Spanish #sphere/personal\n");
+    });
+
+    it("should add item with reminder date to someday file", async () => {
+      await fileWriter.addToSomedayFile("Learn Spanish", ["personal"], "2026-01-12");
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [filePath, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      expect(filePath).toBe("Someday.md");
+      expect(content).toBe("- Learn Spanish 📅 2026-01-12 #sphere/personal\n");
+    });
+
+    it("should add item with reminder date but no spheres", async () => {
+      await fileWriter.addToSomedayFile("Write a book", [], "2025-06-01");
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      expect(content).toBe("- Write a book 📅 2025-06-01\n");
+    });
+
+    it("should add item without reminder date or spheres", async () => {
+      await fileWriter.addToSomedayFile("Start a podcast");
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      expect(content).toBe("- Start a podcast\n");
+    });
+
+    it("should add item with reminder date and multiple spheres", async () => {
+      await fileWriter.addToSomedayFile(
+        "Organize team retreat",
+        ["work", "personal"],
+        "2026-03-15"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      expect(content).toBe("- Organize team retreat 📅 2026-03-15 #sphere/work #sphere/personal\n");
+    });
+
+    it("should append to existing someday file", async () => {
+      const mockFile = new TFile();
+      const existingContent = `- Learn French #sphere/personal
+- Write book #sphere/personal
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
+
+      await fileWriter.addToSomedayFile("Learn Spanish", ["personal"], "2026-01-12");
+
+      expect(mockVault.modify).toHaveBeenCalled();
+      const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
+
+      expect(newContent).toContain("- Learn French #sphere/personal");
+      expect(newContent).toContain("- Write book #sphere/personal");
+      expect(newContent).toContain("- Learn Spanish 📅 2026-01-12 #sphere/personal");
+    });
+  });
 });

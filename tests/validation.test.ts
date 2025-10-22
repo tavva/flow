@@ -6,6 +6,7 @@ import {
   sanitizeFileName,
   validateInboxItem,
   validateNextAction,
+  validateReminderDate,
 } from "../src/validation";
 
 describe("Validation", () => {
@@ -238,6 +239,89 @@ describe("Validation", () => {
       expect(result.valid).toBe(true);
       expect(result.warnings).toBeDefined();
       expect(result.warnings!.length).toBeGreaterThan(1);
+    });
+  });
+
+  describe("validateReminderDate", () => {
+    it("should accept empty string as valid (optional field)", () => {
+      const result = validateReminderDate("");
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should accept valid date in YYYY-MM-DD format", () => {
+      const result = validateReminderDate("2026-01-12");
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should accept leap year dates", () => {
+      const result = validateReminderDate("2024-02-29");
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it("should reject invalid date format", () => {
+      const result = validateReminderDate("01/12/2026");
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("YYYY-MM-DD format");
+    });
+
+    it("should reject date with wrong separators", () => {
+      const result = validateReminderDate("2026.01.12");
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("YYYY-MM-DD format");
+    });
+
+    it("should reject invalid date (February 30th)", () => {
+      const result = validateReminderDate("2025-02-30");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invalid date");
+    });
+
+    it("should reject invalid date (month 13)", () => {
+      const result = validateReminderDate("2025-13-01");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invalid date");
+    });
+
+    it("should reject invalid date (day 32)", () => {
+      const result = validateReminderDate("2025-01-32");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invalid date");
+    });
+
+    it("should reject non-leap year February 29th", () => {
+      const result = validateReminderDate("2025-02-29");
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invalid date");
+    });
+
+    it("should reject date with text", () => {
+      const result = validateReminderDate("January 12, 2026");
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("YYYY-MM-DD format");
+    });
+
+    it("should reject date with extra characters", () => {
+      const result = validateReminderDate("2026-01-12 10:30");
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain("YYYY-MM-DD format");
+    });
+
+    it("should accept valid dates at boundaries", () => {
+      const validDates = [
+        "2025-01-01",
+        "2025-12-31",
+        "2025-06-30",
+        "2025-04-15",
+      ];
+
+      validDates.forEach((date) => {
+        const result = validateReminderDate(date);
+        expect(result.valid).toBe(true);
+        expect(result.error).toBeUndefined();
+      });
     });
   });
 });

@@ -21,6 +21,7 @@ export interface EditableItem {
   parentProject?: FlowProject; // Parent project if creating as sub-project
   isSubProject?: boolean; // Whether to create as sub-project
   addToHotlist?: boolean; // Whether to add next actions to hotlist after creation
+  reminderDate?: string; // Optional reminder date for someday items (YYYY-MM-DD format)
 }
 
 export interface ProcessingOutcome {

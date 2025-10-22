@@ -103,6 +103,23 @@ The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
 - **Status Cycler** (`src/task-status-cycler.ts`) - Cycles checkbox status: [ ] → [w] → [x]
 - **AI Integration** - Processor recognizes waiting-for scenarios during inbox processing
 
+### Someday/Maybe with Reminder Dates
+
+The plugin supports adding optional reminder dates to items in the Someday/Maybe file:
+
+- **Date Picker UI** - When processing items to the Someday/Maybe file, a date picker allows setting reminder dates
+- **Format** - Reminder dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- Learn Spanish 📅 2026-01-12 #sphere/personal`)
+- **Integration** - Works with the Reminders plugin for Obsidian to surface items at the appropriate time
+- **Validation** - The `validateReminderDate()` function ensures dates are valid and properly formatted
+- **Optional** - Reminder dates are optional; items can be added to Someday/Maybe without a date
+
+**Example Someday/Maybe entries:**
+```markdown
+- Write a book 📅 2026-06-01 #sphere/personal
+- Learn Spanish #sphere/personal
+- Organize team retreat 📅 2026-03-15 #sphere/work
+```
+
 ### Hotlist Support
 
 The plugin supports creating a curated "hotlist" of next actions to work on:
