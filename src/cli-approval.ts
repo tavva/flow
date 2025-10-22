@@ -83,19 +83,20 @@ function formatToolCallDescription(toolCall: ToolCall): string {
 }
 
 async function promptUser(question: string): Promise<string> {
+  // Restore stdin to normal mode before using readline
+  // (Ink leaves it in raw mode after unmounting)
+  if (process.stdin.isTTY && process.stdin.setRawMode) {
+    process.stdin.setRawMode(false);
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    terminal: false, // Don't modify terminal settings
   });
 
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
-      // Restore stdin after closing readline
-      if (process.stdin.isTTY) {
-        process.stdin.setRawMode(true);
-      }
       resolve(answer.trim().toLowerCase());
     });
   });
