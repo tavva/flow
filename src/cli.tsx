@@ -415,6 +415,18 @@ export async function runREPL(
   }
 }
 
+// Mock TFile for CLI usage (cannot instantiate real TFile outside Obsidian)
+class MockTFile {
+  path: string = "";
+  basename: string = "";
+  extension: string = "";
+  stat: {
+    ctime: number;
+    mtime: number;
+    size: number;
+  } = { ctime: 0, mtime: 0, size: 0 };
+}
+
 // Mock Obsidian App for CLI usage
 class MockVault {
   private vaultPath: string;
@@ -423,8 +435,8 @@ class MockVault {
     this.vaultPath = vaultPath;
   }
 
-  getMarkdownFiles(): TFile[] {
-    const files: TFile[] = [];
+  getMarkdownFiles(): MockTFile[] {
+    const files: MockTFile[] = [];
     const walkDir = (dir: string) => {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {
@@ -438,11 +450,15 @@ class MockVault {
           const relativePath = path.relative(this.vaultPath, fullPath);
           const stats = fs.statSync(fullPath);
           // Create mock TFile
-          const tfile = new TFile();
+          const tfile = new MockTFile();
           tfile.path = relativePath;
           tfile.basename = entry.name.replace(".md", "");
           tfile.extension = "md";
-          tfile.stat.mtime = stats.mtimeMs;
+          tfile.stat = {
+            ctime: stats.ctimeMs,
+            mtime: stats.mtimeMs,
+            size: stats.size,
+          };
           files.push(tfile);
         }
       }
@@ -452,28 +468,32 @@ class MockVault {
     return files;
   }
 
-  async read(file: TFile): Promise<string> {
+  async read(file: MockTFile): Promise<string> {
     const fullPath = path.join(this.vaultPath, file.path);
     return fs.readFileSync(fullPath, "utf-8");
   }
 
-  async modify(file: TFile, data: string): Promise<void> {
+  async modify(file: MockTFile, data: string): Promise<void> {
     const fullPath = path.join(this.vaultPath, file.path);
     fs.writeFileSync(fullPath, data, "utf-8");
   }
 
-  getAbstractFileByPath(filePath: string): TFile | null {
+  getAbstractFileByPath(filePath: string): MockTFile | null {
     const fullPath = path.join(this.vaultPath, filePath);
     if (!fs.existsSync(fullPath)) {
       return null;
     }
     const stats = fs.statSync(fullPath);
     const basename = filePath.split("/").pop()?.replace(".md", "") || "";
-    const tfile = new TFile();
+    const tfile = new MockTFile();
     tfile.path = filePath;
     tfile.basename = basename;
     tfile.extension = "md";
-    tfile.stat.mtime = stats.mtimeMs;
+    tfile.stat = {
+      ctime: stats.ctimeMs,
+      mtime: stats.mtimeMs,
+      size: stats.size,
+    };
     return tfile;
   }
 }
@@ -486,7 +506,7 @@ class MockMetadataCache {
     this.vault = vault;
   }
 
-  getFileCache(file: TFile): CachedMetadata | null {
+  getFileCache(file: MockTFile): CachedMetadata | null {
     // Check cache first
     if (this.cache.has(file.path)) {
       return this.cache.get(file.path)!;
@@ -647,6 +667,9 @@ export async function main() {
     );
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof Error && error.stack) {
+      console.error(error.stack);
+    }
     process.exit(1);
   }
 }
