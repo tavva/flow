@@ -1,5 +1,6 @@
-import { parseCliArgs, loadPluginSettings } from "../src/cli";
+import { parseCliArgs, loadPluginSettings, buildSystemPrompt } from "../src/cli";
 import * as fs from "fs";
+import { FlowProject, GTDContext } from "../src/types";
 
 jest.mock("fs");
 
@@ -118,5 +119,66 @@ describe("Plugin settings loading", () => {
     (fs.readFileSync as jest.Mock).mockReturnValue("{ invalid json }");
 
     expect(() => loadPluginSettings("/path/to/vault")).toThrow();
+  });
+});
+
+describe("System prompt generation", () => {
+  it("should include warning for paused projects and instruction not to add actions to them", () => {
+    const liveProject: FlowProject = {
+      file: "Projects/Active Task.md",
+      title: "Active Task",
+      description: "Currently active project",
+      priority: 1,
+      tags: ["project/work"],
+      status: "live",
+      nextActions: ["Complete the report"],
+    };
+
+    const pausedProject: FlowProject = {
+      file: "Projects/Paused Task.md",
+      title: "Paused Task",
+      description: "On hold for now",
+      priority: 2,
+      tags: ["project/work"],
+      status: "hold",
+      nextActions: ["Resume when ready"],
+    };
+
+    const gtdContext: GTDContext = {
+      nextActions: [],
+      somedayItems: [],
+      inboxItems: [],
+    };
+
+    const prompt = buildSystemPrompt([liveProject, pausedProject], "work", gtdContext);
+
+    // Verify the prompt includes an instruction not to add actions to non-live projects
+    expect(prompt).toContain("only add actions to projects with status 'live'");
+
+    // Verify paused projects are marked with a warning
+    expect(prompt).toMatch(/Paused Task[\s\S]*?⚠️.*?paused.*?do not add actions/i);
+  });
+
+  it("should not include warning for live projects", () => {
+    const liveProject: FlowProject = {
+      file: "Projects/Active Task.md",
+      title: "Active Task",
+      description: "Currently active project",
+      priority: 1,
+      tags: ["project/work"],
+      status: "live",
+      nextActions: ["Complete the report"],
+    };
+
+    const gtdContext: GTDContext = {
+      nextActions: [],
+      somedayItems: [],
+      inboxItems: [],
+    };
+
+    const prompt = buildSystemPrompt([liveProject], "work", gtdContext);
+
+    // Verify live projects don't have the paused warning
+    expect(prompt).not.toMatch(/Active Task[\s\S]*?⚠️.*?paused/i);
   });
 });

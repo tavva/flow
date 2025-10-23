@@ -103,6 +103,8 @@ export function buildSystemPrompt(
   prompt += `- Update project status (archive completed projects, etc.)\n\n`;
   prompt += `When you identify improvements, use the available tools to suggest changes. `;
   prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
+  prompt += `IMPORTANT: You should only add actions to projects with status 'live'. `;
+  prompt += `Projects with other statuses (hold, archived, etc.) are not active and should not have new actions added.\n\n`;
 
   prompt += `Communication Style:\n`;
   prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
@@ -137,6 +139,11 @@ export function buildSystemPrompt(
 
       if (node.depth > 0) {
         prompt += `${indent}(Sub-project at depth ${node.depth})\n`;
+      }
+
+      // Warn about non-live projects
+      if (project.status !== "live") {
+        prompt += `${indent}⚠️ Project is paused - do not add actions to this project\n`;
       }
 
       if (project.milestones) {
