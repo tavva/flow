@@ -399,7 +399,7 @@ export async function runREPL(
         rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m"); // italic (single asterisk)
         rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m"); // italic (underscore)
 
-        console.log(`${colors.assistant}Coach:${colors.reset}\n${rendered}`);
+        console.log(`${colors.assistant}Coach:${colors.reset}\n${wrapForTerminal(rendered)}`);
       }
     } catch (error) {
       // Clear thinking indicator on error
