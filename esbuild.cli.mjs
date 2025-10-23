@@ -17,7 +17,7 @@ const stubDevtools = {
 };
 
 const result = await esbuild.build({
-	entryPoints: ['src/cli.tsx'],
+	entryPoints: ['src/cli-entry.mts'],
 	bundle: true,
 	platform: 'node',
 	target: 'node20',

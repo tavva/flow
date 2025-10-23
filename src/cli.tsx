@@ -636,7 +636,5 @@ export async function main() {
   }
 }
 
-// Run if executed directly (ESM check)
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+// NOTE: Entry point logic moved to cli-entry.mts to avoid import.meta parse errors in Jest
+// This allows tests to import functions from cli.tsx without triggering syntax errors
