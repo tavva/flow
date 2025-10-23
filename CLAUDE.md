@@ -88,6 +88,7 @@ The CLI uses Ink (React for terminals) for multiline text input:
 The CLI includes automatic retry logic for network errors with exponential backoff and user feedback.
 
 **Documentation:**
+
 - `docs/gtd-coach-cli.md` - User guide and features
 - `docs/cli-ink-usage.md` - Ink-specific usage details
 - `docs/cli-architecture.md` - Build system and MockApp architecture (for developers)
@@ -131,6 +132,7 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 - **Multiple Items** - You can add multiple items to the Someday/Maybe file in one operation
 
 **Example Someday/Maybe entries:**
+
 ```markdown
 - [ ] Write a book 📅 2026-06-01 #sphere/personal
 - [ ] Learn Spanish #sphere/personal

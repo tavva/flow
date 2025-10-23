@@ -310,12 +310,7 @@ describe("Validation", () => {
     });
 
     it("should accept valid dates at boundaries", () => {
-      const validDates = [
-        "2025-01-01",
-        "2025-12-31",
-        "2025-06-30",
-        "2025-04-15",
-      ];
+      const validDates = ["2025-01-01", "2025-12-31", "2025-06-30", "2025-04-15"];
 
       validDates.forEach((date) => {
         const result = validateReminderDate(date);

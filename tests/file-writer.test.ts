@@ -918,7 +918,9 @@ tags:
       expect(mockVault.create).toHaveBeenCalled();
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
 
-      expect(content).toBe("- [ ] Organize team retreat 📅 2026-03-15 #sphere/work #sphere/personal\n");
+      expect(content).toBe(
+        "- [ ] Organize team retreat 📅 2026-03-15 #sphere/work #sphere/personal\n"
+      );
     });
 
     it("should append to existing someday file", async () => {
@@ -956,10 +958,7 @@ tags:
     });
 
     it("should add multiple items without reminder date", async () => {
-      await fileWriter.addToSomedayFile(
-        ["Learn Spanish", "Write a book"],
-        ["personal"]
-      );
+      await fileWriter.addToSomedayFile(["Learn Spanish", "Write a book"], ["personal"]);
 
       expect(mockVault.create).toHaveBeenCalledTimes(2);
 

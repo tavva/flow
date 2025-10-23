@@ -22,6 +22,7 @@ Use `wrap-ansi` as a post-processing step after markdown rendering:
 3. Wrapped text outputs via `console.log()` (existing)
 
 **Why wrap-ansi:**
+
 - Battle-tested library for ANSI-aware text wrapping
 - Simple integration at final output stage
 - Preserves color codes and formatting
@@ -32,8 +33,9 @@ Use `wrap-ansi` as a post-processing step after markdown rendering:
 **File:** `src/cli.tsx`
 
 **New utility function:**
+
 ```typescript
-import wrapAnsi from 'wrap-ansi';
+import wrapAnsi from "wrap-ansi";
 
 function wrapForTerminal(text: string): string {
   const width = process.stdout.columns || 80;
@@ -42,11 +44,13 @@ function wrapForTerminal(text: string): string {
 ```
 
 **Apply wrapping to:**
+
 - Line 385: Coach markdown responses
 - Lines 220-221: Tool execution result messages
 - Line 230: Tool execution summary messages
 
 **Leave unwrapped:**
+
 - Ink components (handle their own layout)
 - System messages ("Thinking...", "Network error...")
 - Initial stats display (lines 266-271)
@@ -68,11 +72,13 @@ Code blocks won't receive special treatment. They'll use soft wrapping (break at
 ## Implementation
 
 **Dependency:**
+
 ```json
 "wrap-ansi": "^9.0.0"
 ```
 
 **Changes:**
+
 - Add `wrap-ansi` import to `src/cli.tsx`
 - Create `wrapForTerminal()` utility function
 - Wrap output at three locations (Coach responses, tool results, tool summaries)
@@ -80,6 +86,7 @@ Code blocks won't receive special treatment. They'll use soft wrapping (break at
 ## Testing
 
 Manual testing in terminal:
+
 - Verify long Coach responses wrap correctly
 - Check ANSI colors preserved after wrapping
 - Test with different terminal widths

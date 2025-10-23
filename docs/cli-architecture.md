@@ -61,6 +61,7 @@ import { TFile, App, CachedMetadata } from "obsidian";
 ```
 
 These imports fail outside Obsidian:
+
 1. Type-only imports work fine (transpiled away)
 2. Runtime imports (like `TFile` for instanceof checks) fail
 3. The `obsidian` package is not available in node_modules
@@ -217,9 +218,10 @@ The `as any` cast is needed because MockApp doesn't implement the full App inter
 **Cause**: Only type imports of TFile, no runtime import
 
 **Solution**: Add runtime import alongside type import:
+
 ```typescript
 import type { App, CachedMetadata } from "obsidian";
-import { TFile } from "obsidian";  // Runtime import
+import { TFile } from "obsidian"; // Runtime import
 ```
 
 ### Issue: "instanceof TFile" always returns false
@@ -227,6 +229,7 @@ import { TFile } from "obsidian";  // Runtime import
 **Cause**: MockVault returning plain objects instead of TFile instances
 
 **Solution**: Always construct actual TFile instances:
+
 ```typescript
 const tfile = new TFile({ path, basename, extension });
 return tfile;
@@ -237,6 +240,7 @@ return tfile;
 **Cause**: esbuild alias not working or packages not external
 
 **Solution**: Check esbuild.cli.mjs has:
+
 ```javascript
 packages: 'external',
 alias: { 'obsidian': './src/obsidian-compat.ts' }
@@ -259,6 +263,7 @@ alias: { 'obsidian': './src/obsidian-compat.ts' }
 **Cause**: CommonJS pattern doesn't work in ESM
 
 **Solution**: Use ESM equivalent:
+
 ```typescript
 // ESM check
 if (import.meta.url === `file://${process.argv[1]}`) {
