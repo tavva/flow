@@ -20,6 +20,16 @@ import { withRetry } from "./network-retry";
 import { presentToolCallsForApproval } from "./cli-approval";
 import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
 import { FileWriter } from "./file-writer";
+import wrapAnsi from 'wrap-ansi';
+
+/**
+ * Wraps text to terminal width whilst preserving ANSI color codes.
+ * Uses process.stdout.columns with 80-column fallback.
+ */
+function wrapForTerminal(text: string): string {
+  const width = process.stdout.columns || 80;
+  return wrapAnsi(text, width, { hard: false, trim: false });
+}
 
 export interface CliArgs {
   vaultPath: string;
