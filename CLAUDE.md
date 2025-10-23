@@ -87,6 +87,12 @@ The CLI uses Ink (React for terminals) for multiline text input:
 
 The CLI includes automatic retry logic for network errors with exponential backoff and user feedback.
 
+**Output Formatting:**
+
+- CLI output automatically wraps to terminal width using `wrap-ansi`
+- Width detection uses `process.stdout.columns` (fallback: 80 columns)
+- ANSI colours are preserved during wrapping
+
 **Documentation:**
 
 - `docs/gtd-coach-cli.md` - User guide and features
