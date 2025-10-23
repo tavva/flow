@@ -234,9 +234,9 @@ async function handleToolCalls(
 
       // Show result to user
       if (result.is_error) {
-        console.log(`  ✗ ${result.content}`);
+        console.log(`  ✗ ${wrapForTerminal(result.content)}`);
       } else {
-        console.log(`  ${result.content}`);
+        console.log(`  ${wrapForTerminal(result.content)}`);
       }
     }
   }
@@ -244,7 +244,7 @@ async function handleToolCalls(
   // Acknowledge tool execution
   const summary = `Completed ${approval.approvedToolIds.length} of ${toolCalls!.length} suggested changes.`;
   messages.push({ role: "assistant", content: summary });
-  console.log(`\n${colors.assistant}Coach:${colors.reset} ${summary}\n`);
+  console.log(`\n${colors.assistant}Coach:${colors.reset} ${wrapForTerminal(summary)}\n`);
 }
 
 export async function runREPL(
