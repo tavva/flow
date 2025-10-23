@@ -224,43 +224,9 @@ export class SphereView extends ItemView {
 
       if (project.nextActions && project.nextActions.length > 0) {
         const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+        // Render all action items (async operations will complete in background)
         project.nextActions.forEach((action, index) => {
-          const item = list.createEl("li", { text: action });
-          item.style.cursor = "pointer";
-
-          // Check if this action is in the hotlist and add CSS class if so
-          const inHotlist = this.settings.hotlist.some(
-            (hotlistItem) => hotlistItem.file === project.file && hotlistItem.text === action
-          );
-          if (inHotlist) {
-            item.addClass("sphere-action-in-hotlist");
-          }
-
-          item.addEventListener("click", async (e) => {
-            // Capture element reference before any async operations
-            const clickedElement = e.currentTarget as HTMLElement;
-
-            // Find the exact line number for this action
-            const lineResult = await this.lineFinder.findActionLine(project.file, action);
-            if (!lineResult.found) {
-              console.error("Could not find line for action:", action);
-              return;
-            }
-
-            if (this.isOnHotlist(project.file, lineResult.lineNumber!)) {
-              await this.removeFromHotlist(project.file, lineResult.lineNumber!, clickedElement);
-            } else {
-              await this.addToHotlist(
-                action,
-                project.file,
-                lineResult.lineNumber!,
-                lineResult.lineContent!,
-                this.sphere,
-                false,
-                clickedElement
-              );
-            }
-          });
+          void this.renderActionItem(list, action, project.file, this.sphere, false);
         });
       } else {
         this.renderEmptyMessage(wrapper, "No next actions captured yet.");
@@ -288,43 +254,68 @@ export class SphereView extends ItemView {
     const list = section.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
     const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
 
+    // Render all action items (async operations will complete in background)
     actions.forEach((action, index) => {
-      const item = list.createEl("li", { text: action });
-      item.style.cursor = "pointer";
+      void this.renderActionItem(list, action, nextActionsFile, this.sphere, true);
+    });
+  }
 
-      // Check if this action is in the hotlist and add CSS class if so
-      const inHotlist = this.settings.hotlist.some(
-        (hotlistItem) => hotlistItem.file === nextActionsFile && hotlistItem.text === action
-      );
-      if (inHotlist) {
-        item.addClass("sphere-action-in-hotlist");
+  private async renderActionItem(
+    list: HTMLElement,
+    action: string,
+    file: string,
+    sphere: string,
+    isGeneral: boolean
+  ): Promise<void> {
+    // Find the exact line for this action to check its checkbox status
+    const lineResult = await this.lineFinder.findActionLine(file, action);
+
+    // Check if this is a waiting-for item by examining the line content
+    const isWaitingFor = lineResult.found && lineResult.lineContent
+      ? /^[-*]\s*\[w\]/i.test(lineResult.lineContent)
+      : false;
+
+    // Create the display text with clock emoji if waiting-for
+    const displayText = isWaitingFor ? `🕐 ${action}` : action;
+
+    const item = list.createEl("li", { text: displayText });
+    item.style.cursor = "pointer";
+
+    // Check if this action is in the hotlist and add CSS class if so
+    const inHotlist = this.settings.hotlist.some(
+      (hotlistItem) => hotlistItem.file === file && hotlistItem.text === action
+    );
+    if (inHotlist) {
+      item.addClass("sphere-action-in-hotlist");
+    }
+
+    item.addEventListener("click", async (e) => {
+      // Capture element reference before any async operations
+      const clickedElement = e.currentTarget as HTMLElement;
+
+      // Use the line result we already have, or find it again if needed
+      const finalLineResult = lineResult.found
+        ? lineResult
+        : await this.lineFinder.findActionLine(file, action);
+
+      if (!finalLineResult.found) {
+        console.error("Could not find line for action:", action);
+        return;
       }
 
-      item.addEventListener("click", async (e) => {
-        // Capture element reference before any async operations
-        const clickedElement = e.currentTarget as HTMLElement;
-
-        // Find the exact line number for this action
-        const lineResult = await this.lineFinder.findActionLine(nextActionsFile, action);
-        if (!lineResult.found) {
-          console.error("Could not find line for action:", action);
-          return;
-        }
-
-        if (this.isOnHotlist(nextActionsFile, lineResult.lineNumber!)) {
-          await this.removeFromHotlist(nextActionsFile, lineResult.lineNumber!, clickedElement);
-        } else {
-          await this.addToHotlist(
-            action,
-            nextActionsFile,
-            lineResult.lineNumber!,
-            lineResult.lineContent!,
-            this.sphere,
-            true,
-            clickedElement
-          );
-        }
-      });
+      if (this.isOnHotlist(file, finalLineResult.lineNumber!)) {
+        await this.removeFromHotlist(file, finalLineResult.lineNumber!, clickedElement);
+      } else {
+        await this.addToHotlist(
+          action,
+          file,
+          finalLineResult.lineNumber!,
+          finalLineResult.lineContent!,
+          sphere,
+          isGeneral,
+          clickedElement
+        );
+      }
     });
   }
 

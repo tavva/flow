@@ -447,6 +447,67 @@ describe("SphereView", () => {
     });
   });
 
+  describe("waiting-for visual indicator", () => {
+    it("should display clock emoji for waiting-for items", async () => {
+      // Mock line finder to return waiting-for checkbox for one action
+      mockLineFinder.findActionLine.mockImplementation((file: string, action: string) => {
+        if (action === "Wait for client response") {
+          return Promise.resolve({
+            found: true,
+            lineNumber: 5,
+            lineContent: "- [w] Wait for client response",
+          });
+        }
+        return Promise.resolve({
+          found: true,
+          lineNumber: 6,
+          lineContent: "- [ ] Regular action",
+        });
+      });
+
+      const mockListElement = {
+        createEl: jest.fn().mockReturnValue({
+          style: {},
+          classList: {
+            add: jest.fn(),
+          },
+          addEventListener: jest.fn(),
+        }),
+      };
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Test waiting-for item
+      await (view as any).renderActionItem(
+        mockListElement,
+        "Wait for client response",
+        "Projects/Test.md",
+        "work",
+        false
+      );
+
+      // Should have clock emoji prefix
+      expect(mockListElement.createEl).toHaveBeenCalledWith("li", {
+        text: "🕐 Wait for client response",
+      });
+
+      // Test regular item
+      await (view as any).renderActionItem(
+        mockListElement,
+        "Regular action",
+        "Projects/Test.md",
+        "work",
+        false
+      );
+
+      // Should NOT have clock emoji prefix
+      expect(mockListElement.createEl).toHaveBeenCalledWith("li", {
+        text: "Regular action",
+      });
+    });
+  });
+
   describe("always-on hotlist toggle", () => {
     it("should not have planning mode property", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
