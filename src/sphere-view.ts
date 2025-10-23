@@ -2,7 +2,12 @@ import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, HotlistItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
-import { buildProjectHierarchy, flattenHierarchy, ProjectNode } from "./project-hierarchy";
+import {
+  buildProjectHierarchy,
+  flattenHierarchy,
+  sortHierarchy,
+  ProjectNode,
+} from "./project-hierarchy";
 import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
@@ -106,7 +111,12 @@ export class SphereView extends ItemView {
 
     // Build hierarchy from ALL projects first (so parent relationships are preserved)
     const hierarchy = buildProjectHierarchy(allProjects);
-    const flattenedHierarchy = flattenHierarchy(hierarchy);
+
+    // Sort hierarchy at each level (siblings within same parent)
+    const sortedHierarchy = sortHierarchy(hierarchy, (a, b) => this.compareProjectNodes(a, b));
+
+    // Flatten the sorted hierarchy (preserves parent-child grouping)
+    const flattenedHierarchy = flattenHierarchy(sortedHierarchy);
 
     // Then filter to only sphere projects with live status
     const projectSummaries = flattenedHierarchy
@@ -121,8 +131,7 @@ export class SphereView extends ItemView {
         project: node.project,
         priority: this.normalizePriority(node.project.priority),
         depth: node.depth,
-      }))
-      .sort((a, b) => this.compareProjects(a, b));
+      }));
 
     const projectsNeedingNextActions = projectSummaries.filter(
       ({ project }) => !project.nextActions || project.nextActions.length === 0
@@ -327,6 +336,25 @@ export class SphereView extends ItemView {
 
   private renderEmptyMessage(container: HTMLElement, message: string) {
     container.createDiv({ cls: "flow-gtd-sphere-empty" }).setText(message);
+  }
+
+  private compareProjectNodes(a: ProjectNode, b: ProjectNode): number {
+    const aPriority = this.normalizePriority(a.project.priority);
+    const bPriority = this.normalizePriority(b.project.priority);
+
+    if (aPriority !== null && bPriority !== null && aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    if (aPriority !== null && bPriority === null) {
+      return -1;
+    }
+
+    if (aPriority === null && bPriority !== null) {
+      return 1;
+    }
+
+    return a.project.title.localeCompare(b.project.title);
   }
 
   private compareProjects(a: SphereProjectSummary, b: SphereProjectSummary): number {

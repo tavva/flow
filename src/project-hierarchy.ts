@@ -198,6 +198,27 @@ function calculateDepthAndActions(node: ProjectNode, depth: number): void {
 }
 
 /**
+ * Sorts a hierarchy tree recursively using the provided comparator
+ * Sorts root nodes and all children within their parent's children arrays
+ */
+export function sortHierarchy(
+  roots: ProjectNode[],
+  comparator: (a: ProjectNode, b: ProjectNode) => number
+): ProjectNode[] {
+  // Sort root nodes
+  const sortedRoots = [...roots].sort(comparator);
+
+  // Recursively sort children
+  sortedRoots.forEach((node) => {
+    if (node.children.length > 0) {
+      node.children = sortHierarchy(node.children, comparator);
+    }
+  });
+
+  return sortedRoots;
+}
+
+/**
  * Flattens a hierarchy tree into a depth-first ordered list
  * Useful for rendering with proper indentation
  */

@@ -340,6 +340,57 @@ describe("SphereView", () => {
       expect(data.projects[3].project.title).toBe("Delta Project");
       expect(data.projects[4].project.title).toBe("Zulu Project");
     });
+
+    it("should preserve hierarchy when sorting by priority", async () => {
+      // Parent has priority 2, child has priority 1
+      // After sorting, child should still appear AFTER parent (grouped with parent)
+      const parentProject = {
+        file: "Parent.md",
+        title: "Parent Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["Parent action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        parentProject: "[[Parent]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      const otherProject = {
+        file: "Other.md",
+        title: "Other Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 3,
+        nextActions: ["Other action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([parentProject, childProject, otherProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(3);
+
+      // Parent should appear before its child despite lower priority
+      const parentIndex = data.projects.findIndex((p: any) => p.project.file === "Parent.md");
+      const childIndex = data.projects.findIndex((p: any) => p.project.file === "Child.md");
+
+      expect(parentIndex).toBeLessThan(childIndex);
+      expect(data.projects[childIndex].depth).toBe(1);
+    });
   });
 
   describe("completed items filtering", () => {

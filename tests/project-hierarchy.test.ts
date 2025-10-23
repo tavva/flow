@@ -4,6 +4,7 @@
 import {
   buildProjectHierarchy,
   flattenHierarchy,
+  sortHierarchy,
   extractParentPath,
   getProjectDisplayName,
   ProjectNode,
@@ -477,6 +478,135 @@ describe("flattenHierarchy", () => {
     expect(flattened).toHaveLength(2);
     expect(flattened[0].project.file).toBe("Root1.md");
     expect(flattened[1].project.file).toBe("Root2.md");
+  });
+});
+
+describe("sortHierarchy", () => {
+  it("should sort root nodes by comparator", () => {
+    const root1: ProjectNode = {
+      project: {
+        file: "Z.md",
+        title: "Z Project",
+        tags: ["project/work"],
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [],
+      depth: 0,
+      allNextActions: [],
+    };
+
+    const root2: ProjectNode = {
+      project: {
+        file: "A.md",
+        title: "A Project",
+        tags: ["project/work"],
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [],
+      depth: 0,
+      allNextActions: [],
+    };
+
+    const sorted = sortHierarchy([root1, root2], (a, b) =>
+      a.project.title.localeCompare(b.project.title)
+    );
+
+    expect(sorted).toHaveLength(2);
+    expect(sorted[0].project.file).toBe("A.md");
+    expect(sorted[1].project.file).toBe("Z.md");
+  });
+
+  it("should sort children within each parent", () => {
+    const child2: ProjectNode = {
+      project: {
+        file: "Child2.md",
+        title: "B Child",
+        tags: ["project/work"],
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [],
+      depth: 1,
+      allNextActions: [],
+    };
+
+    const child1: ProjectNode = {
+      project: {
+        file: "Child1.md",
+        title: "A Child",
+        tags: ["project/work"],
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [],
+      depth: 1,
+      allNextActions: [],
+    };
+
+    const root: ProjectNode = {
+      project: {
+        file: "Root.md",
+        title: "Root",
+        tags: ["project/work"],
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [child2, child1], // Unsorted
+      depth: 0,
+      allNextActions: [],
+    };
+
+    const sorted = sortHierarchy([root], (a, b) => a.project.title.localeCompare(b.project.title));
+
+    expect(sorted[0].children).toHaveLength(2);
+    expect(sorted[0].children[0].project.file).toBe("Child1.md");
+    expect(sorted[0].children[1].project.file).toBe("Child2.md");
+  });
+
+  it("should preserve parent-child grouping when flattened", () => {
+    const childLowPriority: ProjectNode = {
+      project: {
+        file: "Child.md",
+        title: "Child",
+        tags: ["project/work"],
+        priority: 1,
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [],
+      depth: 1,
+      allNextActions: [],
+    };
+
+    const parentHighPriority: ProjectNode = {
+      project: {
+        file: "Parent.md",
+        title: "Parent",
+        tags: ["project/work"],
+        priority: 2,
+        nextActions: [],
+        mtime: Date.now(),
+      },
+      children: [childLowPriority],
+      depth: 0,
+      allNextActions: [],
+    };
+
+    // Comparator that sorts by priority
+    const sorted = sortHierarchy([parentHighPriority], (a, b) => {
+      const aPriority = a.project.priority ?? 999;
+      const bPriority = b.project.priority ?? 999;
+      return aPriority - bPriority;
+    });
+
+    const flattened = flattenHierarchy(sorted);
+
+    // Parent should still come before child in flattened list
+    expect(flattened).toHaveLength(2);
+    expect(flattened[0].project.file).toBe("Parent.md");
+    expect(flattened[1].project.file).toBe("Child.md");
   });
 });
 
