@@ -438,11 +438,10 @@ class MockVault {
           const relativePath = path.relative(this.vaultPath, fullPath);
           const stats = fs.statSync(fullPath);
           // Create mock TFile
-          const tfile = new TFile({
-            path: relativePath,
-            basename: entry.name.replace(".md", ""),
-            extension: "md",
-          });
+          const tfile = new TFile();
+          tfile.path = relativePath;
+          tfile.basename = entry.name.replace(".md", "");
+          tfile.extension = "md";
           tfile.stat.mtime = stats.mtimeMs;
           files.push(tfile);
         }
@@ -470,11 +469,10 @@ class MockVault {
     }
     const stats = fs.statSync(fullPath);
     const basename = filePath.split("/").pop()?.replace(".md", "") || "";
-    const tfile = new TFile({
-      path: filePath,
-      basename: basename,
-      extension: "md",
-    });
+    const tfile = new TFile();
+    tfile.path = filePath;
+    tfile.basename = basename;
+    tfile.extension = "md";
     tfile.stat.mtime = stats.mtimeMs;
     return tfile;
   }
