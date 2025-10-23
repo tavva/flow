@@ -441,6 +441,11 @@ class MockVault {
     return fs.readFileSync(fullPath, "utf-8");
   }
 
+  async modify(file: TFile, data: string): Promise<void> {
+    const fullPath = path.join(this.vaultPath, file.path);
+    fs.writeFileSync(fullPath, data, "utf-8");
+  }
+
   getAbstractFileByPath(filePath: string): TFile | null {
     const fullPath = path.join(this.vaultPath, filePath);
     if (!fs.existsSync(fullPath)) {
