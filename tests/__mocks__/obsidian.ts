@@ -103,8 +103,12 @@ export class Setting {
   addDropdown(cb: (dropdown: any) => void) {
     cb({
       addOptions: jest.fn().mockReturnThis(),
+      addOption: jest.fn().mockReturnThis(),
       setValue: jest.fn().mockReturnThis(),
       onChange: jest.fn(),
+      selectEl: {
+        style: {},
+      },
     });
     return this;
   }
@@ -242,5 +246,30 @@ export function setIcon(element: HTMLElement, iconId: string): void {
   // Mock implementation - just sets a data attribute for testing
   if (element) {
     (element as any).dataset = { icon: iconId };
+  }
+}
+
+export class DropdownComponent {
+  selectEl: any;
+
+  constructor(containerEl: HTMLElement) {
+    this.selectEl = {
+      id: "",
+      addClass: jest.fn().mockReturnThis(),
+      setAttribute: jest.fn(),
+      style: {},
+    };
+  }
+
+  addOption(value: string, label: string) {
+    return this;
+  }
+
+  setValue(value: string) {
+    return this;
+  }
+
+  onChange(callback: (value: string) => void) {
+    return this;
   }
 }

@@ -1,6 +1,15 @@
 // ABOUTME: Test setup file to configure global mocks and make Obsidian classes
 // ABOUTME: available for instanceof checks across all test files.
 
+// Set up a minimal DOM environment for tests that need it
+if (typeof document === "undefined") {
+  const { JSDOM } = require("jsdom");
+  const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
+  (global as any).document = dom.window.document;
+  (global as any).window = dom.window;
+  (global as any).HTMLElement = dom.window.HTMLElement;
+}
+
 // Mock obsidian module globally
 jest.mock("obsidian");
 

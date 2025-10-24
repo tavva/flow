@@ -315,7 +315,7 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   });
 }
 
-function renderEditableItemContent(
+export function renderEditableItemContent(
   itemEl: HTMLElement,
   item: EditableItem,
   state: InboxModalState

@@ -28,6 +28,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.12",
+    "@types/jsdom": "^27.0.0",
     "@types/marked-terminal": "^6.1.1",
     "@types/node": "^20.11.19",
     "@types/react": "^18.3.26",
@@ -38,6 +39,7 @@
     "esbuild": "^0.25.0",
     "ink-testing-library": "^4.0.0",
     "jest": "^29.7.0",
+    "jsdom": "^27.0.1",
     "obsidian": "latest",
     "obsidian-dataview": "^0.5.68",
     "prettier": "^3.6.2",
