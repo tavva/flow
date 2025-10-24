@@ -216,6 +216,7 @@ export function buildSystemPrompt(
 const colors = {
   reset: "\x1b[0m",
   assistant: "\x1b[35m", // Magenta for assistant
+  user: "\x1b[36m", // Cyan for user
   dim: "\x1b[2m", // Dim for thinking indicator
 };
 
@@ -429,6 +430,9 @@ export async function runREPL(
       role: "user",
       content: input,
     });
+
+    // Echo user message
+    console.log(`${colors.user}You:${colors.reset} ${input}\n`);
 
     try {
       // Show thinking indicator
