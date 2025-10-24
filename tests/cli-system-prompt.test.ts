@@ -84,4 +84,14 @@ describe("CLI System Prompt - Tool Support", () => {
     expect(prompt).toContain("Test Project");
     expect(prompt).toContain("Projects/Test.md");
   });
+
+  it("should include opening message format guidance", () => {
+    const prompt = buildSystemPrompt(mockProjects, "work", mockContext);
+
+    expect(prompt).toContain("Opening Message Format:");
+    expect(prompt).toContain("provide an opening summary");
+    expect(prompt).toContain("exactly 3 numbered options");
+    expect(prompt).toContain("Use high-level counts only");
+    expect(prompt).toContain("never list specific project names in the opening");
+  });
 });

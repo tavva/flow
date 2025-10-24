@@ -122,6 +122,13 @@ export function buildSystemPrompt(
   prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
   prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
 
+  prompt += `Opening Message Format:\n`;
+  prompt += `- When asked to provide an opening summary, be brief and data-driven\n`;
+  prompt += `- State what you observe (e.g., "5 projects are stalled")\n`;
+  prompt += `- Always provide exactly 3 numbered options for what to work on\n`;
+  prompt += `- Use high-level counts only, never list specific project names in the opening\n`;
+  prompt += `- If system is healthy, note this positively and suggest proactive actions\n\n`;
+
   prompt += `GTD Quality Standards:\n`;
   prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
   prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
