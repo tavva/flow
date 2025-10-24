@@ -193,17 +193,80 @@ export class SphereView extends ItemView {
     };
   }
 
-  private renderContent(container: HTMLElement, data: SphereViewData) {
-    const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
+  private renderSearchHeader(container: HTMLElement): HTMLInputElement {
+    const header = container.createDiv({ cls: "flow-gtd-sphere-sticky-header" });
+
+    // Sphere title
+    const titleEl = header.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
-    this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
-    this.renderProjectsSection(container, data.projects);
+    // Search container
+    const searchContainer = header.createDiv({ cls: "flow-gtd-sphere-search-container" });
+
+    // Search input
+    const searchInput = searchContainer.createEl("input", {
+      cls: "flow-gtd-sphere-search-input",
+      type: "text",
+      placeholder: "Filter actions and projects...",
+    });
+    searchInput.value = this.searchQuery;
+
+    // Clear button
+    const clearButton = searchContainer.createEl("span", {
+      cls: "flow-gtd-sphere-search-clear",
+      text: "✕",
+    });
+    clearButton.style.display = this.searchQuery ? "" : "none";
+
+    // Input event handler
+    searchInput.addEventListener("input", (e) => {
+      this.searchQuery = (e.target as HTMLInputElement).value;
+      clearButton.style.display = this.searchQuery ? "" : "none";
+      this.refresh();
+    });
+
+    // Clear button handler
+    clearButton.addEventListener("click", () => {
+      this.searchQuery = "";
+      searchInput.value = "";
+      clearButton.style.display = "none";
+      searchInput.focus();
+      this.refresh();
+    });
+
+    return searchInput;
+  }
+
+  private async refresh(): Promise<void> {
+    const container = this.containerEl.children[1] as HTMLElement;
+    container.empty();
+    const data = await this.loadSphereData();
+    this.renderContent(container, data);
+  }
+
+  private renderContent(container: HTMLElement, data: SphereViewData) {
+    // Render sticky header with search
+    const searchInput = this.renderSearchHeader(container);
+
+    // Filter data based on search query
+    const filteredData = this.filterData(data, this.searchQuery);
+
+    // Render filtered sections
+    this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
+    this.renderProjectsSection(container, filteredData.projects);
     this.renderGeneralNextActionsSection(
       container,
-      data.generalNextActions,
-      data.generalNextActionsNotice
+      filteredData.generalNextActions,
+      filteredData.generalNextActionsNotice
     );
+
+    // Show empty state if query exists but no results
+    if (this.searchQuery.trim() &&
+        filteredData.projects.length === 0 &&
+        filteredData.generalNextActions.length === 0) {
+      const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
+      emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
+    }
   }
 
   private renderProjectsNeedingActionsSection(

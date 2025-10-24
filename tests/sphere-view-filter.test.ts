@@ -174,7 +174,202 @@ describe("SphereView filtering", () => {
       expect(result.projectsNeedingNextActions).toEqual(needsActions);
     });
   });
+
+  describe("Search UI rendering", () => {
+    it("should render sticky header with search input", () => {
+      const { SphereView } = require("../src/sphere-view");
+      const view = createMockSphereView();
+
+      // Mock container element
+      const headerEl = createMockContainerElement();
+      const searchInput = createMockInputElement();
+      const clearButton = createMockElement();
+
+      let capturedSearchInput: any;
+      let capturedClearButton: any;
+
+      headerEl.createDiv = jest.fn((opts: any) => {
+        if (opts?.cls === "flow-gtd-sphere-sticky-header") {
+          const header = createMockElement();
+          header.createEl = jest.fn((tag: string, opts: any) => {
+            if (tag === "h2" && opts?.cls === "flow-gtd-sphere-title") {
+              return { setText: jest.fn() };
+            }
+            if (tag === "input" && opts?.cls === "flow-gtd-sphere-search-input") {
+              searchInput.placeholder = opts?.placeholder || "";
+              searchInput.value = opts?.value || "";
+              capturedSearchInput = searchInput;
+              return searchInput;
+            }
+            if (tag === "span" && opts?.cls === "flow-gtd-sphere-search-clear") {
+              capturedClearButton = clearButton;
+              return clearButton;
+            }
+            return createMockElement();
+          });
+          header.createDiv = jest.fn(() => {
+            const searchContainer = createMockElement();
+            searchContainer.createEl = header.createEl;
+            return searchContainer;
+          });
+          return header;
+        }
+        return createMockElement();
+      });
+
+      const data = {
+        projects: [],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      };
+
+      (view as any).renderContent(headerEl, data);
+
+      expect(headerEl.createDiv).toHaveBeenCalledWith({ cls: "flow-gtd-sphere-sticky-header" });
+      expect(capturedSearchInput).toBeTruthy();
+      expect(capturedSearchInput.placeholder).toBe("Filter actions and projects...");
+      expect(capturedClearButton).toBeTruthy();
+    });
+
+    it("should hide clear button when query is empty", () => {
+      const { SphereView } = require("../src/sphere-view");
+      const view = createMockSphereView();
+
+      const headerEl = createMockContainerElement();
+      const clearButton = createMockElement();
+      clearButton.style = { display: "" };
+
+      headerEl.createDiv = jest.fn((opts: any) => {
+        if (opts?.cls === "flow-gtd-sphere-sticky-header") {
+          const header = createMockElement();
+          header.createEl = jest.fn((tag: string, opts: any) => {
+            if (tag === "span" && opts?.cls === "flow-gtd-sphere-search-clear") {
+              return clearButton;
+            }
+            if (tag === "input") {
+              return createMockInputElement();
+            }
+            return createMockElement();
+          });
+          header.createDiv = jest.fn(() => {
+            const searchContainer = createMockElement();
+            searchContainer.createEl = header.createEl;
+            return searchContainer;
+          });
+          return header;
+        }
+        return createMockElement();
+      });
+
+      (view as any).searchQuery = "";
+      (view as any).renderContent(headerEl, {
+        projects: [],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      });
+
+      expect(clearButton.style.display).toBe("none");
+    });
+
+    it("should show clear button when query is non-empty", () => {
+      const { SphereView } = require("../src/sphere-view");
+      const view = createMockSphereView();
+
+      const headerEl = createMockContainerElement();
+      const clearButton = createMockElement();
+      clearButton.style = { display: "none" };
+
+      headerEl.createDiv = jest.fn((opts: any) => {
+        if (opts?.cls === "flow-gtd-sphere-sticky-header") {
+          const header = createMockElement();
+          header.createEl = jest.fn((tag: string, opts: any) => {
+            if (tag === "span" && opts?.cls === "flow-gtd-sphere-search-clear") {
+              return clearButton;
+            }
+            if (tag === "input") {
+              const input = createMockInputElement();
+              input.value = "test";
+              return input;
+            }
+            return createMockElement();
+          });
+          header.createDiv = jest.fn(() => {
+            const searchContainer = createMockElement();
+            searchContainer.createEl = header.createEl;
+            return searchContainer;
+          });
+          return header;
+        }
+        return createMockElement();
+      });
+
+      (view as any).searchQuery = "test";
+      (view as any).renderContent(headerEl, {
+        projects: [],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      });
+
+      expect(clearButton.style.display).toBe("");
+    });
+  });
 });
+
+// Helper to create mock element
+function createMockElement(): any {
+  const element: any = {
+    createDiv: jest.fn((opts?: any) => {
+      const newEl = createMockElement();
+      if (opts?.cls) newEl.className = opts.cls;
+      return newEl;
+    }),
+    createEl: jest.fn((tag?: string, opts?: any) => {
+      const newEl = createMockElement();
+      if (opts?.cls) newEl.className = opts.cls;
+      if (opts?.type) newEl.type = opts.type;
+      if (opts?.placeholder) newEl.placeholder = opts.placeholder;
+      if (opts?.text) newEl.textContent = opts.text;
+      return newEl;
+    }),
+    createSpan: jest.fn((opts?: any) => {
+      const newEl = createMockElement();
+      if (opts?.cls) newEl.className = opts.cls;
+      if (opts?.text) newEl.textContent = opts.text;
+      return newEl;
+    }),
+    setText: jest.fn(),
+    addEventListener: jest.fn(),
+    style: {},
+    empty: jest.fn(),
+    value: "",
+    placeholder: "",
+  };
+  return element;
+}
+
+// Helper to create mock input element
+function createMockInputElement(): any {
+  return {
+    ...createMockElement(),
+    value: "",
+    placeholder: "",
+    addEventListener: jest.fn(),
+    focus: jest.fn(),
+  };
+}
+
+// Helper to create mock container element
+function createMockContainerElement(): any {
+  const element = createMockElement();
+  element.createDiv = jest.fn((opts?: any) => {
+    const newElement = createMockElement();
+    newElement.createDiv = jest.fn(() => createMockElement());
+    return newElement;
+  });
+  element.createEl = jest.fn(() => createMockElement());
+  element.empty = jest.fn();
+  return element;
+}
 
 // Helper to create mock SphereView for testing
 function createMockSphereView() {
