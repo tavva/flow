@@ -32,6 +32,8 @@ export class SphereView extends ItemView {
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
+  private searchQuery: string = "";
+  private containerKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -147,17 +149,160 @@ export class SphereView extends ItemView {
     };
   }
 
-  private renderContent(container: HTMLElement, data: SphereViewData) {
-    const titleEl = container.createEl("h2", { cls: "flow-gtd-sphere-title" });
+  private filterData(data: SphereViewData, query: string): SphereViewData {
+    // Empty query = no filtering
+    if (!query.trim()) {
+      return data;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const matches = (text: string) => text.toLowerCase().includes(lowerQuery);
+
+    // Filter projects: include if name matches OR has matching actions
+    const filteredProjects = data.projects
+      .map((summary) => {
+        const filteredActions =
+          summary.project.nextActions?.filter((action) => matches(action)) || [];
+
+        const projectNameMatches = matches(summary.project.title);
+        const includeProject = projectNameMatches || filteredActions.length > 0;
+
+        if (!includeProject) return null;
+
+        return {
+          ...summary,
+          project: {
+            ...summary.project,
+            nextActions: projectNameMatches
+              ? summary.project.nextActions
+              : filteredActions,
+          },
+        };
+      })
+      .filter((p): p is SphereProjectSummary => p !== null);
+
+    // Filter general actions
+    const filteredGeneralActions = data.generalNextActions.filter((action) =>
+      matches(action)
+    );
+
+    return {
+      projects: filteredProjects,
+      projectsNeedingNextActions: data.projectsNeedingNextActions, // Not filtered
+      generalNextActions: filteredGeneralActions,
+      generalNextActionsNotice: data.generalNextActionsNotice,
+    };
+  }
+
+  private renderSearchHeader(container: HTMLElement): HTMLInputElement {
+    const header = container.createDiv({ cls: "flow-gtd-sphere-sticky-header" });
+
+    // Sphere title
+    const titleEl = header.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
-    this.renderProjectsNeedingActionsSection(container, data.projectsNeedingNextActions);
-    this.renderProjectsSection(container, data.projects);
+    // Search container
+    const searchContainer = header.createDiv({ cls: "flow-gtd-sphere-search-container" });
+
+    // Search input
+    const searchInput = searchContainer.createEl("input", {
+      cls: "flow-gtd-sphere-search-input",
+      type: "text",
+      placeholder: "Filter actions and projects...",
+    });
+    searchInput.value = this.searchQuery;
+
+    // Clear button
+    const clearButton = searchContainer.createEl("span", {
+      cls: "flow-gtd-sphere-search-clear",
+      text: "✕",
+    });
+    clearButton.style.display = this.searchQuery ? "" : "none";
+
+    // Input event handler
+    searchInput.addEventListener("input", (e) => {
+      this.searchQuery = (e.target as HTMLInputElement).value;
+      clearButton.style.display = this.searchQuery ? "" : "none";
+      this.refresh();
+    });
+
+    // Clear button handler
+    clearButton.addEventListener("click", () => {
+      this.searchQuery = "";
+      searchInput.value = "";
+      clearButton.style.display = "none";
+      searchInput.focus();
+      this.refresh();
+    });
+
+    return searchInput;
+  }
+
+  private setupKeyboardShortcuts(container: HTMLElement, searchInput: HTMLInputElement): void {
+    // Remove previous listener if exists
+    if (this.containerKeydownHandler) {
+      container.removeEventListener("keydown", this.containerKeydownHandler);
+    }
+
+    // Create and store new handler for Cmd/Ctrl+F to focus search
+    this.containerKeydownHandler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    };
+
+    container.addEventListener("keydown", this.containerKeydownHandler);
+
+    // Escape to clear search (input handler is fine as-is - element is recreated each time)
+    const handleInputKeydown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        this.searchQuery = "";
+        searchInput.value = "";
+        const clearButton = container.querySelector(".flow-gtd-sphere-search-clear") as HTMLElement;
+        if (clearButton) {
+          clearButton.style.display = "none";
+        }
+        this.refresh();
+      }
+    };
+
+    searchInput.addEventListener("keydown", handleInputKeydown);
+  }
+
+  private async refresh(): Promise<void> {
+    const container = this.containerEl.children[1] as HTMLElement;
+    container.empty();
+    const data = await this.loadSphereData();
+    this.renderContent(container, data);
+  }
+
+  private renderContent(container: HTMLElement, data: SphereViewData) {
+    // Render sticky header with search
+    const searchInput = this.renderSearchHeader(container);
+
+    // Setup keyboard shortcuts
+    this.setupKeyboardShortcuts(container, searchInput);
+
+    // Filter data based on search query
+    const filteredData = this.filterData(data, this.searchQuery);
+
+    // Render filtered sections
+    this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
+    this.renderProjectsSection(container, filteredData.projects);
     this.renderGeneralNextActionsSection(
       container,
-      data.generalNextActions,
-      data.generalNextActionsNotice
+      filteredData.generalNextActions,
+      filteredData.generalNextActionsNotice
     );
+
+    // Show empty state if query exists but no results
+    if (this.searchQuery.trim() &&
+        filteredData.projects.length === 0 &&
+        filteredData.generalNextActions.length === 0) {
+      const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
+      emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
+    }
   }
 
   private renderProjectsNeedingActionsSection(
