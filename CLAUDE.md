@@ -216,6 +216,22 @@ const filtered = allProjects.filter(/* sphere filter */);
 const hierarchy = buildProjectHierarchy(filtered);
 ```
 
+### Sphere View Filter Search
+
+The sphere view includes filter-as-you-type search:
+
+- **Search input:** Sticky header below sphere name, filters as you type
+- **Matches:** Action text and project names (case-insensitive substring)
+- **Keyboard shortcuts:**
+  - Cmd/Ctrl+F: Focus search input
+  - Escape: Clear search query
+- **Behaviour:**
+  - Instant filtering on every keystroke
+  - Projects shown if name matches OR has matching actions
+  - Hierarchy preserved (sub-project matches show parents)
+  - Empty state when no matches found
+  - Search clears on view refresh
+
 ### Flow Project Structure
 
 Flow projects are Markdown files with specific frontmatter and sections:
