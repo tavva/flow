@@ -970,6 +970,11 @@ select.flow-gtd-inline-select option,
         background-color: var(--background-modifier-hover);
 }
 
+.flow-gtd-sphere-next-actions li p {
+        margin: 0;
+        display: inline;
+}
+
 .flow-gtd-sphere-empty {
         font-size: 13px;
         color: var(--text-muted);
