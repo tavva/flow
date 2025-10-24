@@ -52,7 +52,9 @@ The GTD Coach can provide advice on:
 
 ## Example Sessions
 
-### Prioritisation
+### Opening Message
+
+When you start the CLI, it automatically analyzes your system and provides an opening summary:
 
 ```
 $ npx tsx src/cli.ts --vault ~/my-vault --sphere work
@@ -61,8 +63,41 @@ Flow GTD Coach - work sphere
   15 projects
   23 next actions
   8 someday items
-  3 inbox items
+  12 inbox items
 
+Processing...
+
+Coach:
+I've scanned your work sphere. Here's what I found:
+
+• 3 projects have no next actions (stalled)
+• 12 inbox items need processing
+
+I can help with:
+1. Processing inbox items
+2. Reviewing stalled projects to add next actions
+3. Prioritizing current work
+
+> _
+```
+
+If your system is healthy, you'll see a different message:
+
+```
+Coach:
+System looks healthy. 5 priority 1 projects are active with clear next actions.
+
+I can help with:
+1. Prioritizing what to work on next
+2. Reviewing specific projects in detail
+3. Planning for the week ahead
+
+> _
+```
+
+### Prioritisation
+
+```
 > I have 2 hours this afternoon. What should I focus on?
 
 [AI analyzes your projects and suggests specific actions based on priorities]
