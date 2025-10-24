@@ -33,6 +33,7 @@ export class SphereView extends ItemView {
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
   private searchQuery: string = "";
+  private containerKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -238,17 +239,22 @@ export class SphereView extends ItemView {
   }
 
   private setupKeyboardShortcuts(container: HTMLElement, searchInput: HTMLInputElement): void {
-    // Cmd/Ctrl+F to focus search
-    const handleContainerKeydown = (e: KeyboardEvent) => {
+    // Remove previous listener if exists
+    if (this.containerKeydownHandler) {
+      container.removeEventListener("keydown", this.containerKeydownHandler);
+    }
+
+    // Create and store new handler for Cmd/Ctrl+F to focus search
+    this.containerKeydownHandler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "f") {
         e.preventDefault();
         searchInput.focus();
       }
     };
 
-    container.addEventListener("keydown", handleContainerKeydown);
+    container.addEventListener("keydown", this.containerKeydownHandler);
 
-    // Escape to clear search
+    // Escape to clear search (input handler is fine as-is - element is recreated each time)
     const handleInputKeydown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         this.searchQuery = "";
