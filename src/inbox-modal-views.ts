@@ -315,7 +315,90 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   });
 }
 
-function renderEditableItemContent(
+function renderActionButtonGroups(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const groupsContainer = container.createDiv("flow-gtd-action-groups");
+  groupsContainer.style.display = "flex";
+  groupsContainer.style.flexDirection = "row";
+  groupsContainer.style.gap = "32px";
+
+  // Define button groups
+  const groups = [
+    {
+      header: "Projects",
+      actions: [
+        { value: "create-project" as const, label: "📁 Create", icon: "📁" },
+        { value: "add-to-project" as const, label: "➕ Add", icon: "➕" },
+        { value: "reference" as const, label: "📄 Reference", icon: "📄" },
+      ],
+    },
+    {
+      header: "Actions",
+      actions: [
+        { value: "next-actions-file" as const, label: "📋 Next", icon: "📋" },
+        { value: "someday-file" as const, label: "💭 Someday", icon: "💭" },
+      ],
+    },
+    {
+      header: "Other",
+      actions: [
+        { value: "person" as const, label: "👤 Person", icon: "👤" },
+        { value: "trash" as const, label: "🗑️ Trash", icon: "🗑️" },
+      ],
+    },
+  ];
+
+  // Render each group
+  groups.forEach((group) => {
+    const groupEl = groupsContainer.createDiv("flow-gtd-action-group");
+    groupEl.style.display = "flex";
+    groupEl.style.flexDirection = "column";
+    groupEl.style.gap = "8px";
+
+    // Group header
+    const headerEl = groupEl.createEl("div", {
+      cls: "flow-gtd-action-group-header",
+      text: group.header,
+    });
+    headerEl.style.fontSize = "12px";
+    headerEl.style.fontWeight = "500";
+    headerEl.style.color = "var(--text-muted)";
+    headerEl.style.textTransform = "none";
+
+    // Button row
+    const buttonRow = groupEl.createDiv();
+    buttonRow.style.display = "flex";
+    buttonRow.style.flexDirection = "row";
+    buttonRow.style.gap = "8px";
+
+    // Render buttons
+    group.actions.forEach((action) => {
+      const button = buttonRow.createEl("button", {
+        cls: "flow-gtd-action-button",
+        text: action.label,
+      });
+      button.setAttribute("type", "button");
+
+      // Apply selected state
+      const currentSelection = item.selectedAction ?? "next-actions-file";
+      const isSelected = currentSelection === action.value;
+      if (isSelected) {
+        button.addClass("selected");
+      }
+
+      // Click handler - single selection radio behaviour
+      button.addEventListener("click", () => {
+        item.selectedAction = action.value;
+        state.queueRender("editable");
+      });
+    });
+  });
+}
+
+export function renderEditableItemContent(
   itemEl: HTMLElement,
   item: EditableItem,
   state: InboxModalState
@@ -324,47 +407,7 @@ function renderEditableItemContent(
   const actionSelectorEl = itemEl.createDiv("flow-gtd-action-selector");
   actionSelectorEl.style.marginTop = "12px";
 
-  const actionLabel = actionSelectorEl.createEl("label", {
-    text: "How to Process",
-    cls: "flow-gtd-label",
-  });
-  actionLabel.style.display = "block";
-  actionLabel.style.marginBottom = "8px";
-  actionLabel.style.fontSize = "14px";
-  actionLabel.style.fontWeight = "600";
-  actionLabel.style.color = "var(--text-normal)";
-  actionLabel.style.textTransform = "none";
-
-  const actionSelectId = state.getUniqueId("flow-gtd-action");
-  actionLabel.setAttribute("for", actionSelectId);
-
-  const actionDropdown = new DropdownComponent(actionSelectorEl);
-  actionDropdown.selectEl.id = actionSelectId;
-  actionDropdown.selectEl.addClass("flow-gtd-inline-select");
-  actionDropdown.selectEl.setAttribute("aria-label", "How to Process");
-
-  // Force visible text with inline styles
-  actionDropdown.selectEl.style.color = "var(--text-normal)";
-  actionDropdown.selectEl.style.fontSize = "14px";
-
-  const actions: Array<{
-    value: EditableItem["selectedAction"];
-    label: string;
-  }> = [
-    { value: "create-project", label: "Create New Project" },
-    { value: "add-to-project", label: "Add to Existing Project" },
-    { value: "next-actions-file", label: "Next Actions File" },
-    { value: "someday-file", label: "Someday/Maybe File" },
-    { value: "reference", label: "Reference (Not Actionable)" },
-    { value: "person", label: "Discuss with Person" },
-    { value: "trash", label: "Trash (Delete)" },
-  ];
-  actions.forEach(({ value, label }) => actionDropdown.addOption(value, label));
-  actionDropdown.setValue(item.selectedAction ?? "next-actions-file");
-  actionDropdown.onChange((value) => {
-    item.selectedAction = value as EditableItem["selectedAction"];
-    state.queueRender("editable");
-  });
+  renderActionButtonGroups(actionSelectorEl, item, state);
 
   if (item.selectedAction === "create-project") {
     renderProjectCreationSection(itemEl, item, state);

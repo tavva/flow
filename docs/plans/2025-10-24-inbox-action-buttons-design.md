@@ -1,7 +1,7 @@
 # Inbox Action Buttons Design
 
 **Date**: 2025-10-24
-**Status**: Approved
+**Status**: Implemented
 
 ## Summary
 

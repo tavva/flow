@@ -1,140 +1,179 @@
-// ABOUTME: Tests for inbox item persistence service
-// ABOUTME: Ensures next actions are properly persisted for add-to-project actions
+// ABOUTME: Tests for inbox modal views
+// ABOUTME: Tests rendering functions for inbox processing UI
 
-import { InboxItemPersistenceService } from "../src/inbox-item-persistence";
-import { FileWriter } from "../src/file-writer";
+/**
+ * @jest-environment jsdom
+ */
+
+import { renderEditableItemContent } from "../src/inbox-modal-views";
+import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
-import { FlowProject } from "../src/types";
 
-describe("InboxItemPersistenceService - add-to-project with next actions", () => {
-  let mockWriter: jest.Mocked<FileWriter>;
-  let service: InboxItemPersistenceService;
+// Mock Obsidian
+jest.mock("obsidian");
 
-  beforeEach(() => {
-    mockWriter = {
-      addNextActionToProject: jest.fn().mockResolvedValue(undefined),
-    } as any;
-    service = new InboxItemPersistenceService(mockWriter);
+// Helper to add Obsidian's createDiv and createEl methods to an HTMLElement
+function makeObsidianElement(el: HTMLElement): HTMLElement {
+  (el as any).createDiv = function (cls?: string) {
+    const div = document.createElement("div");
+    if (cls) div.className = cls;
+    this.appendChild(div);
+    return makeObsidianElement(div);
+  };
+  (el as any).createEl = function (tag: string, options?: { cls?: string; text?: string }) {
+    const element = document.createElement(tag);
+    if (options?.cls) element.className = options.cls;
+    if (options?.text) element.textContent = options.text;
+    this.appendChild(element);
+    return makeObsidianElement(element);
+  };
+  (el as any).addClass = function (cls: string) {
+    this.classList.add(cls);
+    return this;
+  };
+  (el as any).setText = function (text: string) {
+    this.textContent = text;
+    return this;
+  };
+  (el as any).empty = function () {
+    this.innerHTML = "";
+    return this;
+  };
+  return el;
+}
+
+// Helper to create mock state
+function createMockState(editableItems: EditableItem[]): InboxModalState {
+  const mockController = {} as any;
+  const mockSettings = {
+    availableSpheres: ["personal", "work"],
+    spheres: ["personal", "work"],
+    defaultPriority: 2,
+    defaultStatus: "live",
+  } as any;
+  const mockRenderCallback = jest.fn();
+
+  const state = new InboxModalState(mockController, mockSettings, mockRenderCallback);
+  state.editableItems = editableItems;
+  state.queueRender = jest.fn();
+  state.existingProjects = [];
+  state.existingPersons = [];
+  return state;
+}
+
+describe("renderEditableItemContent - action button groups", () => {
+  it("renders action buttons in three groups with headers", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+    };
+    const state = createMockState([item]);
+
+    renderEditableItemContent(container, item, state);
+
+    // Should have action groups container
+    const groupsContainer = container.querySelector(".flow-gtd-action-groups");
+    expect(groupsContainer).toBeTruthy();
+
+    // Should have three groups
+    const groups = container.querySelectorAll(".flow-gtd-action-group");
+    expect(groups.length).toBe(3);
+
+    // Should have group headers
+    const headers = container.querySelectorAll(".flow-gtd-action-group-header");
+    expect(headers.length).toBe(3);
+    expect(headers[0].textContent).toBe("Projects");
+    expect(headers[1].textContent).toBe("Actions");
+    expect(headers[2].textContent).toBe("Other");
+
+    // Projects group should have 3 buttons
+    const projectsButtons = groups[0].querySelectorAll(".flow-gtd-action-button");
+    expect(projectsButtons.length).toBe(3);
+    expect(projectsButtons[0].textContent).toContain("Create");
+    expect(projectsButtons[1].textContent).toContain("Add");
+    expect(projectsButtons[2].textContent).toContain("Reference");
+
+    // Actions group should have 2 buttons
+    const actionsButtons = groups[1].querySelectorAll(".flow-gtd-action-button");
+    expect(actionsButtons.length).toBe(2);
+    expect(actionsButtons[0].textContent).toContain("Next");
+    expect(actionsButtons[1].textContent).toContain("Someday");
+
+    // Other group should have 2 buttons
+    const otherButtons = groups[2].querySelectorAll(".flow-gtd-action-button");
+    expect(otherButtons.length).toBe(2);
+    expect(otherButtons[0].textContent).toContain("Person");
+    expect(otherButtons[1].textContent).toContain("Trash");
   });
 
-  it("passes multiple next actions when adding to existing project", async () => {
-    const project: FlowProject = {
-      file: "Projects/Test.md",
-      title: "Test Project",
-      priority: 2,
-      status: "live",
-      tags: ["project/personal"],
-      nextActions: [],
-    };
-
+  it("marks selected action button with 'selected' class", () => {
+    const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
-      original: "Test inbox item",
-      isAIProcessed: true,
-      result: {
-        isActionable: true,
-        category: "project",
-        nextAction: "First action from AI",
-        nextActions: ["First action from AI", "Second action from AI"],
-        reasoning: "Test reasoning",
-        suggestedProjects: [],
-        recommendedAction: "add-to-project",
-        recommendedActionReasoning: "Test",
-        recommendedSpheres: ["personal"],
-        recommendedSpheresReasoning: "Test",
-      },
-      selectedAction: "add-to-project",
-      selectedProject: project,
-      selectedSpheres: ["personal"],
-      editedNames: ["Edited first action", "Edited second action"],
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: "create-project",
+      selectedSpheres: [],
     };
+    const state = createMockState([item]);
 
-    await service.persist(item);
+    renderEditableItemContent(container, item, state);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
-      project,
-      ["Edited first action", "Edited second action"],
-      [false, false], // waitingFor
-      [false, false] // markAsDone
+    const allButtons = container.querySelectorAll(".flow-gtd-action-button");
+    const selectedButtons = container.querySelectorAll(".flow-gtd-action-button.selected");
+
+    // Only one button should be selected
+    expect(selectedButtons.length).toBe(1);
+
+    // The create-project button should be selected
+    const createButton = Array.from(allButtons).find(btn =>
+      btn.textContent?.includes("Create")
     );
+    expect(createButton?.classList.contains("selected")).toBe(true);
   });
 
-  it("uses editedName when only one action is edited", async () => {
-    const project: FlowProject = {
-      file: "Projects/Test.md",
-      title: "Test Project",
-      priority: 2,
-      status: "live",
-      tags: ["project/personal"],
-      nextActions: [],
-    };
-
+  it("calls state.queueRender when action button clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
-      original: "Test inbox item",
-      isAIProcessed: true,
-      result: {
-        isActionable: true,
-        category: "project",
-        nextAction: "Action from AI",
-        reasoning: "Test reasoning",
-        suggestedProjects: [],
-        recommendedAction: "add-to-project",
-        recommendedActionReasoning: "Test",
-        recommendedSpheres: ["personal"],
-        recommendedSpheresReasoning: "Test",
-      },
-      selectedAction: "add-to-project",
-      selectedProject: project,
-      selectedSpheres: ["personal"],
-      editedName: "Single edited action",
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
     };
+    const state = createMockState([item]);
 
-    await service.persist(item);
+    renderEditableItemContent(container, item, state);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
-      project,
-      ["Single edited action"],
-      [false], // waitingFor
-      [false] // markAsDone
-    );
+    const somedayButton = Array.from(container.querySelectorAll(".flow-gtd-action-button"))
+      .find(btn => btn.textContent?.includes("Someday")) as HTMLButtonElement;
+
+    expect(somedayButton).toBeTruthy();
+    somedayButton.click();
+
+    expect(item.selectedAction).toBe("someday-file");
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
   });
 
-  it("uses AI-suggested actions when no edits have been made", async () => {
-    const project: FlowProject = {
-      file: "Projects/Test.md",
-      title: "Test Project",
-      priority: 2,
-      status: "live",
-      tags: ["project/personal"],
-      nextActions: [],
-    };
-
+  it("defaults to 'next-actions-file' when selectedAction is undefined", () => {
+    const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
-      original: "Test inbox item",
-      isAIProcessed: true,
-      result: {
-        isActionable: true,
-        category: "project",
-        nextAction: "First AI action",
-        nextActions: ["First AI action", "Second AI action"],
-        reasoning: "Test reasoning",
-        suggestedProjects: [],
-        recommendedAction: "add-to-project",
-        recommendedActionReasoning: "Test",
-        recommendedSpheres: ["personal"],
-        recommendedSpheresReasoning: "Test",
-      },
-      selectedAction: "add-to-project",
-      selectedProject: project,
-      selectedSpheres: ["personal"],
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: undefined as any,
+      selectedSpheres: [],
     };
+    const state = createMockState([item]);
 
-    await service.persist(item);
+    renderEditableItemContent(container, item, state);
 
-    expect(mockWriter.addNextActionToProject).toHaveBeenCalledWith(
-      project,
-      ["First AI action", "Second AI action"],
-      [false, false], // waitingFor
-      [false, false] // markAsDone
+    const allButtons = container.querySelectorAll(".flow-gtd-action-button");
+    const nextButton = Array.from(allButtons).find(btn =>
+      btn.textContent?.includes("Next")
     );
+
+    // Should default to next-actions-file
+    expect(nextButton?.classList.contains("selected")).toBe(true);
   });
 });

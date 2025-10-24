@@ -826,6 +826,63 @@ select.flow-gtd-inline-select option,
         color: var(--background-primary);
 }
 
+/* Action button groups */
+.flow-gtd-action-groups {
+	display: flex;
+	flex-direction: row;
+	gap: 32px;
+	margin-top: 12px;
+}
+
+.flow-gtd-action-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.flow-gtd-action-group-header {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--text-muted);
+	text-transform: none;
+}
+
+.flow-gtd-action-button {
+	padding: 8px 16px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 16px;
+	background-color: rgba(0, 0, 0, 0.05);
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.flow-gtd-action-button:hover {
+	background-color: rgba(0, 0, 0, 0.08);
+}
+
+.flow-gtd-action-button.selected {
+	background-color: var(--interactive-accent);
+	color: white;
+	border-color: var(--interactive-accent);
+}
+
+.theme-dark .flow-gtd-action-button {
+	background-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .flow-gtd-action-button:hover {
+	background-color: rgba(255, 255, 255, 0.12);
+}
+
+.theme-dark .flow-gtd-action-button.selected {
+	background-color: var(--interactive-accent);
+	color: white;
+}
+
 .flow-gtd-sphere-view {
         padding: 24px;
         overflow-y: auto;
