@@ -20,7 +20,7 @@ export function InboxApp({ onComplete }: InboxAppProps) {
   if (inputText === null) {
     return (
       <Box flexDirection="column">
-        <MultilineTextarea prompt="What's on your mind?" onSubmit={handleSubmit} />
+        <MultilineTextarea prompt=">" onSubmit={handleSubmit} />
       </Box>
     );
   }

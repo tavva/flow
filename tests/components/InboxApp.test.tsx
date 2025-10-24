@@ -7,7 +7,7 @@ describe("InboxApp", () => {
     const onComplete = jest.fn();
     const { lastFrame, unmount } = render(<InboxApp onComplete={onComplete} />);
 
-    expect(lastFrame()).toContain("What's on your mind?");
+    expect(lastFrame()).toContain(">");
 
     unmount();
   });
