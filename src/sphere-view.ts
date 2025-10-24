@@ -33,6 +33,7 @@ export class SphereView extends ItemView {
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
   private searchQuery: string = "";
+  private refreshInProgress: boolean = false;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -262,34 +263,45 @@ export class SphereView extends ItemView {
   }
 
   private async refreshContent(): Promise<void> {
-    const container = this.containerEl.children[1] as HTMLElement;
-
-    // Remove all sections except the sticky header
-    const children = Array.from(container.children);
-    for (const child of children) {
-      if (!child.classList.contains("flow-gtd-sphere-sticky-header")) {
-        child.remove();
-      }
+    // Prevent overlapping refresh calls
+    if (this.refreshInProgress) {
+      return;
     }
 
-    // Re-render content sections with current filter
-    const data = await this.loadSphereData();
-    const filteredData = this.filterData(data, this.searchQuery);
+    this.refreshInProgress = true;
 
-    this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
-    this.renderProjectsSection(container, filteredData.projects);
-    this.renderGeneralNextActionsSection(
-      container,
-      filteredData.generalNextActions,
-      filteredData.generalNextActionsNotice
-    );
+    try {
+      const container = this.containerEl.children[1] as HTMLElement;
 
-    // Show empty state if query exists but no results
-    if (this.searchQuery.trim() &&
-        filteredData.projects.length === 0 &&
-        filteredData.generalNextActions.length === 0) {
-      const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
-      emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
+      // Remove all sections except the sticky header
+      const children = Array.from(container.children);
+      for (const child of children) {
+        if (!child.classList.contains("flow-gtd-sphere-sticky-header")) {
+          child.remove();
+        }
+      }
+
+      // Re-render content sections with current filter
+      const data = await this.loadSphereData();
+      const filteredData = this.filterData(data, this.searchQuery);
+
+      this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
+      this.renderProjectsSection(container, filteredData.projects);
+      this.renderGeneralNextActionsSection(
+        container,
+        filteredData.generalNextActions,
+        filteredData.generalNextActionsNotice
+      );
+
+      // Show empty state if query exists but no results
+      if (this.searchQuery.trim() &&
+          filteredData.projects.length === 0 &&
+          filteredData.generalNextActions.length === 0) {
+        const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
+        emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
+      }
+    } finally {
+      this.refreshInProgress = false;
     }
   }
 
