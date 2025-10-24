@@ -313,6 +313,148 @@ describe("SphereView filtering", () => {
       expect(clearButton.style.display).toBe("");
     });
   });
+
+  describe("Keyboard shortcuts", () => {
+    it("should focus search input on Cmd/Ctrl+F", () => {
+      const { SphereView } = require("../src/sphere-view");
+      const view = createMockSphereView();
+
+      const container = createMockContainerElement();
+      const searchInput = createMockInputElement();
+      let containerKeydownHandler: any = null;
+
+      container.addEventListener = jest.fn((event: string, handler: any) => {
+        if (event === "keydown") {
+          containerKeydownHandler = handler;
+        }
+      });
+
+      container.createDiv = jest.fn((opts: any) => {
+        if (opts?.cls === "flow-gtd-sphere-sticky-header") {
+          const header = createMockElement();
+          header.createEl = jest.fn((tag: string, opts: any) => {
+            if (tag === "input" && opts?.cls === "flow-gtd-sphere-search-input") {
+              return searchInput;
+            }
+            return createMockElement();
+          });
+          header.createDiv = jest.fn(() => {
+            const searchContainer = createMockElement();
+            searchContainer.createEl = header.createEl;
+            return searchContainer;
+          });
+          return header;
+        }
+        return createMockElement();
+      });
+
+      (view as any).renderContent(container, {
+        projects: [],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      });
+
+      // Verify keyboard handler was registered
+      expect(containerKeydownHandler).toBeTruthy();
+
+      // Simulate Cmd+F (Mac)
+      const cmdFEvent = {
+        key: "f",
+        metaKey: true,
+        ctrlKey: false,
+        preventDefault: jest.fn(),
+      };
+      containerKeydownHandler(cmdFEvent);
+      expect(cmdFEvent.preventDefault).toHaveBeenCalled();
+      expect(searchInput.focus).toHaveBeenCalled();
+
+      // Clear focus call count
+      searchInput.focus.mockClear();
+
+      // Simulate Ctrl+F (Windows/Linux)
+      const ctrlFEvent = {
+        key: "f",
+        metaKey: false,
+        ctrlKey: true,
+        preventDefault: jest.fn(),
+      };
+      containerKeydownHandler(ctrlFEvent);
+      expect(ctrlFEvent.preventDefault).toHaveBeenCalled();
+      expect(searchInput.focus).toHaveBeenCalled();
+    });
+
+    it("should clear search on Escape", () => {
+      const { SphereView } = require("../src/sphere-view");
+      const view = createMockSphereView();
+      (view as any).searchQuery = "test query";
+
+      const container = createMockContainerElement();
+      const searchInput = createMockInputElement();
+      const clearButton = createMockElement();
+      clearButton.style = { display: "" };
+
+      let inputKeydownHandler: any = null;
+
+      searchInput.addEventListener = jest.fn((event: string, handler: any) => {
+        if (event === "keydown") {
+          inputKeydownHandler = handler;
+        }
+      });
+
+      container.createDiv = jest.fn((opts: any) => {
+        if (opts?.cls === "flow-gtd-sphere-sticky-header") {
+          const header = createMockElement();
+          header.createEl = jest.fn((tag: string, opts: any) => {
+            if (tag === "input" && opts?.cls === "flow-gtd-sphere-search-input") {
+              searchInput.value = "test query";
+              return searchInput;
+            }
+            if (tag === "span" && opts?.cls === "flow-gtd-sphere-search-clear") {
+              return clearButton;
+            }
+            return createMockElement();
+          });
+          header.createDiv = jest.fn(() => {
+            const searchContainer = createMockElement();
+            searchContainer.createEl = header.createEl;
+            return searchContainer;
+          });
+          return header;
+        }
+        return createMockElement();
+      });
+
+      container.querySelector = jest.fn((selector: string) => {
+        if (selector === ".flow-gtd-sphere-search-clear") {
+          return clearButton;
+        }
+        return null;
+      });
+
+      (view as any).renderContent(container, {
+        projects: [],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      });
+
+      // Verify keyboard handler was registered
+      expect(inputKeydownHandler).toBeTruthy();
+
+      // Mock refresh method
+      (view as any).refresh = jest.fn();
+
+      // Simulate Escape key
+      const escapeEvent = {
+        key: "Escape",
+      };
+      inputKeydownHandler(escapeEvent);
+
+      expect((view as any).searchQuery).toBe("");
+      expect(searchInput.value).toBe("");
+      expect(clearButton.style.display).toBe("none");
+      expect((view as any).refresh).toHaveBeenCalled();
+    });
+  });
 });
 
 // Helper to create mock element

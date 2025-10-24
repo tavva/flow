@@ -237,6 +237,33 @@ export class SphereView extends ItemView {
     return searchInput;
   }
 
+  private setupKeyboardShortcuts(container: HTMLElement, searchInput: HTMLInputElement): void {
+    // Cmd/Ctrl+F to focus search
+    const handleContainerKeydown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    };
+
+    container.addEventListener("keydown", handleContainerKeydown);
+
+    // Escape to clear search
+    const handleInputKeydown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        this.searchQuery = "";
+        searchInput.value = "";
+        const clearButton = container.querySelector(".flow-gtd-sphere-search-clear") as HTMLElement;
+        if (clearButton) {
+          clearButton.style.display = "none";
+        }
+        this.refresh();
+      }
+    };
+
+    searchInput.addEventListener("keydown", handleInputKeydown);
+  }
+
   private async refresh(): Promise<void> {
     const container = this.containerEl.children[1] as HTMLElement;
     container.empty();
@@ -247,6 +274,9 @@ export class SphereView extends ItemView {
   private renderContent(container: HTMLElement, data: SphereViewData) {
     // Render sticky header with search
     const searchInput = this.renderSearchHeader(container);
+
+    // Setup keyboard shortcuts
+    this.setupKeyboardShortcuts(container, searchInput);
 
     // Filter data based on search query
     const filteredData = this.filterData(data, this.searchQuery);
