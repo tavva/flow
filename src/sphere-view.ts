@@ -477,10 +477,16 @@ export class SphereView extends ItemView {
     }
 
     try {
-      // Always get a fresh leaf - the cached leaf may have been closed or detached
-      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      // Reuse existing leaf if it's still valid (not detached), otherwise create new split
+      let leaf = this.rightPaneLeaf;
+
+      // Check if cached leaf is still valid and attached to workspace
+      if (!leaf || leaf.getRoot() !== this.app.workspace.rootSplit) {
+        leaf = this.app.workspace.getLeaf("split", "vertical");
+        this.rightPaneLeaf = leaf;
+      }
+
       await leaf.openFile(file);
-      this.rightPaneLeaf = leaf;
     } catch (error) {
       console.error(`Failed to open project file: ${filePath}`, error);
     }

@@ -1,5 +1,5 @@
 // ABOUTME: Tests for SphereView functionality including project opening behaviour.
-// ABOUTME: Verifies that projects open in the right pane and replace existing tabs.
+// ABOUTME: Verifies that projects open in right pane and reuse the same split leaf.
 
 import { App, TFile, WorkspaceLeaf } from "obsidian";
 import { SphereView } from "../src/sphere-view";
@@ -64,14 +64,51 @@ describe("SphereView", () => {
   });
 
   describe("openProjectFile", () => {
-    it("should get a fresh leaf each time to avoid stale references", async () => {
+    it("should reuse the same leaf for subsequent project opens", async () => {
+      const firstProject = new TFile("Projects/first-project.md");
+      const secondProject = new TFile("Projects/second-project.md");
+
+      const projectLeaf = new WorkspaceLeaf();
+      projectLeaf.getRoot = jest.fn().mockReturnValue(app.workspace.rootSplit);
+
+      // Setup mocks - getLeaf only called once for first project
+      app.workspace.getLeaf = jest.fn().mockReturnValue(projectLeaf);
+
+      app.vault.getAbstractFileByPath = jest
+        .fn()
+        .mockReturnValueOnce(firstProject)
+        .mockReturnValueOnce(secondProject);
+
+      const view = new SphereView(leaf, "personal", settings, mockSaveSettings);
+      view.app = app;
+
+      // Open first project
+      await (view as any).openProjectFile(firstProject.path);
+
+      // Verify first project opened with "split" mode
+      expect(app.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
+      expect(projectLeaf.openFile).toHaveBeenCalledWith(firstProject);
+
+      // Open second project
+      await (view as any).openProjectFile(secondProject.path);
+
+      // Should NOT call getLeaf again - should reuse the same leaf
+      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      // Second file should open in the SAME leaf
+      expect(projectLeaf.openFile).toHaveBeenCalledWith(secondProject);
+      expect(projectLeaf.openFile).toHaveBeenCalledTimes(2);
+    });
+
+    it("should create new leaf if cached leaf is detached", async () => {
       const firstProject = new TFile("Projects/first-project.md");
       const secondProject = new TFile("Projects/second-project.md");
 
       const firstLeaf = new WorkspaceLeaf();
-      const secondLeaf = new WorkspaceLeaf();
+      firstLeaf.getRoot = jest.fn().mockReturnValue(app.workspace.rootSplit);
 
-      // Setup mocks - getLeaf will return a fresh leaf each time
+      const secondLeaf = new WorkspaceLeaf();
+      secondLeaf.getRoot = jest.fn().mockReturnValue(app.workspace.rootSplit);
+
       app.workspace.getLeaf = jest
         .fn()
         .mockReturnValueOnce(firstLeaf)
@@ -83,23 +120,21 @@ describe("SphereView", () => {
         .mockReturnValueOnce(secondProject);
 
       const view = new SphereView(leaf, "personal", settings, mockSaveSettings);
-      // Replace the view's app with our mocked one
       view.app = app;
 
       // Open first project
       await (view as any).openProjectFile(firstProject.path);
-
-      // Verify first project opened with "split" mode
-      expect(app.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
+      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(1);
       expect(firstLeaf.openFile).toHaveBeenCalledWith(firstProject);
+
+      // Simulate leaf being detached (e.g., user closed the pane)
+      firstLeaf.getRoot = jest.fn().mockReturnValue(null);
 
       // Open second project
       await (view as any).openProjectFile(secondProject.path);
 
-      // Should call getLeaf each time to avoid stale leaf references
+      // Should create a new leaf since the cached one is detached
       expect(app.workspace.getLeaf).toHaveBeenCalledTimes(2);
-      expect(app.workspace.getLeaf).toHaveBeenNthCalledWith(2, "split", "vertical");
-      // Second file should open in the second leaf returned by getLeaf
       expect(secondLeaf.openFile).toHaveBeenCalledWith(secondProject);
     });
   });
