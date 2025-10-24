@@ -21,6 +21,7 @@ import { presentToolCallsForApproval } from "./cli-approval";
 import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
 import { FileWriter } from "./file-writer";
 import wrapAnsi from 'wrap-ansi';
+import { SystemAnalyzer, SystemIssues } from "./system-analyzer";
 
 /**
  * Wraps text to terminal width whilst preserving ANSI color codes.
@@ -245,6 +246,32 @@ async function handleToolCalls(
   const summary = `Completed ${approval.approvedToolIds.length} of ${toolCalls!.length} suggested changes.`;
   messages.push({ role: "assistant", content: summary });
   console.log(`\n${colors.assistant}Coach:${colors.reset} ${wrapForTerminal(summary)}\n`);
+}
+
+export function buildAnalysisPrompt(issues: SystemIssues): string {
+  let prompt = "Based on the system context you have, provide a brief opening summary.\n\n";
+
+  if (issues.hasIssues) {
+    prompt += "Issues detected:\n";
+    if (issues.stalledProjects > 0) {
+      prompt += `- ${issues.stalledProjects} projects have no next actions (stalled)\n`;
+    }
+    if (issues.inboxNeedsAttention) {
+      prompt += `- ${issues.inboxCount} inbox items need processing\n`;
+    }
+    prompt +=
+      "\nProvide a brief summary of these issues and suggest 3 numbered options to address them.\n";
+  } else {
+    prompt +=
+      "The system looks healthy - no stalled projects, inbox is under control.\n\n";
+    prompt +=
+      "Provide a brief positive summary and suggest 3 numbered options for proactive work.\n";
+  }
+
+  prompt += "\nFormat: Brief observation paragraph, then numbered list of 3 options.\n";
+  prompt += "Keep it concise. High-level counts only, no specific project names or examples.";
+
+  return prompt;
 }
 
 export async function runREPL(
