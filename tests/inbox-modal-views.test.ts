@@ -155,4 +155,25 @@ describe("renderEditableItemContent - action button groups", () => {
     expect(item.selectedAction).toBe("someday-file");
     expect(state.queueRender).toHaveBeenCalledWith("editable");
   });
+
+  it("defaults to 'next-actions-file' when selectedAction is undefined", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: undefined as any,
+      selectedSpheres: [],
+    };
+    const state = createMockState([item]);
+
+    renderEditableItemContent(container, item, state);
+
+    const allButtons = container.querySelectorAll(".flow-gtd-action-button");
+    const nextButton = Array.from(allButtons).find(btn =>
+      btn.textContent?.includes("Next")
+    );
+
+    // Should default to next-actions-file
+    expect(nextButton?.classList.contains("selected")).toBe(true);
+  });
 });

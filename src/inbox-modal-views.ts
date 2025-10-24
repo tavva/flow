@@ -383,7 +383,8 @@ function renderActionButtonGroups(
       button.setAttribute("type", "button");
 
       // Apply selected state
-      const isSelected = item.selectedAction === action.value;
+      const currentSelection = item.selectedAction ?? "next-actions-file";
+      const isSelected = currentSelection === action.value;
       if (isSelected) {
         button.addClass("selected");
       }
