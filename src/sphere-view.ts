@@ -32,6 +32,7 @@ export class SphereView extends ItemView {
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
+  private searchQuery: string = "";
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -144,6 +145,49 @@ export class SphereView extends ItemView {
       projectsNeedingNextActions,
       generalNextActions,
       generalNextActionsNotice,
+    };
+  }
+
+  private filterData(data: SphereViewData, query: string): SphereViewData {
+    // Empty query = no filtering
+    if (!query.trim()) {
+      return data;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const matches = (text: string) => text.toLowerCase().includes(lowerQuery);
+
+    // Filter projects: include if name matches OR has matching actions
+    const filteredProjects = data.projects
+      .map((summary) => {
+        const filteredActions =
+          summary.project.nextActions?.filter((action) => matches(action)) || [];
+
+        const includeProject =
+          matches(summary.project.title) || filteredActions.length > 0;
+
+        if (!includeProject) return null;
+
+        return {
+          ...summary,
+          project: {
+            ...summary.project,
+            nextActions: filteredActions,
+          },
+        };
+      })
+      .filter((p): p is SphereProjectSummary => p !== null);
+
+    // Filter general actions
+    const filteredGeneralActions = data.generalNextActions.filter((action) =>
+      matches(action)
+    );
+
+    return {
+      projects: filteredProjects,
+      projectsNeedingNextActions: data.projectsNeedingNextActions, // Not filtered
+      generalNextActions: filteredGeneralActions,
+      generalNextActionsNotice: data.generalNextActionsNotice,
     };
   }
 
