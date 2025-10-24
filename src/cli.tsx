@@ -286,6 +286,7 @@ export async function runREPL(
   model: string,
   systemPrompt: string,
   gtdContext: GTDContext,
+  projects: FlowProject[],
   projectCount: number,
   sphere: string,
   mockApp: App,
@@ -326,6 +327,65 @@ export async function runREPL(
     role: "system",
     content: systemPrompt,
   });
+
+  // Auto-send opening analysis
+  const issues = SystemAnalyzer.analyze(gtdContext, projects);
+  const analysisPrompt = buildAnalysisPrompt(issues);
+
+  messages.push({
+    role: "user",
+    content: analysisPrompt,
+  });
+
+  try {
+    // Show thinking indicator
+    process.stdout.write(`${colors.dim}Processing...${colors.reset}`);
+
+    // Get AI's formatted opening
+    const openingResponse = await withRetry(
+      () =>
+        languageModelClient.sendMessage({
+          model,
+          maxTokens: 500,
+          messages,
+        }),
+      { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+      (attempt, delayMs) => {
+        process.stdout.write("\r");
+        const delaySec = (delayMs / 1000).toFixed(1);
+        process.stdout.write(
+          `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+        );
+      }
+    );
+
+    // Clear thinking indicator
+    process.stdout.write("\r");
+    if (typeof process.stdout.clearLine === "function") {
+      process.stdout.clearLine(0);
+    }
+
+    // Render markdown opening
+    let rendered = marked.parse(openingResponse) as string;
+    rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m");
+    rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m");
+    rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m");
+
+    console.log(`${colors.assistant}Coach:${colors.reset}\n${wrapForTerminal(rendered)}`);
+
+    messages.push({ role: "assistant", content: openingResponse });
+  } catch (error) {
+    // Clear thinking indicator on error
+    process.stdout.write("\r");
+    if (typeof process.stdout.clearLine === "function") {
+      process.stdout.clearLine(0);
+    }
+
+    console.error(
+      `\nError generating opening message: ${error instanceof Error ? error.message : String(error)}`
+    );
+    console.error("Continuing to REPL...\n");
+  }
 
   // REPL loop
   while (true) {
@@ -694,6 +754,7 @@ export async function main() {
       model,
       systemPrompt,
       gtdContext,
+      projects,
       projects.length,
       args.sphere,
       mockApp as any,
