@@ -1278,3 +1278,66 @@ select.flow-gtd-inline-select option,
 .sphere-action-in-hotlist:hover {
 	background-color: rgba(33, 150, 243, 0.25);
 }
+
+/* Sphere View Filter Search */
+.flow-gtd-sphere-sticky-header {
+	position: sticky;
+	top: 0;
+	background: var(--background-primary);
+	z-index: 10;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+	margin-bottom: 16px;
+}
+
+.flow-gtd-sphere-title {
+	margin: 0 0 12px 0;
+	font-size: 1.5em;
+	font-weight: 600;
+}
+
+.flow-gtd-sphere-search-container {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.flow-gtd-sphere-search-input {
+	flex: 1;
+	padding: 6px 10px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--background-primary);
+	color: var(--text-normal);
+	font-size: 14px;
+}
+
+.flow-gtd-sphere-search-input::placeholder {
+	color: var(--text-muted);
+}
+
+.flow-gtd-sphere-search-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+.flow-gtd-sphere-search-clear {
+	cursor: pointer;
+	padding: 4px;
+	opacity: 0.6;
+	color: var(--text-muted);
+	display: flex;
+	align-items: center;
+}
+
+.flow-gtd-sphere-search-clear:hover {
+	opacity: 1;
+	color: var(--text-normal);
+}
+
+.flow-gtd-sphere-empty-search {
+	padding: 20px;
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+}
