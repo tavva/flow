@@ -103,6 +103,37 @@ describe("SphereView filtering", () => {
       expect(result.projects[0].project.title).toBe("Marketing Campaign");
     });
 
+    it("should show all actions when project name matches", () => {
+      const data = {
+        projects: [
+          {
+            project: {
+              title: "Marketing Campaign",
+              nextActions: ["Write blog", "Design logo", "Launch ad"],
+              tags: ["project/work"],
+              status: "live" as const,
+              file: "marketing.md",
+            },
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      };
+
+      const view = createMockSphereView();
+      const result = (view as any).filterData(data, "marketing");
+
+      expect(result.projects).toHaveLength(1);
+      expect(result.projects[0].project.nextActions).toHaveLength(3);
+      expect(result.projects[0].project.nextActions).toEqual([
+        "Write blog",
+        "Design logo",
+        "Launch ad",
+      ]);
+    });
+
     it("should filter general actions", () => {
       const data = {
         projects: [],

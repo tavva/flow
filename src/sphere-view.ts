@@ -163,8 +163,8 @@ export class SphereView extends ItemView {
         const filteredActions =
           summary.project.nextActions?.filter((action) => matches(action)) || [];
 
-        const includeProject =
-          matches(summary.project.title) || filteredActions.length > 0;
+        const projectNameMatches = matches(summary.project.title);
+        const includeProject = projectNameMatches || filteredActions.length > 0;
 
         if (!includeProject) return null;
 
@@ -172,7 +172,9 @@ export class SphereView extends ItemView {
           ...summary,
           project: {
             ...summary.project,
-            nextActions: filteredActions,
+            nextActions: projectNameMatches
+              ? summary.project.nextActions
+              : filteredActions,
           },
         };
       })
