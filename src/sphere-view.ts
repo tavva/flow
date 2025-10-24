@@ -223,7 +223,7 @@ export class SphereView extends ItemView {
     searchInput.addEventListener("input", (e) => {
       this.searchQuery = (e.target as HTMLInputElement).value;
       clearButton.style.display = this.searchQuery ? "" : "none";
-      this.refresh();
+      this.refreshContent();
     });
 
     // Clear button handler
@@ -241,7 +241,7 @@ export class SphereView extends ItemView {
   private setupKeyboardShortcuts(container: HTMLElement, searchInput: HTMLInputElement): void {
     // Remove previous listener if exists
     if (this.containerKeydownHandler) {
-      container.removeEventListener("keydown", this.containerKeydownHandler);
+      document.removeEventListener("keydown", this.containerKeydownHandler);
     }
 
     // Create and store new handler for Cmd/Ctrl+F to focus search
@@ -252,7 +252,7 @@ export class SphereView extends ItemView {
       }
     };
 
-    container.addEventListener("keydown", this.containerKeydownHandler);
+    document.addEventListener("keydown", this.containerKeydownHandler);
 
     // Escape to clear search (input handler is fine as-is - element is recreated each time)
     const handleInputKeydown = (e: KeyboardEvent) => {
@@ -275,6 +275,38 @@ export class SphereView extends ItemView {
     container.empty();
     const data = await this.loadSphereData();
     this.renderContent(container, data);
+  }
+
+  private async refreshContent(): Promise<void> {
+    const container = this.containerEl.children[1] as HTMLElement;
+
+    // Remove all sections except the sticky header
+    const children = Array.from(container.children);
+    for (const child of children) {
+      if (!child.classList.contains("flow-gtd-sphere-sticky-header")) {
+        child.remove();
+      }
+    }
+
+    // Re-render content sections with current filter
+    const data = await this.loadSphereData();
+    const filteredData = this.filterData(data, this.searchQuery);
+
+    this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
+    this.renderProjectsSection(container, filteredData.projects);
+    this.renderGeneralNextActionsSection(
+      container,
+      filteredData.generalNextActions,
+      filteredData.generalNextActionsNotice
+    );
+
+    // Show empty state if query exists but no results
+    if (this.searchQuery.trim() &&
+        filteredData.projects.length === 0 &&
+        filteredData.generalNextActions.length === 0) {
+      const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
+      emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
+    }
   }
 
   private renderContent(container: HTMLElement, data: SphereViewData) {

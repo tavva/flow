@@ -321,13 +321,15 @@ describe("SphereView filtering", () => {
 
       const container = createMockContainerElement();
       const searchInput = createMockInputElement();
-      let containerKeydownHandler: any = null;
+      let documentKeydownHandler: any = null;
 
-      container.addEventListener = jest.fn((event: string, handler: any) => {
+      // Mock document.addEventListener to capture the handler
+      const originalAddEventListener = document.addEventListener;
+      document.addEventListener = jest.fn((event: string, handler: any) => {
         if (event === "keydown") {
-          containerKeydownHandler = handler;
+          documentKeydownHandler = handler;
         }
-      });
+      }) as any;
 
       container.createDiv = jest.fn((opts: any) => {
         if (opts?.cls === "flow-gtd-sphere-sticky-header") {
@@ -354,8 +356,8 @@ describe("SphereView filtering", () => {
         generalNextActions: [],
       });
 
-      // Verify keyboard handler was registered
-      expect(containerKeydownHandler).toBeTruthy();
+      // Verify keyboard handler was registered on document
+      expect(documentKeydownHandler).toBeTruthy();
 
       // Simulate Cmd+F (Mac)
       const cmdFEvent = {
@@ -364,7 +366,7 @@ describe("SphereView filtering", () => {
         ctrlKey: false,
         preventDefault: jest.fn(),
       };
-      containerKeydownHandler(cmdFEvent);
+      documentKeydownHandler(cmdFEvent);
       expect(cmdFEvent.preventDefault).toHaveBeenCalled();
       expect(searchInput.focus).toHaveBeenCalled();
 
@@ -378,9 +380,12 @@ describe("SphereView filtering", () => {
         ctrlKey: true,
         preventDefault: jest.fn(),
       };
-      containerKeydownHandler(ctrlFEvent);
+      documentKeydownHandler(ctrlFEvent);
       expect(ctrlFEvent.preventDefault).toHaveBeenCalled();
       expect(searchInput.focus).toHaveBeenCalled();
+
+      // Restore original addEventListener
+      document.addEventListener = originalAddEventListener;
     });
 
     it("should clear search on Escape", () => {
