@@ -12,7 +12,7 @@ describe("MultilineTextarea", () => {
       />
     );
 
-    expect(lastFrame()).toContain("What's on your mind?");
+    expect(lastFrame()).toContain("Ctrl+Enter for new line");
 
     unmount();
   });
@@ -25,7 +25,6 @@ describe("MultilineTextarea", () => {
     const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component structure
-    expect(lastFrame()).toContain("Enter text");
     expect(lastFrame()).toContain("Ctrl+Enter for new line");
     expect(lastFrame()).toContain(">");
 

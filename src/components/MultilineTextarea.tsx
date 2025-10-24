@@ -111,7 +111,7 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
 
   return (
     <Box flexDirection="column">
-      <Text>{prompt} (Ctrl+Enter for new line, Enter to submit)</Text>
+      <Text>• Ctrl+Enter for new line, Enter to submit</Text>
       <Text>{""}</Text>
       {lines.map((line, index) => {
         const isCurrentLine = index === cursorRow;
