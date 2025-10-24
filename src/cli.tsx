@@ -21,6 +21,7 @@ import { presentToolCallsForApproval } from "./cli-approval";
 import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
 import { FileWriter } from "./file-writer";
 import wrapAnsi from 'wrap-ansi';
+import { SystemAnalyzer, SystemIssues } from "./system-analyzer";
 
 /**
  * Wraps text to terminal width whilst preserving ANSI color codes.
@@ -120,6 +121,13 @@ export function buildSystemPrompt(
   prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
   prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
   prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
+
+  prompt += `Opening Message Format:\n`;
+  prompt += `- When asked to provide an opening summary, be brief and data-driven\n`;
+  prompt += `- State what you observe (e.g., "5 projects are stalled")\n`;
+  prompt += `- Always provide exactly 3 numbered options for what to work on\n`;
+  prompt += `- Use high-level counts only, never list specific project names in the opening\n`;
+  prompt += `- If system is healthy, note this positively and suggest proactive actions\n\n`;
 
   prompt += `GTD Quality Standards:\n`;
   prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
@@ -247,11 +255,38 @@ async function handleToolCalls(
   console.log(`\n${colors.assistant}Coach:${colors.reset} ${wrapForTerminal(summary)}\n`);
 }
 
+export function buildAnalysisPrompt(issues: SystemIssues): string {
+  let prompt = "Based on the system context you have, provide a brief opening summary.\n\n";
+
+  if (issues.hasIssues) {
+    prompt += "Issues detected:\n";
+    if (issues.stalledProjects > 0) {
+      prompt += `- ${issues.stalledProjects} projects have no next actions (stalled)\n`;
+    }
+    if (issues.inboxNeedsAttention) {
+      prompt += `- ${issues.inboxCount} inbox items need processing\n`;
+    }
+    prompt +=
+      "\nProvide a brief summary of these issues and suggest 3 numbered options to address them.\n";
+  } else {
+    prompt +=
+      "The system looks healthy - no stalled projects, inbox is under control.\n\n";
+    prompt +=
+      "Provide a brief positive summary and suggest 3 numbered options for proactive work.\n";
+  }
+
+  prompt += "\nFormat: Brief observation paragraph, then numbered list of 3 options.\n";
+  prompt += "Keep it concise. High-level counts only, no specific project names or examples.";
+
+  return prompt;
+}
+
 export async function runREPL(
   languageModelClient: LanguageModelClient,
   model: string,
   systemPrompt: string,
   gtdContext: GTDContext,
+  projects: FlowProject[],
   projectCount: number,
   sphere: string,
   mockApp: App,
@@ -292,6 +327,65 @@ export async function runREPL(
     role: "system",
     content: systemPrompt,
   });
+
+  // Auto-send opening analysis
+  const issues = SystemAnalyzer.analyze(gtdContext, projects);
+  const analysisPrompt = buildAnalysisPrompt(issues);
+
+  messages.push({
+    role: "user",
+    content: analysisPrompt,
+  });
+
+  try {
+    // Show thinking indicator
+    process.stdout.write(`${colors.dim}Processing...${colors.reset}`);
+
+    // Get AI's formatted opening
+    const openingResponse = await withRetry(
+      () =>
+        languageModelClient.sendMessage({
+          model,
+          maxTokens: 500,
+          messages,
+        }),
+      { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
+      (attempt, delayMs) => {
+        process.stdout.write("\r");
+        const delaySec = (delayMs / 1000).toFixed(1);
+        process.stdout.write(
+          `${colors.dim}Network error. Retrying in ${delaySec}s... (attempt ${attempt}/5)${colors.reset}`
+        );
+      }
+    );
+
+    // Clear thinking indicator
+    process.stdout.write("\r");
+    if (typeof process.stdout.clearLine === "function") {
+      process.stdout.clearLine(0);
+    }
+
+    // Render markdown opening
+    let rendered = marked.parse(openingResponse) as string;
+    rendered = rendered.replace(/\*\*([^*]+)\*\*/g, "\x1b[1m$1\x1b[22m");
+    rendered = rendered.replace(/\*([^*]+)\*/g, "\x1b[3m$1\x1b[23m");
+    rendered = rendered.replace(/_([^_]+)_/g, "\x1b[3m$1\x1b[23m");
+
+    console.log(`${colors.assistant}Coach:${colors.reset}\n${wrapForTerminal(rendered)}`);
+
+    messages.push({ role: "assistant", content: openingResponse });
+  } catch (error) {
+    // Clear thinking indicator on error
+    process.stdout.write("\r");
+    if (typeof process.stdout.clearLine === "function") {
+      process.stdout.clearLine(0);
+    }
+
+    console.error(
+      `\nError generating opening message: ${error instanceof Error ? error.message : String(error)}`
+    );
+    console.error("Continuing to REPL...\n");
+  }
 
   // REPL loop
   while (true) {
@@ -660,6 +754,7 @@ export async function main() {
       model,
       systemPrompt,
       gtdContext,
+      projects,
       projects.length,
       args.sphere,
       mockApp as any,
