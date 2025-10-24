@@ -273,3 +273,16 @@ export class DropdownComponent {
     return this;
   }
 }
+
+export class MarkdownRenderer {
+  static async renderMarkdown(
+    markdown: string,
+    element: HTMLElement,
+    sourcePath: string,
+    component: any
+  ): Promise<void> {
+    // Simple mock: just set the text content for testing
+    // In real Obsidian, this would parse markdown and create proper DOM
+    element.innerHTML = markdown;
+  }
+}

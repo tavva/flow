@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, HotlistItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
@@ -451,7 +451,8 @@ export class SphereView extends ItemView {
     // Create the display text with clock emoji if waiting-for
     const displayText = isWaitingFor ? `🕐 ${action}` : action;
 
-    const item = list.createEl("li", { text: displayText });
+    const item = list.createEl("li");
+    await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
     item.style.cursor = "pointer";
 
     // Check if this action is in the hotlist and add CSS class if so

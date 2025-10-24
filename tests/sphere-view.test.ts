@@ -1,7 +1,7 @@
 // ABOUTME: Tests for SphereView functionality including project opening behaviour.
 // ABOUTME: Verifies that projects open in right pane and reuse the same split leaf.
 
-import { App, TFile, WorkspaceLeaf } from "obsidian";
+import { App, TFile, WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 import { SphereView } from "../src/sphere-view";
 import { PluginSettings } from "../src/types";
 import { FlowProjectScanner } from "../src/flow-scanner";
@@ -513,6 +513,9 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
+      // Spy on MarkdownRenderer
+      const renderMarkdownSpy = jest.spyOn(MarkdownRenderer, "renderMarkdown");
+
       // Test waiting-for item
       await (view as any).renderActionItem(
         mockListElement,
@@ -522,10 +525,15 @@ describe("SphereView", () => {
         false
       );
 
-      // Should have clock emoji prefix
-      expect(mockListElement.createEl).toHaveBeenCalledWith("li", {
-        text: "🕐 Wait for client response",
-      });
+      // Should have clock emoji prefix in markdown
+      expect(renderMarkdownSpy).toHaveBeenCalledWith(
+        "🕐 Wait for client response",
+        expect.anything(),
+        "",
+        view
+      );
+
+      renderMarkdownSpy.mockClear();
 
       // Test regular item
       await (view as any).renderActionItem(
@@ -537,9 +545,14 @@ describe("SphereView", () => {
       );
 
       // Should NOT have clock emoji prefix
-      expect(mockListElement.createEl).toHaveBeenCalledWith("li", {
-        text: "Regular action",
-      });
+      expect(renderMarkdownSpy).toHaveBeenCalledWith(
+        "Regular action",
+        expect.anything(),
+        "",
+        view
+      );
+
+      renderMarkdownSpy.mockRestore();
     });
   });
 
