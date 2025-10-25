@@ -2,6 +2,8 @@
 // ABOUTME: Handles version parsing, calculation, and GitHub release creation via BRAT.
 
 import * as readline from 'readline';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 interface ParsedVersion {
 	major: number;
@@ -128,4 +130,64 @@ export function promptVersionBump(current: ParsedVersion): Promise<string> {
 			}
 		});
 	});
+}
+
+interface PluginManifest {
+	id: string;
+	name: string;
+	version: string;
+	minAppVersion: string;
+	description: string;
+	author: string;
+	authorUrl: string;
+	isDesktopOnly: boolean;
+}
+
+/**
+ * Reads and parses the manifest.json file
+ * @returns Parsed manifest object
+ */
+export function readManifest(): PluginManifest {
+	const manifestPath = join(process.cwd(), 'manifest.json');
+
+	if (!existsSync(manifestPath)) {
+		throw new Error('manifest.json not found in current directory');
+	}
+
+	const content = readFileSync(manifestPath, 'utf-8');
+	return JSON.parse(content) as PluginManifest;
+}
+
+/**
+ * Updates manifest.json with new version
+ * @param version - New version string to set
+ */
+export function updateManifest(version: string): void {
+	const manifestPath = join(process.cwd(), 'manifest.json');
+	const manifest = readManifest();
+
+	manifest.version = version;
+
+	// Write with tabs for indentation to match existing format
+	writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n', 'utf-8');
+}
+
+/**
+ * Verifies that all required build files exist
+ * @throws Error if any required files are missing
+ */
+export function verifyBuildFiles(): void {
+	const requiredFiles = ['main.js', 'manifest.json', 'styles.css'];
+	const missingFiles: string[] = [];
+
+	for (const file of requiredFiles) {
+		const filePath = join(process.cwd(), file);
+		if (!existsSync(filePath)) {
+			missingFiles.push(file);
+		}
+	}
+
+	if (missingFiles.length > 0) {
+		throw new Error(`Missing required build files: ${missingFiles.join(', ')}`);
+	}
 }
