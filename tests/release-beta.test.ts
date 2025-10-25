@@ -48,4 +48,39 @@ describe('Next Version Calculation', () => {
 		const next = calculateNextVersion(current, 'minor');
 		expect(next).toBe('0.8.0-beta.1');
 	});
+
+	test('should handle custom version when current is null', () => {
+		const next = calculateNextVersion(null, '1.0.0-beta.1');
+		expect(next).toBe('1.0.0-beta.1');
+	});
+
+	test('should throw error when auto-incrementing production version', () => {
+		const current = parseVersion('0.7.0');
+		expect(() => {
+			calculateNextVersion(current, 'auto');
+		}).toThrow('Cannot auto-increment beta number on production version');
+	});
+
+	test('should throw error when custom version is invalid and current is null', () => {
+		expect(() => {
+			calculateNextVersion(null, 'invalid-version');
+		}).toThrow('Invalid custom version');
+	});
+
+	test('should parse version with multi-digit numbers', () => {
+		const result = parseVersion('12.34.56-beta.78');
+		expect(result).toEqual({
+			major: 12,
+			minor: 34,
+			patch: 56,
+			betaNumber: 78,
+			isBeta: true
+		});
+	});
+
+	test('should auto-increment beta with multi-digit numbers', () => {
+		const current = parseVersion('12.34.56-beta.78');
+		const next = calculateNextVersion(current, 'auto');
+		expect(next).toBe('12.34.56-beta.79');
+	});
 });

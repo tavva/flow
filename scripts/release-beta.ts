@@ -42,12 +42,21 @@ export function calculateNextVersion(
 	bumpType: string
 ): string {
 	if (!current) {
+		// Validate custom version when current is null
+		const parsed = parseVersion(bumpType);
+		if (!parsed) {
+			throw new Error('Invalid custom version');
+		}
 		return bumpType;
 	}
 
 	if (bumpType === 'auto') {
-		// Auto-increment beta number
-		return `${current.major}.${current.minor}.${current.patch}-beta.${(current.betaNumber || 0) + 1}`;
+		// Validate that we're auto-incrementing a beta version
+		if (!current.isBeta) {
+			throw new Error('Cannot auto-increment beta number on production version');
+		}
+		// Auto-increment beta number (using non-null assertion since we know it exists)
+		return `${current.major}.${current.minor}.${current.patch}-beta.${current.betaNumber! + 1}`;
 	}
 
 	if (bumpType === 'patch') {
@@ -59,5 +68,9 @@ export function calculateNextVersion(
 	}
 
 	// Custom version - validate and return
+	const parsed = parseVersion(bumpType);
+	if (!parsed) {
+		throw new Error('Invalid custom version');
+	}
 	return bumpType;
 }
