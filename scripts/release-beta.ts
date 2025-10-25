@@ -375,6 +375,13 @@ export function commitAndPush(version: string): boolean {
 }
 
 /**
+ * Reverts manifest.json to its state in git
+ */
+function rollbackManifest(): void {
+	execFileSync('git', ['checkout', 'manifest.json']);
+}
+
+/**
  * Main entry point that orchestrates the entire release workflow
  */
 async function main(): Promise<void> {
@@ -412,7 +419,7 @@ async function main(): Promise<void> {
 	// Build plugin
 	if (!buildPlugin()) {
 		console.error('Reverting manifest changes...');
-		execSync('git checkout manifest.json');
+		rollbackManifest();
 		process.exit(1);
 	}
 
@@ -420,8 +427,9 @@ async function main(): Promise<void> {
 	try {
 		verifyBuildFiles();
 	} catch (error) {
+		console.error(error instanceof Error ? error.message : String(error));
 		console.error('Reverting manifest changes...');
-		execSync('git checkout manifest.json');
+		rollbackManifest();
 		process.exit(1);
 	}
 
@@ -429,7 +437,7 @@ async function main(): Promise<void> {
 	const confirmed = await confirmRelease(nextVersion);
 	if (!confirmed) {
 		console.log('Release cancelled. Reverting manifest changes...');
-		execSync('git checkout manifest.json');
+		rollbackManifest();
 		process.exit(0);
 	}
 
