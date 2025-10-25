@@ -262,3 +262,24 @@ export function runPreflightChecks(): boolean {
 
 	return true;
 }
+
+/**
+ * Builds the plugin using npm build
+ * @returns true if build succeeds, false otherwise
+ */
+export function buildPlugin(): boolean {
+	console.log('\nBuilding plugin...');
+
+	try {
+		execSync('npm run build', {
+			stdio: 'inherit',
+			encoding: 'utf-8'
+		});
+
+		console.log('✓ Build completed successfully\n');
+		return true;
+	} catch (error) {
+		console.error('✗ Build failed\n');
+		return false;
+	}
+}
