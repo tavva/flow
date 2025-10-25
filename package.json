@@ -14,6 +14,7 @@
     "test:coverage": "jest --coverage",
     "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
+    "release:beta": "ts-node scripts/release-beta.ts",
     "cli": "node dist/cli.mjs",
     "build:cli": "node esbuild.cli.mjs"
   },
