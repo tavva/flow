@@ -323,6 +323,7 @@ function renderActionButtonGroups(
   const groupsContainer = container.createDiv("flow-gtd-action-groups");
   groupsContainer.style.display = "flex";
   groupsContainer.style.flexDirection = "row";
+  groupsContainer.style.flexWrap = "wrap";
   groupsContainer.style.gap = "32px";
 
   // Define button groups
