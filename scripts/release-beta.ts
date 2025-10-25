@@ -373,3 +373,83 @@ export function commitAndPush(version: string): boolean {
 		return false;
 	}
 }
+
+/**
+ * Main entry point that orchestrates the entire release workflow
+ */
+async function main(): Promise<void> {
+	console.log('\n=== Beta Release Workflow ===\n');
+
+	// Pre-flight checks
+	if (!runPreflightChecks()) {
+		process.exit(1);
+	}
+
+	// Read current version
+	const manifest = readManifest();
+	const current = parseVersion(manifest.version);
+
+	if (!current) {
+		console.error('Error: Invalid version in manifest.json');
+		process.exit(1);
+	}
+
+	// Determine next version
+	let nextVersion: string;
+	if (current.isBeta) {
+		// Auto-increment beta
+		nextVersion = calculateNextVersion(current, 'auto');
+		console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
+	} else {
+		// Interactive selection
+		const bumpType = await promptVersionBump(current);
+		nextVersion = calculateNextVersion(current, bumpType);
+	}
+
+	// Update manifest
+	updateManifest(nextVersion);
+
+	// Build plugin
+	if (!buildPlugin()) {
+		console.error('Reverting manifest changes...');
+		execSync('git checkout manifest.json');
+		process.exit(1);
+	}
+
+	// Verify build files
+	try {
+		verifyBuildFiles();
+	} catch (error) {
+		console.error('Reverting manifest changes...');
+		execSync('git checkout manifest.json');
+		process.exit(1);
+	}
+
+	// Confirm and execute
+	const confirmed = await confirmRelease(nextVersion);
+	if (!confirmed) {
+		console.log('Release cancelled. Reverting manifest changes...');
+		execSync('git checkout manifest.json');
+		process.exit(0);
+	}
+
+	// Create release
+	if (!createGitHubRelease(nextVersion)) {
+		process.exit(1);
+	}
+
+	// Commit and push
+	if (!commitAndPush(nextVersion)) {
+		process.exit(1);
+	}
+
+	console.log(`\n✓ Beta v${nextVersion} released successfully!\n`);
+}
+
+// Run if called directly (TypeScript/Node.js entry point check)
+if (require.main === module) {
+	main().catch((error) => {
+		console.error('Unexpected error:', error);
+		process.exit(1);
+	});
+}
