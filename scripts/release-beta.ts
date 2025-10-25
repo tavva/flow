@@ -4,7 +4,7 @@
 import * as readline from 'readline';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 interface ParsedVersion {
 	major: number;
@@ -285,16 +285,24 @@ export function buildPlugin(): boolean {
 }
 
 /**
+ * Determines which release assets to include based on file presence
+ * @returns Array of asset file names
+ */
+export function getReleaseAssets(): string[] {
+	const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
+	return hasStyles
+		? ['manifest.json', 'main.js', 'styles.css']
+		: ['manifest.json', 'main.js'];
+}
+
+/**
  * Displays planned commands and asks for confirmation
  * @param version - Version to release
  * @returns Promise resolving to true if user confirms
  */
 export function confirmRelease(version: string): Promise<boolean> {
 	return new Promise((resolve) => {
-		const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
-		const assets = hasStyles
-			? 'manifest.json main.js styles.css'
-			: 'manifest.json main.js';
+		const assets = getReleaseAssets().join(' ');
 
 		console.log('The following commands will be executed:\n');
 		console.log(`  gh release create ${version} \\`);
@@ -323,22 +331,21 @@ export function confirmRelease(version: string): Promise<boolean> {
  * @returns true if successful, false otherwise
  */
 export function createGitHubRelease(version: string): boolean {
-	const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
-	const assets = hasStyles
-		? 'manifest.json main.js styles.css'
-		: 'manifest.json main.js';
+	const assets = getReleaseAssets();
 
 	console.log('\nCreating GitHub release...\n');
 
 	try {
-		execSync(
-			`gh release create ${version} --title "Beta v${version}" --prerelease ${assets}`,
+		execFileSync(
+			'gh',
+			['release', 'create', version, '--title', `Beta v${version}`, '--prerelease', ...assets],
 			{ stdio: 'inherit' }
 		);
 		console.log('\n✓ GitHub release created\n');
 		return true;
 	} catch (error) {
 		console.error('\nError creating release. Manifest was updated but release failed.');
+		console.error(error instanceof Error ? error.message : String(error));
 		console.error('To rollback: git checkout manifest.json\n');
 		return false;
 	}
@@ -353,13 +360,14 @@ export function commitAndPush(version: string): boolean {
 	console.log('Committing and pushing changes...\n');
 
 	try {
-		execSync('git add manifest.json', { stdio: 'inherit' });
-		execSync(`git commit -m "Release beta v${version}"`, { stdio: 'inherit' });
-		execSync('git push', { stdio: 'inherit' });
+		execFileSync('git', ['add', 'manifest.json'], { stdio: 'inherit' });
+		execFileSync('git', ['commit', '-m', `Release beta v${version}`], { stdio: 'inherit' });
+		execFileSync('git', ['push'], { stdio: 'inherit' });
 		console.log('\n✓ Changes committed and pushed\n');
 		return true;
 	} catch (error) {
 		console.error('\nError during git operations');
+		console.error(error instanceof Error ? error.message : String(error));
 		console.error('Release was created but changes not pushed');
 		console.error('You may need to manually commit and push manifest.json\n');
 		return false;
