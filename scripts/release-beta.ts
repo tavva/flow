@@ -177,7 +177,8 @@ export function updateManifest(version: string): void {
  * @throws Error if any required files are missing
  */
 export function verifyBuildFiles(): void {
-	const requiredFiles = ['main.js', 'manifest.json', 'styles.css'];
+	const requiredFiles = ['main.js', 'manifest.json'];
+	const optionalFiles = ['styles.css'];
 	const missingFiles: string[] = [];
 
 	for (const file of requiredFiles) {
@@ -189,5 +190,13 @@ export function verifyBuildFiles(): void {
 
 	if (missingFiles.length > 0) {
 		throw new Error(`Missing required build files: ${missingFiles.join(', ')}`);
+	}
+
+	// Check optional files
+	for (const file of optionalFiles) {
+		const filePath = join(process.cwd(), file);
+		if (!existsSync(filePath)) {
+			console.log(`Note: ${file} not found (plugin may not have styles)`);
+		}
 	}
 }
