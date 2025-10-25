@@ -4,6 +4,7 @@
 import * as readline from 'readline';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { execSync } from 'child_process';
 
 interface ParsedVersion {
 	major: number;
@@ -199,4 +200,65 @@ export function verifyBuildFiles(): void {
 			console.log(`Note: ${file} not found (plugin may not have styles)`);
 		}
 	}
+}
+
+/**
+ * Checks if git working directory is clean
+ * @returns true if clean, false otherwise
+ */
+export function checkGitStatus(): boolean {
+	try {
+		const output = execSync('git status --porcelain', { encoding: 'utf-8' });
+		if (output.trim() !== '') {
+			console.error('Error: Git working directory is not clean');
+			console.error('Please commit or stash your changes before releasing');
+			return false;
+		}
+		return true;
+	} catch (error) {
+		console.error('Error: Failed to check git status');
+		console.error(error instanceof Error ? error.message : String(error));
+		return false;
+	}
+}
+
+/**
+ * Verifies gh CLI is installed and authenticated
+ * @returns true if available and authenticated, false otherwise
+ */
+export function checkGitHubCLI(): boolean {
+	// Check if gh is installed
+	try {
+		execSync('gh --version', { encoding: 'utf-8', stdio: 'pipe' });
+	} catch (error) {
+		console.error('Error: GitHub CLI (gh) is not installed');
+		console.error('Install from: https://cli.github.com/');
+		return false;
+	}
+
+	// Check if gh is authenticated
+	try {
+		execSync('gh auth status', { encoding: 'utf-8', stdio: 'pipe' });
+		return true;
+	} catch (error) {
+		console.error('Error: GitHub CLI is not authenticated');
+		console.error('Run: gh auth login');
+		return false;
+	}
+}
+
+/**
+ * Runs all pre-flight checks before releasing
+ * @returns true if all checks pass, false otherwise
+ */
+export function runPreflightChecks(): boolean {
+	if (!checkGitStatus()) {
+		return false;
+	}
+
+	if (!checkGitHubCLI()) {
+		return false;
+	}
+
+	return true;
 }
