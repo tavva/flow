@@ -283,3 +283,85 @@ export function buildPlugin(): boolean {
 		return false;
 	}
 }
+
+/**
+ * Displays planned commands and asks for confirmation
+ * @param version - Version to release
+ * @returns Promise resolving to true if user confirms
+ */
+export function confirmRelease(version: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
+		const assets = hasStyles
+			? 'manifest.json main.js styles.css'
+			: 'manifest.json main.js';
+
+		console.log('The following commands will be executed:\n');
+		console.log(`  gh release create ${version} \\`);
+		console.log(`    --title "Beta v${version}" \\`);
+		console.log('    --prerelease \\');
+		console.log(`    ${assets}\n`);
+		console.log('  git add manifest.json');
+		console.log(`  git commit -m "Release beta v${version}"`);
+		console.log('  git push\n');
+
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout
+		});
+
+		rl.question('Proceed with release? (y/n): ', (answer) => {
+			rl.close();
+			resolve(answer.toLowerCase() === 'y');
+		});
+	});
+}
+
+/**
+ * Creates GitHub release
+ * @param version - Version to release
+ * @returns true if successful, false otherwise
+ */
+export function createGitHubRelease(version: string): boolean {
+	const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
+	const assets = hasStyles
+		? 'manifest.json main.js styles.css'
+		: 'manifest.json main.js';
+
+	console.log('\nCreating GitHub release...\n');
+
+	try {
+		execSync(
+			`gh release create ${version} --title "Beta v${version}" --prerelease ${assets}`,
+			{ stdio: 'inherit' }
+		);
+		console.log('\n✓ GitHub release created\n');
+		return true;
+	} catch (error) {
+		console.error('\nError creating release. Manifest was updated but release failed.');
+		console.error('To rollback: git checkout manifest.json\n');
+		return false;
+	}
+}
+
+/**
+ * Commits and pushes changes
+ * @param version - Version being released
+ * @returns true if successful, false otherwise
+ */
+export function commitAndPush(version: string): boolean {
+	console.log('Committing and pushing changes...\n');
+
+	try {
+		execSync('git add manifest.json', { stdio: 'inherit' });
+		execSync(`git commit -m "Release beta v${version}"`, { stdio: 'inherit' });
+		execSync('git push', { stdio: 'inherit' });
+		console.log('\n✓ Changes committed and pushed\n');
+		return true;
+	} catch (error) {
+		console.error('\nError during git operations');
+		console.error('Release was created but changes not pushed');
+		console.error('You may need to manually commit and push manifest.json\n');
+		return false;
+	}
+}
