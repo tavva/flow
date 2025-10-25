@@ -1,6 +1,8 @@
 // ABOUTME: Beta release script for creating and publishing versioned beta releases.
 // ABOUTME: Handles version parsing, calculation, and GitHub release creation via BRAT.
 
+import * as readline from 'readline';
+
 interface ParsedVersion {
 	major: number;
 	minor: number;
@@ -73,4 +75,57 @@ export function calculateNextVersion(
 		throw new Error('Invalid custom version');
 	}
 	return bumpType;
+}
+
+/**
+ * Prompts user to select version bump type
+ * @param current - Parsed current version
+ * @returns Promise resolving to 'patch', 'minor', or a custom version string
+ */
+export function promptVersionBump(current: ParsedVersion): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout
+		});
+
+		// Calculate what each option would result in
+		const patchVersion = `${current.major}.${current.minor}.${current.patch + 1}-beta.1`;
+		const minorVersion = `${current.major}.${current.minor + 1}.0-beta.1`;
+
+		console.log(`\nCurrent version: ${current.major}.${current.minor}.${current.patch}\n`);
+		console.log('Select version bump:');
+		console.log(`1) Patch: ${patchVersion}`);
+		console.log(`2) Minor: ${minorVersion}`);
+		console.log('3) Custom (enter version manually)\n');
+
+		rl.question('Choice (1/2/3): ', (answer) => {
+			const choice = answer.trim();
+
+			if (choice === '1') {
+				rl.close();
+				resolve('patch');
+			} else if (choice === '2') {
+				rl.close();
+				resolve('minor');
+			} else if (choice === '3') {
+				rl.question('Enter custom version (format: X.Y.Z-beta.N): ', (customVersion) => {
+					const trimmed = customVersion.trim();
+					const parsed = parseVersion(trimmed);
+
+					if (!parsed || !parsed.isBeta) {
+						rl.close();
+						reject(new Error('Invalid version format. Must be X.Y.Z-beta.N'));
+						return;
+					}
+
+					rl.close();
+					resolve(trimmed);
+				});
+			} else {
+				rl.close();
+				reject(new Error('Invalid choice. Please enter 1, 2, or 3'));
+			}
+		});
+	});
 }
