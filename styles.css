@@ -1403,3 +1403,45 @@ select.flow-gtd-inline-select option,
 	color: var(--text-muted);
 	font-style: italic;
 }
+
+/* Sub-project checkbox styling */
+.flow-gtd-subproject-toggle {
+	margin-top: 16px !important;
+	padding: 12px;
+	background-color: var(--background-secondary);
+	border-radius: 8px;
+	border: 1px solid var(--background-modifier-border);
+}
+
+/* Fix Setting component layout in project section */
+.flow-gtd-project-section .setting-item {
+	display: flex;
+	flex-direction: column !important;
+	gap: 8px;
+	padding: 16px 0;
+	border: none;
+	margin: 0;
+}
+
+.flow-gtd-project-section .setting-item-info {
+	width: 100%;
+	margin-right: 0;
+}
+
+.flow-gtd-project-section .setting-item-control {
+	width: 100%;
+	max-width: none;
+	flex-grow: 0;
+}
+
+.flow-gtd-project-section .setting-item-name {
+	font-size: 14px;
+	font-weight: 600;
+	margin-bottom: 4px;
+}
+
+.flow-gtd-project-section .setting-item-description {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-bottom: 8px;
+}

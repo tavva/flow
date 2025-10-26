@@ -640,8 +640,7 @@ function renderProjectCreationSection(
     }
   }
 
-  const subProjectToggleContainer = projectEl.createDiv();
-  subProjectToggleContainer.style.marginTop = "12px";
+  const subProjectToggleContainer = projectEl.createDiv("flow-gtd-subproject-toggle");
   subProjectToggleContainer.style.display = "flex";
   subProjectToggleContainer.style.alignItems = "center";
   subProjectToggleContainer.style.gap = "8px";
