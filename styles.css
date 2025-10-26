@@ -1526,3 +1526,17 @@ select.flow-gtd-inline-select option,
 	opacity: 1;
 	pointer-events: auto;
 }
+
+/* Three-dot menu button - hide on desktop (hover-capable devices), show on mobile */
+@media (hover: hover) {
+	.flow-gtd-hotlist-action-menu {
+		display: none;
+	}
+}
+
+/* Show secondary actions when menu-open class is present (mobile) */
+.flow-gtd-hotlist-item.menu-open .flow-gtd-hotlist-action-secondary,
+.flow-gtd-hotlist-pinned-item.menu-open .flow-gtd-hotlist-action-secondary {
+	opacity: 1;
+	pointer-events: auto;
+}

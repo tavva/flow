@@ -379,6 +379,17 @@ export class HotlistView extends ItemView {
       await this.markItemComplete(item);
     });
 
+    // Three-dot menu button (mobile only, hidden on desktop via CSS)
+    const menuBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-menu",
+      text: "⋯",
+    });
+    menuBtn.title = "More actions";
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      itemEl.toggleClass("menu-open", !itemEl.hasClass("menu-open"));
+    });
+
     // Secondary actions (shown on hover) - wrapped in container for absolute positioning
     const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-hotlist-action-secondary" });
 
@@ -468,6 +479,17 @@ export class HotlistView extends ItemView {
     completeBtn.title = "Mark as complete";
     completeBtn.addEventListener("click", async () => {
       await this.markItemComplete(item);
+    });
+
+    // Three-dot menu button (mobile only, hidden on desktop via CSS)
+    const menuBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-menu",
+      text: "⋯",
+    });
+    menuBtn.title = "More actions";
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      itemEl.toggleClass("menu-open", !itemEl.hasClass("menu-open"));
     });
 
     // Secondary actions (shown on hover) - wrapped in container for absolute positioning
