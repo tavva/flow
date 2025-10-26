@@ -13,6 +13,7 @@
 ## Task 1: Data Model - Add isPinned Property
 
 **Files:**
+
 - Modify: `src/types.ts:23-31`
 - Test: `tests/hotlist-view.test.ts`
 
@@ -137,6 +138,7 @@ git commit -m "feat: add isPinned property to HotlistItem interface"
 ## Task 2: Rendering - Split and Render Pinned Section
 
 **Files:**
+
 - Modify: `src/hotlist-view.ts:103-105`, `src/hotlist-view.ts:237-268`
 - Test: Already added in Task 1
 
@@ -234,6 +236,7 @@ git commit -m "feat: split rendering into pinned and unpinned sections"
 ## Task 3: Pin/Unpin Functionality
 
 **Files:**
+
 - Modify: `src/hotlist-view.ts:319-380` (renderItem method), add new methods after line 571
 - Test: `tests/hotlist-view.test.ts`
 
@@ -422,6 +425,7 @@ git commit -m "feat: implement pin/unpin functionality with pin button"
 ## Task 4: Drag-and-Drop Support
 
 **Files:**
+
 - Modify: `src/hotlist-view.ts` (renderPinnedItem method, add drag handlers)
 - Test: `tests/hotlist-view.test.ts`
 
@@ -687,6 +691,7 @@ git commit -m "feat: implement drag-and-drop reordering for pinned items"
 ## Task 5: CSS Styling
 
 **Files:**
+
 - Modify: `styles.css`
 
 **Step 1: Add CSS for pinned section and drag-and-drop**
@@ -744,6 +749,7 @@ npm run build
 ```
 
 Then in Obsidian:
+
 1. Open hotlist view
 2. Pin some items (should appear in "Pinned" section)
 3. Hover over pinned items (drag handle should appear)
@@ -762,6 +768,7 @@ git commit -m "style: add CSS for pinned section and drag-and-drop"
 ## Task 6: Edge Case - Planning Mode Integration
 
 **Files:**
+
 - Modify: `src/sphere-view.ts` (verify new items added as unpinned)
 - Test: `tests/sphere-view.test.ts`
 
@@ -840,6 +847,7 @@ git commit -m "test: verify planning mode adds unpinned items by default"
 ## Task 7: Edge Case - Validation Preserves Pin State
 
 **Files:**
+
 - Modify: `src/hotlist-view.ts:148-183` (refresh method)
 - Test: `tests/hotlist-view.test.ts`
 
@@ -931,6 +939,7 @@ git commit -m "test: verify validation preserves isPinned state"
 ## Task 8: Integration Testing
 
 **Files:**
+
 - Test: `tests/hotlist-integration.test.ts`
 
 **Step 1: Write end-to-end integration test**
@@ -1029,6 +1038,7 @@ git commit -m "test: add end-to-end integration test for pin/reorder/unpin workf
 ## Task 9: Run Full Test Suite and Build
 
 **Files:**
+
 - All test files
 
 **Step 1: Run full test suite**
@@ -1067,6 +1077,7 @@ git commit -m "fix: address any issues found in full test suite"
 ## Task 10: Update Documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 **Step 1: Update CLAUDE.md with new feature description**
@@ -1139,6 +1150,7 @@ git commit -m "docs: update CLAUDE.md with manual reordering feature"
 ## Task 11: Final Verification and Cleanup
 
 **Files:**
+
 - All files
 
 **Step 1: Run format check**
@@ -1166,6 +1178,7 @@ npm run build
 ```
 
 Test in Obsidian:
+
 - [ ] Pin items from different sections (Project Actions, General Actions)
 - [ ] Verify pinned items appear in "Pinned" section
 - [ ] Drag handle appears on hover
@@ -1215,6 +1228,7 @@ git push -u origin feature/hotlist-manual-reordering
 ## Next Steps
 
 After implementation:
+
 1. Use `superpowers:finishing-a-development-branch` to decide merge strategy
 2. Create PR or merge to main
 3. Test in production Obsidian vault

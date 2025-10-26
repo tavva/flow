@@ -21,12 +21,14 @@ The current hotlist displays items grouped by project and sphere, sorted alphabe
 ## Approach: Hybrid Pinned Section
 
 We explored four approaches:
+
 - Disable grouping entirely (flat custom-ordered list)
 - Allow reordering within groups only
 - **Hybrid: Pinned section + grouped unpinned items** ← Selected
 - Two-level: Reorder both groups and items within groups
 
 The hybrid approach was chosen because it:
+
 - Solves the priority problem (pin important items to top)
 - Maintains the useful grouping for unpinned items
 - Keeps complexity low (only pinned items need ordering)
@@ -45,19 +47,21 @@ export interface HotlistItem {
   sphere: string;
   isGeneral: boolean;
   addedAt: number;
-  isPinned?: boolean;  // NEW: indicates item is in pinned section
+  isPinned?: boolean; // NEW: indicates item is in pinned section
 }
 ```
 
 ### Settings Storage Structure
 
 The `settings.hotlist` array becomes an ordered list where:
+
 - **Pinned items** appear at the front in their desired display order
 - **Unpinned items** follow (their array position is irrelevant for rendering)
 
 **Key principle:** Array index determines pinned item order. When dragging item A above item B in the pinned section, we reorder the array so A's index < B's index.
 
 **Example:**
+
 ```typescript
 settings.hotlist = [
   { text: "High priority task", isPinned: true, ... },      // Position 0
@@ -114,6 +118,7 @@ Each pinned item displays:
 ```
 
 Where:
+
 - **Drag Handle** (⋮⋮ or grip-vertical icon) - Appears on hover, enables drag-and-drop
 - **📌 Pin Icon** - Visual indicator of pinned status
 - **Action Text** - Clickable to open source file
@@ -135,6 +140,7 @@ The pin button appears before the existing action buttons.
 ### Technology Choice
 
 Use native HTML5 Drag-and-Drop API (consistent with Obsidian patterns):
+
 - `draggable="true"` attribute on pinned items
 - Standard drag events: `dragstart`, `dragover`, `drop`, `dragend`
 - Visual feedback via CSS classes during drag operations
@@ -230,6 +236,7 @@ private async pinItem(item: HotlistItem): Promise<void> {
 ```
 
 When an item is pinned:
+
 1. Set `isPinned = true`
 2. Move item to end of pinned section in array
 3. Save settings and re-render
@@ -255,6 +262,7 @@ private async unpinItem(item: HotlistItem): Promise<void> {
 ```
 
 When an item is unpinned:
+
 1. Set `isPinned = false`
 2. Item stays in array (position doesn't matter for unpinned items)
 3. Save settings and re-render
@@ -264,12 +272,14 @@ When an item is unpinned:
 ### Planning Mode Integration
 
 When adding items from sphere view planning mode:
+
 - New items are added with `isPinned: false` (unpinned by default)
 - Appended to end of `settings.hotlist` array
 
 ### Validation and Refresh
 
 When hotlist items are validated during refresh:
+
 - Maintain `isPinned` state when updating line numbers
 - Preserve array order for pinned items
 - Completed items are removed regardless of pin status
@@ -277,12 +287,14 @@ When hotlist items are validated during refresh:
 ### Empty Pinned Section
 
 If all pinned items are unpinned:
+
 - "Pinned" section header disappears automatically
 - View shows only Project Actions and General Actions sections
 
 ### Single Pinned Item
 
 If only one item is pinned:
+
 - Drag-and-drop still works but has no visible effect
 - No special handling required
 
@@ -378,18 +390,21 @@ If only one item is pinned:
 ## Implementation Phases
 
 ### Phase 1: Data Model and Basic Pinning
+
 - Add `isPinned` property to `HotlistItem`
 - Implement `pinItem()` and `unpinItem()` methods
 - Update rendering to show pinned section
 - Add pin/unpin buttons to UI
 
 ### Phase 2: Drag-and-Drop
+
 - Add drag handle to pinned items
 - Implement drag event handlers
 - Add reordering logic
 - CSS for drag-drop visual feedback
 
 ### Phase 3: Polish and Testing
+
 - Edge case handling
 - Accessibility improvements
 - Unit tests
