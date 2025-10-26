@@ -369,15 +369,17 @@ export class HotlistView extends ItemView {
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
 
-    // Pin button
-    const pinBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
-      text: "📌",
-    });
-    pinBtn.title = "Pin to top";
-    pinBtn.addEventListener("click", async () => {
-      await this.pinItem(item);
-    });
+    // Pin button (only show for unpinned items)
+    if (!item.isPinned) {
+      const pinBtn = actionsSpan.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
+        text: "📌",
+      });
+      pinBtn.title = "Pin to top";
+      pinBtn.addEventListener("click", async () => {
+        await this.pinItem(item);
+      });
+    }
 
     const completeBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-hotlist-action-btn",
