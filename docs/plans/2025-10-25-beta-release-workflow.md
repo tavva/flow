@@ -13,6 +13,7 @@
 ## Task 1: Create Scripts Directory and Version Parsing Logic
 
 **Files:**
+
 - Create: `scripts/release-beta.mjs`
 - Test: `tests/release-beta.test.ts`
 
@@ -22,54 +23,54 @@ Create test file:
 
 ```typescript
 // tests/release-beta.test.ts
-import { parseVersion, calculateNextVersion } from '../scripts/release-beta.mjs';
+import { parseVersion, calculateNextVersion } from "../scripts/release-beta.mjs";
 
-describe('Version Parsing', () => {
-  test('should parse production version', () => {
-    const result = parseVersion('0.7.0');
+describe("Version Parsing", () => {
+  test("should parse production version", () => {
+    const result = parseVersion("0.7.0");
     expect(result).toEqual({
       major: 0,
       minor: 7,
       patch: 0,
       betaNumber: undefined,
-      isBeta: false
+      isBeta: false,
     });
   });
 
-  test('should parse beta version', () => {
-    const result = parseVersion('0.7.1-beta.2');
+  test("should parse beta version", () => {
+    const result = parseVersion("0.7.1-beta.2");
     expect(result).toEqual({
       major: 0,
       minor: 7,
       patch: 1,
       betaNumber: 2,
-      isBeta: true
+      isBeta: true,
     });
   });
 
-  test('should return null for invalid version', () => {
-    const result = parseVersion('invalid');
+  test("should return null for invalid version", () => {
+    const result = parseVersion("invalid");
     expect(result).toBeNull();
   });
 });
 
-describe('Next Version Calculation', () => {
-  test('should auto-increment beta number', () => {
-    const current = parseVersion('0.7.1-beta.2');
-    const next = calculateNextVersion(current, 'auto');
-    expect(next).toBe('0.7.1-beta.3');
+describe("Next Version Calculation", () => {
+  test("should auto-increment beta number", () => {
+    const current = parseVersion("0.7.1-beta.2");
+    const next = calculateNextVersion(current, "auto");
+    expect(next).toBe("0.7.1-beta.3");
   });
 
-  test('should create patch beta from production', () => {
-    const current = parseVersion('0.7.0');
-    const next = calculateNextVersion(current, 'patch');
-    expect(next).toBe('0.7.1-beta.1');
+  test("should create patch beta from production", () => {
+    const current = parseVersion("0.7.0");
+    const next = calculateNextVersion(current, "patch");
+    expect(next).toBe("0.7.1-beta.1");
   });
 
-  test('should create minor beta from production', () => {
-    const current = parseVersion('0.7.0');
-    const next = calculateNextVersion(current, 'minor');
-    expect(next).toBe('0.8.0-beta.1');
+  test("should create minor beta from production", () => {
+    const current = parseVersion("0.7.0");
+    const next = calculateNextVersion(current, "minor");
+    expect(next).toBe("0.8.0-beta.1");
   });
 });
 ```
@@ -153,6 +154,7 @@ git commit -m "feat: add version parsing logic for beta releases"
 ## Task 2: Add Interactive Version Selection
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 - Test: Manual testing (readline is interactive, hard to unit test)
 
@@ -161,7 +163,7 @@ git commit -m "feat: add version parsing logic for beta releases"
 Add to `scripts/release-beta.mjs`:
 
 ```javascript
-import * as readline from 'readline';
+import * as readline from "readline";
 
 /**
  * Prompts user for version bump type
@@ -171,49 +173,50 @@ import * as readline from 'readline';
 export async function promptVersionBump(current) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
-  const question = (query) => new Promise((resolve) => {
-    rl.question(query, resolve);
-  });
+  const question = (query) =>
+    new Promise((resolve) => {
+      rl.question(query, resolve);
+    });
 
   const currentVersion = `${current.major}.${current.minor}.${current.patch}`;
-  const patchVersion = calculateNextVersion(current, 'patch');
-  const minorVersion = calculateNextVersion(current, 'minor');
+  const patchVersion = calculateNextVersion(current, "patch");
+  const minorVersion = calculateNextVersion(current, "minor");
 
   console.log(`\nCurrent version: ${currentVersion}\n`);
-  console.log('Select version bump:');
+  console.log("Select version bump:");
   console.log(`1) Patch: ${patchVersion}`);
   console.log(`2) Minor: ${minorVersion}`);
-  console.log('3) Custom (enter version manually)\n');
+  console.log("3) Custom (enter version manually)\n");
 
-  const choice = await question('Choice (1/2/3): ');
+  const choice = await question("Choice (1/2/3): ");
 
-  if (choice === '1') {
+  if (choice === "1") {
     rl.close();
-    return 'patch';
+    return "patch";
   }
 
-  if (choice === '2') {
+  if (choice === "2") {
     rl.close();
-    return 'minor';
+    return "minor";
   }
 
-  if (choice === '3') {
-    const custom = await question('Enter version (e.g., 0.8.0-beta.1): ');
+  if (choice === "3") {
+    const custom = await question("Enter version (e.g., 0.8.0-beta.1): ");
     rl.close();
 
     // Validate custom version
     if (!parseVersion(custom)) {
-      console.error('Invalid version format. Must match X.Y.Z-beta.N');
+      console.error("Invalid version format. Must match X.Y.Z-beta.N");
       process.exit(1);
     }
 
     return custom;
   }
 
-  console.error('Invalid choice');
+  console.error("Invalid choice");
   rl.close();
   process.exit(1);
 }
@@ -231,6 +234,7 @@ git commit -m "feat: add interactive version selection prompt"
 ## Task 3: Add Build and File Management
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 
 **Step 1: Add file reading and manifest update functions**
@@ -238,22 +242,22 @@ git commit -m "feat: add interactive version selection prompt"
 Add to `scripts/release-beta.mjs`:
 
 ```javascript
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from "fs";
 
 /**
  * Reads and parses manifest.json
  * @returns {Object} Parsed manifest
  */
 export function readManifest() {
-  if (!existsSync('manifest.json')) {
-    console.error('Error: manifest.json not found');
+  if (!existsSync("manifest.json")) {
+    console.error("Error: manifest.json not found");
     process.exit(1);
   }
 
   try {
-    return JSON.parse(readFileSync('manifest.json', 'utf8'));
+    return JSON.parse(readFileSync("manifest.json", "utf8"));
   } catch (error) {
-    console.error('Error parsing manifest.json:', error.message);
+    console.error("Error parsing manifest.json:", error.message);
     process.exit(1);
   }
 }
@@ -265,7 +269,7 @@ export function readManifest() {
 export function updateManifest(version) {
   const manifest = readManifest();
   manifest.version = version;
-  writeFileSync('manifest.json', JSON.stringify(manifest, null, '\t'));
+  writeFileSync("manifest.json", JSON.stringify(manifest, null, "\t"));
   console.log(`✓ manifest.json updated to ${version}`);
 }
 
@@ -274,8 +278,8 @@ export function updateManifest(version) {
  * @returns {boolean} True if all files exist
  */
 export function verifyBuildFiles() {
-  const required = ['manifest.json', 'main.js'];
-  const optional = ['styles.css'];
+  const required = ["manifest.json", "main.js"];
+  const optional = ["styles.css"];
 
   for (const file of required) {
     if (!existsSync(file)) {
@@ -285,8 +289,8 @@ export function verifyBuildFiles() {
   }
 
   // styles.css is optional - just note if missing
-  if (!existsSync('styles.css')) {
-    console.log('Note: styles.css not found (plugin may not have styles)');
+  if (!existsSync("styles.css")) {
+    console.log("Note: styles.css not found (plugin may not have styles)");
   }
 
   return true;
@@ -305,6 +309,7 @@ git commit -m "feat: add manifest reading/updating and build file verification"
 ## Task 4: Add Pre-flight Checks
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 
 **Step 1: Add pre-flight check functions**
@@ -312,7 +317,7 @@ git commit -m "feat: add manifest reading/updating and build file verification"
 Add to `scripts/release-beta.mjs`:
 
 ```javascript
-import { execSync } from 'child_process';
+import { execSync } from "child_process";
 
 /**
  * Checks if git working directory is clean
@@ -320,15 +325,15 @@ import { execSync } from 'child_process';
  */
 export function checkGitStatus() {
   try {
-    const status = execSync('git status --porcelain', { encoding: 'utf8' });
+    const status = execSync("git status --porcelain", { encoding: "utf8" });
     if (status.trim()) {
-      console.error('\nError: Working directory has uncommitted changes');
-      console.error('Please commit or stash changes before releasing\n');
+      console.error("\nError: Working directory has uncommitted changes");
+      console.error("Please commit or stash changes before releasing\n");
       return false;
     }
     return true;
   } catch (error) {
-    console.error('Error checking git status:', error.message);
+    console.error("Error checking git status:", error.message);
     return false;
   }
 }
@@ -339,18 +344,18 @@ export function checkGitStatus() {
  */
 export function checkGitHubCLI() {
   try {
-    execSync('gh --version', { stdio: 'pipe' });
+    execSync("gh --version", { stdio: "pipe" });
   } catch (error) {
-    console.error('\nError: GitHub CLI (gh) not found');
-    console.error('Install from: https://cli.github.com\n');
+    console.error("\nError: GitHub CLI (gh) not found");
+    console.error("Install from: https://cli.github.com\n");
     return false;
   }
 
   try {
-    execSync('gh auth status', { stdio: 'pipe' });
+    execSync("gh auth status", { stdio: "pipe" });
   } catch (error) {
-    console.error('\nError: GitHub CLI not authenticated');
-    console.error('Run: gh auth login\n');
+    console.error("\nError: GitHub CLI not authenticated");
+    console.error("Run: gh auth login\n");
     return false;
   }
 
@@ -362,12 +367,12 @@ export function checkGitHubCLI() {
  * @returns {boolean} True if all checks pass
  */
 export function runPreflightChecks() {
-  console.log('Running pre-flight checks...\n');
+  console.log("Running pre-flight checks...\n");
 
   if (!checkGitStatus()) return false;
   if (!checkGitHubCLI()) return false;
 
-  console.log('✓ All pre-flight checks passed\n');
+  console.log("✓ All pre-flight checks passed\n");
   return true;
 }
 ```
@@ -384,6 +389,7 @@ git commit -m "feat: add pre-flight checks for git and GitHub CLI"
 ## Task 5: Add Build Execution
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 
 **Step 1: Add build function**
@@ -396,14 +402,14 @@ Add to `scripts/release-beta.mjs`:
  * @returns {boolean} True if build succeeds
  */
 export function buildPlugin() {
-  console.log('Building plugin...\n');
+  console.log("Building plugin...\n");
 
   try {
-    execSync('npm run build', { stdio: 'inherit' });
-    console.log('\n✓ Build completed successfully\n');
+    execSync("npm run build", { stdio: "inherit" });
+    console.log("\n✓ Build completed successfully\n");
     return true;
   } catch (error) {
-    console.error('\nBuild failed. Please fix errors before releasing.\n');
+    console.error("\nBuild failed. Please fix errors before releasing.\n");
     return false;
   }
 }
@@ -421,6 +427,7 @@ git commit -m "feat: add plugin build execution"
 ## Task 6: Add Confirmation and Release Execution
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 
 **Step 1: Add confirmation and execution functions**
@@ -434,32 +441,30 @@ Add to `scripts/release-beta.mjs`:
  * @returns {Promise<boolean>} True if user confirms
  */
 export async function confirmRelease(version) {
-  const hasStyles = existsSync('styles.css');
-  const assets = hasStyles
-    ? 'manifest.json main.js styles.css'
-    : 'manifest.json main.js';
+  const hasStyles = existsSync("styles.css");
+  const assets = hasStyles ? "manifest.json main.js styles.css" : "manifest.json main.js";
 
-  console.log('The following commands will be executed:\n');
+  console.log("The following commands will be executed:\n");
   console.log(`  gh release create ${version} \\`);
   console.log(`    --title "Beta v${version}" \\`);
-  console.log('    --prerelease \\');
+  console.log("    --prerelease \\");
   console.log(`    ${assets}\n`);
-  console.log('  git add manifest.json');
+  console.log("  git add manifest.json");
   console.log(`  git commit -m "Release beta v${version}"`);
-  console.log('  git push\n');
+  console.log("  git push\n");
 
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
   const answer = await new Promise((resolve) => {
-    rl.question('Proceed with release? (y/n): ', resolve);
+    rl.question("Proceed with release? (y/n): ", resolve);
   });
 
   rl.close();
 
-  return answer.toLowerCase() === 'y';
+  return answer.toLowerCase() === "y";
 }
 
 /**
@@ -468,23 +473,20 @@ export async function confirmRelease(version) {
  * @returns {boolean} True if successful
  */
 export function createGitHubRelease(version) {
-  const hasStyles = existsSync('styles.css');
-  const assets = hasStyles
-    ? 'manifest.json main.js styles.css'
-    : 'manifest.json main.js';
+  const hasStyles = existsSync("styles.css");
+  const assets = hasStyles ? "manifest.json main.js styles.css" : "manifest.json main.js";
 
-  console.log('\nCreating GitHub release...\n');
+  console.log("\nCreating GitHub release...\n");
 
   try {
-    execSync(
-      `gh release create ${version} --title "Beta v${version}" --prerelease ${assets}`,
-      { stdio: 'inherit' }
-    );
-    console.log('\n✓ GitHub release created\n');
+    execSync(`gh release create ${version} --title "Beta v${version}" --prerelease ${assets}`, {
+      stdio: "inherit",
+    });
+    console.log("\n✓ GitHub release created\n");
     return true;
   } catch (error) {
-    console.error('\nError creating release. Manifest was updated but release failed.');
-    console.error('To rollback: git checkout manifest.json\n');
+    console.error("\nError creating release. Manifest was updated but release failed.");
+    console.error("To rollback: git checkout manifest.json\n");
     return false;
   }
 }
@@ -495,18 +497,18 @@ export function createGitHubRelease(version) {
  * @returns {boolean} True if successful
  */
 export function commitAndPush(version) {
-  console.log('Committing and pushing changes...\n');
+  console.log("Committing and pushing changes...\n");
 
   try {
-    execSync('git add manifest.json', { stdio: 'inherit' });
-    execSync(`git commit -m "Release beta v${version}"`, { stdio: 'inherit' });
-    execSync('git push', { stdio: 'inherit' });
-    console.log('\n✓ Changes committed and pushed\n');
+    execSync("git add manifest.json", { stdio: "inherit" });
+    execSync(`git commit -m "Release beta v${version}"`, { stdio: "inherit" });
+    execSync("git push", { stdio: "inherit" });
+    console.log("\n✓ Changes committed and pushed\n");
     return true;
   } catch (error) {
-    console.error('\nError during git operations');
-    console.error('Release was created but changes not pushed');
-    console.error('You may need to manually commit and push manifest.json\n');
+    console.error("\nError during git operations");
+    console.error("Release was created but changes not pushed");
+    console.error("You may need to manually commit and push manifest.json\n");
     return false;
   }
 }
@@ -524,6 +526,7 @@ git commit -m "feat: add release confirmation and execution functions"
 ## Task 7: Add Main Entry Point
 
 **Files:**
+
 - Modify: `scripts/release-beta.mjs`
 
 **Step 1: Add main function**
@@ -535,7 +538,7 @@ Add to `scripts/release-beta.mjs`:
  * Main entry point
  */
 async function main() {
-  console.log('\n=== Beta Release Workflow ===\n');
+  console.log("\n=== Beta Release Workflow ===\n");
 
   // Pre-flight checks
   if (!runPreflightChecks()) {
@@ -547,7 +550,7 @@ async function main() {
   const current = parseVersion(manifest.version);
 
   if (!current) {
-    console.error('Error: Invalid version in manifest.json');
+    console.error("Error: Invalid version in manifest.json");
     process.exit(1);
   }
 
@@ -555,7 +558,7 @@ async function main() {
   let nextVersion;
   if (current.isBeta) {
     // Auto-increment beta
-    nextVersion = calculateNextVersion(current, 'auto');
+    nextVersion = calculateNextVersion(current, "auto");
     console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
   } else {
     // Interactive selection
@@ -568,23 +571,23 @@ async function main() {
 
   // Build plugin
   if (!buildPlugin()) {
-    console.error('Reverting manifest changes...');
-    execSync('git checkout manifest.json');
+    console.error("Reverting manifest changes...");
+    execSync("git checkout manifest.json");
     process.exit(1);
   }
 
   // Verify build files
   if (!verifyBuildFiles()) {
-    console.error('Reverting manifest changes...');
-    execSync('git checkout manifest.json');
+    console.error("Reverting manifest changes...");
+    execSync("git checkout manifest.json");
     process.exit(1);
   }
 
   // Confirm and execute
   const confirmed = await confirmRelease(nextVersion);
   if (!confirmed) {
-    console.log('Release cancelled. Reverting manifest changes...');
-    execSync('git checkout manifest.json');
+    console.log("Release cancelled. Reverting manifest changes...");
+    execSync("git checkout manifest.json");
     process.exit(0);
   }
 
@@ -604,7 +607,7 @@ async function main() {
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
-    console.error('Unexpected error:', error);
+    console.error("Unexpected error:", error);
     process.exit(1);
   });
 }
@@ -626,6 +629,7 @@ git commit -m "feat: add main entry point for beta release script"
 ## Task 8: Add NPM Script and Documentation
 
 **Files:**
+
 - Modify: `package.json`
 - Create: `docs/beta-release.md` (optional documentation)
 
@@ -665,11 +669,13 @@ git commit -m "feat: add release:beta npm script"
 ## Task 9: Manual Testing and Verification
 
 **Files:**
+
 - None (manual testing only)
 
 **Step 1: Test with current production version**
 
 Before running, verify current state:
+
 - Run: `cat manifest.json | grep version`
 - Expected: Shows current production version (e.g., `"version": "0.7.0"`)
 
@@ -680,6 +686,7 @@ Since this will actually create a release, we should test the pre-flight checks 
 Run: `npm run release:beta`
 
 Expected workflow:
+
 1. Pre-flight checks pass (clean git, gh installed)
 2. Shows current version
 3. Prompts for version selection (test each option)
@@ -692,6 +699,7 @@ Expected workflow:
 **Step 3: Review the code**
 
 Before creating an actual release, review:
+
 - All error handling paths
 - Rollback mechanisms work correctly
 - Console output is clear and helpful
@@ -699,6 +707,7 @@ Before creating an actual release, review:
 **Step 4: Document for Ben**
 
 Add note to implementation plan about testing strategy:
+
 - Can test by selecting 'n' at confirmation
 - First real release will be from current version (0.7.0)
 - Subsequent beta releases will auto-increment

@@ -13,6 +13,7 @@
 ## Task 1: Add wrap-ansi dependency
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Add wrap-ansi to dependencies**
@@ -44,6 +45,7 @@ git commit -m "Add wrap-ansi dependency for terminal text wrapping"
 ## Task 2: Create wrapForTerminal utility function
 
 **Files:**
+
 - Modify: `src/cli.tsx:1-25` (add import and function after existing imports)
 
 **Step 1: Add wrap-ansi import**
@@ -51,7 +53,7 @@ git commit -m "Add wrap-ansi dependency for terminal text wrapping"
 Add after the existing imports (around line 22):
 
 ```typescript
-import wrapAnsi from 'wrap-ansi';
+import wrapAnsi from "wrap-ansi";
 ```
 
 **Step 2: Create wrapForTerminal function**
@@ -89,6 +91,7 @@ git commit -m "Add wrapForTerminal utility function"
 ## Task 3: Apply wrapping to Coach responses
 
 **Files:**
+
 - Modify: `src/cli.tsx:385` (the console.log for Coach responses)
 
 **Step 1: Find the Coach response output**
@@ -127,6 +130,7 @@ git commit -m "Apply word wrapping to Coach markdown responses"
 ## Task 4: Apply wrapping to tool execution messages
 
 **Files:**
+
 - Modify: `src/cli.tsx:220-221,230` (tool result messages)
 
 **Step 1: Wrap tool error messages**
@@ -193,6 +197,7 @@ git commit -m "Apply word wrapping to tool execution messages"
 ## Task 5: Build and manual verification
 
 **Files:**
+
 - None (verification only)
 
 **Step 1: Build the CLI**
@@ -259,6 +264,7 @@ Manual testing performed:
 ## Task 6: Update documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md` (update CLI section with wrapping info)
 
 **Step 1: Find CLI documentation section**
@@ -271,6 +277,7 @@ Add after the existing CLI usage notes:
 
 ```markdown
 **Output Formatting:**
+
 - CLI output automatically wraps to terminal width using `wrap-ansi`
 - Width detection uses `process.stdout.columns` (fallback: 80 columns)
 - ANSI colors are preserved during wrapping
@@ -302,16 +309,19 @@ Before considering complete:
 ## Notes
 
 **Testing Strategy:**
+
 - No unit tests for wrapping (would require mocking process.stdout.columns)
 - Manual verification in terminal is sufficient
 - Existing tests verify wrapping doesn't break functionality
 
 **Code Block Handling:**
+
 - Using `hard: false` means code won't break mid-word
 - Long code lines may still overflow (acceptable)
 - No special code block detection needed
 
 **Potential Future Improvements:**
+
 - Add configuration option for max width override
 - Better handling of very long code blocks
 - Detect and preserve pre-formatted blocks

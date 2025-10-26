@@ -13,6 +13,7 @@
 ## Task 1: Add CSS Styles for Search UI
 
 **Files:**
+
 - Modify: `styles.css` (add new styles at end)
 
 **Step 1: Add CSS for sticky header and search input**
@@ -97,6 +98,7 @@ git commit -m "feat: add CSS styles for sphere view filter search"
 ## Task 2: Add Filter Logic to SphereView
 
 **Files:**
+
 - Modify: `src/sphere-view.ts:28-33` (add searchQuery state)
 - Modify: `src/sphere-view.ts:150-161` (update renderContent to use filtered data)
 
@@ -351,6 +353,7 @@ git commit -m "feat: add filterData method to SphereView"
 ## Task 3: Add Search Header UI
 
 **Files:**
+
 - Modify: `src/sphere-view.ts:150-161` (update renderContent)
 
 **Step 1: Write test for search header rendering**
@@ -394,7 +397,9 @@ describe("Search UI rendering", () => {
     const title = container.querySelector(".flow-gtd-sphere-title");
     expect(title?.textContent).toBe("Work");
 
-    const searchInput = container.querySelector(".flow-gtd-sphere-search-input") as HTMLInputElement;
+    const searchInput = container.querySelector(
+      ".flow-gtd-sphere-search-input"
+    ) as HTMLInputElement;
     expect(searchInput).toBeTruthy();
     expect(searchInput.placeholder).toBe("Filter actions and projects...");
   });
@@ -409,7 +414,11 @@ describe("Search UI rendering", () => {
     view.app = mockApp;
 
     const container = document.createElement("div");
-    (view as any).renderContent(container, { projects: [], projectsNeedingNextActions: [], generalNextActions: [] });
+    (view as any).renderContent(container, {
+      projects: [],
+      projectsNeedingNextActions: [],
+      generalNextActions: [],
+    });
 
     const clearButton = container.querySelector(".flow-gtd-sphere-search-clear") as HTMLElement;
     expect(clearButton.style.display).toBe("none");
@@ -417,9 +426,15 @@ describe("Search UI rendering", () => {
     // Set query and re-render
     (view as any).searchQuery = "test";
     container.innerHTML = "";
-    (view as any).renderContent(container, { projects: [], projectsNeedingNextActions: [], generalNextActions: [] });
+    (view as any).renderContent(container, {
+      projects: [],
+      projectsNeedingNextActions: [],
+      generalNextActions: [],
+    });
 
-    const clearButtonVisible = container.querySelector(".flow-gtd-sphere-search-clear") as HTMLElement;
+    const clearButtonVisible = container.querySelector(
+      ".flow-gtd-sphere-search-clear"
+    ) as HTMLElement;
     expect(clearButtonVisible.style.display).not.toBe("none");
   });
 });
@@ -543,6 +558,7 @@ git commit -m "feat: add search header UI to sphere view"
 ## Task 4: Add Keyboard Shortcuts
 
 **Files:**
+
 - Modify: `src/sphere-view.ts` (add keyboard shortcut handling)
 
 **Step 1: Write test for keyboard shortcuts**
@@ -561,9 +577,15 @@ describe("Keyboard shortcuts", () => {
     view.app = mockApp;
 
     const container = document.createElement("div");
-    (view as any).renderContent(container, { projects: [], projectsNeedingNextActions: [], generalNextActions: [] });
+    (view as any).renderContent(container, {
+      projects: [],
+      projectsNeedingNextActions: [],
+      generalNextActions: [],
+    });
 
-    const searchInput = container.querySelector(".flow-gtd-sphere-search-input") as HTMLInputElement;
+    const searchInput = container.querySelector(
+      ".flow-gtd-sphere-search-input"
+    ) as HTMLInputElement;
 
     // Simulate Cmd+F (Mac) or Ctrl+F (Windows/Linux)
     const event = new KeyboardEvent("keydown", {
@@ -587,9 +609,15 @@ describe("Keyboard shortcuts", () => {
     (view as any).searchQuery = "test query";
 
     const container = document.createElement("div");
-    (view as any).renderContent(container, { projects: [], projectsNeedingNextActions: [], generalNextActions: [] });
+    (view as any).renderContent(container, {
+      projects: [],
+      projectsNeedingNextActions: [],
+      generalNextActions: [],
+    });
 
-    const searchInput = container.querySelector(".flow-gtd-sphere-search-input") as HTMLInputElement;
+    const searchInput = container.querySelector(
+      ".flow-gtd-sphere-search-input"
+    ) as HTMLInputElement;
 
     const event = new KeyboardEvent("keydown", {
       key: "Escape",
@@ -742,6 +770,7 @@ Create GitHub issues or fix immediately depending on severity.
 ## Task 7: Update Documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md` (add search feature documentation)
 
 **Step 1: Add search documentation to CLAUDE.md**
@@ -794,25 +823,30 @@ Before marking complete:
 ## Notes for Implementer
 
 **TDD Discipline:**
+
 - Write test first, watch it fail, implement minimal code, watch it pass
 - One commit per passing test (or logical group)
 - Don't skip the "watch it fail" step - ensures test actually validates
 
 **YAGNI:**
+
 - No debouncing in v1 (can add later if needed)
 - No text highlighting (future enhancement)
 - No regex support (simple substring only)
 
 **DRY:**
+
 - Reuse existing hierarchy building logic
 - Reuse existing action rendering logic
 - Don't duplicate filtering code
 
 **Testing:**
+
 - Test both the filterData logic and UI rendering
 - Use mock data for unit tests
 - Manual testing required for keyboard shortcuts and UX
 
 **Skills References:**
+
 - @superpowers:test-driven-development - Follow RED-GREEN-REFACTOR
 - @superpowers:verification-before-completion - Run full suite before claiming done

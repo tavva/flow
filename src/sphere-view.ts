@@ -173,18 +173,14 @@ export class SphereView extends ItemView {
           ...summary,
           project: {
             ...summary.project,
-            nextActions: projectNameMatches
-              ? summary.project.nextActions
-              : filteredActions,
+            nextActions: projectNameMatches ? summary.project.nextActions : filteredActions,
           },
         };
       })
       .filter((p): p is SphereProjectSummary => p !== null);
 
     // Filter general actions
-    const filteredGeneralActions = data.generalNextActions.filter((action) =>
-      matches(action)
-    );
+    const filteredGeneralActions = data.generalNextActions.filter((action) => matches(action));
 
     return {
       projects: filteredProjects,
@@ -294,9 +290,11 @@ export class SphereView extends ItemView {
       );
 
       // Show empty state if query exists but no results
-      if (this.searchQuery.trim() &&
-          filteredData.projects.length === 0 &&
-          filteredData.generalNextActions.length === 0) {
+      if (
+        this.searchQuery.trim() &&
+        filteredData.projects.length === 0 &&
+        filteredData.generalNextActions.length === 0
+      ) {
         const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
         emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
       }
@@ -325,9 +323,11 @@ export class SphereView extends ItemView {
     );
 
     // Show empty state if query exists but no results
-    if (this.searchQuery.trim() &&
-        filteredData.projects.length === 0 &&
-        filteredData.generalNextActions.length === 0) {
+    if (
+      this.searchQuery.trim() &&
+      filteredData.projects.length === 0 &&
+      filteredData.generalNextActions.length === 0
+    ) {
       const emptyEl = container.createDiv({ cls: "flow-gtd-sphere-empty-search" });
       emptyEl.setText(`No actions or projects match '${this.searchQuery}'`);
     }
@@ -444,9 +444,10 @@ export class SphereView extends ItemView {
     const lineResult = await this.lineFinder.findActionLine(file, action);
 
     // Check if this is a waiting-for item by examining the line content
-    const isWaitingFor = lineResult.found && lineResult.lineContent
-      ? /^[-*]\s*\[w\]/i.test(lineResult.lineContent)
-      : false;
+    const isWaitingFor =
+      lineResult.found && lineResult.lineContent
+        ? /^[-*]\s*\[w\]/i.test(lineResult.lineContent)
+        : false;
 
     // Create the display text with clock emoji if waiting-for
     const displayText = isWaitingFor ? `🕐 ${action}` : action;

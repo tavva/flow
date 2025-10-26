@@ -51,39 +51,47 @@ Add a filter-as-you-type search feature to the sphere view that allows users to 
 ### What Gets Filtered
 
 **Projects section:**
+
 - Show projects that have matching actions OR matching project names
 - Within each project, show only actions that match the query
 - If a sub-project matches, show its parent projects (preserve hierarchy)
 - Hide projects entirely if no matches
 
 **General actions section:**
+
 - Show only actions that match the query
 
 **Projects needing actions section:**
+
 - Not filtered (different purpose - always show all)
 
 ### Display Behaviour
 
 **Empty states:**
+
 - Empty query → show everything (current behaviour)
 - Query with no matches → show "No actions or projects match 'search term'"
 
 **Hierarchy preservation:**
+
 - Keep parent-child project relationships intact
 - Show proper indentation (32px per level)
 - If sub-project matches, its parents are visible even if they don't match
 
 **Scroll position:**
+
 - Maintain scroll position when results change
 - Don't jump to top on every keystroke
 
 **Hotlist interaction:**
+
 - Filtering is purely based on search text (not hotlist status)
 - Actions on hotlist are hidden if they don't match the query
 - Only visible (filtered) actions are clickable for hotlist operations
 - Checkmark indicators work normally on visible items
 
 **Waiting-for items:**
+
 - Searchable by action text (not the 🕐 emoji)
 - Clock emoji preserved in display
 
@@ -92,11 +100,13 @@ Add a filter-as-you-type search feature to the sphere view that allows users to 
 ### Component Changes (SphereView)
 
 **New state:**
+
 ```typescript
 private searchQuery: string = "";
 ```
 
 **New methods:**
+
 ```typescript
 // Filter data based on search query
 private filterData(data: SphereViewData, query: string): SphereViewData
@@ -226,6 +236,7 @@ private renderContent(container: HTMLElement, data: SphereViewData) {
 **Test file:** `tests/sphere-view-filter.test.ts`
 
 **Test cases:**
+
 1. Empty query returns unfiltered data
 2. Case-insensitive matching works
 3. Project name matching filters correctly
@@ -267,11 +278,13 @@ private renderContent(container: HTMLElement, data: SphereViewData) {
 **Strategy:** Simple filter-on-render (Approach 1 from brainstorming)
 
 **Rationale:**
+
 - Simplest implementation
 - Works with existing hierarchy building logic
 - Can optimize later if performance issues arise
 - Easy to add text highlighting in future
 
 **Performance considerations:**
+
 - Re-filtering on every keystroke is acceptable for typical vault sizes
 - Virtual scrolling or search indexing can be added later if needed

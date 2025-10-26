@@ -128,9 +128,7 @@ describe("renderEditableItemContent - action button groups", () => {
     expect(selectedButtons.length).toBe(1);
 
     // The create-project button should be selected
-    const createButton = Array.from(allButtons).find(btn =>
-      btn.textContent?.includes("Create")
-    );
+    const createButton = Array.from(allButtons).find((btn) => btn.textContent?.includes("Create"));
     expect(createButton?.classList.contains("selected")).toBe(true);
   });
 
@@ -146,8 +144,9 @@ describe("renderEditableItemContent - action button groups", () => {
 
     renderEditableItemContent(container, item, state);
 
-    const somedayButton = Array.from(container.querySelectorAll(".flow-gtd-action-button"))
-      .find(btn => btn.textContent?.includes("Someday")) as HTMLButtonElement;
+    const somedayButton = Array.from(container.querySelectorAll(".flow-gtd-action-button")).find(
+      (btn) => btn.textContent?.includes("Someday")
+    ) as HTMLButtonElement;
 
     expect(somedayButton).toBeTruthy();
     somedayButton.click();
@@ -169,9 +168,7 @@ describe("renderEditableItemContent - action button groups", () => {
     renderEditableItemContent(container, item, state);
 
     const allButtons = container.querySelectorAll(".flow-gtd-action-button");
-    const nextButton = Array.from(allButtons).find(btn =>
-      btn.textContent?.includes("Next")
-    );
+    const nextButton = Array.from(allButtons).find((btn) => btn.textContent?.includes("Next"));
 
     // Should default to next-actions-file
     expect(nextButton?.classList.contains("selected")).toBe(true);

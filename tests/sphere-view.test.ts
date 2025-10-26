@@ -545,12 +545,7 @@ describe("SphereView", () => {
       );
 
       // Should NOT have clock emoji prefix
-      expect(renderMarkdownSpy).toHaveBeenCalledWith(
-        "Regular action",
-        expect.anything(),
-        "",
-        view
-      );
+      expect(renderMarkdownSpy).toHaveBeenCalledWith("Regular action", expect.anything(), "", view);
 
       renderMarkdownSpy.mockRestore();
     });

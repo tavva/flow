@@ -70,6 +70,7 @@ A standalone Node.js script (`scripts/release-beta.mjs`) handles the entire beta
 ### Version Parsing and Calculation
 
 **Version Detection:**
+
 - Regex pattern: `/^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/`
 - Captures: `[major, minor, patch, betaNumber]`
 - Examples:
@@ -77,13 +78,16 @@ A standalone Node.js script (`scripts/release-beta.mjs`) handles the entire beta
   - `0.7.1-beta.2` → `[0, 7, 1, 2]` (beta)
 
 **Auto-increment Logic (Already Beta):**
+
 ```
 Current: 0.7.1-beta.2
 Next:    0.7.1-beta.3
 ```
+
 No user prompt required - automatically increment beta number.
 
 **Interactive Selection (Production Version):**
+
 ```
 Current version: 0.7.0
 
@@ -96,6 +100,7 @@ Choice (1/2/3):
 ```
 
 **Custom Version Validation:**
+
 - Must match semver beta format: `X.Y.Z-beta.N`
 - Validate with regex before accepting
 
@@ -161,17 +166,20 @@ On `n`: Abort without executing.
 ### File Structure
 
 **New Files:**
+
 ```
 scripts/
   release-beta.mjs    # Main beta release script
 ```
 
 **Modified Files:**
+
 ```
 package.json          # Add "release:beta" npm script
 ```
 
 **Unchanged Files:**
+
 ```
 package.json          # version field stays at production version
 versions.json         # only updated for production releases
@@ -181,6 +189,7 @@ version-bump.mjs      # production release workflow unchanged
 ### Integration
 
 **NPM Script:**
+
 ```json
 {
   "scripts": {
@@ -190,11 +199,13 @@ version-bump.mjs      # production release workflow unchanged
 ```
 
 **Usage:**
+
 ```bash
 npm run release:beta
 ```
 
 **GitHub Release Details:**
+
 - Tag: Version number (e.g., `0.7.1-beta.1`)
 - Title: `Beta v{version}` (e.g., `Beta v0.7.1-beta.1`)
 - Pre-release: Yes (marked with `--prerelease` flag)

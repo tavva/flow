@@ -18,15 +18,18 @@ Replace dropdown with grouped pill buttons arranged horizontally, organized into
 ### Button Groups
 
 **Projects** (3 buttons)
+
 - 📁 Create Project
 - ➕ Add to Project
 - 📄 Reference
 
 **Actions** (2 buttons)
+
 - 📋 Next Actions
 - 💭 Someday
 
 **Other** (2 buttons)
+
 - 👤 Person
 - 🗑️ Trash
 
@@ -42,16 +45,19 @@ Projects                    Actions              Other
 ### Layout Structure
 
 **Container**: Horizontal flex container
+
 - `display: flex`
 - `flex-direction: row`
 - `gap: 32px` (between groups)
 
 **Each Group**: Vertical flex container
+
 - `display: flex`
 - `flex-direction: column`
 - `gap: 8px` (between header and buttons)
 
 **Button Row**: Horizontal flex container
+
 - `display: flex`
 - `flex-direction: row`
 - `gap: 8px` (between buttons)
@@ -59,6 +65,7 @@ Projects                    Actions              Other
 ### Typography & Spacing
 
 **Group Headers**:
+
 - Font size: 12-13px
 - Font weight: medium (500-600)
 - Color: `var(--text-muted)`
@@ -66,6 +73,7 @@ Projects                    Actions              Other
 - Text transform: none (natural case)
 
 **Buttons**:
+
 - Font size: 14px
 - Padding: 8px vertical, 12-16px horizontal
 - Border radius: 16-20px (pill shape)
@@ -74,16 +82,19 @@ Projects                    Actions              Other
 ### Button States
 
 **Unselected**:
+
 - Background: transparent
 - Text color: `var(--text-normal)`
 - Border: 1px solid `var(--background-modifier-border)` (optional)
 
 **Selected** (single selection - radio behaviour):
+
 - Background: `var(--interactive-accent)`
 - Text color: white or `var(--text-on-accent)`
 - Border: none
 
 **Hover**:
+
 - Background: `var(--background-modifier-hover)` (unselected)
 - Slight opacity change: 0.9 (selected)
 - Cursor: pointer
@@ -102,6 +113,7 @@ Projects                    Actions              Other
 ### Files to Modify
 
 **Primary file**: `src/inbox-modal-views.ts`
+
 - Lines 323-367: Replace `renderEditableItemContent()` dropdown section
 
 ### CSS Considerations
@@ -113,6 +125,7 @@ Projects                    Actions              Other
 ### Action Mapping
 
 Current dropdown values → New button labels:
+
 - `create-project` → "📁 Create" (Projects group)
 - `add-to-project` → "➕ Add" (Projects group)
 - `reference` → "📄 Reference" (Projects group)

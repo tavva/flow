@@ -23,6 +23,7 @@ Add a proactive opening message to the CLI that observes system state and offers
 **Hybrid approach**: TypeScript detects issues using simple heuristics, AI formats the message naturally.
 
 **Rationale**:
+
 - Consistent detection logic (no model variance)
 - Natural language formatting (leverages AI strengths)
 - No extra token cost for detection
@@ -36,10 +37,10 @@ Add a proactive opening message to the CLI that observes system state and offers
 
 ```typescript
 interface SystemIssues {
-  stalledProjects: number;        // Projects with no next actions
-  inboxCount: number;             // Total inbox items
-  inboxNeedsAttention: boolean;   // true if > threshold
-  hasIssues: boolean;             // true if any issue present
+  stalledProjects: number; // Projects with no next actions
+  inboxCount: number; // Total inbox items
+  inboxNeedsAttention: boolean; // true if > threshold
+  hasIssues: boolean; // true if any issue present
 }
 
 class SystemAnalyzer {
@@ -54,9 +55,7 @@ class SystemAnalyzer {
     projects: FlowProject[],
     inboxThreshold: number = 5
   ): SystemIssues {
-    const stalledProjects = projects.filter(
-      p => p.nextActions.length === 0
-    ).length;
+    const stalledProjects = projects.filter((p) => p.nextActions.length === 0).length;
 
     const inboxCount = gtdContext.inboxItems.length;
     const inboxNeedsAttention = inboxCount > inboxThreshold;
@@ -72,6 +71,7 @@ class SystemAnalyzer {
 ```
 
 **Detection logic:**
+
 - Count projects where `nextActions.length === 0` (stalled projects)
 - Check inbox count against configurable threshold
 - Set `hasIssues = true` if any issue detected
@@ -110,7 +110,7 @@ const openingResponse = await languageModelClient.sendMessage({
 
 // Clear thinking indicator and display opening
 process.stdout.write("\r");
-if (typeof process.stdout.clearLine === 'function') {
+if (typeof process.stdout.clearLine === "function") {
   process.stdout.clearLine(0);
 }
 
@@ -138,10 +138,12 @@ function buildAnalysisPrompt(issues: SystemIssues): string {
     if (issues.inboxNeedsAttention) {
       prompt += `- ${issues.inboxCount} inbox items need processing\n`;
     }
-    prompt += "\nProvide a brief summary of these issues and suggest 3 numbered options to address them.\n";
+    prompt +=
+      "\nProvide a brief summary of these issues and suggest 3 numbered options to address them.\n";
   } else {
     prompt += "The system looks healthy - no stalled projects, inbox is under control.\n\n";
-    prompt += "Provide a brief positive summary and suggest 3 numbered options for proactive work.\n";
+    prompt +=
+      "Provide a brief positive summary and suggest 3 numbered options for proactive work.\n";
   }
 
   prompt += "\nFormat: Brief observation paragraph, then numbered list of 3 options.\n";
@@ -168,6 +170,7 @@ prompt += `- If system is healthy, note this positively and suggest proactive ac
 ### 4. Expected Output Examples
 
 **With issues:**
+
 ```
 Flow - work sphere
   33 projects
@@ -192,6 +195,7 @@ I can help with:
 ```
 
 **No issues:**
+
 ```
 Flow - work sphere
   33 projects
@@ -245,6 +249,7 @@ I can help with:
 ### Why hybrid approach vs pure prompt-based?
 
 **Considered alternatives:**
+
 1. **Pure prompt**: Add detection instructions to system prompt, let AI find issues
    - ❌ Uses tokens on every conversation turn
    - ❌ Inconsistent between models
@@ -268,6 +273,7 @@ I can help with:
 **New behaviour**: Show stats, automatically provide opening summary
 
 **Rationale**:
+
 - User's communication style guide says "no open-ended questions"
 - Stating observations is not asking a question
 - Provides immediate value (user doesn't need to ask "what should I work on?")
@@ -276,10 +282,12 @@ I can help with:
 ### Why limit to stalled projects + inbox?
 
 **Initially considered:**
+
 - Action quality detection (vague actions, missing verbs)
 - Priority mismatches (P1 with no actions, P3 with many)
 
 **Decided to skip for MVP:**
+
 - Action quality needs LLM analysis (expensive, slow at startup)
 - Heuristics have too many false positives
 - Stalled projects + inbox are clear, objective metrics
@@ -312,18 +320,21 @@ I can help with:
 ## Testing Strategy
 
 **Unit tests** (`system-analyzer.test.ts`):
+
 - Stalled project detection with various project states
 - Inbox threshold logic (boundary cases: 4, 5, 6 items)
 - `hasIssues` flag combinations
 - Edge cases: no projects, empty inbox, all projects stalled
 
 **Integration tests** (manual for now):
+
 - Run CLI with vault in different states
 - Verify opening message format matches examples
 - Check that REPL continues normally after opening
 - Test with both Anthropic and OpenAI-compatible providers
 
 **Acceptance criteria:**
+
 - Opening message appears automatically after stats
 - Issues are detected correctly
 - Message format matches design examples
