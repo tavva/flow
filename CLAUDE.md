@@ -149,13 +149,14 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 
 The plugin supports creating a curated "hotlist" of next actions to work on:
 
+- **Manual Reordering** - Pin items to a "Pinned" section at the top and reorder via drag-and-drop
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files by searching for checkbox patterns
 - **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change, searches for moved lines
 - **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in right sidebar with actions grouped by project/sphere
 - **HotlistEditorMenu** (`src/hotlist-editor-menu.ts`) - Right-click context menu for adding/removing actions from hotlist
 - **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from hotlist
 - **Commands** - "Open Hotlist" command (`open-hotlist`) and ribbon icon with `list-checks` icon
-- **Hotlist Item Actions** - Mark complete, convert to waiting-for, or remove from hotlist
+- **Hotlist Item Actions** - Mark complete, convert to waiting-for, pin/unpin, or remove from hotlist
 - **File Navigation** - Click action text to open source file at correct line in split pane
 
 **Workflow:**
@@ -174,7 +175,10 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 
 3. **Using the Hotlist:**
    - Open hotlist view to see curated list of actions
+   - Pin important items to "Pinned" section at top
+   - Drag-and-drop to reorder pinned items
    - Work through hotlist, marking complete or converting to waiting-for
+   - Unpin items when priorities change
 
 **Storage:**
 
@@ -187,6 +191,11 @@ Hotlist items are stored in plugin settings as `HotlistItem[]` with:
 - `sphere`: Which sphere the action belongs to
 - `isGeneral`: Whether from Next Actions file vs project file
 - `addedAt`: Timestamp for ordering
+- `isPinned`: Whether item is pinned to top section (optional, defaults to false)
+
+**Pinned Item Ordering:**
+
+Pinned items appear at the front of the `hotlist` array in their display order. Array position determines rendering order for pinned items. Unpinned items follow in the array but are rendered using project/sphere grouping regardless of array position.
 
 ### Sub-Projects Support
 
