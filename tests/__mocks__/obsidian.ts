@@ -178,47 +178,115 @@ export class ItemView {
   constructor(leaf: WorkspaceLeaf) {
     this.app = new App();
     this.leaf = leaf;
-    // Create a simple mock container without using DOM
-    const childElement = {
-      empty: jest.fn(),
-      setText: jest.fn(),
-      createDiv: jest.fn(() => ({
+    // Use real DOM elements if available (JSDOM in tests)
+    if (typeof document !== "undefined") {
+      const container = document.createElement("div");
+      const childElement = document.createElement("div");
+      container.appendChild(document.createElement("div")); // Placeholder for children[0]
+      container.appendChild(childElement);
+
+      // Add Obsidian-specific methods to DOM elements
+      (container as any).createDiv = function (opts?: any) {
+        const div = document.createElement("div");
+        if (opts?.cls) div.className = opts.cls;
+        if (opts?.text) div.textContent = opts.text;
+        this.appendChild(div);
+        (div as any).createDiv = container.createDiv;
+        (div as any).createEl = container.createEl;
+        (div as any).createSpan = container.createSpan;
+        (div as any).empty = function () {
+          this.innerHTML = "";
+        };
+        (div as any).setText = function (text: string) {
+          this.textContent = text;
+        };
+        (div as any).addClass = function (cls: string) {
+          this.classList.add(cls);
+        };
+        (div as any).removeClass = function (cls: string) {
+          this.classList.remove(cls);
+        };
+        return div;
+      };
+      (container as any).createEl = function (tag: string, opts?: any) {
+        const el = document.createElement(tag);
+        if (opts?.cls) el.className = opts.cls;
+        if (opts?.text) el.textContent = opts.text;
+        if (opts?.attr) {
+          for (const [key, value] of Object.entries(opts.attr)) {
+            el.setAttribute(key, value as string);
+          }
+        }
+        this.appendChild(el);
+        (el as any).createDiv = container.createDiv;
+        (el as any).createEl = container.createEl;
+        (el as any).createSpan = container.createSpan;
+        (el as any).empty = function () {
+          this.innerHTML = "";
+        };
+        (el as any).setText = function (text: string) {
+          this.textContent = text;
+        };
+        (el as any).addClass = function (cls: string) {
+          this.classList.add(cls);
+        };
+        (el as any).removeClass = function (cls: string) {
+          this.classList.remove(cls);
+        };
+        return el;
+      };
+      (container as any).createSpan = function (opts?: any) {
+        const span = document.createElement("span");
+        if (opts?.cls) span.className = opts.cls;
+        if (opts?.text) span.textContent = opts.text;
+        this.appendChild(span);
+        (span as any).createDiv = container.createDiv;
+        (span as any).createEl = container.createEl;
+        (span as any).createSpan = container.createSpan;
+        (span as any).setText = function (text: string) {
+          this.textContent = text;
+        };
+        (span as any).addClass = function (cls: string) {
+          this.classList.add(cls);
+        };
+        return span;
+      };
+      (container as any).empty = function () {
+        this.innerHTML = "";
+      };
+      (container as any).addClass = function (cls: string) {
+        this.classList.add(cls);
+      };
+
+      // Apply same methods to childElement
+      (childElement as any).createDiv = container.createDiv;
+      (childElement as any).createEl = container.createEl;
+      (childElement as any).createSpan = container.createSpan;
+      (childElement as any).empty = function () {
+        this.innerHTML = "";
+      };
+      (childElement as any).addClass = function (cls: string) {
+        this.classList.add(cls);
+      };
+
+      this.containerEl = container;
+    } else {
+      // Fallback for non-DOM environments
+      const childElement = {
+        empty: jest.fn(),
         setText: jest.fn(),
         createDiv: jest.fn(() => ({ setText: jest.fn(), style: {} })),
-        createEl: jest.fn(() => ({
-          setText: jest.fn(),
-          createEl: jest.fn(() => ({
-            setText: jest.fn(),
-            addEventListener: jest.fn(),
-            style: {},
-          })),
-          addEventListener: jest.fn(),
-          style: {},
-        })),
+        createEl: jest.fn(() => ({ setText: jest.fn(), style: {} })),
         addClass: jest.fn(),
-        remove: jest.fn(),
-        addEventListener: jest.fn(),
-        style: {},
-      })),
-      createEl: jest.fn(() => ({
-        setText: jest.fn(),
-        addEventListener: jest.fn(),
-        createEl: jest.fn(() => ({
-          setText: jest.fn(),
-          addEventListener: jest.fn(),
-          style: {},
-        })),
-        style: {},
-      })),
-      addClass: jest.fn(),
-    };
-    this.containerEl = {
-      children: [{}, childElement],
-      empty: jest.fn(),
-      createDiv: jest.fn(() => childElement),
-      createEl: jest.fn(() => childElement),
-      addClass: jest.fn(),
-    };
+      };
+      this.containerEl = {
+        children: [{}, childElement],
+        empty: jest.fn(),
+        createDiv: jest.fn(() => childElement),
+        createEl: jest.fn(() => childElement),
+        addClass: jest.fn(),
+      };
+    }
   }
 
   getViewType(): string {
@@ -245,7 +313,7 @@ export class ItemView {
 export function setIcon(element: HTMLElement, iconId: string): void {
   // Mock implementation - just sets a data attribute for testing
   if (element) {
-    (element as any).dataset = { icon: iconId };
+    element.setAttribute("data-icon", iconId);
   }
 }
 

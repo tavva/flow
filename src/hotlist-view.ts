@@ -100,8 +100,7 @@ export class HotlistView extends ItemView {
       return;
     }
 
-    const grouped = this.groupItems(this.settings.hotlist);
-    this.renderGroupedItems(container as HTMLElement, grouped);
+    this.renderGroupedItems(container as HTMLElement, this.settings.hotlist);
   }
 
   async onClose() {
@@ -204,8 +203,7 @@ export class HotlistView extends ItemView {
       if (validatedItems.length === 0) {
         this.renderEmptyMessage(container as HTMLElement);
       } else {
-        const grouped = this.groupItems(validatedItems);
-        this.renderGroupedItems(container as HTMLElement, grouped);
+        this.renderGroupedItems(container as HTMLElement, validatedItems);
       }
     } catch (error) {
       console.error("Failed to refresh hotlist view", error);
@@ -235,7 +233,30 @@ export class HotlistView extends ItemView {
     return { projectActions, generalActions };
   }
 
-  private renderGroupedItems(container: HTMLElement, grouped: GroupedHotlistItems) {
+  private renderGroupedItems(container: HTMLElement, items: HotlistItem[]) {
+    // Split items into pinned and unpinned
+    const pinnedItems = items.filter((item) => item.isPinned === true);
+    const unpinnedItems = items.filter((item) => item.isPinned !== true);
+
+    // Render pinned section (if any pinned items exist)
+    if (pinnedItems.length > 0) {
+      const pinnedSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      pinnedSection.createEl("h3", {
+        text: "Pinned",
+        cls: "flow-gtd-hotlist-section-title",
+      });
+
+      const pinnedList = pinnedSection.createEl("ul", {
+        cls: "flow-gtd-hotlist-items flow-gtd-hotlist-pinned-items",
+      });
+      pinnedItems.forEach((item) => {
+        this.renderPinnedItem(pinnedList, item);
+      });
+    }
+
+    // Render unpinned items with existing grouping logic
+    const grouped = this.groupItems(unpinnedItems);
+
     // Project Actions section
     if (Object.keys(grouped.projectActions).length > 0) {
       const projectSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
@@ -377,6 +398,11 @@ export class HotlistView extends ItemView {
     removeBtn.addEventListener("click", async () => {
       await this.removeFromHotlist(item);
     });
+  }
+
+  private renderPinnedItem(container: HTMLElement, item: HotlistItem) {
+    // Temporary stub - will be implemented in Task 4
+    this.renderItem(container, item);
   }
 
   private renderLoadingState(container: HTMLElement) {
