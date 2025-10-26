@@ -727,5 +727,24 @@ describe("SphereView", () => {
       // View should NOT refresh when element is provided
       expect(onOpenSpy).not.toHaveBeenCalled();
     });
+
+    it("should add items from planning mode as unpinned by default", async () => {
+      settings.hotlist = [];
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Simulate adding action via planning mode
+      const action = "Test action";
+      const file = "Projects/Test.md";
+      const lineNumber = 10;
+      const lineContent = "- [ ] Test action";
+
+      await (view as any).addToHotlist(action, file, lineNumber, lineContent, "work", false);
+
+      // Check item was added with isPinned: false (or undefined, which is treated as false)
+      expect(settings.hotlist.length).toBe(1);
+      expect(settings.hotlist[0].isPinned).toBeFalsy();
+      expect(settings.hotlist[0].text).toBe(action);
+    });
   });
 });
