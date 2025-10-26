@@ -613,5 +613,44 @@ describe("HotlistView", () => {
       // Check saveSettings was called
       expect(mockSaveSettings).toHaveBeenCalled();
     });
+
+    it("should preserve isPinned state when validating and updating line numbers", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] Pinned action",
+            text: "Pinned action",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now(),
+            isPinned: true,
+          },
+        ],
+      };
+
+      // Mock validator to return updated line number
+      const mockValidator = {
+        validateItem: jest.fn().mockResolvedValue({
+          found: true,
+          updatedLineNumber: 15, // Line moved
+        }),
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).validator = mockValidator;
+
+      // Mock file read
+      mockApp.vault.read = jest.fn().mockResolvedValue("- [ ] Pinned action");
+
+      await (testView as any).refresh();
+
+      // Check isPinned state is preserved
+      expect(settings.hotlist[0].isPinned).toBe(true);
+      expect(settings.hotlist[0].lineNumber).toBe(15);
+    });
   });
 });
