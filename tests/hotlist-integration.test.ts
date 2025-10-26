@@ -288,3 +288,128 @@ describe("Hotlist Integration", () => {
     expect(validation.updatedLineNumber).toBe(11);
   });
 });
+
+describe("Hotlist Manual Reordering Integration", () => {
+  let mockLeaf: any;
+  let mockApp: any;
+  let saveSettingsMock: jest.Mock;
+  const DEFAULT_SETTINGS = {
+    anthropicApiKey: "",
+    anthropicModel: "claude-sonnet-4-20250514",
+    provider: "anthropic" as const,
+    openAIApiKey: "",
+    openAIBaseURL: "https://openrouter.ai/api/v1",
+    openAIModel: "openrouter/anthropic/claude-3.5-sonnet",
+    defaultPriority: 2,
+    defaultStatus: "live",
+    inboxFilesFolder: "Flow Inbox Files",
+    inboxFolder: "Flow Inbox Folder",
+    nextActionsFilePath: "Next actions.md",
+    somedayFilePath: "Someday.md",
+    projectsFolder: "Projects",
+    spheres: ["work", "personal"],
+    hotlist: [],
+  };
+
+  beforeEach(() => {
+    mockApp = {
+      vault: {
+        getAbstractFileByPath: jest.fn(),
+        read: jest.fn(),
+        modify: jest.fn(),
+        getMarkdownFiles: jest.fn().mockReturnValue([]),
+      },
+      workspace: {
+        getLeaf: jest.fn(),
+        getLeavesOfType: jest.fn().mockReturnValue([]),
+      },
+      metadataCache: {
+        on: jest.fn(),
+        offref: jest.fn(),
+        getFileCache: jest.fn(),
+      },
+    };
+    mockLeaf = {
+      view: null,
+      getViewState: jest.fn(),
+      setViewState: jest.fn(),
+      getRoot: jest.fn().mockReturnValue({
+        app: mockApp,
+      }),
+    };
+    saveSettingsMock = jest.fn();
+  });
+
+  it("should support full pin/reorder/unpin workflow", async () => {
+    const settings: PluginSettings = {
+      ...DEFAULT_SETTINGS,
+      hotlist: [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Action A",
+          text: "Action A",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 3000,
+          isPinned: false,
+        },
+        {
+          file: "Projects/Project B.md",
+          lineNumber: 15,
+          lineContent: "- [ ] Action B",
+          text: "Action B",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 2000,
+          isPinned: false,
+        },
+        {
+          file: "Projects/Project C.md",
+          lineNumber: 20,
+          lineContent: "- [ ] Action C",
+          text: "Action C",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 1000,
+          isPinned: false,
+        },
+      ],
+    };
+
+    const view = new HotlistView(mockLeaf, settings, saveSettingsMock);
+    (view as any).app = mockApp;
+    // Re-initialize scanner with mocked app
+    (view as any).scanner = {
+      scanProjects: jest.fn().mockResolvedValue([]),
+    };
+    await view.onOpen();
+
+    // Step 1: Pin first item
+    await (view as any).pinItem(settings.hotlist[0]);
+    expect(settings.hotlist[0].isPinned).toBe(true);
+
+    // Step 2: Pin third item
+    await (view as any).pinItem(settings.hotlist[2]);
+    expect(settings.hotlist[1].isPinned).toBe(true);
+    expect(settings.hotlist[1].text).toBe("Action C");
+
+    // Step 3: Reorder pinned items (swap them)
+    (view as any).draggedItem = settings.hotlist[1]; // Action C
+    const mockDropEvent = { preventDefault: jest.fn() } as unknown as DragEvent;
+    await (view as any).onDrop(mockDropEvent, settings.hotlist[0]); // Drop on Action A
+
+    // Check order: C should now be first
+    expect(settings.hotlist[0].text).toBe("Action C");
+    expect(settings.hotlist[1].text).toBe("Action A");
+
+    // Step 4: Unpin first item (Action C)
+    await (view as any).unpinItem(settings.hotlist[0]);
+    expect(settings.hotlist[0].isPinned).toBe(false);
+
+    // Check only Action A is still pinned
+    const pinnedItems = settings.hotlist.filter((i) => i.isPinned);
+    expect(pinnedItems.length).toBe(1);
+    expect(pinnedItems[0].text).toBe("Action A");
+  });
+});
