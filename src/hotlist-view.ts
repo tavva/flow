@@ -26,6 +26,7 @@ export class HotlistView extends ItemView {
   private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
   private allProjects: FlowProject[] = [];
+  private draggedItem: HotlistItem | null = null;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -413,8 +414,92 @@ export class HotlistView extends ItemView {
   }
 
   private renderPinnedItem(container: HTMLElement, item: HotlistItem) {
-    // Temporary stub - will be implemented in Task 4
-    this.renderItem(container, item);
+    const itemEl = container.createEl("li", {
+      cls: "flow-gtd-hotlist-item flow-gtd-hotlist-pinned-item",
+      attr: { draggable: "true" },
+    });
+
+    // Drag handle
+    const dragHandle = itemEl.createSpan({ cls: "flow-gtd-hotlist-drag-handle" });
+    setIcon(dragHandle, "grip-vertical");
+
+    // Pin icon indicator
+    itemEl.createSpan({ text: "📌 ", cls: "flow-gtd-hotlist-pin-indicator" });
+
+    // Drag event handlers
+    itemEl.addEventListener("dragstart", (e) => this.onDragStart(e, item));
+    itemEl.addEventListener("dragover", (e) => this.onDragOver(e));
+    itemEl.addEventListener("drop", (e) => this.onDrop(e, item));
+    itemEl.addEventListener("dragend", (e) => this.onDragEnd(e));
+
+    // Check if this is a waiting-for item
+    const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
+    const isWaitingFor = checkboxStatus.toLowerCase() === "w";
+
+    // Add clock emoji for waiting-for items (outside the item box)
+    if (isWaitingFor) {
+      const clockSpan = itemEl.createSpan({
+        cls: "flow-gtd-hotlist-waiting-indicator",
+        text: "🕐 ",
+      });
+      clockSpan.style.marginRight = "8px";
+    }
+
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
+    textSpan.setText(item.text);
+    textSpan.style.cursor = "pointer";
+
+    // Gray out waiting-for items
+    if (isWaitingFor) {
+      textSpan.style.opacity = "0.6";
+      textSpan.style.fontStyle = "italic";
+    }
+
+    textSpan.addEventListener("click", () => {
+      this.openFile(item.file, item.lineNumber);
+    });
+
+    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
+
+    const completeBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "✓",
+    });
+    completeBtn.title = "Mark as complete";
+    completeBtn.addEventListener("click", async () => {
+      await this.markItemComplete(item);
+    });
+
+    // Only show "Convert to waiting for" button for non-waiting items
+    if (!isWaitingFor) {
+      const waitingBtn = actionsSpan.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
+        text: "⏸",
+      });
+      waitingBtn.title = "Convert to waiting for";
+      waitingBtn.addEventListener("click", async () => {
+        await this.convertToWaitingFor(item);
+      });
+    }
+
+    const removeBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "🗑️",
+    });
+    removeBtn.title = "Remove from hotlist";
+    removeBtn.addEventListener("click", async () => {
+      await this.removeFromHotlist(item);
+    });
+
+    // Unpin button
+    const unpinBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "📌",
+    });
+    unpinBtn.title = "Unpin";
+    unpinBtn.addEventListener("click", async () => {
+      await this.unpinItem(item);
+    });
   }
 
   private renderLoadingState(container: HTMLElement) {
@@ -640,6 +725,58 @@ export class HotlistView extends ItemView {
 
     await this.saveSettings();
     await this.onOpen(); // Re-render
+  }
+
+  private onDragStart(e: DragEvent, item: HotlistItem): void {
+    this.draggedItem = item;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+    }
+    // Add dragging class to item
+    const target = e.target as HTMLElement;
+    target.addClass("dragging");
+  }
+
+  private onDragOver(e: DragEvent): void {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  private async onDrop(e: DragEvent, dropTarget: HotlistItem): Promise<void> {
+    e.preventDefault();
+    if (!this.draggedItem || this.draggedItem === dropTarget) return;
+
+    // Find indices in settings.hotlist
+    const draggedIndex = this.settings.hotlist.findIndex(
+      (i) =>
+        i.file === this.draggedItem!.file &&
+        i.lineNumber === this.draggedItem!.lineNumber &&
+        i.addedAt === this.draggedItem!.addedAt
+    );
+    const targetIndex = this.settings.hotlist.findIndex(
+      (i) =>
+        i.file === dropTarget.file &&
+        i.lineNumber === dropTarget.lineNumber &&
+        i.addedAt === dropTarget.addedAt
+    );
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Remove dragged item and insert at target position
+    const [item] = this.settings.hotlist.splice(draggedIndex, 1);
+    this.settings.hotlist.splice(targetIndex, 0, item);
+
+    await this.saveSettings();
+    await this.onOpen(); // Re-render
+  }
+
+  private onDragEnd(e: DragEvent): void {
+    this.draggedItem = null;
+    // Remove dragging class
+    const target = e.target as HTMLElement;
+    target.removeClass("dragging");
   }
 
   private async refreshSphereViews(): Promise<void> {

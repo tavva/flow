@@ -542,5 +542,76 @@ describe("HotlistView", () => {
       // Check saveSettings was called
       expect(mockSaveSettings).toHaveBeenCalled();
     });
+
+    it("should reorder pinned items on drop", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] First pinned",
+            text: "First pinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 3000,
+            isPinned: true,
+          },
+          {
+            file: "Projects/Project B.md",
+            lineNumber: 15,
+            lineContent: "- [ ] Second pinned",
+            text: "Second pinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 2000,
+            isPinned: true,
+          },
+          {
+            file: "Projects/Project C.md",
+            lineNumber: 20,
+            lineContent: "- [ ] Third pinned",
+            text: "Third pinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 1000,
+            isPinned: true,
+          },
+        ],
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).scanner = {
+        scanProjects: jest.fn().mockResolvedValue([]),
+      };
+
+      // Simulate dragging third item to first position
+      const draggedItem = settings.hotlist[2];
+      const dropTarget = settings.hotlist[0];
+
+      // Set up drag state
+      (testView as any).draggedItem = draggedItem;
+
+      // Simulate drop event
+      const mockDropEvent = {
+        preventDefault: jest.fn(),
+      } as unknown as DragEvent;
+
+      await (testView as any).onDrop(mockDropEvent, dropTarget);
+
+      // Check order changed: "Third" should now be at index 0
+      expect(settings.hotlist[0].text).toBe("Third pinned");
+      expect(settings.hotlist[1].text).toBe("First pinned");
+      expect(settings.hotlist[2].text).toBe("Second pinned");
+
+      // Check all are still pinned
+      expect(settings.hotlist[0].isPinned).toBe(true);
+      expect(settings.hotlist[1].isPinned).toBe(true);
+      expect(settings.hotlist[2].isPinned).toBe(true);
+
+      // Check saveSettings was called
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
   });
 });
