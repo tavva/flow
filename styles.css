@@ -1491,15 +1491,38 @@ select.flow-gtd-inline-select option,
 }
 
 /* Action button visibility - show only primary by default, all on hover */
+.flow-gtd-hotlist-item-actions {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
 .flow-gtd-hotlist-action-secondary {
+	position: absolute;
+	right: 0;
+	top: 100%;
+	margin-top: 4px;
 	opacity: 0;
+	pointer-events: none;
 	transition: opacity 0.2s;
+	background: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	padding: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	z-index: 10;
 }
 
 .flow-gtd-hotlist-item:hover .flow-gtd-hotlist-action-secondary {
 	opacity: 1;
+	pointer-events: auto;
 }
 
 .flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-action-secondary {
 	opacity: 1;
+	pointer-events: auto;
 }
