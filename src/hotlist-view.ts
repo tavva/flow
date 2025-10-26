@@ -476,7 +476,7 @@ export class HotlistView extends ItemView {
     // Unpin button
     const unpinBtn = secondaryActions.createEl("button", {
       cls: "flow-gtd-hotlist-action-btn",
-      text: "✕",
+      text: "⬇️",
     });
     unpinBtn.title = "Unpin from top";
     unpinBtn.addEventListener("click", async () => {
