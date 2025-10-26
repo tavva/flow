@@ -1489,3 +1489,17 @@ select.flow-gtd-inline-select option,
 .flow-gtd-hotlist-pin-indicator {
 	margin-right: 4px;
 }
+
+/* Action button visibility - show only primary by default, all on hover */
+.flow-gtd-hotlist-action-secondary {
+	opacity: 0;
+	transition: opacity 0.2s;
+}
+
+.flow-gtd-hotlist-item:hover .flow-gtd-hotlist-action-secondary {
+	opacity: 1;
+}
+
+.flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-action-secondary {
+	opacity: 1;
+}
