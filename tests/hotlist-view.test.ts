@@ -451,5 +451,96 @@ describe("HotlistView", () => {
       expect(sections.length).toBe(1);
       expect(sections[0].querySelector("h3")?.textContent).toBe("Project Actions");
     });
+
+    it("should pin an unpinned item and move to end of pinned section", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] Already pinned",
+            text: "Already pinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 3000,
+            isPinned: true,
+          },
+          {
+            file: "Projects/Project B.md",
+            lineNumber: 15,
+            lineContent: "- [ ] To be pinned",
+            text: "To be pinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 2000,
+            isPinned: false,
+          },
+          {
+            file: "Projects/Project C.md",
+            lineNumber: 20,
+            lineContent: "- [ ] Another unpinned",
+            text: "Another unpinned",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 1000,
+            isPinned: false,
+          },
+        ],
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).scanner = {
+        scanProjects: jest.fn().mockResolvedValue([]),
+      };
+
+      // Pin the second item
+      await (testView as any).pinItem(settings.hotlist[1]);
+
+      // Check isPinned flag is set
+      expect(settings.hotlist[1].isPinned).toBe(true);
+
+      // Check it moved to end of pinned section (index 1, after existing pinned item)
+      const pinnedItems = settings.hotlist.filter((i) => i.isPinned);
+      expect(pinnedItems.length).toBe(2);
+      expect(pinnedItems[1].text).toBe("To be pinned");
+
+      // Check saveSettings was called
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
+
+    it("should unpin a pinned item", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] Pinned action",
+            text: "Pinned action",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now(),
+            isPinned: true,
+          },
+        ],
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).scanner = {
+        scanProjects: jest.fn().mockResolvedValue([]),
+      };
+
+      // Unpin the item
+      await (testView as any).unpinItem(settings.hotlist[0]);
+
+      // Check isPinned flag is cleared
+      expect(settings.hotlist[0].isPinned).toBe(false);
+
+      // Check saveSettings was called
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
   });
 });

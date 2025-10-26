@@ -369,6 +369,16 @@ export class HotlistView extends ItemView {
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
 
+    // Pin button
+    const pinBtn = actionsSpan.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
+      text: "📌",
+    });
+    pinBtn.title = "Pin to top";
+    pinBtn.addEventListener("click", async () => {
+      await this.pinItem(item);
+    });
+
     const completeBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-hotlist-action-btn",
       text: "✓",
@@ -593,6 +603,40 @@ export class HotlistView extends ItemView {
     );
     await this.saveSettings();
     await this.refreshSphereViews();
+    await this.onOpen(); // Re-render
+  }
+
+  private async pinItem(item: HotlistItem): Promise<void> {
+    // Find item in settings.hotlist
+    const index = this.settings.hotlist.findIndex(
+      (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
+    );
+
+    if (index === -1) return;
+
+    // Set isPinned flag
+    this.settings.hotlist[index].isPinned = true;
+
+    // Move to end of pinned section
+    const pinnedCount = this.settings.hotlist.filter((i) => i.isPinned).length;
+    const [pinnedItem] = this.settings.hotlist.splice(index, 1);
+    this.settings.hotlist.splice(pinnedCount - 1, 0, pinnedItem);
+
+    await this.saveSettings();
+    await this.onOpen(); // Re-render
+  }
+
+  private async unpinItem(item: HotlistItem): Promise<void> {
+    const index = this.settings.hotlist.findIndex(
+      (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
+    );
+
+    if (index === -1) return;
+
+    // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
+    this.settings.hotlist[index].isPinned = false;
+
+    await this.saveSettings();
     await this.onOpen(); // Re-render
   }
 
