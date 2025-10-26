@@ -423,9 +423,6 @@ export class HotlistView extends ItemView {
     const dragHandle = itemEl.createSpan({ cls: "flow-gtd-hotlist-drag-handle" });
     setIcon(dragHandle, "grip-vertical");
 
-    // Pin icon indicator
-    itemEl.createSpan({ text: "📌 ", cls: "flow-gtd-hotlist-pin-indicator" });
-
     // Drag event handlers
     itemEl.addEventListener("dragstart", (e) => this.onDragStart(e, item));
     itemEl.addEventListener("dragover", (e) => this.onDragOver(e));
@@ -494,9 +491,9 @@ export class HotlistView extends ItemView {
     // Unpin button
     const unpinBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-hotlist-action-btn",
-      text: "📌",
+      text: "✕",
     });
-    unpinBtn.title = "Unpin";
+    unpinBtn.title = "Unpin from top";
     unpinBtn.addEventListener("click", async () => {
       await this.unpinItem(item);
     });
