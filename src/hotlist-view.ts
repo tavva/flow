@@ -626,10 +626,14 @@ export class HotlistView extends ItemView {
     }
 
     try {
-      // Always get a fresh leaf - the cached leaf may have been closed or detached
-      const leaf = this.app.workspace.getLeaf("split", "vertical");
+      // Reuse cached leaf if it exists, otherwise create a new split
+      let leaf = this.rightPaneLeaf;
+      if (!leaf) {
+        leaf = this.app.workspace.getLeaf("split", "vertical");
+        this.rightPaneLeaf = leaf;
+      }
+
       await leaf.openFile(file);
-      this.rightPaneLeaf = leaf;
 
       if (lineNumber !== undefined) {
         const view = leaf.view;

@@ -653,4 +653,52 @@ describe("HotlistView", () => {
       expect(settings.hotlist[0].lineNumber).toBe(15);
     });
   });
+
+  describe("File navigation", () => {
+    it("should reuse the same leaf when clicking multiple actions", async () => {
+      // Create mock files
+      const { TFile } = require("obsidian");
+      const mockFile1 = new TFile();
+      mockFile1.path = "Projects/Project A.md";
+      const mockFile2 = new TFile();
+      mockFile2.path = "Projects/Project B.md";
+
+      mockApp.vault.getAbstractFileByPath
+        .mockReturnValueOnce(mockFile1)
+        .mockReturnValueOnce(mockFile2);
+
+      // Create a mock leaf that will be returned by getLeaf
+      const mockOpenedLeaf = {
+        openFile: jest.fn().mockResolvedValue(undefined),
+        view: {
+          editor: {
+            setCursor: jest.fn(),
+            scrollIntoView: jest.fn(),
+          },
+        },
+      };
+
+      // Mock getLeaf to return the same leaf each time
+      mockApp.workspace.getLeaf.mockReturnValue(mockOpenedLeaf);
+
+      // Open first file
+      await (view as any).openFile("Projects/Project A.md", 5);
+
+      // Verify getLeaf was called to create the initial split
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
+      expect(mockOpenedLeaf.openFile).toHaveBeenCalledWith(mockFile1);
+
+      // Reset call counts
+      mockApp.workspace.getLeaf.mockClear();
+      mockOpenedLeaf.openFile.mockClear();
+
+      // Open second file - should reuse the same leaf
+      await (view as any).openFile("Projects/Project B.md", 10);
+
+      // Verify getLeaf was NOT called again (leaf was reused)
+      expect(mockApp.workspace.getLeaf).not.toHaveBeenCalled();
+      expect(mockOpenedLeaf.openFile).toHaveBeenCalledWith(mockFile2);
+    });
+  });
 });
