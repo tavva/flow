@@ -1,17 +1,17 @@
 // ABOUTME: Beta release script for creating and publishing versioned beta releases.
 // ABOUTME: Handles version parsing, calculation, and GitHub release creation via BRAT.
 
-import * as readline from 'readline';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-import { join } from 'path';
-import { execSync, execFileSync } from 'child_process';
+import * as readline from "readline";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { join } from "path";
+import { execSync, execFileSync } from "child_process";
 
 interface ParsedVersion {
-	major: number;
-	minor: number;
-	patch: number;
-	betaNumber: number | undefined;
-	isBeta: boolean;
+  major: number;
+  minor: number;
+  patch: number;
+  betaNumber: number | undefined;
+  isBeta: boolean;
 }
 
 /**
@@ -20,20 +20,20 @@ interface ParsedVersion {
  * @returns Parsed version or null if invalid
  */
 export function parseVersion(version: string): ParsedVersion | null {
-	const pattern = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/;
-	const match = version.match(pattern);
+  const pattern = /^(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/;
+  const match = version.match(pattern);
 
-	if (!match) return null;
+  if (!match) return null;
 
-	const [, major, minor, patch, betaNumber] = match;
+  const [, major, minor, patch, betaNumber] = match;
 
-	return {
-		major: parseInt(major, 10),
-		minor: parseInt(minor, 10),
-		patch: parseInt(patch, 10),
-		betaNumber: betaNumber ? parseInt(betaNumber, 10) : undefined,
-		isBeta: betaNumber !== undefined
-	};
+  return {
+    major: parseInt(major, 10),
+    minor: parseInt(minor, 10),
+    patch: parseInt(patch, 10),
+    betaNumber: betaNumber ? parseInt(betaNumber, 10) : undefined,
+    isBeta: betaNumber !== undefined,
+  };
 }
 
 /**
@@ -42,42 +42,39 @@ export function parseVersion(version: string): ParsedVersion | null {
  * @param bumpType - 'auto' for beta increment, 'patch', 'minor', or custom version
  * @returns Next version string
  */
-export function calculateNextVersion(
-	current: ParsedVersion | null,
-	bumpType: string
-): string {
-	if (!current) {
-		// Validate custom version when current is null
-		const parsed = parseVersion(bumpType);
-		if (!parsed) {
-			throw new Error('Invalid custom version');
-		}
-		return bumpType;
-	}
+export function calculateNextVersion(current: ParsedVersion | null, bumpType: string): string {
+  if (!current) {
+    // Validate custom version when current is null
+    const parsed = parseVersion(bumpType);
+    if (!parsed) {
+      throw new Error("Invalid custom version");
+    }
+    return bumpType;
+  }
 
-	if (bumpType === 'auto') {
-		// Validate that we're auto-incrementing a beta version
-		if (!current.isBeta) {
-			throw new Error('Cannot auto-increment beta number on production version');
-		}
-		// Auto-increment beta number (using non-null assertion since we know it exists)
-		return `${current.major}.${current.minor}.${current.patch}-beta.${current.betaNumber! + 1}`;
-	}
+  if (bumpType === "auto") {
+    // Validate that we're auto-incrementing a beta version
+    if (!current.isBeta) {
+      throw new Error("Cannot auto-increment beta number on production version");
+    }
+    // Auto-increment beta number (using non-null assertion since we know it exists)
+    return `${current.major}.${current.minor}.${current.patch}-beta.${current.betaNumber! + 1}`;
+  }
 
-	if (bumpType === 'patch') {
-		return `${current.major}.${current.minor}.${current.patch + 1}-beta.1`;
-	}
+  if (bumpType === "patch") {
+    return `${current.major}.${current.minor}.${current.patch + 1}-beta.1`;
+  }
 
-	if (bumpType === 'minor') {
-		return `${current.major}.${current.minor + 1}.0-beta.1`;
-	}
+  if (bumpType === "minor") {
+    return `${current.major}.${current.minor + 1}.0-beta.1`;
+  }
 
-	// Custom version - validate and return
-	const parsed = parseVersion(bumpType);
-	if (!parsed) {
-		throw new Error('Invalid custom version');
-	}
-	return bumpType;
+  // Custom version - validate and return
+  const parsed = parseVersion(bumpType);
+  if (!parsed) {
+    throw new Error("Invalid custom version");
+  }
+  return bumpType;
 }
 
 /**
@@ -86,62 +83,62 @@ export function calculateNextVersion(
  * @returns Promise resolving to 'patch', 'minor', or a custom version string
  */
 export function promptVersionBump(current: ParsedVersion): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const rl = readline.createInterface({
-			input: process.stdin,
-			output: process.stdout
-		});
+  return new Promise((resolve, reject) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
 
-		// Calculate what each option would result in
-		const patchVersion = `${current.major}.${current.minor}.${current.patch + 1}-beta.1`;
-		const minorVersion = `${current.major}.${current.minor + 1}.0-beta.1`;
+    // Calculate what each option would result in
+    const patchVersion = `${current.major}.${current.minor}.${current.patch + 1}-beta.1`;
+    const minorVersion = `${current.major}.${current.minor + 1}.0-beta.1`;
 
-		console.log(`\nCurrent version: ${current.major}.${current.minor}.${current.patch}\n`);
-		console.log('Select version bump:');
-		console.log(`1) Patch: ${patchVersion}`);
-		console.log(`2) Minor: ${minorVersion}`);
-		console.log('3) Custom (enter version manually)\n');
+    console.log(`\nCurrent version: ${current.major}.${current.minor}.${current.patch}\n`);
+    console.log("Select version bump:");
+    console.log(`1) Patch: ${patchVersion}`);
+    console.log(`2) Minor: ${minorVersion}`);
+    console.log("3) Custom (enter version manually)\n");
 
-		rl.question('Choice (1/2/3): ', (answer) => {
-			const choice = answer.trim();
+    rl.question("Choice (1/2/3): ", (answer) => {
+      const choice = answer.trim();
 
-			if (choice === '1') {
-				rl.close();
-				resolve('patch');
-			} else if (choice === '2') {
-				rl.close();
-				resolve('minor');
-			} else if (choice === '3') {
-				rl.question('Enter custom version (format: X.Y.Z-beta.N): ', (customVersion) => {
-					const trimmed = customVersion.trim();
-					const parsed = parseVersion(trimmed);
+      if (choice === "1") {
+        rl.close();
+        resolve("patch");
+      } else if (choice === "2") {
+        rl.close();
+        resolve("minor");
+      } else if (choice === "3") {
+        rl.question("Enter custom version (format: X.Y.Z-beta.N): ", (customVersion) => {
+          const trimmed = customVersion.trim();
+          const parsed = parseVersion(trimmed);
 
-					if (!parsed || !parsed.isBeta) {
-						rl.close();
-						reject(new Error('Invalid version format. Must be X.Y.Z-beta.N'));
-						return;
-					}
+          if (!parsed || !parsed.isBeta) {
+            rl.close();
+            reject(new Error("Invalid version format. Must be X.Y.Z-beta.N"));
+            return;
+          }
 
-					rl.close();
-					resolve(trimmed);
-				});
-			} else {
-				rl.close();
-				reject(new Error('Invalid choice. Please enter 1, 2, or 3'));
-			}
-		});
-	});
+          rl.close();
+          resolve(trimmed);
+        });
+      } else {
+        rl.close();
+        reject(new Error("Invalid choice. Please enter 1, 2, or 3"));
+      }
+    });
+  });
 }
 
 interface PluginManifest {
-	id: string;
-	name: string;
-	version: string;
-	minAppVersion: string;
-	description: string;
-	author: string;
-	authorUrl: string;
-	isDesktopOnly: boolean;
+  id: string;
+  name: string;
+  version: string;
+  minAppVersion: string;
+  description: string;
+  author: string;
+  authorUrl: string;
+  isDesktopOnly: boolean;
 }
 
 /**
@@ -149,14 +146,14 @@ interface PluginManifest {
  * @returns Parsed manifest object
  */
 export function readManifest(): PluginManifest {
-	const manifestPath = join(process.cwd(), 'manifest.json');
+  const manifestPath = join(process.cwd(), "manifest.json");
 
-	if (!existsSync(manifestPath)) {
-		throw new Error('manifest.json not found in current directory');
-	}
+  if (!existsSync(manifestPath)) {
+    throw new Error("manifest.json not found in current directory");
+  }
 
-	const content = readFileSync(manifestPath, 'utf-8');
-	return JSON.parse(content) as PluginManifest;
+  const content = readFileSync(manifestPath, "utf-8");
+  return JSON.parse(content) as PluginManifest;
 }
 
 /**
@@ -164,13 +161,13 @@ export function readManifest(): PluginManifest {
  * @param version - New version string to set
  */
 export function updateManifest(version: string): void {
-	const manifestPath = join(process.cwd(), 'manifest.json');
-	const manifest = readManifest();
+  const manifestPath = join(process.cwd(), "manifest.json");
+  const manifest = readManifest();
 
-	manifest.version = version;
+  manifest.version = version;
 
-	// Write with tabs for indentation to match existing format
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n', 'utf-8');
+  // Write with tabs for indentation to match existing format
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n", "utf-8");
 }
 
 /**
@@ -178,28 +175,28 @@ export function updateManifest(version: string): void {
  * @throws Error if any required files are missing
  */
 export function verifyBuildFiles(): void {
-	const requiredFiles = ['main.js', 'manifest.json'];
-	const optionalFiles = ['styles.css'];
-	const missingFiles: string[] = [];
+  const requiredFiles = ["main.js", "manifest.json"];
+  const optionalFiles = ["styles.css"];
+  const missingFiles: string[] = [];
 
-	for (const file of requiredFiles) {
-		const filePath = join(process.cwd(), file);
-		if (!existsSync(filePath)) {
-			missingFiles.push(file);
-		}
-	}
+  for (const file of requiredFiles) {
+    const filePath = join(process.cwd(), file);
+    if (!existsSync(filePath)) {
+      missingFiles.push(file);
+    }
+  }
 
-	if (missingFiles.length > 0) {
-		throw new Error(`Missing required build files: ${missingFiles.join(', ')}`);
-	}
+  if (missingFiles.length > 0) {
+    throw new Error(`Missing required build files: ${missingFiles.join(", ")}`);
+  }
 
-	// Check optional files
-	for (const file of optionalFiles) {
-		const filePath = join(process.cwd(), file);
-		if (!existsSync(filePath)) {
-			console.log(`Note: ${file} not found (plugin may not have styles)`);
-		}
-	}
+  // Check optional files
+  for (const file of optionalFiles) {
+    const filePath = join(process.cwd(), file);
+    if (!existsSync(filePath)) {
+      console.log(`Note: ${file} not found (plugin may not have styles)`);
+    }
+  }
 }
 
 /**
@@ -207,19 +204,19 @@ export function verifyBuildFiles(): void {
  * @returns true if clean, false otherwise
  */
 export function checkGitStatus(): boolean {
-	try {
-		const output = execSync('git status --porcelain', { encoding: 'utf-8' });
-		if (output.trim() !== '') {
-			console.error('Error: Git working directory is not clean');
-			console.error('Please commit or stash your changes before releasing');
-			return false;
-		}
-		return true;
-	} catch (error) {
-		console.error('Error: Failed to check git status');
-		console.error(error instanceof Error ? error.message : String(error));
-		return false;
-	}
+  try {
+    const output = execSync("git status --porcelain", { encoding: "utf-8" });
+    if (output.trim() !== "") {
+      console.error("Error: Git working directory is not clean");
+      console.error("Please commit or stash your changes before releasing");
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error: Failed to check git status");
+    console.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
 }
 
 /**
@@ -227,24 +224,65 @@ export function checkGitStatus(): boolean {
  * @returns true if available and authenticated, false otherwise
  */
 export function checkGitHubCLI(): boolean {
-	// Check if gh is installed
-	try {
-		execSync('gh --version', { encoding: 'utf-8', stdio: 'pipe' });
-	} catch (error) {
-		console.error('Error: GitHub CLI (gh) is not installed');
-		console.error('Install from: https://cli.github.com/');
-		return false;
-	}
+  // Check if gh is installed
+  try {
+    execSync("gh --version", { encoding: "utf-8", stdio: "pipe" });
+  } catch (error) {
+    console.error("Error: GitHub CLI (gh) is not installed");
+    console.error("Install from: https://cli.github.com/");
+    return false;
+  }
 
-	// Check if gh is authenticated
-	try {
-		execSync('gh auth status', { encoding: 'utf-8', stdio: 'pipe' });
-		return true;
-	} catch (error) {
-		console.error('Error: GitHub CLI is not authenticated');
-		console.error('Run: gh auth login');
-		return false;
-	}
+  // Check if gh is authenticated
+  try {
+    execSync("gh auth status", { encoding: "utf-8", stdio: "pipe" });
+    return true;
+  } catch (error) {
+    console.error("Error: GitHub CLI is not authenticated");
+    console.error("Run: gh auth login");
+    return false;
+  }
+}
+
+/**
+ * Checks code formatting using Prettier
+ * @returns true if code is formatted correctly, false otherwise
+ */
+export function checkFormatting(): boolean {
+  console.log("Checking code formatting...");
+
+  try {
+    execSync("npm run format:check", {
+      stdio: "pipe",
+      encoding: "utf-8",
+    });
+    console.log("✓ Code formatting is correct\n");
+    return true;
+  } catch (error) {
+    console.error("✗ Code formatting check failed");
+    console.error("Run: npm run format\n");
+    return false;
+  }
+}
+
+/**
+ * Runs test suite
+ * @returns true if all tests pass, false otherwise
+ */
+export function checkTests(): boolean {
+  console.log("Running tests...");
+
+  try {
+    execSync("npm test", {
+      stdio: "inherit",
+      encoding: "utf-8",
+    });
+    console.log("✓ All tests passed\n");
+    return true;
+  } catch (error) {
+    console.error("✗ Tests failed\n");
+    return false;
+  }
 }
 
 /**
@@ -252,15 +290,23 @@ export function checkGitHubCLI(): boolean {
  * @returns true if all checks pass, false otherwise
  */
 export function runPreflightChecks(): boolean {
-	if (!checkGitStatus()) {
-		return false;
-	}
+  if (!checkGitStatus()) {
+    return false;
+  }
 
-	if (!checkGitHubCLI()) {
-		return false;
-	}
+  if (!checkGitHubCLI()) {
+    return false;
+  }
 
-	return true;
+  if (!checkFormatting()) {
+    return false;
+  }
+
+  if (!checkTests()) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -268,20 +314,20 @@ export function runPreflightChecks(): boolean {
  * @returns true if build succeeds, false otherwise
  */
 export function buildPlugin(): boolean {
-	console.log('\nBuilding plugin...');
+  console.log("\nBuilding plugin...");
 
-	try {
-		execSync('npm run build', {
-			stdio: 'inherit',
-			encoding: 'utf-8'
-		});
+  try {
+    execSync("npm run build", {
+      stdio: "inherit",
+      encoding: "utf-8",
+    });
 
-		console.log('✓ Build completed successfully\n');
-		return true;
-	} catch (error) {
-		console.error('✗ Build failed\n');
-		return false;
-	}
+    console.log("✓ Build completed successfully\n");
+    return true;
+  } catch (error) {
+    console.error("✗ Build failed\n");
+    return false;
+  }
 }
 
 /**
@@ -289,10 +335,8 @@ export function buildPlugin(): boolean {
  * @returns Array of asset file names
  */
 export function getReleaseAssets(): string[] {
-	const hasStyles = existsSync(join(process.cwd(), 'styles.css'));
-	return hasStyles
-		? ['manifest.json', 'main.js', 'styles.css']
-		: ['manifest.json', 'main.js'];
+  const hasStyles = existsSync(join(process.cwd(), "styles.css"));
+  return hasStyles ? ["manifest.json", "main.js", "styles.css"] : ["manifest.json", "main.js"];
 }
 
 /**
@@ -301,28 +345,28 @@ export function getReleaseAssets(): string[] {
  * @returns Promise resolving to true if user confirms
  */
 export function confirmRelease(version: string): Promise<boolean> {
-	return new Promise((resolve) => {
-		const assets = getReleaseAssets().join(' ');
+  return new Promise((resolve) => {
+    const assets = getReleaseAssets().join(" ");
 
-		console.log('The following commands will be executed:\n');
-		console.log(`  gh release create ${version} \\`);
-		console.log(`    --title "Beta v${version}" \\`);
-		console.log('    --prerelease \\');
-		console.log(`    ${assets}\n`);
-		console.log('  git add manifest.json');
-		console.log(`  git commit -m "Release beta v${version}"`);
-		console.log('  git push\n');
+    console.log("The following commands will be executed:\n");
+    console.log(`  gh release create ${version} \\`);
+    console.log(`    --title "Beta v${version}" \\`);
+    console.log("    --prerelease \\");
+    console.log(`    ${assets}\n`);
+    console.log("  git add manifest.json");
+    console.log(`  git commit -m "Release beta v${version}"`);
+    console.log("  git push\n");
 
-		const rl = readline.createInterface({
-			input: process.stdin,
-			output: process.stdout
-		});
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
 
-		rl.question('Proceed with release? (y/n): ', (answer) => {
-			rl.close();
-			resolve(answer.toLowerCase() === 'y');
-		});
-	});
+    rl.question("Proceed with release? (y/n): ", (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === "y");
+    });
+  });
 }
 
 /**
@@ -331,24 +375,24 @@ export function confirmRelease(version: string): Promise<boolean> {
  * @returns true if successful, false otherwise
  */
 export function createGitHubRelease(version: string): boolean {
-	const assets = getReleaseAssets();
+  const assets = getReleaseAssets();
 
-	console.log('\nCreating GitHub release...\n');
+  console.log("\nCreating GitHub release...\n");
 
-	try {
-		execFileSync(
-			'gh',
-			['release', 'create', version, '--title', `Beta v${version}`, '--prerelease', ...assets],
-			{ stdio: 'inherit' }
-		);
-		console.log('\n✓ GitHub release created\n');
-		return true;
-	} catch (error) {
-		console.error('\nError creating release. Manifest was updated but release failed.');
-		console.error(error instanceof Error ? error.message : String(error));
-		console.error('To rollback: git checkout manifest.json\n');
-		return false;
-	}
+  try {
+    execFileSync(
+      "gh",
+      ["release", "create", version, "--title", `Beta v${version}`, "--prerelease", ...assets],
+      { stdio: "inherit" }
+    );
+    console.log("\n✓ GitHub release created\n");
+    return true;
+  } catch (error) {
+    console.error("\nError creating release. Manifest was updated but release failed.");
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("To rollback: git checkout manifest.json\n");
+    return false;
+  }
 }
 
 /**
@@ -357,107 +401,107 @@ export function createGitHubRelease(version: string): boolean {
  * @returns true if successful, false otherwise
  */
 export function commitAndPush(version: string): boolean {
-	console.log('Committing and pushing changes...\n');
+  console.log("Committing and pushing changes...\n");
 
-	try {
-		execFileSync('git', ['add', 'manifest.json'], { stdio: 'inherit' });
-		execFileSync('git', ['commit', '-m', `Release beta v${version}`], { stdio: 'inherit' });
-		execFileSync('git', ['push'], { stdio: 'inherit' });
-		console.log('\n✓ Changes committed and pushed\n');
-		return true;
-	} catch (error) {
-		console.error('\nError during git operations');
-		console.error(error instanceof Error ? error.message : String(error));
-		console.error('Release was created but changes not pushed');
-		console.error('You may need to manually commit and push manifest.json\n');
-		return false;
-	}
+  try {
+    execFileSync("git", ["add", "manifest.json"], { stdio: "inherit" });
+    execFileSync("git", ["commit", "-m", `Release beta v${version}`], { stdio: "inherit" });
+    execFileSync("git", ["push"], { stdio: "inherit" });
+    console.log("\n✓ Changes committed and pushed\n");
+    return true;
+  } catch (error) {
+    console.error("\nError during git operations");
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("Release was created but changes not pushed");
+    console.error("You may need to manually commit and push manifest.json\n");
+    return false;
+  }
 }
 
 /**
  * Reverts manifest.json to its state in git
  */
 function rollbackManifest(): void {
-	execFileSync('git', ['checkout', 'manifest.json']);
+  execFileSync("git", ["checkout", "manifest.json"]);
 }
 
 /**
  * Main entry point that orchestrates the entire release workflow
  */
 async function main(): Promise<void> {
-	console.log('\n=== Beta Release Workflow ===\n');
+  console.log("\n=== Beta Release Workflow ===\n");
 
-	// Pre-flight checks
-	if (!runPreflightChecks()) {
-		process.exit(1);
-	}
+  // Pre-flight checks
+  if (!runPreflightChecks()) {
+    process.exit(1);
+  }
 
-	// Read current version
-	const manifest = readManifest();
-	const current = parseVersion(manifest.version);
+  // Read current version
+  const manifest = readManifest();
+  const current = parseVersion(manifest.version);
 
-	if (!current) {
-		console.error('Error: Invalid version in manifest.json');
-		process.exit(1);
-	}
+  if (!current) {
+    console.error("Error: Invalid version in manifest.json");
+    process.exit(1);
+  }
 
-	// Determine next version
-	let nextVersion: string;
-	if (current.isBeta) {
-		// Auto-increment beta
-		nextVersion = calculateNextVersion(current, 'auto');
-		console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
-	} else {
-		// Interactive selection
-		const bumpType = await promptVersionBump(current);
-		nextVersion = calculateNextVersion(current, bumpType);
-	}
+  // Determine next version
+  let nextVersion: string;
+  if (current.isBeta) {
+    // Auto-increment beta
+    nextVersion = calculateNextVersion(current, "auto");
+    console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
+  } else {
+    // Interactive selection
+    const bumpType = await promptVersionBump(current);
+    nextVersion = calculateNextVersion(current, bumpType);
+  }
 
-	// Update manifest
-	updateManifest(nextVersion);
+  // Update manifest
+  updateManifest(nextVersion);
 
-	// Build plugin
-	if (!buildPlugin()) {
-		console.error('Reverting manifest changes...');
-		rollbackManifest();
-		process.exit(1);
-	}
+  // Build plugin
+  if (!buildPlugin()) {
+    console.error("Reverting manifest changes...");
+    rollbackManifest();
+    process.exit(1);
+  }
 
-	// Verify build files
-	try {
-		verifyBuildFiles();
-	} catch (error) {
-		console.error(error instanceof Error ? error.message : String(error));
-		console.error('Reverting manifest changes...');
-		rollbackManifest();
-		process.exit(1);
-	}
+  // Verify build files
+  try {
+    verifyBuildFiles();
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("Reverting manifest changes...");
+    rollbackManifest();
+    process.exit(1);
+  }
 
-	// Confirm and execute
-	const confirmed = await confirmRelease(nextVersion);
-	if (!confirmed) {
-		console.log('Release cancelled. Reverting manifest changes...');
-		rollbackManifest();
-		process.exit(0);
-	}
+  // Confirm and execute
+  const confirmed = await confirmRelease(nextVersion);
+  if (!confirmed) {
+    console.log("Release cancelled. Reverting manifest changes...");
+    rollbackManifest();
+    process.exit(0);
+  }
 
-	// Create release
-	if (!createGitHubRelease(nextVersion)) {
-		process.exit(1);
-	}
+  // Create release
+  if (!createGitHubRelease(nextVersion)) {
+    process.exit(1);
+  }
 
-	// Commit and push
-	if (!commitAndPush(nextVersion)) {
-		process.exit(1);
-	}
+  // Commit and push
+  if (!commitAndPush(nextVersion)) {
+    process.exit(1);
+  }
 
-	console.log(`\n✓ Beta v${nextVersion} released successfully!\n`);
+  console.log(`\n✓ Beta v${nextVersion} released successfully!\n`);
 }
 
 // Run if called directly (TypeScript/Node.js entry point check)
 if (require.main === module) {
-	main().catch((error) => {
-		console.error('Unexpected error:', error);
-		process.exit(1);
-	});
+  main().catch((error) => {
+    console.error("Unexpected error:", error);
+    process.exit(1);
+  });
 }
