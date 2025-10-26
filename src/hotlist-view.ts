@@ -379,11 +379,13 @@ export class HotlistView extends ItemView {
       await this.markItemComplete(item);
     });
 
-    // Secondary actions (shown on hover)
+    // Secondary actions (shown on hover) - wrapped in container for absolute positioning
+    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-hotlist-action-secondary" });
+
     // Pin button (only show for unpinned items)
     if (!item.isPinned) {
-      const pinBtn = actionsSpan.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+      const pinBtn = secondaryActions.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
         text: "📌",
       });
       pinBtn.title = "Pin to top";
@@ -394,8 +396,8 @@ export class HotlistView extends ItemView {
 
     // Only show "Convert to waiting for" button for non-waiting items
     if (!isWaitingFor) {
-      const waitingBtn = actionsSpan.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+      const waitingBtn = secondaryActions.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
@@ -404,8 +406,8 @@ export class HotlistView extends ItemView {
       });
     }
 
-    const removeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+    const removeBtn = secondaryActions.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
       text: "🗑️",
     });
     removeBtn.title = "Remove from hotlist";
@@ -468,10 +470,12 @@ export class HotlistView extends ItemView {
       await this.markItemComplete(item);
     });
 
-    // Secondary actions (shown on hover)
+    // Secondary actions (shown on hover) - wrapped in container for absolute positioning
+    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-hotlist-action-secondary" });
+
     // Unpin button
-    const unpinBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+    const unpinBtn = secondaryActions.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
       text: "✕",
     });
     unpinBtn.title = "Unpin from top";
@@ -481,8 +485,8 @@ export class HotlistView extends ItemView {
 
     // Only show "Convert to waiting for" button for non-waiting items
     if (!isWaitingFor) {
-      const waitingBtn = actionsSpan.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+      const waitingBtn = secondaryActions.createEl("button", {
+        cls: "flow-gtd-hotlist-action-btn",
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
@@ -491,8 +495,8 @@ export class HotlistView extends ItemView {
       });
     }
 
-    const removeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-secondary",
+    const removeBtn = secondaryActions.createEl("button", {
+      cls: "flow-gtd-hotlist-action-btn",
       text: "🗑️",
     });
     removeBtn.title = "Remove from hotlist";
