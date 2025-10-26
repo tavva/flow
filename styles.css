@@ -1449,3 +1449,43 @@ select.flow-gtd-inline-select option,
 	color: var(--text-muted);
 	margin-bottom: 0;
 }
+
+/* Pinned section styling */
+.flow-gtd-hotlist-pinned-items {
+	background: var(--background-primary-alt);
+	border-radius: 4px;
+	padding: 8px;
+	margin-bottom: 8px;
+}
+
+/* Drag handle - hidden by default, visible on hover */
+.flow-gtd-hotlist-drag-handle {
+	opacity: 0.3;
+	cursor: grab;
+	margin-right: 8px;
+	transition: opacity 0.2s;
+	display: inline-flex;
+	align-items: center;
+}
+
+.flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-drag-handle {
+	opacity: 0.7;
+}
+
+.flow-gtd-hotlist-drag-handle:active {
+	cursor: grabbing;
+}
+
+/* Dragging state */
+.flow-gtd-hotlist-item.dragging {
+	opacity: 0.5;
+}
+
+.flow-gtd-hotlist-item.drag-over {
+	border-top: 2px solid var(--interactive-accent);
+}
+
+/* Pin indicator */
+.flow-gtd-hotlist-pin-indicator {
+	margin-right: 4px;
+}
