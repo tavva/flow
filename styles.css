@@ -1415,23 +1415,27 @@ select.flow-gtd-inline-select option,
 
 /* Fix Setting component layout in project section */
 .flow-gtd-project-section .setting-item {
-	display: flex;
-	flex-direction: column !important;
-	gap: 8px;
+	display: block !important;
 	padding: 16px 0;
 	border: none;
 	margin: 0;
 }
 
 .flow-gtd-project-section .setting-item-info {
+	display: block;
 	width: 100%;
 	margin-right: 0;
+	margin-bottom: 8px;
+	float: none;
 }
 
 .flow-gtd-project-section .setting-item-control {
+	display: block;
 	width: 100%;
 	max-width: none;
 	flex-grow: 0;
+	margin-left: 0;
+	float: none;
 }
 
 .flow-gtd-project-section .setting-item-name {
@@ -1443,5 +1447,5 @@ select.flow-gtd-inline-select option,
 .flow-gtd-project-section .setting-item-description {
 	font-size: 12px;
 	color: var(--text-muted);
-	margin-bottom: 8px;
+	margin-bottom: 0;
 }
