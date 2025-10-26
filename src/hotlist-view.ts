@@ -395,7 +395,7 @@ export class HotlistView extends ItemView {
     if (!isWaitingFor) {
       const waitingBtn = actionsSpan.createEl("button", {
         cls: "flow-gtd-hotlist-action-btn",
-        text: "⏸",
+        text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
       waitingBtn.addEventListener("click", async () => {
@@ -471,7 +471,7 @@ export class HotlistView extends ItemView {
     if (!isWaitingFor) {
       const waitingBtn = actionsSpan.createEl("button", {
         cls: "flow-gtd-hotlist-action-btn",
-        text: "⏸",
+        text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
       waitingBtn.addEventListener("click", async () => {
