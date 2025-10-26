@@ -375,4 +375,81 @@ describe("HotlistView", () => {
       expect(mockSaveSettings).toHaveBeenCalled();
     });
   });
+
+  describe("HotlistView - Pinned Items", () => {
+    it("should filter pinned items from unpinned items", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] Pinned action",
+            text: "Pinned action",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 2000,
+            isPinned: true,
+          },
+          {
+            file: "Projects/Project B.md",
+            lineNumber: 15,
+            lineContent: "- [ ] Unpinned action",
+            text: "Unpinned action",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now() - 1000,
+            isPinned: false,
+          },
+        ],
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).scanner = {
+        scanProjects: jest.fn().mockResolvedValue([]),
+      };
+      await testView.onOpen();
+
+      const container = testView.containerEl.children[1] as HTMLElement;
+      const sections = container.querySelectorAll(".flow-gtd-hotlist-section");
+
+      // Should have 2 sections: Pinned and Project Actions
+      expect(sections.length).toBe(2);
+      expect(sections[0].querySelector("h3")?.textContent).toBe("Pinned");
+      expect(sections[1].querySelector("h3")?.textContent).toBe("Project Actions");
+    });
+
+    it("should treat items without isPinned as unpinned (backward compatibility)", async () => {
+      const settings = {
+        ...mockSettings,
+        hotlist: [
+          {
+            file: "Projects/Project A.md",
+            lineNumber: 10,
+            lineContent: "- [ ] Legacy action",
+            text: "Legacy action",
+            sphere: "work",
+            isGeneral: false,
+            addedAt: Date.now(),
+            // No isPinned property
+          } as HotlistItem,
+        ],
+      };
+
+      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      (testView as any).app = mockApp;
+      (testView as any).scanner = {
+        scanProjects: jest.fn().mockResolvedValue([]),
+      };
+      await testView.onOpen();
+
+      const container = testView.containerEl.children[1] as HTMLElement;
+      const sections = container.querySelectorAll(".flow-gtd-hotlist-section");
+
+      // Should only have Project Actions section (no pinned)
+      expect(sections.length).toBe(1);
+      expect(sections[0].querySelector("h3")?.textContent).toBe("Project Actions");
+    });
+  });
 });

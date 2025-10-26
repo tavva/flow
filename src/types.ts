@@ -28,6 +28,7 @@ export interface HotlistItem {
   sphere: string; // Which sphere this belongs to
   isGeneral: boolean; // true if from Next Actions file
   addedAt: number; // Timestamp
+  isPinned?: boolean; // true if item is in pinned section
 }
 
 export type ProcessingAction =
