@@ -104,6 +104,7 @@ async function promptUser(question: string): Promise<string> {
   return new Promise((resolve) => {
     rl.question(question, (answer) => {
       rl.close();
+      process.stdin.unref();
       resolve(answer.trim().toLowerCase());
     });
   });

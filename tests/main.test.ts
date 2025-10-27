@@ -69,6 +69,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
   afterEach(() => {
     plugin.onunload();
+    jest.clearAllTimers();
   });
 
   describe("activateWaitingForView", () => {
