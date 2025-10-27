@@ -27,6 +27,13 @@ function makeObsidianElement(el: HTMLElement): HTMLElement {
     this.appendChild(element);
     return makeObsidianElement(element);
   };
+  (el as any).createSpan = function (options?: { cls?: string; text?: string }) {
+    const span = document.createElement("span");
+    if (options?.cls) span.className = options.cls;
+    if (options?.text) span.textContent = options.text;
+    this.appendChild(span);
+    return makeObsidianElement(span);
+  };
   (el as any).addClass = function (cls: string) {
     this.classList.add(cls);
     return this;
@@ -172,5 +179,64 @@ describe("renderEditableItemContent - action button groups", () => {
 
     // Should default to next-actions-file
     expect(nextButton?.classList.contains("selected")).toBe(true);
+  });
+});
+
+describe("renderEditableItemContent - date section", () => {
+  it("should render collapsible date section", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: true,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+      editedName: "Test action",
+      editedNames: ["Test action"],
+      waitingFor: [false],
+    };
+    const state = createMockState([item]);
+
+    renderEditableItemContent(container, item, state);
+
+    const dateSection = container.querySelector(".flow-gtd-date-section");
+    expect(dateSection).toBeTruthy();
+
+    const dateLabel = dateSection?.querySelector(".flow-gtd-date-label");
+    expect(dateLabel?.textContent).toContain("Set due date (optional)");
+  });
+
+  it("should show different date labels based on action type", () => {
+    const actionLabels: Record<string, string | null> = {
+      "next-actions-file": "Set due date (optional)",
+      "create-project": "Set target date (optional)",
+      "someday-file": "Set reminder date (optional)",
+      person: "Set follow-up date (optional)",
+      reference: null,
+    };
+
+    Object.entries(actionLabels).forEach(([action, expectedLabel]) => {
+      const container = makeObsidianElement(document.createElement("div"));
+      const item: EditableItem = {
+        original: "Test",
+        isAIProcessed: true,
+        selectedAction: action as any,
+        selectedSpheres: ["work"],
+        editedName: "Test",
+      };
+      const state = createMockState([item]);
+
+      renderEditableItemContent(container, item, state);
+
+      const dateSection = container.querySelector(".flow-gtd-date-section") as HTMLElement;
+
+      if (expectedLabel) {
+        expect(dateSection).toBeTruthy();
+        expect(dateSection.style.display).not.toBe("none");
+        const label = dateSection.querySelector(".flow-gtd-date-label");
+        expect(label?.textContent).toBe(expectedLabel);
+      } else {
+        expect(dateSection).toBeNull();
+      }
+    });
   });
 });

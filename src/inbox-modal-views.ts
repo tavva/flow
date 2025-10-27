@@ -447,6 +447,100 @@ export function renderEditableItemContent(
   ) {
     renderFocusCheckbox(itemEl, item, state);
   }
+
+  // Show date section for actions that support dates (not reference or trash)
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
+    renderDateSection(itemEl, item, state);
+  }
+}
+
+function renderDateSection(container: HTMLElement, item: EditableItem, state: InboxModalState) {
+  // Get label based on action type
+  const getDateLabel = (
+    action: string,
+    waitingFor?: boolean[]
+  ): string | null => {
+    // Check if any actions are waiting-for
+    const isWaiting = waitingFor?.some((w) => w) || false;
+    if (isWaiting) return "Set follow-up date (optional)";
+
+    switch (action) {
+      case "next-actions-file":
+        return "Set due date (optional)";
+      case "create-project":
+      case "add-to-project":
+        return "Set target date (optional)";
+      case "someday-file":
+        return "Set reminder date (optional)";
+      case "person":
+        return "Set follow-up date (optional)";
+      default:
+        return null;
+    }
+  };
+
+  const label = getDateLabel(item.selectedAction, item.waitingFor);
+  if (!label) return;
+
+  // Date section (collapsible)
+  const dateSection = container.createDiv("flow-gtd-date-section");
+  dateSection.style.marginTop = "8px";
+
+  const dateSectionHeader = dateSection.createDiv("flow-gtd-date-section-header");
+  dateSectionHeader.style.display = "flex";
+  dateSectionHeader.style.alignItems = "center";
+  dateSectionHeader.style.cursor = "pointer";
+  dateSectionHeader.style.fontSize = "13px";
+  dateSectionHeader.style.color = "var(--text-muted)";
+
+  const chevron = dateSectionHeader.createSpan({
+    cls: "flow-gtd-date-chevron",
+    text: "▶",
+  });
+  chevron.style.marginRight = "6px";
+  chevron.style.fontSize = "10px";
+
+  const dateLabel = dateSectionHeader.createSpan({
+    cls: "flow-gtd-date-label",
+  });
+  dateLabel.textContent = label;
+
+  const dateInputContainer = dateSection.createDiv("flow-gtd-date-input-container");
+  dateInputContainer.style.marginTop = "8px";
+  dateInputContainer.style.display = "none"; // Hidden by default
+
+  const dateInput = dateInputContainer.createEl("input", {
+    type: "date",
+    cls: "flow-gtd-date-input",
+  });
+  dateInput.value = item.dueDate || "";
+  dateInput.style.width = "150px";
+  dateInput.style.marginRight = "8px";
+
+  dateInput.addEventListener("change", () => {
+    item.dueDate = dateInput.value || undefined;
+  });
+
+  if (item.dueDate) {
+    const clearButton = dateInputContainer.createEl("button", {
+      text: "×",
+      cls: "flow-gtd-date-clear",
+    });
+    clearButton.style.cursor = "pointer";
+    clearButton.addEventListener("click", () => {
+      item.dueDate = undefined;
+      dateInput.value = "";
+      clearButton.remove();
+    });
+  }
+
+  // Toggle collapsed/expanded
+  let isExpanded = false;
+  dateSectionHeader.addEventListener("click", () => {
+    isExpanded = !isExpanded;
+    dateInputContainer.style.display = isExpanded ? "block" : "none";
+    chevron.textContent = isExpanded ? "▼" : "▶";
+  });
 }
 
 function renderNextActionsEditor(
