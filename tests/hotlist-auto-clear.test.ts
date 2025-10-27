@@ -330,4 +330,29 @@ describe("archiveClearedTasks", () => {
     // General actions should use display text format
     expect(createdContent).toContain("- [[Next actions|Call dentist]]");
   });
+
+  it("handles files without .md extension gracefully", async () => {
+    const items: HotlistItem[] = [
+      {
+        file: "Projects/README",
+        lineNumber: 5,
+        lineContent: "- [ ] Update documentation",
+        text: "Update documentation",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+    ];
+
+    const archiveFilePath = "Archive.md";
+    const clearTime = new Date("2025-10-27T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Should create wikilink even without .md extension
+    expect(createdContent).toContain("- [[Projects/README]] Update documentation");
+  });
 });
