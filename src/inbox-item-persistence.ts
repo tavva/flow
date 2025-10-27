@@ -87,7 +87,7 @@ export class InboxItemPersistenceService {
       throw new GTDResponseValidationError("At least one sphere must be selected for this action.");
     }
 
-    // Validate reminder date for someday items
+    // Validate date format for someday items
     if (item.selectedAction === "someday-file" && item.dueDate) {
       const validation = validateReminderDate(item.dueDate);
       if (!validation.valid) {

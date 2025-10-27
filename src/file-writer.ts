@@ -121,10 +121,10 @@ export class FileWriter {
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
 
     for (const item of itemsArray) {
-      const reminderSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+      const dateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
       const content = sphereTags
-        ? `- [ ] ${item}${reminderSuffix} ${sphereTags}`
-        : `- [ ] ${item}${reminderSuffix}`;
+        ? `- [ ] ${item}${dateSuffix} ${sphereTags}`
+        : `- [ ] ${item}${dateSuffix}`;
       await this.appendToFile(this.settings.somedayFilePath, content);
     }
   }
