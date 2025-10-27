@@ -281,4 +281,53 @@ describe("archiveClearedTasks", () => {
     expect(createdContent).not.toContain("- [x]");
     expect(createdContent).not.toContain("- [w]");
   });
+
+  it("formats general actions with display text and projects with file links", async () => {
+    const items: HotlistItem[] = [
+      {
+        file: "Projects/Work Project.md",
+        lineNumber: 15,
+        lineContent: "- [ ] Review design document",
+        text: "Review design document",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Next actions.md",
+        lineNumber: 8,
+        lineContent: "- [ ] Call dentist",
+        text: "Call dentist",
+        sphere: "personal",
+        isGeneral: true,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Projects/Health/Annual Checkup.md",
+        lineNumber: 20,
+        lineContent: "- [ ] Schedule appointment",
+        text: "Schedule appointment",
+        sphere: "personal",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+    ];
+
+    const archiveFilePath = "Archive.md";
+    const clearTime = new Date("2025-10-27T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Project items should have file link before text
+    expect(createdContent).toContain("- [[Projects/Work Project]] Review design document");
+    expect(createdContent).toContain(
+      "- [[Projects/Health/Annual Checkup]] Schedule appointment"
+    );
+
+    // General actions should use display text format
+    expect(createdContent).toContain("- [[Next actions|Call dentist]]");
+  });
 });
