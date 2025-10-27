@@ -74,6 +74,12 @@ export class FileWriter {
 
   /**
    * Add an action to the Next Actions file
+   *
+   * @param actions - Single action or array of actions to add
+   * @param spheres - Sphere tags to apply (e.g., ["personal", "work"])
+   * @param waitingFor - Array of booleans indicating which actions are waiting-for items
+   * @param markAsDone - Array of booleans indicating which actions should be marked as complete
+   * @param dueDate - Optional due date in YYYY-MM-DD format (e.g., "2025-11-15")
    */
   async addToNextActionsFile(
     actions: string | string[],

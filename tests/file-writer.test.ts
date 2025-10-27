@@ -897,6 +897,36 @@ tags:
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
       expect(content).toBe("- [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work\n");
     });
+
+    it("should write next action without due date when dueDate is undefined", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Call dentist for appointment"],
+        ["personal"],
+        [false],
+        [false],
+        undefined
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe("- [ ] Call dentist for appointment #sphere/personal\n");
+    });
+
+    it("should write completed action with due date showing both completion emoji and due date", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Call dentist for appointment"],
+        ["personal"],
+        [false],
+        [true],
+        "2025-11-15"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toMatch(
+        /- \[x\] Call dentist for appointment ✅ \d{4}-\d{2}-\d{2} 📅 2025-11-15 #sphere\/personal\n/
+      );
+    });
   });
 
   describe("addToSomedayFile", () => {
