@@ -151,18 +151,19 @@ The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
 - **Scanner** (`src/waiting-for-scanner.ts`) - Finds all `[w]` items across vault
 - **View** (`src/waiting-for-view.ts`) - Aggregates waiting-for items in dedicated pane
 - **Status Cycler** (`src/task-status-cycler.ts`) - Cycles checkbox status: [ ] → [w] → [x]
+- **Visual Indicator** - Waiting-for items show 🤝 handshake emoji in sphere and focus views
 - **AI Integration** - Processor recognizes waiting-for scenarios during inbox processing
 
-### Someday/Maybe with Reminder Dates
+### Someday/Maybe with Dates
 
-The plugin supports adding optional reminder dates to items in the Someday/Maybe file:
+The plugin supports adding optional dates to items in the Someday/Maybe file:
 
 - **Editable Items** - When processing items to the Someday/Maybe file, you can edit the item text and add/remove multiple items
-- **Date Picker UI** - A date picker allows setting reminder dates for all items
-- **Format** - Reminder dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal`)
+- **Date Picker UI** - A collapsible date picker allows setting dates for items
+- **Format** - Dates are stored in YYYY-MM-DD format with a 📅 emoji (e.g., `- [ ] Learn Spanish 📅 2026-01-12 #sphere/personal`)
 - **Integration** - Works with the Reminders plugin for Obsidian to surface items at the appropriate time
 - **Validation** - The `validateReminderDate()` function ensures dates are valid and properly formatted
-- **Optional** - Reminder dates are optional; items can be added to Someday/Maybe without a date
+- **Optional** - Dates are optional; items can be added to Someday/Maybe without a date
 - **Multiple Items** - You can add multiple items to the Someday/Maybe file in one operation
 
 **Example Someday/Maybe entries:**
@@ -171,6 +172,36 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 - [ ] Write a book 📅 2026-06-01 #sphere/personal
 - [ ] Learn Spanish #sphere/personal
 - [ ] Organize team retreat 📅 2026-03-15 #sphere/work
+```
+
+### Due Date Support
+
+The plugin supports optional due dates for all processing action types:
+
+- **All Action Types** - Next actions, projects, someday items, waiting-for items, and person notes all support dates
+- **Context-Aware Labels** - UI labels adapt based on action type (due date, reminder date, follow-up date, target date)
+- **Consistent Format** - All dates use 📅 YYYY-MM-DD format for compatibility with Reminders plugin
+- **Minimal UI** - Collapsible date section hidden by default to avoid clutter
+- **Optional** - Dates are never required; only add when meaningful
+- **Manual Entry** - No AI suggestions for dates; user sets them explicitly during review
+
+**Date semantic meaning by action type:**
+- **Next actions**: Due date (when action must be completed)
+- **Projects**: Target date (desired completion timeline)
+- **Someday items**: Reminder date (when to review the item)
+- **Waiting-for items**: Follow-up date (when to check back)
+- **Person notes**: Follow-up date (when to reach out)
+
+**Example entries with dates:**
+
+```markdown
+# Next Actions file
+- [ ] Call dentist for appointment 📅 2025-11-15 #sphere/personal
+- [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work
+
+# Project file
+## Next actions
+- [ ] Draft proposal outline 📅 2025-11-05
 ```
 
 ### Focus Support
