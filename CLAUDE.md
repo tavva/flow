@@ -99,6 +99,17 @@ The CLI includes automatic retry logic for network errors with exponential backo
 - `docs/cli-ink-usage.md` - Ink-specific usage details
 - `docs/cli-architecture.md` - Build system and MockApp architecture (for developers)
 
+**CLI Tools:**
+
+The CLI provides the LLM with 4 tools to modify the vault (`src/cli-tools.ts`):
+
+- `move_to_hotlist` - Add a next action to the hotlist for immediate focus
+- `update_next_action` - Rename or improve the wording of an existing action
+- `create_project` - Create a new Flow project with GTD-compliant structure
+- `update_project` - Update an existing project's description or add next actions
+
+The CLI requires user approval before executing any tool calls that modify the vault.
+
 ## Architecture
 
 ### Core Processing Flow
@@ -106,15 +117,32 @@ The CLI includes automatic retry logic for network errors with exponential backo
 1. **Flow Scanner** (`src/flow-scanner.ts`) - Scans the Obsidian vault for Flow projects (files with `project/*` tags in frontmatter)
 2. **Person Scanner** (`src/person-scanner.ts`) - Scans the vault for person notes (files with `person` tag)
 3. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans designated inbox folders for files to process
-4. **GTD Processor** (`src/gtd-processor.ts`) - Uses AI to analyze inbox items with context from existing projects and people
-5. **LLM Factory** (`src/llm-factory.ts`) - Factory pattern for creating language model clients (Anthropic/OpenAI-compatible)
-6. **Language Model Clients** (`src/anthropic-client.ts`, `src/openai-compatible-client.ts`) - Provider-specific AI integrations
-7. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
-8. **Inbox Processing Controller** (`src/inbox-processing-controller.ts`) - Orchestrates the processing workflow
-9. **Inbox Modal** (`src/inbox-modal.ts`) - Main UI component for the inbox processing workflow
-10. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
-11. **Validation** (`src/validation.ts`) - Input validation and error handling
-12. **Errors** (`src/errors.ts`) - Custom error types and handling
+4. **GTD Context Scanner** (`src/gtd-context-scanner.ts`) - Scans for inbox items, next actions, and someday items across the vault
+5. **GTD Processor** (`src/gtd-processor.ts`) - Uses AI to analyze inbox items with context from existing projects and people
+6. **LLM Factory** (`src/llm-factory.ts`) - Factory pattern for creating language model clients (Anthropic/OpenAI-compatible)
+7. **Language Model Clients** (`src/anthropic-client.ts`, `src/openai-compatible-client.ts`) - Provider-specific AI integrations
+8. **File Writer** (`src/file-writer.ts`) - Creates new project files or updates existing ones with proper Flow frontmatter
+9. **Inbox Processing Controller** (`src/inbox-processing-controller.ts`) - Orchestrates the processing workflow
+10. **Inbox Processing View** (`src/inbox-processing-view.ts`) - Main UI component for the inbox processing workflow
+11. **Settings Tab** (`src/settings-tab.ts`) - Configuration interface for API keys and project defaults
+12. **Validation** (`src/validation.ts`) - Input validation and error handling
+13. **Errors** (`src/errors.ts`) - Custom error types and handling
+14. **Network Retry** (`src/network-retry.ts`) - Automatic retry logic for network errors with exponential backoff
+
+### Utility Components
+
+Supporting utilities for core functionality:
+
+- **Project Filters** (`src/project-filters.ts`) - Filtering logic for templates and project status
+- **Project Hierarchy** (`src/project-hierarchy.ts`) - Builds hierarchical tree structures from flat project lists
+- **Deletion Offset Manager** (`src/deletion-offset-manager.ts`) - Tracks line deletions to adjust line numbers when processing multiple inbox items
+- **Confirmation Modal** (`src/confirmation-modal.ts`) - Consistent UI for yes/no confirmation dialogs
+- **Inbox Modal State** (`src/inbox-modal-state.ts`) - State management for inbox processing UI
+- **Inbox Modal Utils** (`src/inbox-modal-utils.ts`) - Utility functions for inbox modal
+- **Inbox Modal Views** (`src/inbox-modal-views.ts`) - View components for inbox modal
+- **Inbox Types** (`src/inbox-types.ts`) - Type definitions for inbox processing
+- **Inbox Item Persistence** (`src/inbox-item-persistence.ts`) - Persists inbox items across sessions
+- **Project Title Prompt** (`src/project-title-prompt.ts`) - Generates prompts for project title suggestions
 
 ### Waiting For Support
 
@@ -154,6 +182,7 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 - **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change, searches for moved lines
 - **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in right sidebar with actions grouped by project/sphere
 - **HotlistEditorMenu** (`src/hotlist-editor-menu.ts`) - Right-click context menu for adding/removing actions from hotlist
+- **HotlistAutoClear** (`src/hotlist-auto-clear.ts`) - Automatic clearing and archiving of hotlist items at a configured time each day
 - **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from hotlist
 - **Commands** - "Open Hotlist" command (`open-hotlist`) and ribbon icon with `list-checks` icon
 - **Hotlist Item Actions** - Mark complete, convert to waiting-for, pin/unpin, or remove from hotlist
@@ -224,6 +253,41 @@ const filtered = flattenedHierarchy.filter(/* sphere filter */);
 const filtered = allProjects.filter(/* sphere filter */);
 const hierarchy = buildProjectHierarchy(filtered);
 ```
+
+### Project Review Support
+
+The plugin includes AI-powered project review to help maintain a healthy GTD system:
+
+- **ProjectReviewer** (`src/project-reviewer.ts`) - Uses AI to review all projects in a sphere and suggest improvements
+- **ReviewModal** (`src/review-modal.ts`) - UI for selecting sphere and displaying review results
+- **SystemAnalyzer** (`src/system-analyzer.ts`) - Analyzes GTD system state to detect issues like stalled projects and large inboxes
+- **Command** - "Review projects" command (`flow-review-projects`) opens the review modal
+
+**Review Capabilities:**
+
+The AI reviewer can suggest:
+
+- **Project improvements** - Better descriptions, clearer outcomes, more specific next actions
+- **Project merges** - Combining related or overlapping projects
+- **Status changes** - Moving projects to "someday" or marking as "complete"
+- **Next action improvements** - Making actions more specific and actionable
+
+The system analyzer detects:
+
+- Stalled projects (no next actions)
+- Inbox overflow (configurable threshold)
+- Projects that may need attention
+
+### Sphere Views
+
+The plugin provides dedicated views for each configured sphere (work, personal, etc.):
+
+- **SphereView** (`src/sphere-view.ts`) - Custom Obsidian view showing all projects and next actions for a sphere
+- Each sphere gets a dedicated command to open its view
+- Shows project hierarchy with indentation
+- Aggregates next actions from all projects in the sphere
+- Includes planning mode for adding actions to hotlist
+- Filter-as-you-type search for projects and actions
 
 ### Sphere View Filter Search
 
@@ -328,20 +392,69 @@ The plugin supports multiple LLM providers through a factory pattern:
 
 ### Test Files
 
+Core functionality tests:
+
 - `flow-scanner.test.ts` - Vault scanning and project parsing
 - `gtd-processor.test.ts` - AI processing logic
+- `gtd-context-scanner.test.ts` - GTD context scanning (inbox, actions, someday)
 - `file-writer.test.ts` - File creation and updates
 - `validation.test.ts` - Input validation
 - `inbox-scanner.test.ts` - Inbox folder scanning functionality
+- `inbox-processing-controller.test.ts` - Inbox processing workflow orchestration
+- `inbox-processing-view.test.ts` - Inbox processing view UI
+- `inbox-modal-state.test.ts` - Inbox modal state management
+- `inbox-item-persistence.test.ts` - Inbox item persistence across sessions
+- `person-scanner.test.ts` - Person note scanning
+
+Hotlist tests:
+
 - `hotlist-validator.test.ts` - Hotlist item validation and line finding
 - `hotlist-view.test.ts` - Hotlist view rendering and interactions
 - `hotlist-integration.test.ts` - End-to-end hotlist workflows
 - `hotlist-editor-menu.test.ts` - Context menu checkbox detection and hotlist operations
+- `hotlist-auto-clear.test.ts` - Automatic hotlist clearing functionality
 - `action-line-finder.test.ts` - Action line number detection
+
+Sphere and project tests:
+
 - `sphere-view.test.ts` - Sphere view and planning mode
+- `sphere-view-filter.test.ts` - Sphere view filter search functionality
+- `project-hierarchy.test.ts` - Project hierarchy building, cycle detection, and display utilities
+- `project-reviewer.test.ts` - AI-powered project review
+- `project-filters.test.ts` - Project filtering logic
+- `project-title-prompt.test.ts` - Project title generation prompts
+
+Waiting For tests:
+
 - `waiting-for-scanner.test.ts` - Waiting-for item scanning
 - `waiting-for-view.test.ts` - Waiting-for view rendering
-- `project-hierarchy.test.ts` - Project hierarchy building, cycle detection, and display utilities
+- `task-status-cycler.test.ts` - Task status cycling ([ ] → [w] → [x])
+
+LLM integration tests:
+
+- `language-model.test.ts` - Language model abstraction
+- `anthropic-client-tools.test.ts` - Anthropic client with tool use
+- `openai-client-tools.test.ts` - OpenAI-compatible client with tool use
+- `network-retry.test.ts` - Network retry logic
+- `network-error-handling.test.ts` - Network error handling
+
+CLI tests:
+
+- `cli.test.ts` - CLI tool integration
+- `cli-tools.test.ts` - CLI tool implementations
+- `cli-tools-execution.test.ts` - CLI tool execution
+- `cli-repl-tools.test.ts` - CLI REPL tool handling
+- `cli-approval.test.ts` - CLI approval workflows
+- `cli-opening-message.test.ts` - CLI opening message generation
+- `cli-system-prompt.test.ts` - CLI system prompt construction
+
+Other tests:
+
+- `system-analyzer.test.ts` - GTD system analysis
+- `deletion-offset-manager.test.ts` - Line deletion offset tracking
+- `types.test.ts` - TypeScript type definitions
+- `main.test.ts` - Plugin main entry point
+- `release-beta.test.ts` - Beta release script
 
 **Note:** Test coverage may vary - check `tests/` directory for current test files.
 
@@ -439,12 +552,13 @@ Examples:
 
 ### Commands
 
-- `process-inbox`: Opens the inbox processing modal
+- `process-inbox`: Opens the inbox processing view
 - `quick-capture`: Same as process-inbox (alias for discoverability)
-- `process-inbox-folders`: Opens the modal with inbox folder scanning enabled
-- `cycle-task-status`: Cycles checkbox status on current line
-- `open-waiting-for-view`: Opens the Waiting For view
+- `cycle-task-status`: Cycles checkbox status on current line ([ ] → [w] → [x])
+- `open-waiting-for-view`: Opens the Waiting For view in right sidebar
 - `open-hotlist`: Opens the Hotlist view in right sidebar
+- `flow-review-projects`: Opens the project review modal to get AI suggestions for improvements
+- `sphere-view-{sphere}`: Opens a sphere view (dynamically created for each configured sphere)
 
 ### UI Components
 
