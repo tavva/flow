@@ -323,9 +323,7 @@ describe("archiveClearedTasks", () => {
 
     // Project items should have file link before text
     expect(createdContent).toContain("- [[Projects/Work Project]] Review design document");
-    expect(createdContent).toContain(
-      "- [[Projects/Health/Annual Checkup]] Schedule appointment"
-    );
+    expect(createdContent).toContain("- [[Projects/Health/Annual Checkup]] Schedule appointment");
 
     // General actions should use display text format
     expect(createdContent).toContain("- [[Next actions|Call dentist]]");

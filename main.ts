@@ -349,10 +349,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
   private async checkAndClearFocus(): Promise<void> {
     // Check if it's time to clear the focus
     if (
-      !shouldClearFocus(
-        this.settings.focusAutoClearTime,
-        this.settings.lastFocusClearTimestamp
-      )
+      !shouldClearFocus(this.settings.focusAutoClearTime, this.settings.lastFocusClearTimestamp)
     ) {
       return;
     }

@@ -716,9 +716,7 @@ export class SphereView extends ItemView {
   }
 
   private isOnFocus(file: string, lineNumber: number): boolean {
-    return this.settings.focus.some(
-      (item) => item.file === file && item.lineNumber === lineNumber
-    );
+    return this.settings.focus.some((item) => item.file === file && item.lineNumber === lineNumber);
   }
 
   private async activateFocusView(): Promise<void> {

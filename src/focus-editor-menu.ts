@@ -65,11 +65,7 @@ export async function determineActionSphere(
 /**
  * Check if an action is already on the focus
  */
-export function isActionOnFocus(
-  filePath: string,
-  lineNumber: number,
-  focus: FocusItem[]
-): boolean {
+export function isActionOnFocus(filePath: string, lineNumber: number, focus: FocusItem[]): boolean {
   return focus.some((item) => item.file === filePath && item.lineNumber === lineNumber);
 }
 

@@ -568,8 +568,7 @@ export class FocusView extends ItemView {
     }
 
     // Only show notification within 24 hours of clearing
-    const hoursSinceClear =
-      (Date.now() - this.settings.lastFocusClearTimestamp) / (1000 * 60 * 60);
+    const hoursSinceClear = (Date.now() - this.settings.lastFocusClearTimestamp) / (1000 * 60 * 60);
     return hoursSinceClear < 24;
   }
 
