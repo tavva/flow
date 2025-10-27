@@ -517,22 +517,32 @@ function renderDateSection(container: HTMLElement, item: EditableItem, state: In
   dateInput.style.width = "150px";
   dateInput.style.marginRight = "8px";
 
+  // Function to update clear button visibility
+  const updateClearButton = () => {
+    const existingButton = dateInputContainer.querySelector(".flow-gtd-date-clear");
+    if (item.dueDate && !existingButton) {
+      const clearButton = dateInputContainer.createEl("button", {
+        text: "×",
+        cls: "flow-gtd-date-clear",
+      });
+      clearButton.style.cursor = "pointer";
+      clearButton.addEventListener("click", () => {
+        item.dueDate = undefined;
+        dateInput.value = "";
+        updateClearButton();
+      });
+    } else if (!item.dueDate && existingButton) {
+      existingButton.remove();
+    }
+  };
+
   dateInput.addEventListener("change", () => {
     item.dueDate = dateInput.value || undefined;
+    updateClearButton();
   });
 
-  if (item.dueDate) {
-    const clearButton = dateInputContainer.createEl("button", {
-      text: "×",
-      cls: "flow-gtd-date-clear",
-    });
-    clearButton.style.cursor = "pointer";
-    clearButton.addEventListener("click", () => {
-      item.dueDate = undefined;
-      dateInput.value = "";
-      clearButton.remove();
-    });
-  }
+  // Initial clear button state
+  updateClearButton();
 
   // Toggle collapsed/expanded
   let isExpanded = false;

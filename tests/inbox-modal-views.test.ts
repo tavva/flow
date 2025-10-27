@@ -239,4 +239,65 @@ describe("renderEditableItemContent - date section", () => {
       }
     });
   });
+
+  it("should override date label to 'Set follow-up date (optional)' for waiting-for items", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: true,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+      editedName: "Test action",
+      editedNames: ["Test action"],
+      waitingFor: [true],
+    };
+    const state = createMockState([item]);
+
+    renderEditableItemContent(container, item, state);
+
+    const dateSection = container.querySelector(".flow-gtd-date-section");
+    expect(dateSection).toBeTruthy();
+
+    const dateLabel = dateSection?.querySelector(".flow-gtd-date-label");
+    expect(dateLabel?.textContent).toBe("Set follow-up date (optional)");
+  });
+
+  it("should toggle date section visibility when header clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: true,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+      editedName: "Test action",
+      editedNames: ["Test action"],
+      waitingFor: [false],
+    };
+    const state = createMockState([item]);
+
+    renderEditableItemContent(container, item, state);
+
+    const dateSection = container.querySelector(".flow-gtd-date-section");
+    const dateSectionHeader = dateSection?.querySelector(".flow-gtd-date-section-header") as HTMLElement;
+    const dateInputContainer = dateSection?.querySelector(".flow-gtd-date-input-container") as HTMLElement;
+    const chevron = dateSection?.querySelector(".flow-gtd-date-chevron") as HTMLElement;
+
+    expect(dateSectionHeader).toBeTruthy();
+    expect(dateInputContainer).toBeTruthy();
+    expect(chevron).toBeTruthy();
+
+    // Initially collapsed
+    expect(dateInputContainer.style.display).toBe("none");
+    expect(chevron.textContent).toBe("▶");
+
+    // Click to expand
+    dateSectionHeader.click();
+    expect(dateInputContainer.style.display).toBe("block");
+    expect(chevron.textContent).toBe("▼");
+
+    // Click to collapse
+    dateSectionHeader.click();
+    expect(dateInputContainer.style.display).toBe("none");
+    expect(chevron.textContent).toBe("▶");
+  });
 });
