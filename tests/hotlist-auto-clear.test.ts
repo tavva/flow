@@ -268,10 +268,10 @@ describe("archiveClearedTasks", () => {
 
     const createdContent = mockVault.create.mock.calls[0][1];
 
-    // Should contain plain list items without checkbox markers
-    expect(createdContent).toContain("- Do something important");
-    expect(createdContent).toContain("- Already completed");
-    expect(createdContent).toContain("- Waiting for response");
+    // Should contain wikilinks to source files
+    expect(createdContent).toContain("- [[Projects/Test]] Do something important");
+    expect(createdContent).toContain("- [[Next actions|Already completed]]");
+    expect(createdContent).toContain("- [[Next actions|Waiting for response]]");
 
     // Should NOT contain checkbox markers
     expect(createdContent).not.toContain("- [ ]");
