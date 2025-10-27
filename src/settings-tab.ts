@@ -350,6 +350,5 @@ export class FlowGTDSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-
   }
 }

@@ -13,6 +13,7 @@
 ## Task 1: Update existing test to expect wikilinks
 
 **Files:**
+
 - Modify: `tests/hotlist-auto-clear.test.ts:232-280`
 
 **Step 1: Update test to expect new wikilink format**
@@ -50,6 +51,7 @@ git commit -m "test: update archive test to expect wikilinks"
 ## Task 2: Implement wikilink formatting
 
 **Files:**
+
 - Modify: `src/hotlist-auto-clear.ts:80-91`
 
 **Step 1: Replace formatting logic with wikilink generation**
@@ -93,6 +95,7 @@ git commit -m "feat: add wikilinks to archived hotlist items"
 ## Task 3: Add comprehensive test for general vs project formatting
 
 **Files:**
+
 - Modify: `tests/hotlist-auto-clear.test.ts` (add after line 280)
 
 **Step 1: Write failing test for mixed general and project items**
@@ -165,6 +168,7 @@ git commit -m "test: add comprehensive test for general vs project formatting"
 ## Task 4: Add edge case test for files without .md extension
 
 **Files:**
+
 - Modify: `tests/hotlist-auto-clear.test.ts` (add after previous test)
 
 **Step 1: Write test for edge case**
@@ -232,6 +236,7 @@ Expected: Build succeeds with no errors
 **Step 3: Create final commit if any changes needed**
 
 If any fixes were required during verification:
+
 ```bash
 git add .
 git commit -m "fix: address verification issues"

@@ -96,9 +96,7 @@ describe("InboxModalState AI toggle", () => {
       const settings: PluginSettings = { ...DEFAULT_SETTINGS, aiEnabled: false };
       const state = new InboxModalState(controller, settings, render);
 
-      await expect(state.suggestProjectName("Example")).rejects.toThrow(
-        "AI features are disabled"
-      );
+      await expect(state.suggestProjectName("Example")).rejects.toThrow("AI features are disabled");
     });
 
     it("calls controller when AI is enabled", async () => {
