@@ -448,6 +448,44 @@ status: live
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
       expect(content).toContain('parent-project: "[[Parent Project]]"');
     });
+
+    it("should create project with next actions with due date", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Website redesign",
+        nextAction: "Draft proposal outline",
+        reasoning: "Multi-step project",
+        nextActions: ["Draft proposal outline", "Review with stakeholders"],
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Multi-step project",
+      };
+
+      const mockFile = new TFile("Website-redesign.md", "Website redesign");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
+
+      await fileWriter.createProject(
+        result,
+        "Website redesign",
+        ["work"],
+        [],
+        undefined,
+        [],
+        "2025-11-05"
+      );
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("- [ ] Draft proposal outline 📅 2025-11-05");
+      expect(content).toContain("- [ ] Review with stakeholders 📅 2025-11-05");
+    });
   });
 
   describe("addNextActionToProject", () => {
@@ -551,6 +589,30 @@ Some notes here
       expect(newContent).toContain("- [ ] New action");
       expect(newContent).toContain("## Notes");
       expect(newContent).toContain("Some notes here");
+    });
+
+    it("should add action with due date to project", async () => {
+      const mockFile = new TFile("project.md", "Test Project");
+      const existingContent = `---
+tags: project/work
+---
+
+# Test Project
+
+## Next actions
+
+- [ ] Existing action
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
+
+      await fileWriter.addNextActionToProject(mockProject, "Complete impact analysis", [], [], "2025-11-10");
+
+      const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
+
+      expect(newContent).toContain("- [ ] Complete impact analysis 📅 2025-11-10");
+      expect(newContent).toContain("- [ ] Existing action");
     });
   });
 

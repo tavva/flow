@@ -19,7 +19,8 @@ export class FileWriter {
     spheres: string[] = [],
     waitingFor: boolean[] = [],
     parentProject?: string,
-    markAsDone: boolean[] = []
+    markAsDone: boolean[] = [],
+    dueDate?: string
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
@@ -48,7 +49,8 @@ export class FileWriter {
       spheres,
       waitingFor,
       parentProject,
-      markAsDone
+      markAsDone,
+      dueDate
     );
     const file = await this.app.vault.create(filePath, content);
 
@@ -164,7 +166,8 @@ export class FileWriter {
     project: FlowProject,
     actions: string | string[],
     waitingFor: boolean[] = [],
-    markAsDone: boolean[] = []
+    markAsDone: boolean[] = [],
+    dueDate?: string
   ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
@@ -178,7 +181,7 @@ export class FileWriter {
       const action = actionsArray[i];
       const isWaiting = waitingFor[i] || false;
       const isDone = markAsDone[i] || false;
-      content = this.addActionToSection(content, "## Next actions", action, isWaiting, isDone);
+      content = this.addActionToSection(content, "## Next actions", action, isWaiting, isDone, dueDate);
     }
 
     await this.app.vault.modify(file, content);
@@ -243,7 +246,8 @@ export class FileWriter {
     spheres: string[] = [],
     waitingFor: boolean[] = [],
     parentProject?: string,
-    markAsDone: boolean[] = []
+    markAsDone: boolean[] = [],
+    dueDate?: string
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
       this.settings.projectTemplateFilePath
@@ -257,7 +261,8 @@ export class FileWriter {
         spheres,
         waitingFor,
         parentProject,
-        markAsDone
+        markAsDone,
+        dueDate
       );
     }
 
@@ -313,6 +318,8 @@ export class FileWriter {
 
     if (match) {
       let actionsText = "";
+      const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+
       if (result.nextActions && result.nextActions.length > 0) {
         actionsText =
           result.nextActions
@@ -333,7 +340,7 @@ export class FileWriter {
                 checkbox = "- [ ]";
               }
 
-              return `${checkbox} ${actionText}`;
+              return `${checkbox} ${actionText}${dueDateSuffix}`;
             })
             .join("\n") + "\n";
       } else if (result.nextAction) {
@@ -353,7 +360,7 @@ export class FileWriter {
           checkbox = "- [ ]";
         }
 
-        actionsText = `${checkbox} ${actionText}\n`;
+        actionsText = `${checkbox} ${actionText}${dueDateSuffix}\n`;
       }
 
       // Replace "## Next actions\n<any whitespace>" with "## Next actions\n<actions>\n"
@@ -373,7 +380,8 @@ export class FileWriter {
     spheres: string[] = [],
     waitingFor: boolean[] = [],
     parentProject?: string,
-    markAsDone: boolean[] = []
+    markAsDone: boolean[] = [],
+    dueDate?: string
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
@@ -418,6 +426,8 @@ ${originalItemDescription}
 `;
 
     // Handle multiple next actions or single next action
+    const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+
     if (result.nextActions && result.nextActions.length > 0) {
       content +=
         result.nextActions
@@ -438,7 +448,7 @@ ${originalItemDescription}
               checkbox = "- [ ]";
             }
 
-            return `${checkbox} ${actionText}`;
+            return `${checkbox} ${actionText}${dueDateSuffix}`;
           })
           .join("\n") + "\n";
     } else {
@@ -458,7 +468,7 @@ ${originalItemDescription}
         checkbox = "- [ ]";
       }
 
-      content += `${checkbox} ${actionText}\n`;
+      content += `${checkbox} ${actionText}${dueDateSuffix}\n`;
     }
 
     content += `
@@ -480,14 +490,15 @@ ${originalItemDescription}
     sectionHeading: string,
     action: string,
     isWaiting: boolean = false,
-    isDone: boolean = false
+    isDone: boolean = false,
+    dueDate?: string
   ): string {
     const lines = content.split("\n");
     const sectionIndex = this.findSectionIndex(lines, sectionHeading);
 
     if (sectionIndex === -1) {
       // Section doesn't exist, create it at the end
-      return this.createSectionWithAction(content, sectionHeading, action, isWaiting, isDone);
+      return this.createSectionWithAction(content, sectionHeading, action, isWaiting, isDone, dueDate);
     }
 
     // Find where to insert the action (after the heading, before next section)
@@ -512,7 +523,8 @@ ${originalItemDescription}
       checkbox = "- [ ]";
     }
 
-    lines.splice(insertIndex, 0, `${checkbox} ${actionText}`);
+    const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+    lines.splice(insertIndex, 0, `${checkbox} ${actionText}${dueDateSuffix}`);
 
     return lines.join("\n");
   }
@@ -568,7 +580,8 @@ ${originalItemDescription}
     sectionHeading: string,
     action: string,
     isWaiting: boolean = false,
-    isDone: boolean = false
+    isDone: boolean = false,
+    dueDate?: string
   ): string {
     // Add section at the end of the file
     let newContent = content.trim();
@@ -590,7 +603,8 @@ ${originalItemDescription}
       checkbox = "- [ ]";
     }
 
-    newContent += `\n${sectionHeading}\n${checkbox} ${actionText}\n`;
+    const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+    newContent += `\n${sectionHeading}\n${checkbox} ${actionText}${dueDateSuffix}\n`;
 
     return newContent;
   }
