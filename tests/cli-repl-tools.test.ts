@@ -38,7 +38,7 @@ describe("CLI REPL - Tool Integration", () => {
     } as any;
 
     mockSettings = {
-      hotlist: [],
+      focus: [],
     } as any;
 
     mockContext = {
@@ -109,7 +109,7 @@ describe("CLI REPL - Tool Integration", () => {
       toolCalls: [
         {
           id: "call_1",
-          name: "move_to_hotlist",
+          name: "move_to_focus",
           input: {
             project_path: "Projects/Test.md",
             action_text: "Test action",
@@ -148,7 +148,7 @@ describe("CLI REPL - Tool Integration", () => {
       toolCalls: [
         {
           id: "call_1",
-          name: "move_to_hotlist",
+          name: "move_to_focus",
           input: { project_path: "Test.md", action_text: "Action" },
         },
       ],

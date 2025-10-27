@@ -1,16 +1,16 @@
-// ABOUTME: Integration tests for the hotlist feature, testing interactions between components.
+// ABOUTME: Integration tests for the focus feature, testing interactions between components.
 // ABOUTME: Validates the full workflow from finding actions to validating them in files.
 
-import { HotlistView } from "../src/hotlist-view";
+import { FocusView } from "../src/focus-view";
 import { SphereView } from "../src/sphere-view";
-import { HotlistValidator } from "../src/hotlist-validator";
+import { FocusValidator } from "../src/focus-validator";
 import { ActionLineFinder } from "../src/action-line-finder";
-import { PluginSettings, HotlistItem } from "../src/types";
+import { PluginSettings, FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
 jest.mock("obsidian");
 
-describe("Hotlist Integration", () => {
+describe("Focus Integration", () => {
   let mockApp: any;
   let mockVault: any;
   let mockSettings: PluginSettings;
@@ -42,11 +42,11 @@ describe("Hotlist Integration", () => {
       somedayFilePath: "Someday.md",
       projectsFolder: "Projects",
       spheres: ["work", "personal"],
-      hotlist: [],
+      focus: [],
     };
   });
 
-  it("should add action to hotlist and validate it", async () => {
+  it("should add action to focus and validate it", async () => {
     const mockFile = new TFile();
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
     mockVault.read.mockResolvedValue(
@@ -61,8 +61,8 @@ describe("Hotlist Integration", () => {
     expect(lineResult.lineNumber).toBe(9);
     expect(lineResult.lineContent).toBe("- [ ] Test action");
 
-    // Add to hotlist
-    const item: HotlistItem = {
+    // Add to focus
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: lineResult.lineNumber!,
       lineContent: lineResult.lineContent!,
@@ -71,10 +71,10 @@ describe("Hotlist Integration", () => {
       isGeneral: false,
       addedAt: Date.now(),
     };
-    mockSettings.hotlist.push(item);
+    mockSettings.focus.push(item);
 
     // Validate the item
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     mockVault.read.mockResolvedValue(
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Next actions\n\n- [ ] Test action\n"
     );
@@ -82,11 +82,11 @@ describe("Hotlist Integration", () => {
 
     expect(validation.found).toBe(true);
     expect(validation.updatedLineNumber).toBeUndefined();
-    expect(mockSettings.hotlist).toHaveLength(1);
+    expect(mockSettings.focus).toHaveLength(1);
   });
 
   it("should handle line number changes after file edits", async () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 9,
       lineContent: "- [ ] Test action",
@@ -103,7 +103,7 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Description\n\nNew section\n\n## Next actions\n\n- [ ] Test action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(true);
@@ -162,7 +162,7 @@ describe("Hotlist Integration", () => {
   });
 
   it("should validate that item still exists after checkbox status changes", async () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 9,
       lineContent: "- [ ] Test action",
@@ -179,7 +179,7 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Next actions\n\n- [x] Test action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     // Should NOT find it because line content changed
@@ -188,7 +188,7 @@ describe("Hotlist Integration", () => {
   });
 
   it("should handle items removed from source file", async () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 9,
       lineContent: "- [ ] Test action",
@@ -205,7 +205,7 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Next actions\n\n- [ ] Different action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(false);
@@ -238,8 +238,8 @@ describe("Hotlist Integration", () => {
     expect(result.lineContent).toBe("- [x] Completed action");
   });
 
-  it("should handle lines deleted above hotlist item", async () => {
-    const item: HotlistItem = {
+  it("should handle lines deleted above focus item", async () => {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 10,
       lineContent: "- [ ] Test action",
@@ -256,15 +256,15 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n- [ ] Test action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(true);
     expect(validation.updatedLineNumber).toBe(7);
   });
 
-  it("should handle lines inserted above hotlist item", async () => {
-    const item: HotlistItem = {
+  it("should handle lines inserted above focus item", async () => {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 7,
       lineContent: "- [ ] Test action",
@@ -281,7 +281,7 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Description\n\nExtra content\n\n- [ ] Test action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(true);
@@ -289,7 +289,7 @@ describe("Hotlist Integration", () => {
   });
 });
 
-describe("Hotlist Manual Reordering Integration", () => {
+describe("Focus Manual Reordering Integration", () => {
   let mockLeaf: any;
   let mockApp: any;
   let saveSettingsMock: jest.Mock;
@@ -308,7 +308,7 @@ describe("Hotlist Manual Reordering Integration", () => {
     somedayFilePath: "Someday.md",
     projectsFolder: "Projects",
     spheres: ["work", "personal"],
-    hotlist: [],
+    focus: [],
   };
 
   beforeEach(() => {
@@ -343,7 +343,7 @@ describe("Hotlist Manual Reordering Integration", () => {
   it("should support full pin/reorder/unpin workflow", async () => {
     const settings: PluginSettings = {
       ...DEFAULT_SETTINGS,
-      hotlist: [
+      focus: [
         {
           file: "Projects/Project A.md",
           lineNumber: 10,
@@ -377,7 +377,7 @@ describe("Hotlist Manual Reordering Integration", () => {
       ],
     };
 
-    const view = new HotlistView(mockLeaf, settings, saveSettingsMock);
+    const view = new FocusView(mockLeaf, settings, saveSettingsMock);
     (view as any).app = mockApp;
     // Re-initialize scanner with mocked app
     (view as any).scanner = {
@@ -386,29 +386,29 @@ describe("Hotlist Manual Reordering Integration", () => {
     await view.onOpen();
 
     // Step 1: Pin first item
-    await (view as any).pinItem(settings.hotlist[0]);
-    expect(settings.hotlist[0].isPinned).toBe(true);
+    await (view as any).pinItem(settings.focus[0]);
+    expect(settings.focus[0].isPinned).toBe(true);
 
     // Step 2: Pin third item
-    await (view as any).pinItem(settings.hotlist[2]);
-    expect(settings.hotlist[1].isPinned).toBe(true);
-    expect(settings.hotlist[1].text).toBe("Action C");
+    await (view as any).pinItem(settings.focus[2]);
+    expect(settings.focus[1].isPinned).toBe(true);
+    expect(settings.focus[1].text).toBe("Action C");
 
     // Step 3: Reorder pinned items (swap them)
-    (view as any).draggedItem = settings.hotlist[1]; // Action C
+    (view as any).draggedItem = settings.focus[1]; // Action C
     const mockDropEvent = { preventDefault: jest.fn() } as unknown as DragEvent;
-    await (view as any).onDrop(mockDropEvent, settings.hotlist[0]); // Drop on Action A
+    await (view as any).onDrop(mockDropEvent, settings.focus[0]); // Drop on Action A
 
     // Check order: C should now be first
-    expect(settings.hotlist[0].text).toBe("Action C");
-    expect(settings.hotlist[1].text).toBe("Action A");
+    expect(settings.focus[0].text).toBe("Action C");
+    expect(settings.focus[1].text).toBe("Action A");
 
     // Step 4: Unpin first item (Action C)
-    await (view as any).unpinItem(settings.hotlist[0]);
-    expect(settings.hotlist[0].isPinned).toBe(false);
+    await (view as any).unpinItem(settings.focus[0]);
+    expect(settings.focus[0].isPinned).toBe(false);
 
     // Check only Action A is still pinned
-    const pinnedItems = settings.hotlist.filter((i) => i.isPinned);
+    const pinnedItems = settings.focus.filter((i) => i.isPinned);
     expect(pinnedItems.length).toBe(1);
     expect(pinnedItems[0].text).toBe("Action A");
   });

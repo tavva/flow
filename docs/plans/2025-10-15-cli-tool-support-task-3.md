@@ -29,7 +29,7 @@ describe("CLI Tool Definitions", () => {
   it("should include move_to_hotlist tool", () => {
     const tool = CLI_TOOLS.find((t) => t.name === "move_to_hotlist");
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain("hotlist");
+    expect(tool?.description).toContain("focus");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
     expect(tool?.input_schema.properties.action_text).toBeDefined();
     expect(tool?.input_schema.required).toContain("project_path");
@@ -93,7 +93,7 @@ describe("ToolExecutor", () => {
     } as any;
 
     mockSettings = {
-      hotlist: [],
+      focus: [],
     } as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
@@ -240,7 +240,7 @@ import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 export const CLI_TOOLS: ToolDefinition[] = [
   {
     name: "move_to_hotlist",
-    description: "Add a next action to the hotlist for immediate focus today",
+    description: "Add a next action to the focus for immediate focus today",
     input_schema: {
       type: "object",
       properties: {
@@ -250,7 +250,7 @@ export const CLI_TOOLS: ToolDefinition[] = [
         },
         action_text: {
           type: "string",
-          description: "Full text of the action to add to hotlist (without checkbox)",
+          description: "Full text of the action to add to focus (without checkbox)",
         },
       },
       required: ["project_path", "action_text"],
@@ -366,12 +366,12 @@ export class ToolExecutor {
       throw new Error(`Project file not found: ${project_path}`);
     }
 
-    // TODO: Implement hotlist addition (Task 4)
+    // TODO: Implement focus addition (Task 4)
     // For now, return success stub
 
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added "${action_text}" to hotlist`,
+      content: `✓ Added "${action_text}" to focus`,
     };
   }
 

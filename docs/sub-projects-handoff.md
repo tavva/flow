@@ -38,7 +38,7 @@ We implemented a hierarchical sub-projects feature for the Flow GTD Coach plugin
    - Builds hierarchy from ALL projects first, then filters to sphere
    - Sub-projects have `.flow-gtd-sphere-subproject` class
 
-2. **Hotlist View** (`src/hotlist-view.ts`):
+2. **Focus View** (`src/focus-view.ts`):
    - Shows parent context in parentheses: "Sub-project (Parent)"
    - Parent text styled smaller (0.85em), dimmed (0.7 opacity), not bold
    - Uses `getProjectDisplayName()` helper
@@ -58,7 +58,7 @@ We implemented a hierarchical sub-projects feature for the Flow GTD Coach plugin
 
 Ben tested by manually adding frontmatter:
 
-- ✅ Hotlist displays parent context with correct styling
+- ✅ Focus displays parent context with correct styling
 - ✅ Sphere view shows nested hierarchy with indentation
 - ✅ All views handle sub-projects correctly
 
@@ -142,13 +142,13 @@ const hierarchy = buildProjectHierarchy(sphereProjects);
 
 **Why**: If parent is in different sphere or not "live", filtering before building hierarchy loses the parent-child relationship.
 
-### Parent Context Styling (hotlist-view.ts)
+### Parent Context Styling (focus-view.ts)
 
 ```typescript
 if (displayName.parent) {
   const parentSpan = fileHeader.createSpan({
     text: ` (${displayName.parent})`,
-    cls: "flow-gtd-hotlist-parent-context",
+    cls: "flow-gtd-focus-parent-context",
   });
   parentSpan.style.fontSize = "0.85em"; // Smaller
   parentSpan.style.opacity = "0.7"; // Dimmed
@@ -193,7 +193,7 @@ Description of the sub-project...
 ### Viewing Hierarchy
 
 1. **Sphere View**: Sub-projects appear indented under their parents
-2. **Hotlist**: Shows "Sub-project (Parent)" format
+2. **Focus**: Shows "Sub-project (Parent)" format
 3. **CLI**: System prompt shows indented tree structure
 
 ### Best Practices
@@ -219,13 +219,13 @@ All existing tests pass (260 tests):
 3. `src/flow-scanner.ts` - Extract parent-project from frontmatter
 4. `src/file-writer.ts` - Write parent-project frontmatter
 5. `src/sphere-view.ts` - Hierarchical display with indentation
-6. `src/hotlist-view.ts` - Parent context display
+6. `src/focus-view.ts` - Parent context display
 7. `src/cli.ts` - Hierarchical system prompt
 8. `src/gtd-processor.ts` - Sub-project suggestions
 
 ### Tests Updated (1 file)
 
-1. `tests/hotlist-view.test.ts` - Added scanner mock
+1. `tests/focus-view.test.ts` - Added scanner mock
 
 ## Next Session Action Items
 

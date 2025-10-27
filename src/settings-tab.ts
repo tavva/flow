@@ -307,21 +307,21 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    // Hotlist Settings
-    new Setting(containerEl).setHeading().setName("Hotlist");
+    // Focus Settings
+    new Setting(containerEl).setHeading().setName("Focus");
     containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Configure automatic clearing and archiving of your hotlist.</p>
+			<p>Configure automatic clearing and archiving of your focus.</p>
 		`;
 
     new Setting(containerEl)
       .setName("Auto-clear time")
       .setDesc(
-        'Time to automatically clear the hotlist daily (e.g., "03:00"). Leave empty to disable auto-clearing.'
+        'Time to automatically clear the focus daily (e.g., "03:00"). Leave empty to disable auto-clearing.'
       )
       .addText((text) =>
         text
           .setPlaceholder("03:00")
-          .setValue(this.plugin.settings.hotlistAutoClearTime)
+          .setValue(this.plugin.settings.focusAutoClearTime)
           .onChange(async (value) => {
             const trimmed = value.trim();
             // Validate format if not empty
@@ -329,7 +329,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
               // Invalid format, don't save
               return;
             }
-            this.plugin.settings.hotlistAutoClearTime = trimmed;
+            this.plugin.settings.focusAutoClearTime = trimmed;
             await this.plugin.saveSettings();
           })
       );
@@ -337,14 +337,14 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Archive file")
       .setDesc(
-        "File path where cleared hotlist items will be archived. Disabled if auto-clear is off."
+        "File path where cleared focus items will be archived. Disabled if auto-clear is off."
       )
       .addText((text) =>
         text
-          .setPlaceholder("Hotlist Archive.md")
-          .setValue(this.plugin.settings.hotlistArchiveFile)
+          .setPlaceholder("Focus Archive.md")
+          .setValue(this.plugin.settings.focusArchiveFile)
           .onChange(async (value) => {
-            this.plugin.settings.hotlistArchiveFile = value.trim();
+            this.plugin.settings.focusArchiveFile = value.trim();
             await this.plugin.saveSettings();
           })
       );

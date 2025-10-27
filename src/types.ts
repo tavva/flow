@@ -20,7 +20,7 @@ export interface PersonNote {
   creationDate?: string;
 }
 
-export interface HotlistItem {
+export interface FocusItem {
   file: string; // Full path to source file
   lineNumber: number; // Last known line number
   lineContent: string; // Full line content for validation
@@ -93,12 +93,12 @@ export interface PluginSettings {
   projectsFolderPath: string;
   projectTemplateFilePath: string;
   spheres: string[];
-  hotlist: HotlistItem[];
-  hotlistAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
-  hotlistArchiveFile: string; // Path to archive file for cleared tasks
-  lastHotlistClearTimestamp: number; // Timestamp of last auto-clear
-  lastHotlistArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
-  hotlistClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
+  focus: FocusItem[];
+  focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
+  focusArchiveFile: string; // Path to archive file for cleared tasks
+  lastFocusClearTimestamp: number; // Timestamp of last auto-clear
+  lastFocusArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
+  focusClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -118,12 +118,12 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
   spheres: ["personal", "work"],
-  hotlist: [],
-  hotlistAutoClearTime: "03:00",
-  hotlistArchiveFile: "Hotlist Archive.md",
-  lastHotlistClearTimestamp: 0,
-  lastHotlistArchiveSucceeded: false,
-  hotlistClearedNotificationDismissed: false,
+  focus: [],
+  focusAutoClearTime: "03:00",
+  focusArchiveFile: "Focus Archive.md",
+  lastFocusClearTimestamp: 0,
+  lastFocusArchiveSucceeded: false,
+  focusClearedNotificationDismissed: false,
 };
 
 // Project Review Types

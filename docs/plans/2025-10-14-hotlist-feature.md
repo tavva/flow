@@ -1,31 +1,31 @@
-# Hotlist Feature Implementation Plan
+# Focus Feature Implementation Plan
 
 > **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
 
-**Goal:** Add a hotlist feature that allows users to curate a focused list of next actions from across their vault, with planning mode in sphere view for selection and a dedicated sidebar view for working through the list.
+**Goal:** Add a focus feature that allows users to curate a focused list of next actions from across their vault, with planning mode in sphere view for selection and a dedicated sidebar view for working through the list.
 
-**Architecture:** Extend sphere view with planning mode toggle, create new hotlist view component similar to waiting-for view, implement validation service to handle file/line changes, store hotlist in plugin settings as array of file/line references with cached text.
+**Architecture:** Extend sphere view with planning mode toggle, create new focus view component similar to waiting-for view, implement validation service to handle file/line changes, store focus in plugin settings as array of file/line references with cached text.
 
 **Tech Stack:** TypeScript, Obsidian API, Jest for testing
 
 ---
 
-## Task 1: Add HotlistItem type and settings storage
+## Task 1: Add FocusItem type and settings storage
 
 **Files:**
 
-- Modify: `src/types.ts` (add HotlistItem interface)
+- Modify: `src/types.ts` (add FocusItem interface)
 - Modify: `src/types.ts` (extend PluginSettings interface)
 
 **Step 1: Write the failing test**
 
 ```typescript
 // tests/types.test.ts (new file)
-import { HotlistItem } from "../src/types";
+import { FocusItem } from "../src/types";
 
-describe("HotlistItem type", () => {
+describe("FocusItem type", () => {
   it("should have all required properties", () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 5,
       lineContent: "- [ ] Test action",
@@ -51,12 +51,12 @@ describe("HotlistItem type", () => {
 Run: `npm test -- types.test`
 Expected: FAIL with "Cannot find module '../src/types'"
 
-**Step 3: Add HotlistItem interface to types.ts**
+**Step 3: Add FocusItem interface to types.ts**
 
 In `src/types.ts`, add after the FlowProject interface:
 
 ```typescript
-export interface HotlistItem {
+export interface FocusItem {
   file: string; // Full path to source file
   lineNumber: number; // Last known line number
   lineContent: string; // Full line content for validation
@@ -74,7 +74,7 @@ In `src/types.ts`, add to PluginSettings interface:
 ```typescript
 export interface PluginSettings {
   // ... existing fields
-  hotlist: HotlistItem[];
+  focus: FocusItem[];
 }
 ```
 
@@ -85,7 +85,7 @@ In `main.ts`, add to DEFAULT_SETTINGS:
 ```typescript
 const DEFAULT_SETTINGS: PluginSettings = {
   // ... existing fields
-  hotlist: [],
+  focus: [],
 };
 ```
 
@@ -98,31 +98,31 @@ Expected: PASS
 
 ```bash
 git add src/types.ts main.ts tests/types.test.ts
-git commit -m "feat: add HotlistItem type and settings storage"
+git commit -m "feat: add FocusItem type and settings storage"
 ```
 
 ---
 
-## Task 2: Create hotlist validator service
+## Task 2: Create focus validator service
 
 **Files:**
 
-- Create: `src/hotlist-validator.ts`
-- Create: `tests/hotlist-validator.test.ts`
+- Create: `src/focus-validator.ts`
+- Create: `tests/focus-validator.test.ts`
 
 **Step 1: Write the failing test for basic validation**
 
 ```typescript
-// tests/hotlist-validator.test.ts
-import { HotlistValidator, ValidationResult } from "../src/hotlist-validator";
-import { HotlistItem } from "../src/types";
+// tests/focus-validator.test.ts
+import { FocusValidator, ValidationResult } from "../src/focus-validator";
+import { FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
 // Mock Obsidian
 jest.mock("obsidian");
 
-describe("HotlistValidator", () => {
-  let validator: HotlistValidator;
+describe("FocusValidator", () => {
+  let validator: FocusValidator;
   let mockApp: any;
   let mockVault: any;
 
@@ -134,12 +134,12 @@ describe("HotlistValidator", () => {
     mockApp = {
       vault: mockVault,
     };
-    validator = new HotlistValidator(mockApp);
+    validator = new FocusValidator(mockApp);
   });
 
   describe("validateItem", () => {
     it("should validate when line number and content match", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -160,7 +160,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should return error when file does not exist", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "nonexistent.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -183,18 +183,18 @@ describe("HotlistValidator", () => {
 
 **Step 2: Run test to verify it fails**
 
-Run: `npm test -- hotlist-validator.test`
-Expected: FAIL with "Cannot find module '../src/hotlist-validator'"
+Run: `npm test -- focus-validator.test`
+Expected: FAIL with "Cannot find module '../src/focus-validator'"
 
-**Step 3: Create hotlist-validator.ts with basic structure**
+**Step 3: Create focus-validator.ts with basic structure**
 
 ```typescript
-// src/hotlist-validator.ts
-// ABOUTME: Validates and resolves hotlist items when files or line numbers change.
+// src/focus-validator.ts
+// ABOUTME: Validates and resolves focus items when files or line numbers change.
 // ABOUTME: Uses exact match first, then searches file for matching content.
 
 import { App, TFile } from "obsidian";
-import { HotlistItem } from "./types";
+import { FocusItem } from "./types";
 
 export interface ValidationResult {
   found: boolean;
@@ -203,10 +203,10 @@ export interface ValidationResult {
   error?: string;
 }
 
-export class HotlistValidator {
+export class FocusValidator {
   constructor(private app: App) {}
 
-  async validateItem(item: HotlistItem): Promise<ValidationResult> {
+  async validateItem(item: FocusItem): Promise<ValidationResult> {
     // Check if file exists
     const file = this.app.vault.getAbstractFileByPath(item.file);
     if (!(file instanceof TFile)) {
@@ -242,14 +242,14 @@ export class HotlistValidator {
 
 **Step 4: Run test to verify it passes**
 
-Run: `npm test -- hotlist-validator.test`
+Run: `npm test -- focus-validator.test`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-git add src/hotlist-validator.ts tests/hotlist-validator.test.ts
-git commit -m "feat: add hotlist validator with basic validation"
+git add src/focus-validator.ts tests/focus-validator.test.ts
+git commit -m "feat: add focus validator with basic validation"
 ```
 
 ---
@@ -258,15 +258,15 @@ git commit -m "feat: add hotlist validator with basic validation"
 
 **Files:**
 
-- Modify: `tests/hotlist-validator.test.ts`
+- Modify: `tests/focus-validator.test.ts`
 
 **Step 1: Write tests for line movement scenarios**
 
-Add to `tests/hotlist-validator.test.ts`:
+Add to `tests/focus-validator.test.ts`:
 
 ```typescript
 it("should find item when lines inserted above", async () => {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: "test.md",
     lineNumber: 2,
     lineContent: "- [ ] Test action",
@@ -290,7 +290,7 @@ it("should find item when lines inserted above", async () => {
 });
 
 it("should find item when lines deleted above", async () => {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: "test.md",
     lineNumber: 5,
     lineContent: "- [ ] Test action",
@@ -312,7 +312,7 @@ it("should find item when lines deleted above", async () => {
 });
 
 it("should handle checkbox status changes", async () => {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: "test.md",
     lineNumber: 2,
     lineContent: "- [ ] Test action",
@@ -335,7 +335,7 @@ it("should handle checkbox status changes", async () => {
 });
 
 it("should return error when content completely changed", async () => {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: "test.md",
     lineNumber: 2,
     lineContent: "- [ ] Test action",
@@ -356,7 +356,7 @@ it("should return error when content completely changed", async () => {
 });
 
 it("should handle multiple identical actions by using first match", async () => {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: "test.md",
     lineNumber: 2,
     lineContent: "- [ ] Test action",
@@ -381,44 +381,44 @@ it("should handle multiple identical actions by using first match", async () => 
 
 **Step 2: Run tests to verify they pass**
 
-Run: `npm test -- hotlist-validator.test`
+Run: `npm test -- focus-validator.test`
 Expected: PASS (all tests)
 
 **Step 3: Commit**
 
 ```bash
-git add tests/hotlist-validator.test.ts
-git commit -m "test: add comprehensive hotlist validator edge case tests"
+git add tests/focus-validator.test.ts
+git commit -m "test: add comprehensive focus validator edge case tests"
 ```
 
 ---
 
-## Task 4: Create hotlist view component
+## Task 4: Create focus view component
 
 **Files:**
 
-- Create: `src/hotlist-view.ts`
-- Create: `tests/hotlist-view.test.ts`
+- Create: `src/focus-view.ts`
+- Create: `tests/focus-view.test.ts`
 
 **Step 1: Write the failing test for basic rendering**
 
 ```typescript
-// tests/hotlist-view.test.ts
-import { HotlistView, HOTLIST_VIEW_TYPE } from "../src/hotlist-view";
-import { HotlistItem } from "../src/types";
+// tests/focus-view.test.ts
+import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
+import { FocusItem } from "../src/types";
 import { WorkspaceLeaf } from "obsidian";
 
 jest.mock("obsidian");
 
-describe("HotlistView", () => {
-  let view: HotlistView;
+describe("FocusView", () => {
+  let view: FocusView;
   let mockLeaf: any;
   let mockApp: any;
   let mockSettings: any;
 
   beforeEach(() => {
     mockSettings = {
-      hotlist: [],
+      focus: [],
     };
     mockApp = {
       vault: {
@@ -434,16 +434,16 @@ describe("HotlistView", () => {
       view: null,
     } as any;
 
-    view = new HotlistView(mockLeaf, mockSettings);
+    view = new FocusView(mockLeaf, mockSettings);
     (view as any).app = mockApp;
   });
 
   it("should have correct view type", () => {
-    expect(view.getViewType()).toBe(HOTLIST_VIEW_TYPE);
+    expect(view.getViewType()).toBe(FOCUS_VIEW_TYPE);
   });
 
   it("should have correct display text", () => {
-    expect(view.getDisplayText()).toBe("Hotlist");
+    expect(view.getDisplayText()).toBe("Focus");
   });
 
   it("should render empty state when no items", async () => {
@@ -455,51 +455,51 @@ describe("HotlistView", () => {
     await view.onOpen();
 
     const container = mockContainer.children[1] as HTMLElement;
-    expect(container.querySelector(".flow-gtd-hotlist-empty")).toBeTruthy();
+    expect(container.querySelector(".flow-gtd-focus-empty")).toBeTruthy();
   });
 });
 ```
 
 **Step 2: Run test to verify it fails**
 
-Run: `npm test -- hotlist-view.test`
-Expected: FAIL with "Cannot find module '../src/hotlist-view'"
+Run: `npm test -- focus-view.test`
+Expected: FAIL with "Cannot find module '../src/focus-view'"
 
-**Step 3: Create hotlist-view.ts with basic structure**
+**Step 3: Create focus-view.ts with basic structure**
 
 ```typescript
-// src/hotlist-view.ts
-// ABOUTME: Leaf view displaying curated hotlist of next actions from across the vault.
+// src/focus-view.ts
+// ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
-import { HotlistItem, PluginSettings } from "./types";
-import { HotlistValidator, ValidationResult } from "./hotlist-validator";
+import { FocusItem, PluginSettings } from "./types";
+import { FocusValidator, ValidationResult } from "./focus-validator";
 
-export const HOTLIST_VIEW_TYPE = "flow-gtd-hotlist-view";
+export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
 interface GroupedHotlistItems {
-  projectActions: { [filePath: string]: HotlistItem[] };
-  generalActions: { [sphere: string]: HotlistItem[] };
+  projectActions: { [filePath: string]: FocusItem[] };
+  generalActions: { [sphere: string]: FocusItem[] };
 }
 
-export class HotlistView extends ItemView {
+export class FocusView extends ItemView {
   private settings: PluginSettings;
-  private validator: HotlistValidator;
+  private validator: FocusValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings) {
     super(leaf);
     this.settings = settings;
-    this.validator = new HotlistValidator(this.app);
+    this.validator = new FocusValidator(this.app);
   }
 
   getViewType(): string {
-    return HOTLIST_VIEW_TYPE;
+    return FOCUS_VIEW_TYPE;
   }
 
   getDisplayText(): string {
-    return "Hotlist";
+    return "Focus";
   }
 
   getIcon(): string {
@@ -509,17 +509,17 @@ export class HotlistView extends ItemView {
   async onOpen() {
     const container = this.containerEl.children[1];
     container.empty();
-    container.addClass("flow-gtd-hotlist-view");
+    container.addClass("flow-gtd-focus-view");
 
-    const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
-    titleEl.setText("Hotlist");
+    const titleEl = container.createEl("h2", { cls: "flow-gtd-focus-title" });
+    titleEl.setText("Focus");
 
-    if (this.settings.hotlist.length === 0) {
+    if (this.settings.focus.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
     }
 
-    const grouped = this.groupItems(this.settings.hotlist);
+    const grouped = this.groupItems(this.settings.focus);
     this.renderGroupedItems(container as HTMLElement, grouped);
   }
 
@@ -527,9 +527,9 @@ export class HotlistView extends ItemView {
     // Cleanup if needed
   }
 
-  private groupItems(items: HotlistItem[]): GroupedHotlistItems {
-    const projectActions: { [filePath: string]: HotlistItem[] } = {};
-    const generalActions: { [sphere: string]: HotlistItem[] } = {};
+  private groupItems(items: FocusItem[]): GroupedHotlistItems {
+    const projectActions: { [filePath: string]: FocusItem[] } = {};
+    const generalActions: { [sphere: string]: FocusItem[] } = {};
 
     items.forEach((item) => {
       if (item.isGeneral) {
@@ -551,10 +551,10 @@ export class HotlistView extends ItemView {
   private renderGroupedItems(container: HTMLElement, grouped: GroupedHotlistItems) {
     // Project Actions section
     if (Object.keys(grouped.projectActions).length > 0) {
-      const projectSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      const projectSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       projectSection.createEl("h3", {
         text: "Project Actions",
-        cls: "flow-gtd-hotlist-section-title",
+        cls: "flow-gtd-focus-section-title",
       });
 
       Object.keys(grouped.projectActions)
@@ -566,10 +566,10 @@ export class HotlistView extends ItemView {
 
     // General Actions section
     if (Object.keys(grouped.generalActions).length > 0) {
-      const generalSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      const generalSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       generalSection.createEl("h3", {
         text: "General Actions",
-        cls: "flow-gtd-hotlist-section-title",
+        cls: "flow-gtd-focus-section-title",
       });
 
       Object.keys(grouped.generalActions)
@@ -580,14 +580,14 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private renderFileGroup(container: HTMLElement, filePath: string, items: HotlistItem[]) {
-    const fileSection = container.createDiv({ cls: "flow-gtd-hotlist-file-section" });
+  private renderFileGroup(container: HTMLElement, filePath: string, items: FocusItem[]) {
+    const fileSection = container.createDiv({ cls: "flow-gtd-focus-file-section" });
 
-    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-hotlist-file-header" });
+    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-focus-file-header" });
     const fileName = filePath.split("/").pop() || filePath;
     const fileLink = fileHeader.createEl("a", {
       text: fileName,
-      cls: "flow-gtd-hotlist-file-link",
+      cls: "flow-gtd-focus-file-link",
     });
     fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
@@ -595,40 +595,40 @@ export class HotlistView extends ItemView {
       this.openFile(filePath);
     });
 
-    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
       this.renderItem(itemsList, item);
     });
   }
 
-  private renderSphereGroup(container: HTMLElement, sphere: string, items: HotlistItem[]) {
-    const sphereSection = container.createDiv({ cls: "flow-gtd-hotlist-sphere-section" });
+  private renderSphereGroup(container: HTMLElement, sphere: string, items: FocusItem[]) {
+    const sphereSection = container.createDiv({ cls: "flow-gtd-focus-sphere-section" });
 
     sphereSection.createEl("h4", {
       text: `(${sphere} sphere)`,
-      cls: "flow-gtd-hotlist-sphere-header",
+      cls: "flow-gtd-focus-sphere-header",
     });
 
-    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
       this.renderItem(itemsList, item);
     });
   }
 
-  private renderItem(container: HTMLElement, item: HotlistItem) {
-    const itemEl = container.createEl("li", { cls: "flow-gtd-hotlist-item" });
+  private renderItem(container: HTMLElement, item: FocusItem) {
+    const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
     textSpan.addEventListener("click", () => {
       this.openFile(item.file, item.lineNumber);
     });
 
-    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
+    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
 
     const completeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
@@ -637,7 +637,7 @@ export class HotlistView extends ItemView {
     });
 
     const waitingBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "⏸",
     });
     waitingBtn.title = "Convert to waiting for";
@@ -646,10 +646,10 @@ export class HotlistView extends ItemView {
     });
 
     const removeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "🗑️",
     });
-    removeBtn.title = "Remove from hotlist";
+    removeBtn.title = "Remove from focus";
     removeBtn.addEventListener("click", async () => {
       await this.removeFromHotlist(item);
     });
@@ -657,8 +657,8 @@ export class HotlistView extends ItemView {
 
   private renderEmptyMessage(container: HTMLElement) {
     container
-      .createDiv({ cls: "flow-gtd-hotlist-empty" })
-      .setText("No items in hotlist. Use planning mode in sphere view to add actions.");
+      .createDiv({ cls: "flow-gtd-focus-empty" })
+      .setText("No items in focus. Use planning mode in sphere view to add actions.");
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {
@@ -693,7 +693,7 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async markItemComplete(item: HotlistItem): Promise<void> {
+  private async markItemComplete(item: FocusItem): Promise<void> {
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot mark item complete: item not found");
@@ -716,7 +716,7 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async convertToWaitingFor(item: HotlistItem): Promise<void> {
+  private async convertToWaitingFor(item: FocusItem): Promise<void> {
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot convert item: item not found");
@@ -739,8 +739,8 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async removeFromHotlist(item: HotlistItem): Promise<void> {
-    this.settings.hotlist = this.settings.hotlist.filter(
+  private async removeFromHotlist(item: FocusItem): Promise<void> {
+    this.settings.focus = this.settings.focus.filter(
       (i) =>
         !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
@@ -751,14 +751,14 @@ export class HotlistView extends ItemView {
 
 **Step 4: Run test to verify it passes**
 
-Run: `npm test -- hotlist-view.test`
+Run: `npm test -- focus-view.test`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-git add src/hotlist-view.ts tests/hotlist-view.test.ts
-git commit -m "feat: add hotlist view component with grouping and actions"
+git add src/focus-view.ts tests/focus-view.test.ts
+git commit -m "feat: add focus view component with grouping and actions"
 ```
 
 ---
@@ -838,7 +838,7 @@ private renderContent(container: HTMLElement, data: SphereViewData) {
   // Add planning mode banner if active
   if (this.planningMode) {
     const banner = container.createDiv({ cls: "flow-gtd-sphere-planning-banner" });
-    banner.setText("Planning Mode - Click actions to add/remove from hotlist");
+    banner.setText("Planning Mode - Click actions to add/remove from focus");
   }
 
   // Add planning mode background class
@@ -877,13 +877,13 @@ git commit -m "feat: add planning mode toggle to sphere view"
 - Modify: `src/sphere-view.ts`
 - Modify: `tests/sphere-view.test.ts`
 
-**Step 1: Write test for adding action to hotlist**
+**Step 1: Write test for adding action to focus**
 
 Add to `tests/sphere-view.test.ts`:
 
 ```typescript
-it("should add action to hotlist when clicked in planning mode", async () => {
-  mockSettings.hotlist = [];
+it("should add action to focus when clicked in planning mode", async () => {
+  mockSettings.focus = [];
   const view = new SphereView(mockLeaf, "work", mockSettings);
   (view as any).app = mockApp;
   (view as any).planningMode = true;
@@ -906,13 +906,13 @@ it("should add action to hotlist when clicked in planning mode", async () => {
     false
   );
 
-  expect(mockSettings.hotlist).toHaveLength(1);
-  expect(mockSettings.hotlist[0].text).toBe("Test action");
-  expect(mockSettings.hotlist[0].file).toBe("Projects/Test.md");
+  expect(mockSettings.focus).toHaveLength(1);
+  expect(mockSettings.focus[0].text).toBe("Test action");
+  expect(mockSettings.focus[0].file).toBe("Projects/Test.md");
 });
 
-it("should remove action from hotlist when clicked again in planning mode", async () => {
-  mockSettings.hotlist = [
+it("should remove action from focus when clicked again in planning mode", async () => {
+  mockSettings.focus = [
     {
       file: "Projects/Test.md",
       lineNumber: 5,
@@ -929,7 +929,7 @@ it("should remove action from hotlist when clicked again in planning mode", asyn
 
   await (view as any).removeFromHotlist("Projects/Test.md", 5);
 
-  expect(mockSettings.hotlist).toHaveLength(0);
+  expect(mockSettings.focus).toHaveLength(0);
 });
 ```
 
@@ -938,7 +938,7 @@ it("should remove action from hotlist when clicked again in planning mode", asyn
 Run: `npm test -- sphere-view.test`
 Expected: FAIL with "addToHotlist is not a function"
 
-**Step 3: Add hotlist management methods to SphereView**
+**Step 3: Add focus management methods to SphereView**
 
 In `src/sphere-view.ts`, add these methods:
 
@@ -951,7 +951,7 @@ private async addToHotlist(
   sphere: string,
   isGeneral: boolean
 ): Promise<void> {
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file,
     lineNumber,
     lineContent,
@@ -961,19 +961,19 @@ private async addToHotlist(
     addedAt: Date.now(),
   };
 
-  this.settings.hotlist.push(item);
+  this.settings.focus.push(item);
   await this.onOpen(); // Re-render to show updated state
 }
 
 private async removeFromHotlist(file: string, lineNumber: number): Promise<void> {
-  this.settings.hotlist = this.settings.hotlist.filter(
+  this.settings.focus = this.settings.focus.filter(
     (item) => !(item.file === file && item.lineNumber === lineNumber)
   );
   await this.onOpen(); // Re-render to show updated state
 }
 
 private isOnHotlist(file: string, lineNumber: number): boolean {
-  return this.settings.hotlist.some(
+  return this.settings.focus.some(
     (item) => item.file === file && item.lineNumber === lineNumber
   );
 }
@@ -988,7 +988,7 @@ Expected: PASS
 
 ```bash
 git add src/sphere-view.ts tests/sphere-view.test.ts
-git commit -m "feat: add hotlist management methods to sphere view"
+git commit -m "feat: add focus management methods to sphere view"
 ```
 
 ---
@@ -1044,9 +1044,9 @@ private renderProjectsSection(container: HTMLElement, projects: SphereProjectSum
           // Calculate line number (approximate - will be validated)
           const lineNumber = index + 10; // Rough estimate, validator will fix
 
-          // Show visual indicator if already on hotlist
+          // Show visual indicator if already on focus
           if (this.isOnHotlist(project.file, lineNumber)) {
-            item.addClass("flow-gtd-hotlist-indicator");
+            item.addClass("flow-gtd-focus-indicator");
           }
 
           item.addEventListener("click", async () => {
@@ -1124,9 +1124,9 @@ private renderGeneralNextActionsSection(
       // Calculate line number (approximate - will be validated)
       const lineNumber = index + 5; // Rough estimate, validator will fix
 
-      // Show visual indicator if already on hotlist
+      // Show visual indicator if already on focus
       if (this.isOnHotlist(nextActionsFile, lineNumber)) {
-        item.addClass("flow-gtd-hotlist-indicator");
+        item.addClass("flow-gtd-focus-indicator");
       }
 
       item.addEventListener("click", async () => {
@@ -1159,7 +1159,7 @@ git commit -m "feat: make general actions clickable in planning mode"
 
 ---
 
-## Task 9: Register hotlist view and commands in main.ts
+## Task 9: Register focus view and commands in main.ts
 
 **Files:**
 
@@ -1174,15 +1174,15 @@ Add to relevant test file or create new test:
 // For now, we'll test manually
 ```
 
-**Step 2: Import HotlistView in main.ts**
+**Step 2: Import FocusView in main.ts**
 
 At the top of `main.ts`, add:
 
 ```typescript
-import { HotlistView, HOTLIST_VIEW_TYPE } from "./hotlist-view";
+import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
 ```
 
-**Step 3: Register hotlist view type in onload**
+**Step 3: Register focus view type in onload**
 
 In the `onload()` method of `main.ts`, add:
 
@@ -1190,24 +1190,24 @@ In the `onload()` method of `main.ts`, add:
 async onload() {
   await this.loadSettings();
 
-  // Register hotlist view
+  // Register focus view
   this.registerView(
-    HOTLIST_VIEW_TYPE,
-    (leaf) => new HotlistView(leaf, this.settings)
+    FOCUS_VIEW_TYPE,
+    (leaf) => new FocusView(leaf, this.settings)
   );
 
   // ... existing code
 }
 ```
 
-**Step 4: Add command to open hotlist view**
+**Step 4: Add command to open focus view**
 
 In the `onload()` method, add:
 
 ```typescript
 this.addCommand({
-  id: "open-hotlist",
-  name: "Open Hotlist",
+  id: "open-focus",
+  name: "Open Focus",
   callback: () => {
     this.activateHotlistView();
   },
@@ -1223,7 +1223,7 @@ async activateHotlistView() {
   const { workspace } = this.app;
 
   let leaf: WorkspaceLeaf | null = null;
-  const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
+  const leaves = workspace.getLeavesOfType(FOCUS_VIEW_TYPE);
 
   if (leaves.length > 0) {
     // View already exists, reveal it
@@ -1233,7 +1233,7 @@ async activateHotlistView() {
     leaf = workspace.getRightLeaf(false);
     if (leaf) {
       await leaf.setViewState({
-        type: HOTLIST_VIEW_TYPE,
+        type: FOCUS_VIEW_TYPE,
         active: true,
       });
     }
@@ -1251,7 +1251,7 @@ async activateHotlistView() {
 In the `onload()` method, add:
 
 ```typescript
-this.addRibbonIcon("list-checks", "Open Hotlist", () => {
+this.addRibbonIcon("list-checks", "Open Focus", () => {
   this.activateHotlistView();
 });
 ```
@@ -1264,75 +1264,75 @@ Run: `npm run build`
 
 ```bash
 git add main.ts
-git commit -m "feat: register hotlist view and commands"
+git commit -m "feat: register focus view and commands"
 ```
 
 ---
 
-## Task 10: Add CSS styling for hotlist and planning mode
+## Task 10: Add CSS styling for focus and planning mode
 
 **Files:**
 
-- Create: `styles/hotlist.css` (or modify existing styles.css)
+- Create: `styles/focus.css` (or modify existing styles.css)
 
-**Step 1: Create CSS for hotlist view**
+**Step 1: Create CSS for focus view**
 
 ```css
-/* Hotlist View Styles */
-.flow-gtd-hotlist-view {
+/* Focus View Styles */
+.flow-gtd-focus-view {
   padding: 1rem;
 }
 
-.flow-gtd-hotlist-title {
+.flow-gtd-focus-title {
   margin-bottom: 1rem;
 }
 
-.flow-gtd-hotlist-empty {
+.flow-gtd-focus-empty {
   color: var(--text-muted);
   font-style: italic;
   padding: 1rem;
 }
 
-.flow-gtd-hotlist-section {
+.flow-gtd-focus-section {
   margin-bottom: 2rem;
 }
 
-.flow-gtd-hotlist-section-title {
+.flow-gtd-focus-section-title {
   font-size: 1.2em;
   margin-bottom: 0.5rem;
   border-bottom: 1px solid var(--background-modifier-border);
   padding-bottom: 0.25rem;
 }
 
-.flow-gtd-hotlist-file-section,
-.flow-gtd-hotlist-sphere-section {
+.flow-gtd-focus-file-section,
+.flow-gtd-focus-sphere-section {
   margin-bottom: 1rem;
 }
 
-.flow-gtd-hotlist-file-header,
-.flow-gtd-hotlist-sphere-header {
+.flow-gtd-focus-file-header,
+.flow-gtd-focus-sphere-header {
   font-size: 1em;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: var(--text-accent);
 }
 
-.flow-gtd-hotlist-file-link {
+.flow-gtd-focus-file-link {
   color: var(--text-accent);
   text-decoration: none;
 }
 
-.flow-gtd-hotlist-file-link:hover {
+.flow-gtd-focus-file-link:hover {
   text-decoration: underline;
 }
 
-.flow-gtd-hotlist-items {
+.flow-gtd-focus-items {
   list-style: none;
   padding-left: 0;
   margin: 0;
 }
 
-.flow-gtd-hotlist-item {
+.flow-gtd-focus-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1342,21 +1342,21 @@ git commit -m "feat: register hotlist view and commands"
   background: var(--background-secondary);
 }
 
-.flow-gtd-hotlist-item:hover {
+.flow-gtd-focus-item:hover {
   background: var(--background-secondary-alt);
 }
 
-.flow-gtd-hotlist-item-text {
+.flow-gtd-focus-item-text {
   flex: 1;
   cursor: pointer;
 }
 
-.flow-gtd-hotlist-item-actions {
+.flow-gtd-focus-item-actions {
   display: flex;
   gap: 0.25rem;
 }
 
-.flow-gtd-hotlist-action-btn {
+.flow-gtd-focus-action-btn {
   padding: 0.25rem 0.5rem;
   border: none;
   background: var(--interactive-accent);
@@ -1366,7 +1366,7 @@ git commit -m "feat: register hotlist view and commands"
   font-size: 0.9em;
 }
 
-.flow-gtd-hotlist-action-btn:hover {
+.flow-gtd-focus-action-btn:hover {
   background: var(--interactive-accent-hover);
 }
 
@@ -1411,12 +1411,12 @@ git commit -m "feat: register hotlist view and commands"
   background: var(--background-modifier-hover);
 }
 
-.flow-gtd-hotlist-indicator {
+.flow-gtd-focus-indicator {
   background: var(--background-modifier-success);
   font-weight: 600;
 }
 
-.flow-gtd-hotlist-indicator::before {
+.flow-gtd-focus-indicator::before {
   content: "✓ ";
   color: var(--text-success);
 }
@@ -1427,13 +1427,13 @@ git commit -m "feat: register hotlist view and commands"
 **Step 3: Commit**
 
 ```bash
-git add styles/hotlist.css
-git commit -m "feat: add CSS styling for hotlist and planning mode"
+git add styles/focus.css
+git commit -m "feat: add CSS styling for focus and planning mode"
 ```
 
 ---
 
-## Task 11: Fix line number detection for accurate hotlist references
+## Task 11: Fix line number detection for accurate focus references
 
 **Files:**
 
@@ -1517,7 +1517,7 @@ Expected: FAIL with "Cannot find module '../src/action-line-finder'"
 ```typescript
 // src/action-line-finder.ts
 // ABOUTME: Finds exact line numbers for actions in files by searching file content.
-// ABOUTME: Used when adding actions to hotlist to get accurate line references.
+// ABOUTME: Used when adding actions to focus to get accurate line references.
 
 import { App, TFile } from "obsidian";
 
@@ -1626,7 +1626,7 @@ Expected: PASS (all tests)
 
 ```bash
 git add src/action-line-finder.ts tests/action-line-finder.test.ts src/sphere-view.ts
-git commit -m "feat: add accurate line number detection for hotlist items"
+git commit -m "feat: add accurate line number detection for focus items"
 ```
 
 ---
@@ -1635,22 +1635,22 @@ git commit -m "feat: add accurate line number detection for hotlist items"
 
 **Files:**
 
-- Create: `tests/hotlist-integration.test.ts`
+- Create: `tests/focus-integration.test.ts`
 
 **Step 1: Write integration test**
 
 ```typescript
-// tests/hotlist-integration.test.ts
-import { HotlistView } from "../src/hotlist-view";
+// tests/focus-integration.test.ts
+import { FocusView } from "../src/focus-view";
 import { SphereView } from "../src/sphere-view";
-import { HotlistValidator } from "../src/hotlist-validator";
+import { FocusValidator } from "../src/focus-validator";
 import { ActionLineFinder } from "../src/action-line-finder";
-import { PluginSettings, HotlistItem } from "../src/types";
+import { PluginSettings, FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
 jest.mock("obsidian");
 
-describe("Hotlist Integration", () => {
+describe("Focus Integration", () => {
   let mockApp: any;
   let mockVault: any;
   let mockSettings: PluginSettings;
@@ -1682,11 +1682,11 @@ describe("Hotlist Integration", () => {
       somedayFilePath: "Someday.md",
       projectsFolder: "Projects",
       spheres: ["work", "personal"],
-      hotlist: [],
+      focus: [],
     };
   });
 
-  it("should add action to hotlist and validate it", async () => {
+  it("should add action to focus and validate it", async () => {
     const mockFile = new TFile();
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
     mockVault.read.mockResolvedValue(
@@ -1699,8 +1699,8 @@ describe("Hotlist Integration", () => {
 
     expect(lineResult.found).toBe(true);
 
-    // Add to hotlist
-    const item: HotlistItem = {
+    // Add to focus
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: lineResult.lineNumber!,
       lineContent: lineResult.lineContent!,
@@ -1709,21 +1709,21 @@ describe("Hotlist Integration", () => {
       isGeneral: false,
       addedAt: Date.now(),
     };
-    mockSettings.hotlist.push(item);
+    mockSettings.focus.push(item);
 
     // Validate the item
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     mockVault.read.mockResolvedValue(
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Next actions\n\n- [ ] Test action\n"
     );
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(true);
-    expect(mockSettings.hotlist).toHaveLength(1);
+    expect(mockSettings.focus).toHaveLength(1);
   });
 
   it("should handle line number changes after file edits", async () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 9,
       lineContent: "- [ ] Test action",
@@ -1740,7 +1740,7 @@ describe("Hotlist Integration", () => {
       "---\ntags: project/work\n---\n\n# Test Project\n\n## Description\n\nNew section\n\n## Next actions\n\n- [ ] Test action\n"
     );
 
-    const validator = new HotlistValidator(mockApp);
+    const validator = new FocusValidator(mockApp);
     const validation = await validator.validateItem(item);
 
     expect(validation.found).toBe(true);
@@ -1751,14 +1751,14 @@ describe("Hotlist Integration", () => {
 
 **Step 2: Run test to verify it passes**
 
-Run: `npm test -- hotlist-integration.test`
+Run: `npm test -- focus-integration.test`
 Expected: PASS
 
 **Step 3: Commit**
 
 ```bash
-git add tests/hotlist-integration.test.ts
-git commit -m "test: add comprehensive hotlist integration tests"
+git add tests/focus-integration.test.ts
+git commit -m "test: add comprehensive focus integration tests"
 ```
 
 ---
@@ -1770,12 +1770,12 @@ git commit -m "test: add comprehensive hotlist integration tests"
 - Modify: `CLAUDE.md`
 - Modify: `README.md` (if exists)
 
-**Step 1: Update CLAUDE.md with hotlist feature**
+**Step 1: Update CLAUDE.md with focus feature**
 
 Add to the "Key Capabilities" section:
 
 ```markdown
-- Hotlist for curating focused set of next actions
+- Focus for curating focused set of next actions
 - Planning mode in sphere view for selecting actions
 - Validation and resolution when source files change
 ```
@@ -1783,22 +1783,22 @@ Add to the "Key Capabilities" section:
 Add new section after "Waiting For Support":
 
 ```markdown
-### Hotlist Support
+### Focus Support
 
-The plugin supports creating a curated "hotlist" of next actions to work on:
+The plugin supports creating a curated "focus" of next actions to work on:
 
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files
-- **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change
-- **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in sidebar with actions grouped by project/sphere
-- **SphereView Planning Mode** - Toggle planning mode to click actions and add to hotlist
-- **Commands** - "Open Hotlist" command and ribbon icon
+- **FocusValidator** (`src/focus-validator.ts`) - Validates and resolves focus items when files change
+- **FocusView** (`src/focus-view.ts`) - Displays focus in sidebar with actions grouped by project/sphere
+- **SphereView Planning Mode** - Toggle planning mode to click actions and add to focus
+- **Commands** - "Open Focus" command and ribbon icon
 ```
 
 **Step 2: Commit**
 
 ```bash
 git add CLAUDE.md
-git commit -m "docs: document hotlist feature in CLAUDE.md"
+git commit -m "docs: document focus feature in CLAUDE.md"
 ```
 
 ---
@@ -1827,7 +1827,7 @@ If coverage is below threshold, add tests for uncovered branches/lines.
 
 ```bash
 git add tests/
-git commit -m "test: ensure full test coverage for hotlist feature"
+git commit -m "test: ensure full test coverage for focus feature"
 ```
 
 ---
@@ -1848,22 +1848,22 @@ Expected: Clean build with no errors
 1. Open sphere view for a sphere
 2. Click "Planning Mode" button
 3. Verify banner appears and background changes
-4. Click several project actions to add to hotlist
-5. Click several general actions to add to hotlist
+4. Click several project actions to add to focus
+5. Click several general actions to add to focus
 6. Verify checkmarks appear on selected actions
 7. Click "Exit Planning Mode"
-8. Open hotlist view from ribbon or command palette
+8. Open focus view from ribbon or command palette
 9. Verify actions are grouped correctly (project vs general)
-10. Test marking action complete (should update source file and remove from hotlist)
-11. Test converting to waiting-for (should update source file and remove from hotlist)
-12. Test removing from hotlist (should only remove from hotlist, not touch source)
+10. Test marking action complete (should update source file and remove from focus)
+11. Test converting to waiting-for (should update source file and remove from focus)
+12. Test removing from focus (should only remove from focus, not touch source)
 13. Test clicking action text (should open source file at correct line)
 
 **Step 3: Test file editing scenarios**
 
-1. Add action to hotlist
+1. Add action to focus
 2. Edit source file to add lines above the action
-3. Reopen hotlist view
+3. Reopen focus view
 4. Verify action still works (validator should find it)
 
 **Step 4: Document any issues found**
@@ -1894,7 +1894,7 @@ Run: `git status` and `git diff`
 
 ```bash
 git add .
-git commit -m "feat: complete hotlist feature implementation"
+git commit -m "feat: complete focus feature implementation"
 ```
 
 **Step 5: Run tests one final time**
@@ -1906,13 +1906,13 @@ Expected: All tests pass
 
 ## Completion Checklist
 
-- [ ] HotlistItem type and settings storage
-- [ ] Hotlist validator service with comprehensive tests
-- [ ] Hotlist view component with grouping
+- [ ] FocusItem type and settings storage
+- [ ] Focus validator service with comprehensive tests
+- [ ] Focus view component with grouping
 - [ ] Planning mode in sphere view
 - [ ] Clickable actions in planning mode (project and general)
 - [ ] Commands and ribbon icon registered
-- [ ] CSS styling for hotlist and planning mode
+- [ ] CSS styling for focus and planning mode
 - [ ] Accurate line number detection with ActionLineFinder
 - [ ] Integration tests
 - [ ] Documentation updates

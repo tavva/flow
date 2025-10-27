@@ -185,7 +185,7 @@ Potential TUI features enabled by Ink foundation:
 - Split pane view (projects left, details right)
 - Interactive project/action editing
 - Real-time AI processing with progress indicators
-- Hotlist management interface
+- Focus management interface
 - Waiting-for items view
 
 **Note:** Future direction uncertain (may move features into Obsidian plugin). Ink provides flexibility without over-committing to full TUI.

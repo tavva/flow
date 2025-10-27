@@ -1,15 +1,15 @@
-# Hotlist Manual Reordering Design
+# Focus Manual Reordering Design
 
 **Date:** 2025-10-26
 **Status:** Approved
 
 ## Overview
 
-This design adds the ability for users to manually prioritise items in the hotlist by pinning them to a dedicated "Pinned" section at the top. Pinned items can be reordered via drag-and-drop to control their display sequence. The rest of the hotlist maintains its existing project/sphere grouping structure.
+This design adds the ability for users to manually prioritise items in the focus by pinning them to a dedicated "Pinned" section at the top. Pinned items can be reordered via drag-and-drop to control their display sequence. The rest of the focus maintains its existing project/sphere grouping structure.
 
 ## Problem Statement
 
-The current hotlist displays items grouped by project and sphere, sorted alphabetically. Users cannot prioritise specific actions they want to work on first. If a high-priority action belongs to a project that appears late alphabetically, users must scroll past other items to find it.
+The current focus displays items grouped by project and sphere, sorted alphabetically. Users cannot prioritise specific actions they want to work on first. If a high-priority action belongs to a project that appears late alphabetically, users must scroll past other items to find it.
 
 ## Design Goals
 
@@ -36,10 +36,10 @@ The hybrid approach was chosen because it:
 
 ## Data Model Changes
 
-### HotlistItem Interface
+### FocusItem Interface
 
 ```typescript
-export interface HotlistItem {
+export interface FocusItem {
   file: string;
   lineNumber: number;
   lineContent: string;
@@ -53,7 +53,7 @@ export interface HotlistItem {
 
 ### Settings Storage Structure
 
-The `settings.hotlist` array becomes an ordered list where:
+The `settings.focus` array becomes an ordered list where:
 
 - **Pinned items** appear at the front in their desired display order
 - **Unpinned items** follow (their array position is irrelevant for rendering)
@@ -63,7 +63,7 @@ The `settings.hotlist` array becomes an ordered list where:
 **Example:**
 
 ```typescript
-settings.hotlist = [
+settings.focus = [
   { text: "High priority task", isPinned: true, ... },      // Position 0
   { text: "Second priority", isPinned: true, ... },         // Position 1
   { text: "Some project action", isPinned: false, ... },    // Position 2+
@@ -74,29 +74,29 @@ settings.hotlist = [
 
 ### Migration Strategy
 
-Existing hotlist items without the `isPinned` property default to `false` (backward compatibility). No migration script required.
+Existing focus items without the `isPinned` property default to `false` (backward compatibility). No migration script required.
 
 ## Rendering Logic
 
 ### View Rendering Flow
 
 ```typescript
-private renderGroupedItems(container: HTMLElement, items: HotlistItem[]) {
+private renderGroupedItems(container: HTMLElement, items: FocusItem[]) {
   // Split items into pinned and unpinned
   const pinnedItems = items.filter(item => item.isPinned);
   const unpinnedItems = items.filter(item => !item.isPinned);
 
   // Render pinned section (if any pinned items exist)
   if (pinnedItems.length > 0) {
-    const pinnedSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+    const pinnedSection = container.createDiv({ cls: "flow-gtd-focus-section" });
     pinnedSection.createEl("h3", {
       text: "Pinned",
-      cls: "flow-gtd-hotlist-section-title",
+      cls: "flow-gtd-focus-section-title",
     });
 
     // Render as flat list - pinnedItems are already in desired order from array
     const pinnedList = pinnedSection.createEl("ul", {
-      cls: "flow-gtd-hotlist-items flow-gtd-hotlist-pinned-items"
+      cls: "flow-gtd-focus-items flow-gtd-focus-pinned-items"
     });
     pinnedItems.forEach(item => {
       this.renderPinnedItem(pinnedList, item);
@@ -148,9 +148,9 @@ Use native HTML5 Drag-and-Drop API (consistent with Obsidian patterns):
 ### Event Handlers
 
 ```typescript
-private renderPinnedItem(container: HTMLElement, item: HotlistItem) {
+private renderPinnedItem(container: HTMLElement, item: FocusItem) {
   const itemEl = container.createEl("li", {
-    cls: "flow-gtd-hotlist-item flow-gtd-hotlist-pinned-item",
+    cls: "flow-gtd-focus-item flow-gtd-focus-pinned-item",
     attr: { draggable: "true" }
   });
 
@@ -167,7 +167,7 @@ private renderPinnedItem(container: HTMLElement, item: HotlistItem) {
 ### Drag State Tracking
 
 ```typescript
-private draggedItem: HotlistItem | null = null;
+private draggedItem: FocusItem | null = null;
 ```
 
 Stored in view instance during drag operation.
@@ -175,25 +175,25 @@ Stored in view instance during drag operation.
 ### Reordering Logic
 
 ```typescript
-private async onDrop(e: DragEvent, dropTarget: HotlistItem) {
+private async onDrop(e: DragEvent, dropTarget: FocusItem) {
   e.preventDefault();
   if (!this.draggedItem || this.draggedItem === dropTarget) return;
 
-  // Find indices in settings.hotlist
-  const draggedIndex = this.settings.hotlist.findIndex(i =>
+  // Find indices in settings.focus
+  const draggedIndex = this.settings.focus.findIndex(i =>
     i.file === this.draggedItem.file &&
     i.lineNumber === this.draggedItem.lineNumber &&
     i.addedAt === this.draggedItem.addedAt
   );
-  const targetIndex = this.settings.hotlist.findIndex(i =>
+  const targetIndex = this.settings.focus.findIndex(i =>
     i.file === dropTarget.file &&
     i.lineNumber === dropTarget.lineNumber &&
     i.addedAt === dropTarget.addedAt
   );
 
   // Remove dragged item and insert at target position
-  const [item] = this.settings.hotlist.splice(draggedIndex, 1);
-  this.settings.hotlist.splice(targetIndex, 0, item);
+  const [item] = this.settings.focus.splice(draggedIndex, 1);
+  this.settings.focus.splice(targetIndex, 0, item);
 
   await this.saveSettings();
   await this.onOpen(); // Re-render
@@ -212,9 +212,9 @@ private async onDrop(e: DragEvent, dropTarget: HotlistItem) {
 ### Pinning an Item
 
 ```typescript
-private async pinItem(item: HotlistItem): Promise<void> {
-  // Find item in settings.hotlist
-  const index = this.settings.hotlist.findIndex(i =>
+private async pinItem(item: FocusItem): Promise<void> {
+  // Find item in settings.focus
+  const index = this.settings.focus.findIndex(i =>
     i.file === item.file &&
     i.lineNumber === item.lineNumber &&
     i.addedAt === item.addedAt
@@ -223,12 +223,12 @@ private async pinItem(item: HotlistItem): Promise<void> {
   if (index === -1) return;
 
   // Set isPinned flag
-  this.settings.hotlist[index].isPinned = true;
+  this.settings.focus[index].isPinned = true;
 
   // Move to end of pinned section
-  const pinnedCount = this.settings.hotlist.filter(i => i.isPinned).length;
-  const [pinnedItem] = this.settings.hotlist.splice(index, 1);
-  this.settings.hotlist.splice(pinnedCount - 1, 0, pinnedItem);
+  const pinnedCount = this.settings.focus.filter(i => i.isPinned).length;
+  const [pinnedItem] = this.settings.focus.splice(index, 1);
+  this.settings.focus.splice(pinnedCount - 1, 0, pinnedItem);
 
   await this.saveSettings();
   await this.onOpen(); // Re-render
@@ -244,8 +244,8 @@ When an item is pinned:
 ### Unpinning an Item
 
 ```typescript
-private async unpinItem(item: HotlistItem): Promise<void> {
-  const index = this.settings.hotlist.findIndex(i =>
+private async unpinItem(item: FocusItem): Promise<void> {
+  const index = this.settings.focus.findIndex(i =>
     i.file === item.file &&
     i.lineNumber === item.lineNumber &&
     i.addedAt === item.addedAt
@@ -254,7 +254,7 @@ private async unpinItem(item: HotlistItem): Promise<void> {
   if (index === -1) return;
 
   // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
-  this.settings.hotlist[index].isPinned = false;
+  this.settings.focus[index].isPinned = false;
 
   await this.saveSettings();
   await this.onOpen(); // Re-render
@@ -274,11 +274,11 @@ When an item is unpinned:
 When adding items from sphere view planning mode:
 
 - New items are added with `isPinned: false` (unpinned by default)
-- Appended to end of `settings.hotlist` array
+- Appended to end of `settings.focus` array
 
 ### Validation and Refresh
 
-When hotlist items are validated during refresh:
+When focus items are validated during refresh:
 
 - Maintain `isPinned` state when updating line numbers
 - Preserve array order for pinned items
@@ -310,39 +310,39 @@ If only one item is pinned:
 
 ```css
 /* Pinned section styling */
-.flow-gtd-hotlist-pinned-items {
+.flow-gtd-focus-pinned-items {
   background: var(--background-primary-alt);
   border-radius: 4px;
   padding: 8px;
 }
 
 /* Drag handle - hidden by default, visible on hover */
-.flow-gtd-hotlist-drag-handle {
+.flow-gtd-focus-drag-handle {
   opacity: 0.3;
   cursor: grab;
   margin-right: 8px;
   transition: opacity 0.2s;
 }
 
-.flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-drag-handle {
+.flow-gtd-focus-pinned-item:hover .flow-gtd-focus-drag-handle {
   opacity: 0.7;
 }
 
-.flow-gtd-hotlist-drag-handle:active {
+.flow-gtd-focus-drag-handle:active {
   cursor: grabbing;
 }
 
 /* Dragging state */
-.flow-gtd-hotlist-item.dragging {
+.flow-gtd-focus-item.dragging {
   opacity: 0.5;
 }
 
-.flow-gtd-hotlist-item.drag-over {
+.flow-gtd-focus-item.drag-over {
   border-top: 2px solid var(--interactive-accent);
 }
 
 /* Pin indicator */
-.flow-gtd-hotlist-pin-indicator {
+.flow-gtd-focus-pin-indicator {
   margin-right: 4px;
 }
 ```
@@ -391,7 +391,7 @@ If only one item is pinned:
 
 ### Phase 1: Data Model and Basic Pinning
 
-- Add `isPinned` property to `HotlistItem`
+- Add `isPinned` property to `FocusItem`
 - Implement `pinItem()` and `unpinItem()` methods
 - Update rendering to show pinned section
 - Add pin/unpin buttons to UI

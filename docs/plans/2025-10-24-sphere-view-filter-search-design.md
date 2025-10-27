@@ -83,11 +83,11 @@ Add a filter-as-you-type search feature to the sphere view that allows users to 
 - Maintain scroll position when results change
 - Don't jump to top on every keystroke
 
-**Hotlist interaction:**
+**Focus interaction:**
 
-- Filtering is purely based on search text (not hotlist status)
-- Actions on hotlist are hidden if they don't match the query
-- Only visible (filtered) actions are clickable for hotlist operations
+- Filtering is purely based on search text (not focus status)
+- Actions on focus are hidden if they don't match the query
+- Only visible (filtered) actions are clickable for focus operations
 - Checkmark indicators work normally on visible items
 
 **Waiting-for items:**
@@ -260,7 +260,7 @@ private renderContent(container: HTMLElement, data: SphereViewData) {
 - [ ] Hierarchy preserved when filtering
 - [ ] Scroll position maintained during filtering
 - [ ] Empty state shows appropriate message
-- [ ] Hotlist operations work on filtered items
+- [ ] Focus operations work on filtered items
 - [ ] Search clears on view refresh
 - [ ] Waiting-for items (🕐) searchable
 

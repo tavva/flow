@@ -1,23 +1,23 @@
-// ABOUTME: Leaf view displaying curated hotlist of next actions from across the vault.
+// ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
 import { ItemView, WorkspaceLeaf, TFile, EventRef, setIcon } from "obsidian";
 import { getAPI } from "obsidian-dataview";
-import { HotlistItem, PluginSettings, FlowProject } from "./types";
-import { HotlistValidator, ValidationResult } from "./hotlist-validator";
+import { FocusItem, PluginSettings, FlowProject } from "./types";
+import { FocusValidator, ValidationResult } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
 
-export const HOTLIST_VIEW_TYPE = "flow-gtd-hotlist-view";
+export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
-interface GroupedHotlistItems {
-  projectActions: { [filePath: string]: HotlistItem[] };
-  generalActions: { [sphere: string]: HotlistItem[] };
+interface GroupedFocusItems {
+  projectActions: { [filePath: string]: FocusItem[] };
+  generalActions: { [sphere: string]: FocusItem[] };
 }
 
-export class HotlistView extends ItemView {
+export class FocusView extends ItemView {
   private settings: PluginSettings;
-  private validator: HotlistValidator;
+  private validator: FocusValidator;
   private scanner: FlowProjectScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
@@ -26,12 +26,12 @@ export class HotlistView extends ItemView {
   private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
   private allProjects: FlowProject[] = [];
-  private draggedItem: HotlistItem | null = null;
+  private draggedItem: FocusItem | null = null;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
-    this.validator = new HotlistValidator(this.app);
+    this.validator = new FocusValidator(this.app);
     this.scanner = new FlowProjectScanner(this.app);
     this.saveSettings = saveSettings;
 
@@ -49,11 +49,11 @@ export class HotlistView extends ItemView {
   }
 
   getViewType(): string {
-    return HOTLIST_VIEW_TYPE;
+    return FOCUS_VIEW_TYPE;
   }
 
   getDisplayText(): string {
-    return "Hotlist";
+    return "Focus";
   }
 
   getIcon(): string {
@@ -63,7 +63,7 @@ export class HotlistView extends ItemView {
   async onOpen() {
     const container = this.containerEl.children[1];
     container.empty();
-    container.addClass("flow-gtd-hotlist-view");
+    container.addClass("flow-gtd-focus-view");
 
     // Show loading state immediately
     this.renderLoadingState(container as HTMLElement);
@@ -73,12 +73,12 @@ export class HotlistView extends ItemView {
 
     // Register event listener for metadata cache changes (fires after file is indexed)
     this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
-      // Check if file has list items (tasks) that might be hotlist items
+      // Check if file has list items (tasks) that might be focus items
       const cache = this.app.metadataCache.getFileCache(file);
       if (cache?.listItems && cache.listItems.length > 0) {
-        // Check if this file contains any hotlist items
-        const hasHotlistItems = this.settings.hotlist.some((item) => item.file === file.path);
-        if (hasHotlistItems) {
+        // Check if this file contains any focus items
+        const hasFocusItems = this.settings.focus.some((item) => item.file === file.path);
+        if (hasFocusItems) {
           this.scheduleRefresh();
         }
       }
@@ -86,22 +86,22 @@ export class HotlistView extends ItemView {
 
     // Clear container and render actual content
     container.empty();
-    container.addClass("flow-gtd-hotlist-view");
+    container.addClass("flow-gtd-focus-view");
 
-    const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
-    titleEl.setText("Hotlist");
+    const titleEl = container.createEl("h2", { cls: "flow-gtd-focus-title" });
+    titleEl.setText("Focus");
 
     // Show clear notification if applicable
     if (this.shouldShowClearNotification()) {
       this.renderClearNotification(container as HTMLElement);
     }
 
-    if (this.settings.hotlist.length === 0) {
+    if (this.settings.focus.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
     }
 
-    this.renderGroupedItems(container as HTMLElement, this.settings.hotlist);
+    this.renderGroupedItems(container as HTMLElement, this.settings.focus);
   }
 
   async onClose() {
@@ -141,11 +141,11 @@ export class HotlistView extends ItemView {
     this.isRefreshing = true;
 
     try {
-      // Validate all hotlist items and remove completed ones
-      const validatedItems: HotlistItem[] = [];
+      // Validate all focus items and remove completed ones
+      const validatedItems: FocusItem[] = [];
       let needsSettingsSave = false;
 
-      for (const item of this.settings.hotlist) {
+      for (const item of this.settings.focus) {
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {
@@ -163,8 +163,8 @@ export class HotlistView extends ItemView {
 
           if (lineIndex >= 0 && lineIndex < lines.length) {
             const line = lines[lineIndex];
-            // If marked as complete [x], remove from hotlist
-            // Note: We keep waiting-for [w] items in the hotlist
+            // If marked as complete [x], remove from focus
+            // Note: We keep waiting-for [w] items in the focus
             if (line.match(/\[x\]/i)) {
               needsSettingsSave = true;
               continue;
@@ -184,17 +184,17 @@ export class HotlistView extends ItemView {
 
       // Update settings if any items were removed or updated
       if (needsSettingsSave) {
-        this.settings.hotlist = validatedItems;
+        this.settings.focus = validatedItems;
         await this.saveSettings();
       }
 
       // Re-render the view
       const container = this.containerEl.children[1];
       container.empty();
-      container.addClass("flow-gtd-hotlist-view");
+      container.addClass("flow-gtd-focus-view");
 
-      const titleEl = container.createEl("h2", { cls: "flow-gtd-hotlist-title" });
-      titleEl.setText("Hotlist");
+      const titleEl = container.createEl("h2", { cls: "flow-gtd-focus-title" });
+      titleEl.setText("Focus");
 
       // Show clear notification if applicable
       if (this.shouldShowClearNotification()) {
@@ -207,15 +207,15 @@ export class HotlistView extends ItemView {
         this.renderGroupedItems(container as HTMLElement, validatedItems);
       }
     } catch (error) {
-      console.error("Failed to refresh hotlist view", error);
+      console.error("Failed to refresh focus view", error);
     } finally {
       this.isRefreshing = false;
     }
   }
 
-  private groupItems(items: HotlistItem[]): GroupedHotlistItems {
-    const projectActions: { [filePath: string]: HotlistItem[] } = {};
-    const generalActions: { [sphere: string]: HotlistItem[] } = {};
+  private groupItems(items: FocusItem[]): GroupedFocusItems {
+    const projectActions: { [filePath: string]: FocusItem[] } = {};
+    const generalActions: { [sphere: string]: FocusItem[] } = {};
 
     items.forEach((item) => {
       if (item.isGeneral) {
@@ -234,21 +234,21 @@ export class HotlistView extends ItemView {
     return { projectActions, generalActions };
   }
 
-  private renderGroupedItems(container: HTMLElement, items: HotlistItem[]) {
+  private renderGroupedItems(container: HTMLElement, items: FocusItem[]) {
     // Split items into pinned and unpinned
     const pinnedItems = items.filter((item) => item.isPinned === true);
     const unpinnedItems = items.filter((item) => item.isPinned !== true);
 
     // Render pinned section (if any pinned items exist)
     if (pinnedItems.length > 0) {
-      const pinnedSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      const pinnedSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       pinnedSection.createEl("h3", {
         text: "Pinned",
-        cls: "flow-gtd-hotlist-section-title",
+        cls: "flow-gtd-focus-section-title",
       });
 
       const pinnedList = pinnedSection.createEl("ul", {
-        cls: "flow-gtd-hotlist-items flow-gtd-hotlist-pinned-items",
+        cls: "flow-gtd-focus-items flow-gtd-focus-pinned-items",
       });
       pinnedItems.forEach((item) => {
         this.renderPinnedItem(pinnedList, item);
@@ -260,10 +260,10 @@ export class HotlistView extends ItemView {
 
     // Project Actions section
     if (Object.keys(grouped.projectActions).length > 0) {
-      const projectSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      const projectSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       projectSection.createEl("h3", {
         text: "Project Actions",
-        cls: "flow-gtd-hotlist-section-title",
+        cls: "flow-gtd-focus-section-title",
       });
 
       Object.keys(grouped.projectActions)
@@ -275,10 +275,10 @@ export class HotlistView extends ItemView {
 
     // General Actions section
     if (Object.keys(grouped.generalActions).length > 0) {
-      const generalSection = container.createDiv({ cls: "flow-gtd-hotlist-section" });
+      const generalSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       generalSection.createEl("h3", {
         text: "General Actions",
-        cls: "flow-gtd-hotlist-section-title",
+        cls: "flow-gtd-focus-section-title",
       });
 
       Object.keys(grouped.generalActions)
@@ -289,17 +289,17 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private renderFileGroup(container: HTMLElement, filePath: string, items: HotlistItem[]) {
-    const fileSection = container.createDiv({ cls: "flow-gtd-hotlist-file-section" });
+  private renderFileGroup(container: HTMLElement, filePath: string, items: FocusItem[]) {
+    const fileSection = container.createDiv({ cls: "flow-gtd-focus-file-section" });
 
-    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-hotlist-file-header" });
+    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-focus-file-header" });
 
     // Get project display name with parent context
     const displayName = getProjectDisplayName(filePath, this.allProjects);
 
     const fileLink = fileHeader.createEl("a", {
       text: displayName.primary,
-      cls: "flow-gtd-hotlist-file-link",
+      cls: "flow-gtd-focus-file-link",
     });
     fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
@@ -311,35 +311,35 @@ export class HotlistView extends ItemView {
     if (displayName.parent) {
       const parentSpan = fileHeader.createSpan({
         text: ` (${displayName.parent})`,
-        cls: "flow-gtd-hotlist-parent-context",
+        cls: "flow-gtd-focus-parent-context",
       });
       parentSpan.style.fontSize = "0.85em";
       parentSpan.style.opacity = "0.7";
       parentSpan.style.fontWeight = "normal";
     }
 
-    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
       this.renderItem(itemsList, item);
     });
   }
 
-  private renderSphereGroup(container: HTMLElement, sphere: string, items: HotlistItem[]) {
-    const sphereSection = container.createDiv({ cls: "flow-gtd-hotlist-sphere-section" });
+  private renderSphereGroup(container: HTMLElement, sphere: string, items: FocusItem[]) {
+    const sphereSection = container.createDiv({ cls: "flow-gtd-focus-sphere-section" });
 
     sphereSection.createEl("h4", {
       text: `(${sphere} sphere)`,
-      cls: "flow-gtd-hotlist-sphere-header",
+      cls: "flow-gtd-focus-sphere-header",
     });
 
-    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-hotlist-items" });
+    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
       this.renderItem(itemsList, item);
     });
   }
 
-  private renderItem(container: HTMLElement, item: HotlistItem) {
-    const itemEl = container.createEl("li", { cls: "flow-gtd-hotlist-item" });
+  private renderItem(container: HTMLElement, item: FocusItem) {
+    const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
     // Check if this is a waiting-for item
     const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
@@ -348,13 +348,13 @@ export class HotlistView extends ItemView {
     // Add clock emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
       const clockSpan = itemEl.createSpan({
-        cls: "flow-gtd-hotlist-waiting-indicator",
+        cls: "flow-gtd-focus-waiting-indicator",
         text: "🕐 ",
       });
       clockSpan.style.marginRight = "8px";
     }
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
 
@@ -368,10 +368,10 @@ export class HotlistView extends ItemView {
       this.openFile(item.file, item.lineNumber);
     });
 
-    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
+    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
 
     const completeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-primary",
+      cls: "flow-gtd-focus-action-btn flow-gtd-focus-action-primary",
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
@@ -381,7 +381,7 @@ export class HotlistView extends ItemView {
 
     // Three-dot menu button (mobile only, hidden on desktop via CSS)
     const menuBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-menu",
+      cls: "flow-gtd-focus-action-btn flow-gtd-focus-action-menu",
       text: "⋯",
     });
     menuBtn.title = "More actions";
@@ -391,12 +391,12 @@ export class HotlistView extends ItemView {
     });
 
     // Secondary actions (shown on hover) - wrapped in container for absolute positioning
-    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-hotlist-action-secondary" });
+    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-focus-action-secondary" });
 
     // Pin button (only show for unpinned items)
     if (!item.isPinned) {
       const pinBtn = secondaryActions.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn",
+        cls: "flow-gtd-focus-action-btn",
         text: "📌",
       });
       pinBtn.title = "Pin to top";
@@ -408,7 +408,7 @@ export class HotlistView extends ItemView {
     // Only show "Convert to waiting for" button for non-waiting items
     if (!isWaitingFor) {
       const waitingBtn = secondaryActions.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn",
+        cls: "flow-gtd-focus-action-btn",
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
@@ -418,23 +418,23 @@ export class HotlistView extends ItemView {
     }
 
     const removeBtn = secondaryActions.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "🗑️",
     });
-    removeBtn.title = "Remove from hotlist";
+    removeBtn.title = "Remove from focus";
     removeBtn.addEventListener("click", async () => {
-      await this.removeFromHotlist(item);
+      await this.removeFromFocus(item);
     });
   }
 
-  private renderPinnedItem(container: HTMLElement, item: HotlistItem) {
+  private renderPinnedItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", {
-      cls: "flow-gtd-hotlist-item flow-gtd-hotlist-pinned-item",
+      cls: "flow-gtd-focus-item flow-gtd-focus-pinned-item",
       attr: { draggable: "true" },
     });
 
     // Drag handle
-    const dragHandle = itemEl.createSpan({ cls: "flow-gtd-hotlist-drag-handle" });
+    const dragHandle = itemEl.createSpan({ cls: "flow-gtd-focus-drag-handle" });
     setIcon(dragHandle, "grip-vertical");
 
     // Drag event handlers
@@ -450,13 +450,13 @@ export class HotlistView extends ItemView {
     // Add clock emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
       const clockSpan = itemEl.createSpan({
-        cls: "flow-gtd-hotlist-waiting-indicator",
+        cls: "flow-gtd-focus-waiting-indicator",
         text: "🕐 ",
       });
       clockSpan.style.marginRight = "8px";
     }
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-text" });
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
 
@@ -470,10 +470,10 @@ export class HotlistView extends ItemView {
       this.openFile(item.file, item.lineNumber);
     });
 
-    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-hotlist-item-actions" });
+    const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
 
     const completeBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-primary",
+      cls: "flow-gtd-focus-action-btn flow-gtd-focus-action-primary",
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
@@ -483,7 +483,7 @@ export class HotlistView extends ItemView {
 
     // Three-dot menu button (mobile only, hidden on desktop via CSS)
     const menuBtn = actionsSpan.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn flow-gtd-hotlist-action-menu",
+      cls: "flow-gtd-focus-action-btn flow-gtd-focus-action-menu",
       text: "⋯",
     });
     menuBtn.title = "More actions";
@@ -493,11 +493,11 @@ export class HotlistView extends ItemView {
     });
 
     // Secondary actions (shown on hover) - wrapped in container for absolute positioning
-    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-hotlist-action-secondary" });
+    const secondaryActions = actionsSpan.createSpan({ cls: "flow-gtd-focus-action-secondary" });
 
     // Unpin button
     const unpinBtn = secondaryActions.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "⬇️",
     });
     unpinBtn.title = "Unpin from top";
@@ -508,7 +508,7 @@ export class HotlistView extends ItemView {
     // Only show "Convert to waiting for" button for non-waiting items
     if (!isWaitingFor) {
       const waitingBtn = secondaryActions.createEl("button", {
-        cls: "flow-gtd-hotlist-action-btn",
+        cls: "flow-gtd-focus-action-btn",
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
@@ -518,17 +518,17 @@ export class HotlistView extends ItemView {
     }
 
     const removeBtn = secondaryActions.createEl("button", {
-      cls: "flow-gtd-hotlist-action-btn",
+      cls: "flow-gtd-focus-action-btn",
       text: "🗑️",
     });
-    removeBtn.title = "Remove from hotlist";
+    removeBtn.title = "Remove from focus";
     removeBtn.addEventListener("click", async () => {
-      await this.removeFromHotlist(item);
+      await this.removeFromFocus(item);
     });
   }
 
   private renderLoadingState(container: HTMLElement) {
-    const loadingContainer = container.createDiv("flow-gtd-hotlist-loading");
+    const loadingContainer = container.createDiv("flow-gtd-focus-loading");
     loadingContainer.style.textAlign = "center";
     loadingContainer.style.padding = "48px 24px";
     loadingContainer.style.display = "flex";
@@ -547,39 +547,39 @@ export class HotlistView extends ItemView {
 
   private renderEmptyMessage(container: HTMLElement) {
     container
-      .createDiv({ cls: "flow-gtd-hotlist-empty" })
-      .setText("No items in hotlist. Use planning mode in sphere view to add actions.");
+      .createDiv({ cls: "flow-gtd-focus-empty" })
+      .setText("No items in focus. Use planning mode in sphere view to add actions.");
   }
 
   private shouldShowClearNotification(): boolean {
     // Don't show if dismissed
-    if (this.settings.hotlistClearedNotificationDismissed) {
+    if (this.settings.focusClearedNotificationDismissed) {
       return false;
     }
 
     // Don't show if never cleared
-    if (this.settings.lastHotlistClearTimestamp === 0) {
+    if (this.settings.lastFocusClearTimestamp === 0) {
       return false;
     }
 
     // Don't show if archiving failed
-    if (!this.settings.lastHotlistArchiveSucceeded) {
+    if (!this.settings.lastFocusArchiveSucceeded) {
       return false;
     }
 
     // Only show notification within 24 hours of clearing
     const hoursSinceClear =
-      (Date.now() - this.settings.lastHotlistClearTimestamp) / (1000 * 60 * 60);
+      (Date.now() - this.settings.lastFocusClearTimestamp) / (1000 * 60 * 60);
     return hoursSinceClear < 24;
   }
 
   private async dismissClearNotification(): Promise<void> {
-    this.settings.hotlistClearedNotificationDismissed = true;
+    this.settings.focusClearedNotificationDismissed = true;
     await this.saveSettings();
   }
 
   private renderClearNotification(container: HTMLElement) {
-    const notificationEl = container.createDiv({ cls: "flow-gtd-hotlist-notification" });
+    const notificationEl = container.createDiv({ cls: "flow-gtd-focus-notification" });
     notificationEl.style.padding = "12px";
     notificationEl.style.marginBottom = "12px";
     notificationEl.style.backgroundColor = "var(--background-secondary)";
@@ -589,22 +589,22 @@ export class HotlistView extends ItemView {
     notificationEl.style.alignItems = "center";
 
     const messageSpan = notificationEl.createSpan();
-    messageSpan.setText("Your hotlist was automatically cleared. ");
+    messageSpan.setText("Your focus was automatically cleared. ");
 
     const archiveLink = messageSpan.createEl("a", {
       text: "View archived items",
-      cls: "flow-gtd-hotlist-archive-link",
+      cls: "flow-gtd-focus-archive-link",
     });
     archiveLink.style.cursor = "pointer";
     archiveLink.style.textDecoration = "underline";
     archiveLink.addEventListener("click", (e) => {
       e.preventDefault();
-      this.openFile(this.settings.hotlistArchiveFile);
+      this.openFile(this.settings.focusArchiveFile);
     });
 
     const dismissBtn = notificationEl.createEl("button", {
       text: "×",
-      cls: "flow-gtd-hotlist-dismiss-btn",
+      cls: "flow-gtd-focus-dismiss-btn",
     });
     dismissBtn.style.fontSize = "20px";
     dismissBtn.style.cursor = "pointer";
@@ -653,7 +653,7 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async markItemComplete(item: HotlistItem): Promise<void> {
+  private async markItemComplete(item: FocusItem): Promise<void> {
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot mark item complete: item not found");
@@ -672,11 +672,11 @@ export class HotlistView extends ItemView {
     if (lineIndex >= 0 && lineIndex < lines.length) {
       lines[lineIndex] = lines[lineIndex].replace(/\[(?: |w)\]/i, "[x]");
       await this.app.vault.modify(file, lines.join("\n"));
-      await this.removeFromHotlist(item);
+      await this.removeFromFocus(item);
     }
   }
 
-  private async convertToWaitingFor(item: HotlistItem): Promise<void> {
+  private async convertToWaitingFor(item: FocusItem): Promise<void> {
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot convert item: item not found");
@@ -697,14 +697,14 @@ export class HotlistView extends ItemView {
       lines[lineIndex] = updatedLine;
       await this.app.vault.modify(file, lines.join("\n"));
 
-      // Update the item's lineContent in the hotlist instead of removing it
-      const hotlistIndex = this.settings.hotlist.findIndex(
+      // Update the item's lineContent in the focus instead of removing it
+      const focusIndex = this.settings.focus.findIndex(
         (i) =>
           i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
       );
 
-      if (hotlistIndex !== -1) {
-        this.settings.hotlist[hotlistIndex].lineContent = updatedLine;
+      if (focusIndex !== -1) {
+        this.settings.focus[focusIndex].lineContent = updatedLine;
         await this.saveSettings();
         await this.refreshSphereViews();
         await this.onOpen(); // Re-render
@@ -712,8 +712,8 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async removeFromHotlist(item: HotlistItem): Promise<void> {
-    this.settings.hotlist = this.settings.hotlist.filter(
+  private async removeFromFocus(item: FocusItem): Promise<void> {
+    this.settings.focus = this.settings.focus.filter(
       (i) =>
         !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
@@ -722,41 +722,41 @@ export class HotlistView extends ItemView {
     await this.onOpen(); // Re-render
   }
 
-  private async pinItem(item: HotlistItem): Promise<void> {
-    // Find item in settings.hotlist
-    const index = this.settings.hotlist.findIndex(
+  private async pinItem(item: FocusItem): Promise<void> {
+    // Find item in settings.focus
+    const index = this.settings.focus.findIndex(
       (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
     );
 
     if (index === -1) return;
 
     // Set isPinned flag
-    this.settings.hotlist[index].isPinned = true;
+    this.settings.focus[index].isPinned = true;
 
     // Move to end of pinned section
-    const pinnedCount = this.settings.hotlist.filter((i) => i.isPinned).length;
-    const [pinnedItem] = this.settings.hotlist.splice(index, 1);
-    this.settings.hotlist.splice(pinnedCount - 1, 0, pinnedItem);
+    const pinnedCount = this.settings.focus.filter((i) => i.isPinned).length;
+    const [pinnedItem] = this.settings.focus.splice(index, 1);
+    this.settings.focus.splice(pinnedCount - 1, 0, pinnedItem);
 
     await this.saveSettings();
     await this.onOpen(); // Re-render
   }
 
-  private async unpinItem(item: HotlistItem): Promise<void> {
-    const index = this.settings.hotlist.findIndex(
+  private async unpinItem(item: FocusItem): Promise<void> {
+    const index = this.settings.focus.findIndex(
       (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
     );
 
     if (index === -1) return;
 
     // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
-    this.settings.hotlist[index].isPinned = false;
+    this.settings.focus[index].isPinned = false;
 
     await this.saveSettings();
     await this.onOpen(); // Re-render
   }
 
-  private onDragStart(e: DragEvent, item: HotlistItem): void {
+  private onDragStart(e: DragEvent, item: FocusItem): void {
     this.draggedItem = item;
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = "move";
@@ -773,18 +773,18 @@ export class HotlistView extends ItemView {
     }
   }
 
-  private async onDrop(e: DragEvent, dropTarget: HotlistItem): Promise<void> {
+  private async onDrop(e: DragEvent, dropTarget: FocusItem): Promise<void> {
     e.preventDefault();
     if (!this.draggedItem || this.draggedItem === dropTarget) return;
 
-    // Find indices in settings.hotlist
-    const draggedIndex = this.settings.hotlist.findIndex(
+    // Find indices in settings.focus
+    const draggedIndex = this.settings.focus.findIndex(
       (i) =>
         i.file === this.draggedItem!.file &&
         i.lineNumber === this.draggedItem!.lineNumber &&
         i.addedAt === this.draggedItem!.addedAt
     );
-    const targetIndex = this.settings.hotlist.findIndex(
+    const targetIndex = this.settings.focus.findIndex(
       (i) =>
         i.file === dropTarget.file &&
         i.lineNumber === dropTarget.lineNumber &&
@@ -794,8 +794,8 @@ export class HotlistView extends ItemView {
     if (draggedIndex === -1 || targetIndex === -1) return;
 
     // Remove dragged item and insert at target position
-    const [item] = this.settings.hotlist.splice(draggedIndex, 1);
-    this.settings.hotlist.splice(targetIndex, 0, item);
+    const [item] = this.settings.focus.splice(draggedIndex, 1);
+    this.settings.focus.splice(targetIndex, 0, item);
 
     await this.saveSettings();
     await this.onOpen(); // Re-render

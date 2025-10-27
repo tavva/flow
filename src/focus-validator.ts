@@ -1,8 +1,8 @@
-// ABOUTME: Validates and resolves hotlist items when files or line numbers change.
+// ABOUTME: Validates and resolves focus items when files or line numbers change.
 // ABOUTME: Uses exact match first, then searches file for matching content.
 
 import { App, TFile } from "obsidian";
-import { HotlistItem } from "./types";
+import { FocusItem } from "./types";
 
 export interface ValidationResult {
   found: boolean;
@@ -11,10 +11,10 @@ export interface ValidationResult {
   error?: string;
 }
 
-export class HotlistValidator {
+export class FocusValidator {
   constructor(private app: App) {}
 
-  async validateItem(item: HotlistItem): Promise<ValidationResult> {
+  async validateItem(item: FocusItem): Promise<ValidationResult> {
     // Check if file exists
     const file = this.app.vault.getAbstractFileByPath(item.file);
     if (!(file instanceof TFile)) {

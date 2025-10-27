@@ -38,7 +38,7 @@ describe("SphereView", () => {
       somedayFilePath: "Someday.md",
       projectsFolder: "Projects",
       availableSpheres: ["personal", "work"],
-      hotlist: [],
+      focus: [],
     };
 
     // Mock scanner to return empty array by default
@@ -53,7 +53,7 @@ describe("SphereView", () => {
     } as any;
     (ActionLineFinder as jest.Mock).mockImplementation(() => mockLineFinder);
 
-    // Mock workspace methods for hotlist view
+    // Mock workspace methods for focus view
     app.workspace.getLeavesOfType = jest.fn().mockReturnValue([]);
     app.workspace.getRightLeaf = jest.fn().mockReturnValue(null);
     app.workspace.revealLeaf = jest.fn();
@@ -551,7 +551,7 @@ describe("SphereView", () => {
     });
   });
 
-  describe("always-on hotlist toggle", () => {
+  describe("always-on focus toggle", () => {
     it("should not have planning mode property", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
@@ -560,12 +560,12 @@ describe("SphereView", () => {
       expect((view as any).planningMode).toBeUndefined();
     });
 
-    it("should add action to hotlist when clicked", async () => {
-      settings.hotlist = [];
+    it("should add action to focus when clicked", async () => {
+      settings.focus = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      await (view as any).addToHotlist(
+      await (view as any).addToFocus(
         "Test action",
         "Projects/Test.md",
         5,
@@ -574,13 +574,13 @@ describe("SphereView", () => {
         false
       );
 
-      expect(settings.hotlist).toHaveLength(1);
-      expect(settings.hotlist[0].text).toBe("Test action");
-      expect(settings.hotlist[0].file).toBe("Projects/Test.md");
+      expect(settings.focus).toHaveLength(1);
+      expect(settings.focus[0].text).toBe("Test action");
+      expect(settings.focus[0].file).toBe("Projects/Test.md");
     });
 
-    it("should remove action from hotlist when clicked again", async () => {
-      settings.hotlist = [
+    it("should remove action from focus when clicked again", async () => {
+      settings.focus = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -594,13 +594,13 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      await (view as any).removeFromHotlist("Projects/Test.md", 5);
+      await (view as any).removeFromFocus("Projects/Test.md", 5);
 
-      expect(settings.hotlist).toHaveLength(0);
+      expect(settings.focus).toHaveLength(0);
     });
 
-    it("should check if action is on hotlist", () => {
-      settings.hotlist = [
+    it("should check if action is on focus", () => {
+      settings.focus = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -614,18 +614,18 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      expect((view as any).isOnHotlist("Projects/Test.md", 5)).toBe(true);
-      expect((view as any).isOnHotlist("Projects/Test.md", 6)).toBe(false);
-      expect((view as any).isOnHotlist("Projects/Other.md", 5)).toBe(false);
+      expect((view as any).isOnFocus("Projects/Test.md", 5)).toBe(true);
+      expect((view as any).isOnFocus("Projects/Test.md", 6)).toBe(false);
+      expect((view as any).isOnFocus("Projects/Other.md", 5)).toBe(false);
     });
 
-    it("should toggle hotlist item off when clicked again (add then remove)", async () => {
-      settings.hotlist = [];
+    it("should toggle focus item off when clicked again (add then remove)", async () => {
+      settings.focus = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      // First click: add to hotlist
-      await (view as any).addToHotlist(
+      // First click: add to focus
+      await (view as any).addToFocus(
         "Toggle action",
         "Projects/Toggle.md",
         10,
@@ -634,19 +634,19 @@ describe("SphereView", () => {
         false
       );
 
-      expect(settings.hotlist).toHaveLength(1);
-      expect(settings.hotlist[0].text).toBe("Toggle action");
+      expect(settings.focus).toHaveLength(1);
+      expect(settings.focus[0].text).toBe("Toggle action");
       expect(mockSaveSettings).toHaveBeenCalledTimes(1);
 
-      // Second click: remove from hotlist
-      await (view as any).removeFromHotlist("Projects/Toggle.md", 10);
+      // Second click: remove from focus
+      await (view as any).removeFromFocus("Projects/Toggle.md", 10);
 
-      expect(settings.hotlist).toHaveLength(0);
+      expect(settings.focus).toHaveLength(0);
       expect(mockSaveSettings).toHaveBeenCalledTimes(2);
     });
 
-    it("should add CSS class to element when adding to hotlist", async () => {
-      settings.hotlist = [];
+    it("should add CSS class to element when adding to focus", async () => {
+      settings.focus = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -658,7 +658,7 @@ describe("SphereView", () => {
         },
       } as any;
 
-      await (view as any).addToHotlist(
+      await (view as any).addToFocus(
         "Test action",
         "Projects/Test.md",
         5,
@@ -669,11 +669,11 @@ describe("SphereView", () => {
       );
 
       // CSS class should be added to the element
-      expect(mockElement.classList.add).toHaveBeenCalledWith("sphere-action-in-hotlist");
+      expect(mockElement.classList.add).toHaveBeenCalledWith("sphere-action-in-focus");
     });
 
-    it("should remove CSS class from element when removing from hotlist", async () => {
-      settings.hotlist = [
+    it("should remove CSS class from element when removing from focus", async () => {
+      settings.focus = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -695,14 +695,14 @@ describe("SphereView", () => {
         },
       } as any;
 
-      await (view as any).removeFromHotlist("Projects/Test.md", 5, mockElement);
+      await (view as any).removeFromFocus("Projects/Test.md", 5, mockElement);
 
       // CSS class should be removed from the element
-      expect(mockElement.classList.remove).toHaveBeenCalledWith("sphere-action-in-hotlist");
+      expect(mockElement.classList.remove).toHaveBeenCalledWith("sphere-action-in-focus");
     });
 
     it("should not refresh view when element is provided", async () => {
-      settings.hotlist = [];
+      settings.focus = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -714,7 +714,7 @@ describe("SphereView", () => {
       } as any;
       const onOpenSpy = jest.spyOn(view, "onOpen");
 
-      await (view as any).addToHotlist(
+      await (view as any).addToFocus(
         "Test action",
         "Projects/Test.md",
         5,
@@ -729,7 +729,7 @@ describe("SphereView", () => {
     });
 
     it("should add items from planning mode as unpinned by default", async () => {
-      settings.hotlist = [];
+      settings.focus = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -739,12 +739,12 @@ describe("SphereView", () => {
       const lineNumber = 10;
       const lineContent = "- [ ] Test action";
 
-      await (view as any).addToHotlist(action, file, lineNumber, lineContent, "work", false);
+      await (view as any).addToFocus(action, file, lineNumber, lineContent, "work", false);
 
       // Check item was added with isPinned: false (or undefined, which is treated as false)
-      expect(settings.hotlist.length).toBe(1);
-      expect(settings.hotlist[0].isPinned).toBeFalsy();
-      expect(settings.hotlist[0].text).toBe(action);
+      expect(settings.focus.length).toBe(1);
+      expect(settings.focus[0].isPinned).toBeFalsy();
+      expect(settings.focus[0].text).toBe(action);
     });
   });
 });

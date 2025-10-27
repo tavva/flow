@@ -17,8 +17,8 @@ This is an Obsidian plugin that implements a GTD (Getting Things Done) coach for
 - Waiting For list management with `[w]` checkbox status
 - Global view aggregating waiting-for items across all projects
 - Keyboard-driven task status cycling ([ ] → [w] → [x])
-- Hotlist for curating a focused set of next actions from across the vault
-- Planning mode in sphere view for selecting actions to add to hotlist
+- Focus for curating a focused set of next actions from across the vault
+- Planning mode in sphere view for selecting actions to add to focus
 - Validation and resolution when source files change
 
 ## Common Commands
@@ -103,7 +103,7 @@ The CLI includes automatic retry logic for network errors with exponential backo
 
 The CLI provides the LLM with 4 tools to modify the vault (`src/cli-tools.ts`):
 
-- `move_to_hotlist` - Add a next action to the hotlist for immediate focus
+- `move_to_focus` - Add a next action to the focus for immediate attention
 - `update_next_action` - Rename or improve the wording of an existing action
 - `create_project` - Create a new Flow project with GTD-compliant structure
 - `update_project` - Update an existing project's description or add next actions
@@ -173,19 +173,19 @@ The plugin supports adding optional reminder dates to items in the Someday/Maybe
 - [ ] Organize team retreat 📅 2026-03-15 #sphere/work
 ```
 
-### Hotlist Support
+### Focus Support
 
-The plugin supports creating a curated "hotlist" of next actions to work on:
+The plugin supports creating a curated "focus" of next actions to work on:
 
 - **Manual Reordering** - Pin items to a "Pinned" section at the top and reorder via drag-and-drop
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files by searching for checkbox patterns
-- **HotlistValidator** (`src/hotlist-validator.ts`) - Validates and resolves hotlist items when files change, searches for moved lines
-- **HotlistView** (`src/hotlist-view.ts`) - Displays hotlist in right sidebar with actions grouped by project/sphere
-- **HotlistEditorMenu** (`src/hotlist-editor-menu.ts`) - Right-click context menu for adding/removing actions from hotlist
-- **HotlistAutoClear** (`src/hotlist-auto-clear.ts`) - Automatic clearing and archiving of hotlist items at a configured time each day
-- **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from hotlist
-- **Commands** - "Open Hotlist" command (`open-hotlist`) and ribbon icon with `list-checks` icon
-- **Hotlist Item Actions** - Mark complete, convert to waiting-for, pin/unpin, or remove from hotlist
+- **FocusValidator** (`src/focus-validator.ts`) - Validates and resolves focus items when files change, searches for moved lines
+- **FocusView** (`src/focus-view.ts`) - Displays focus in right sidebar with actions grouped by project/sphere
+- **FocusEditorMenu** (`src/focus-editor-menu.ts`) - Right-click context menu for adding/removing actions from focus
+- **FocusAutoClear** (`src/focus-auto-clear.ts`) - Automatic clearing and archiving of focus items at a configured time each day
+- **SphereView Planning Mode** - Toggle planning mode to click actions and add/remove from focus
+- **Commands** - "Open Focus" command (`open-focus`) and ribbon icon with `list-checks` icon
+- **Focus Item Actions** - Mark complete, convert to waiting-for, pin/unpin, or remove from focus
 - **File Navigation** - Click action text to open source file at correct line in split pane
 
 **Workflow:**
@@ -193,25 +193,25 @@ The plugin supports creating a curated "hotlist" of next actions to work on:
 1. **Via Sphere View (Planning Mode):**
    - Open a sphere view (work, personal, etc.)
    - Click "Planning Mode" button to enter planning mode
-   - Click next actions from projects or general actions to add them to the hotlist
+   - Click next actions from projects or general actions to add them to the focus
    - Selected actions show visual indicator (checkmark)
    - Exit planning mode when done selecting
 
 2. **Via Context Menu (Direct from Files):**
    - Right-click on any checkbox line in a project or next actions file
-   - Select "Add to Hotlist" or "Remove from Hotlist" from context menu
+   - Select "Add to Focus" or "Remove from Focus" from context menu
    - Sphere is automatically determined from project tags or inline #sphere/X tags
 
-3. **Using the Hotlist:**
-   - Open hotlist view to see curated list of actions
+3. **Using the Focus:**
+   - Open focus view to see curated list of actions
    - Pin important items to "Pinned" section at top
    - Drag-and-drop to reorder pinned items
-   - Work through hotlist, marking complete or converting to waiting-for
+   - Work through focus, marking complete or converting to waiting-for
    - Unpin items when priorities change
 
 **Storage:**
 
-Hotlist items are stored in plugin settings as `HotlistItem[]` with:
+Focus items are stored in plugin settings as `FocusItem[]` with:
 
 - `file`: Source file path
 - `lineNumber`: Last known line number
@@ -224,7 +224,7 @@ Hotlist items are stored in plugin settings as `HotlistItem[]` with:
 
 **Pinned Item Ordering:**
 
-Pinned items appear at the front of the `hotlist` array in their display order. Array position determines rendering order for pinned items. Unpinned items follow in the array but are rendered using project/sphere grouping regardless of array position.
+Pinned items appear at the front of the `focus` array in their display order. Array position determines rendering order for pinned items. Unpinned items follow in the array but are rendered using project/sphere grouping regardless of array position.
 
 ### Sub-Projects Support
 
@@ -237,7 +237,7 @@ The plugin supports hierarchical project relationships where projects can have s
   - `getProjectDisplayName()` - Returns display name with parent context
 - **Parent-Project Frontmatter** - Sub-projects reference parents using `parent-project: "[[Parent Name]]"` in frontmatter
 - **Arbitrary Nesting** - Sub-projects can have their own sub-projects (unlimited depth)
-- **Hierarchy Views** - Sphere view shows indented hierarchy (24px per level), hotlist shows parent context
+- **Hierarchy Views** - Sphere view shows indented hierarchy (24px per level), focus shows parent context
 - **Inbox Modal** - AI can suggest creating projects as sub-projects; UI provides checkbox toggle and parent selector
 - **Action Aggregation** - Parent projects aggregate next actions from all descendants recursively
 
@@ -286,7 +286,7 @@ The plugin provides dedicated views for each configured sphere (work, personal, 
 - Each sphere gets a dedicated command to open its view
 - Shows project hierarchy with indentation
 - Aggregates next actions from all projects in the sphere
-- Includes planning mode for adding actions to hotlist
+- Includes planning mode for adding actions to focus
 - Filter-as-you-type search for projects and actions
 
 ### Sphere View Filter Search
@@ -406,13 +406,13 @@ Core functionality tests:
 - `inbox-item-persistence.test.ts` - Inbox item persistence across sessions
 - `person-scanner.test.ts` - Person note scanning
 
-Hotlist tests:
+Focus tests:
 
-- `hotlist-validator.test.ts` - Hotlist item validation and line finding
-- `hotlist-view.test.ts` - Hotlist view rendering and interactions
-- `hotlist-integration.test.ts` - End-to-end hotlist workflows
-- `hotlist-editor-menu.test.ts` - Context menu checkbox detection and hotlist operations
-- `hotlist-auto-clear.test.ts` - Automatic hotlist clearing functionality
+- `focus-validator.test.ts` - Focus item validation and line finding
+- `focus-view.test.ts` - Focus view rendering and interactions
+- `focus-integration.test.ts` - End-to-end focus workflows
+- `focus-editor-menu.test.ts` - Context menu checkbox detection and focus operations
+- `focus-auto-clear.test.ts` - Automatic focus clearing functionality
 - `action-line-finder.test.ts` - Action line number detection
 
 Sphere and project tests:
@@ -556,7 +556,7 @@ Examples:
 - `quick-capture`: Same as process-inbox (alias for discoverability)
 - `cycle-task-status`: Cycles checkbox status on current line ([ ] → [w] → [x])
 - `open-waiting-for-view`: Opens the Waiting For view in right sidebar
-- `open-hotlist`: Opens the Hotlist view in right sidebar
+- `open-focus`: Opens the Focus view in right sidebar
 - `flow-review-projects`: Opens the project review modal to get AI suggestions for improvements
 - `sphere-view-{sphere}`: Opens a sphere view (dynamically created for each configured sphere)
 

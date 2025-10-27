@@ -1,13 +1,13 @@
-// tests/hotlist-validator.test.ts
-import { HotlistValidator, ValidationResult } from "../src/hotlist-validator";
-import { HotlistItem } from "../src/types";
+// tests/focus-validator.test.ts
+import { FocusValidator, ValidationResult } from "../src/focus-validator";
+import { FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
 // Mock Obsidian
 jest.mock("obsidian");
 
-describe("HotlistValidator", () => {
-  let validator: HotlistValidator;
+describe("FocusValidator", () => {
+  let validator: FocusValidator;
   let mockApp: any;
   let mockVault: any;
 
@@ -19,12 +19,12 @@ describe("HotlistValidator", () => {
     mockApp = {
       vault: mockVault,
     };
-    validator = new HotlistValidator(mockApp);
+    validator = new FocusValidator(mockApp);
   });
 
   describe("validateItem", () => {
     it("should validate when line number and content match", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -45,7 +45,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should return error when file does not exist", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "nonexistent.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -64,7 +64,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should find item when lines inserted above", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -88,7 +88,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should find item when lines deleted above", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 5,
         lineContent: "- [ ] Test action",
@@ -110,7 +110,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should handle checkbox status changes", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -133,7 +133,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should return error when content completely changed", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 2,
         lineContent: "- [ ] Test action",
@@ -154,7 +154,7 @@ describe("HotlistValidator", () => {
     });
 
     it("should handle multiple identical actions by using first match", async () => {
-      const item: HotlistItem = {
+      const item: FocusItem = {
         file: "test.md",
         lineNumber: 5,
         lineContent: "- [ ] Test action",

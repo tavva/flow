@@ -1,19 +1,19 @@
-# Hotlist Archive Links Design
+# Focus Archive Links Design
 
 **Date:** 27 October 2025
 
-**Purpose:** Add wikilinks to archived hotlist items so users can navigate back to the source file.
+**Purpose:** Add wikilinks to archived focus items so users can navigate back to the source file.
 
 ## Requirements
 
-When hotlist items are archived, each item should include a link back to its source file:
+When focus items are archived, each item should include a link back to its source file:
 
 - **Project items**: `- [[Projects/Health]] Call Dr. Smith`
 - **General actions**: `- [[Next actions|Call Dr. Smith]]`
 
 ## Current Behaviour
 
-The `archiveClearedTasks()` function in `src/hotlist-auto-clear.ts` currently:
+The `archiveClearedTasks()` function in `src/focus-auto-clear.ts` currently:
 
 1. Strips checkbox markers from `item.lineContent`
 2. Outputs plain list items: `- Call Dr. Smith`
@@ -22,7 +22,7 @@ The `archiveClearedTasks()` function in `src/hotlist-auto-clear.ts` currently:
 
 ### Data Available
 
-The `HotlistItem` type provides:
+The `FocusItem` type provides:
 
 - `file`: Source file path (e.g., `Projects/Health.md`)
 - `text`: Action text without checkbox (e.g., `Call Dr. Smith`)

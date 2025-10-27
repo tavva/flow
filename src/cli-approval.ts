@@ -69,8 +69,8 @@ async function batchApproval(toolCalls: ToolCall[]): Promise<ApprovalResult> {
 
 function formatToolCallDescription(toolCall: ToolCall): string {
   switch (toolCall.name) {
-    case "move_to_hotlist":
-      return `Move to hotlist: "${toolCall.input.action_text}"\n  (from ${toolCall.input.project_path})`;
+    case "move_to_focus":
+      return `Move to focus: "${toolCall.input.action_text}"\n  (from ${toolCall.input.project_path})`;
     case "update_next_action":
       return `Rename action in ${toolCall.input.project_path}\n  Current: "${toolCall.input.old_action}"\n  Suggested: "${toolCall.input.new_action}"`;
     case "add_next_action_to_project":

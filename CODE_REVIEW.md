@@ -82,14 +82,14 @@ src/
 ├── Business Logic (7 files)
 │   ├── gtd-processor.ts, project-hierarchy.ts, project-reviewer.ts
 │   ├── file-writer.ts, inbox-processing-controller.ts
-│   ├── hotlist-validator.ts, project-filters.ts
+│   ├── focus-validator.ts, project-filters.ts
 │
 ├── LLM Integration (4 files)
 │   ├── language-model.ts, llm-factory.ts
 │   ├── anthropic-client.ts, openai-compatible-client.ts
 │
 ├── UI Layer - Views (5 files)
-│   ├── sphere-view.ts, hotlist-view.ts, waiting-for-view.ts
+│   ├── sphere-view.ts, focus-view.ts, waiting-for-view.ts
 │   ├── inbox-processing-view.ts, review-modal.ts
 │
 ├── UI Layer - Modals (4 files)
@@ -97,8 +97,8 @@ src/
 │   ├── inbox-modal-utils.ts, inbox-types.ts
 │
 ├── UI Components (6 files)
-│   ├── confirmation-modal.ts, hotlist-editor-menu.ts
-│   ├── hotlist-auto-clear.ts, task-status-cycler.ts
+│   ├── confirmation-modal.ts, focus-editor-menu.ts
+│   ├── focus-auto-clear.ts, task-status-cycler.ts
 │   └── deletion-offset-manager.ts
 │
 └── Utilities (7+ files)
@@ -366,9 +366,9 @@ private createSectionWithContent(
 
 ---
 
-### 3.5 Hotlist Validator ✅ **GOOD**
+### 3.5 Focus Validator ✅ **GOOD**
 
-**File:** `src/hotlist-validator.ts` (49 lines)
+**File:** `src/focus-validator.ts` (49 lines)
 
 **Strengths:**
 
@@ -380,7 +380,7 @@ private createSectionWithContent(
 - Could be optimized for bulk validation to avoid reading the same file multiple times:
 
 ```typescript
-async validateItems(items: HotlistItem[]): Promise<Map<HotlistItem, ValidationResult>> {
+async validateItems(items: FocusItem[]): Promise<Map<FocusItem, ValidationResult>> {
   const results = new Map();
   const fileCache = new Map<string, string[]>();
 
@@ -404,7 +404,7 @@ async validateItems(items: HotlistItem[]): Promise<Map<HotlistItem, ValidationRe
 
 ### 3.6 UI Components (Views) ✅ **GOOD**
 
-**Files:** `sphere-view.ts`, `hotlist-view.ts`, `waiting-for-view.ts`
+**Files:** `sphere-view.ts`, `focus-view.ts`, `waiting-for-view.ts`
 
 **Strengths:**
 
@@ -414,10 +414,10 @@ async validateItems(items: HotlistItem[]): Promise<Map<HotlistItem, ValidationRe
 
 **Issues:**
 
-1. **Duplicate refresh logic** across `hotlist-view.ts` and `waiting-for-view.ts`
+1. **Duplicate refresh logic** across `focus-view.ts` and `waiting-for-view.ts`
 2. **Hard-coded debounce times:**
    ```typescript
-   const debounceTime = this.hasDataview ? 500 : 2000; // hotlist-view.ts:123
+   const debounceTime = this.hasDataview ? 500 : 2000; // focus-view.ts:123
    ```
 
 **Recommendation:**
@@ -447,7 +447,7 @@ abstract class BaseVaultView extends ItemView {
 }
 
 // Then extend it:
-export class HotlistView extends BaseVaultView {
+export class FocusView extends BaseVaultView {
   async onOpen() {
     // Setup event listener
     this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
@@ -530,13 +530,13 @@ export class LLMAPIError extends Error {
   }
 }
 
-export class HotlistValidationError extends Error {
+export class FocusValidationError extends Error {
   constructor(
-    public item: HotlistItem,
+    public item: FocusItem,
     reason: string
   ) {
-    super(`Hotlist item validation failed: ${reason}`);
-    this.name = "HotlistValidationError";
+    super(`Focus item validation failed: ${reason}`);
+    this.name = "FocusValidationError";
   }
 }
 
@@ -612,8 +612,8 @@ catch (error) {
 **Test Files Include:**
 
 - **Core logic:** `gtd-processor.test.ts`, `file-writer.test.ts`, `flow-scanner.test.ts`
-- **Integration:** `hotlist-integration.test.ts`, `inbox-processing-controller.test.ts`
-- **UI:** `sphere-view.test.ts`, `hotlist-view.test.ts`, `waiting-for-view.test.ts`
+- **Integration:** `focus-integration.test.ts`, `inbox-processing-controller.test.ts`
+- **UI:** `sphere-view.test.ts`, `focus-view.test.ts`, `waiting-for-view.test.ts`
 - **Utilities:** `validation.test.ts`, `network-retry.test.ts`, `project-hierarchy.test.ts`
 - **LLM:** `anthropic-client-tools.test.ts`, `openai-client-tools.test.ts`, `language-model.test.ts`
 - **CLI:** 8 CLI-related test files
@@ -996,7 +996,7 @@ Separate `AdaptiveRateLimiter` class for reusability.
 
 #### 8. Add pagination to views (4 hours)
 
-**Files:** `src/sphere-view.ts`, `src/hotlist-view.ts`
+**Files:** `src/sphere-view.ts`, `src/focus-view.ts`
 
 Implement virtual scrolling or pagination for large project lists.
 
@@ -1008,7 +1008,7 @@ Add validation at all UI boundaries with user feedback.
 
 #### 10. Extract regex constants (1 hour)
 
-**Files:** `src/flow-scanner.ts`, `src/hotlist-editor-menu.ts`
+**Files:** `src/flow-scanner.ts`, `src/focus-editor-menu.ts`
 
 Move regex patterns to constants:
 

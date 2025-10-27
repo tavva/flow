@@ -37,7 +37,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test action", project_path: "Projects/Test.md" },
       },
     ];
@@ -76,7 +76,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test", project_path: "Projects/Test.md" },
       },
     ];
@@ -93,7 +93,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -124,7 +124,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -150,7 +150,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -176,7 +176,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -207,7 +207,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -238,7 +238,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test 1", project_path: "Projects/Test1.md" },
       },
       {
@@ -264,7 +264,7 @@ describe("CLI Approval Handler", () => {
     const toolCalls: ToolCall[] = [
       {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: { action_text: "Test", project_path: "Projects/Test.md" },
       },
     ];

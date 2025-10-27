@@ -1,5 +1,5 @@
 // ABOUTME: Finds exact line numbers for actions in files by searching file content.
-// ABOUTME: Used when adding actions to hotlist to get accurate line references.
+// ABOUTME: Used when adding actions to focus to get accurate line references.
 
 import { App, TFile } from "obsidian";
 

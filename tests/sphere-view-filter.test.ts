@@ -450,7 +450,7 @@ function createMockSphereView() {
   const mockLeaf = {} as any;
   const mockSettings = {
     nextActionsFilePath: "Next actions.md",
-    hotlist: [],
+    focus: [],
   } as any;
   const mockSaveSettings = jest.fn();
 

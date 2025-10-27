@@ -1,11 +1,11 @@
-// ABOUTME: Tests for hotlist auto-clear functionality
+// ABOUTME: Tests for focus auto-clear functionality
 // ABOUTME: Validates time checking logic and archival of cleared tasks
 
-import { shouldClearHotlist, archiveClearedTasks } from "../src/hotlist-auto-clear";
-import { HotlistItem } from "../src/types";
+import { shouldClearFocus, archiveClearedTasks } from "../src/focus-auto-clear";
+import { FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
-describe("shouldClearHotlist", () => {
+describe("shouldClearFocus", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -19,7 +19,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = 0;
     const now = new Date("2025-10-15T10:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(false);
   });
@@ -29,7 +29,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-14T03:00:00").getTime();
     const now = new Date("2025-10-15T04:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(true);
   });
@@ -39,7 +39,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-14T03:00:00").getTime();
     const now = new Date("2025-10-15T02:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(false);
   });
@@ -49,7 +49,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-15T03:00:00").getTime();
     const now = new Date("2025-10-15T10:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(false);
   });
@@ -59,7 +59,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-14T00:00:00").getTime();
     const now = new Date("2025-10-15T00:01:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(true);
   });
@@ -69,7 +69,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-14T03:00:00").getTime();
     const now = new Date("2025-10-15T04:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(true);
   });
@@ -79,7 +79,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = 0;
     const now = new Date("2025-10-15T04:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     expect(result).toBe(true);
   });
@@ -89,7 +89,7 @@ describe("shouldClearHotlist", () => {
     const lastClearTimestamp = new Date("2025-10-14T03:00:00").getTime();
     const now = new Date("2025-10-15T03:00:00");
 
-    const result = shouldClearHotlist(autoClearTime, lastClearTimestamp, now);
+    const result = shouldClearFocus(autoClearTime, lastClearTimestamp, now);
 
     // Should still return true since we're at the exact time
     expect(result).toBe(true);
@@ -109,7 +109,7 @@ describe("archiveClearedTasks", () => {
   });
 
   it("creates new archive file with heading and tasks when file doesn't exist", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/Test.md",
         lineNumber: 10,
@@ -130,7 +130,7 @@ describe("archiveClearedTasks", () => {
       },
     ];
 
-    const archiveFilePath = "Hotlist Archive.md";
+    const archiveFilePath = "Focus Archive.md";
     const clearTime = new Date("2025-10-15T03:00:00");
     mockVault.getAbstractFileByPath.mockReturnValue(null);
 
@@ -151,7 +151,7 @@ describe("archiveClearedTasks", () => {
   });
 
   it("prepends to existing archive file", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/Test.md",
         lineNumber: 10,
@@ -163,7 +163,7 @@ describe("archiveClearedTasks", () => {
       },
     ];
 
-    const archiveFilePath = "Hotlist Archive.md";
+    const archiveFilePath = "Focus Archive.md";
     const clearTime = new Date("2025-10-15T03:00:00");
     const existingContent = "## Previous content\n\n- [ ] Old task";
 
@@ -187,9 +187,9 @@ describe("archiveClearedTasks", () => {
     );
   });
 
-  it("handles empty hotlist gracefully", async () => {
-    const items: HotlistItem[] = [];
-    const archiveFilePath = "Hotlist Archive.md";
+  it("handles empty focus gracefully", async () => {
+    const items: FocusItem[] = [];
+    const archiveFilePath = "Focus Archive.md";
     const clearTime = new Date("2025-10-15T03:00:00");
 
     mockVault.getAbstractFileByPath.mockReturnValue(null);
@@ -202,12 +202,12 @@ describe("archiveClearedTasks", () => {
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("No items were in the hotlist.")
+      expect.stringContaining("No items were in the focus.")
     );
   });
 
   it("formats date and time correctly", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "test.md",
         lineNumber: 1,
@@ -233,7 +233,7 @@ describe("archiveClearedTasks", () => {
   });
 
   it("strips checkbox markers from archived items", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/Test.md",
         lineNumber: 10,
@@ -263,7 +263,7 @@ describe("archiveClearedTasks", () => {
       },
     ];
 
-    const archiveFilePath = "Hotlist Archive.md";
+    const archiveFilePath = "Focus Archive.md";
     const clearTime = new Date("2025-10-15T03:00:00");
     mockVault.getAbstractFileByPath.mockReturnValue(null);
 
@@ -283,7 +283,7 @@ describe("archiveClearedTasks", () => {
   });
 
   it("formats general actions with display text and projects with file links", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/Work Project.md",
         lineNumber: 15,
@@ -332,7 +332,7 @@ describe("archiveClearedTasks", () => {
   });
 
   it("handles files without .md extension gracefully", async () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/README",
         lineNumber: 5,

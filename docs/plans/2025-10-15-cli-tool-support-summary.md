@@ -59,7 +59,7 @@ Create `src/cli-tools.ts` with:
 
 Tools:
 
-1. `move_to_hotlist` - Add action to hotlist
+1. `move_to_hotlist` - Add action to focus
 2. `update_next_action` - Rename/improve action
 3. `add_next_action_to_project` - Add new action
 4. `update_project_status` - Change project status
@@ -212,7 +212,7 @@ Each task includes:
 
 3. **Additional tools:** Only 4 tools in MVP. Future expansion can add: `create_project`, `move_action_to_project`, `update_project_priority`, `delete_next_action`, etc.
 
-4. **Hotlist persistence:** Tool execution modifies settings.hotlist but saveSettings() needs to be called. May need callback or different persistence strategy for CLI context.
+4. **Focus persistence:** Tool execution modifies settings.focus but saveSettings() needs to be called. May need callback or different persistence strategy for CLI context.
 
 ## Files Created/Modified
 

@@ -108,7 +108,7 @@ export function buildSystemPrompt(
   prompt += `- Identify issues: projects with no next actions, vague actions, unclear outcomes\n\n`;
 
   prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
-  prompt += `- Move important actions to the hotlist for today\n`;
+  prompt += `- Move important actions to the focus for today\n`;
   prompt += `- Improve vague or unclear next actions to be more specific\n`;
   prompt += `- Add missing next actions to projects\n`;
   prompt += `- Update project status (archive completed projects, etc.)\n\n`;

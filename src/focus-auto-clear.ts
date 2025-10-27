@@ -1,13 +1,13 @@
-// ABOUTME: Handles automatic clearing and archiving of hotlist items
+// ABOUTME: Handles automatic clearing and archiving of focus items
 // ABOUTME: Checks if it's time to clear based on user-configured time
 
 import { TFile, Vault } from "obsidian";
-import { HotlistItem } from "./types";
+import { FocusItem } from "./types";
 
 /**
- * Determines if the hotlist should be cleared based on the configured time and last clear timestamp
+ * Determines if the focus should be cleared based on the configured time and last clear timestamp
  */
-export function shouldClearHotlist(
+export function shouldClearFocus(
   autoClearTime: string,
   lastClearTimestamp: number,
   now: Date = new Date()
@@ -55,11 +55,11 @@ export function shouldClearHotlist(
 }
 
 /**
- * Archives cleared hotlist items to a file with a date/time heading
+ * Archives cleared focus items to a file with a date/time heading
  */
 export async function archiveClearedTasks(
   vault: Vault,
-  items: HotlistItem[],
+  items: FocusItem[],
   archiveFilePath: string,
   clearTime: Date
 ): Promise<void> {
@@ -79,7 +79,7 @@ export async function archiveClearedTasks(
 
   let tasksContent = "";
   if (items.length === 0) {
-    tasksContent = "No items were in the hotlist.\n\n";
+    tasksContent = "No items were in the focus.\n\n";
   } else {
     tasksContent =
       items

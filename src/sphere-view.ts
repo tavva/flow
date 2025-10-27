@@ -1,6 +1,6 @@
 import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
-import { FlowProject, PluginSettings, HotlistItem } from "./types";
+import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import {
   buildProjectHierarchy,
@@ -8,7 +8,7 @@ import {
   sortHierarchy,
   ProjectNode,
 } from "./project-hierarchy";
-import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
+import { FOCUS_VIEW_TYPE } from "./focus-view";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -456,12 +456,12 @@ export class SphereView extends ItemView {
     await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
     item.style.cursor = "pointer";
 
-    // Check if this action is in the hotlist and add CSS class if so
-    const inHotlist = this.settings.hotlist.some(
-      (hotlistItem) => hotlistItem.file === file && hotlistItem.text === action
+    // Check if this action is in the focus and add CSS class if so
+    const inFocus = this.settings.focus.some(
+      (focusItem) => focusItem.file === file && focusItem.text === action
     );
-    if (inHotlist) {
-      item.addClass("sphere-action-in-hotlist");
+    if (inFocus) {
+      item.addClass("sphere-action-in-focus");
     }
 
     item.addEventListener("click", async (e) => {
@@ -478,10 +478,10 @@ export class SphereView extends ItemView {
         return;
       }
 
-      if (this.isOnHotlist(file, finalLineResult.lineNumber!)) {
-        await this.removeFromHotlist(file, finalLineResult.lineNumber!, clickedElement);
+      if (this.isOnFocus(file, finalLineResult.lineNumber!)) {
+        await this.removeFromFocus(file, finalLineResult.lineNumber!, clickedElement);
       } else {
-        await this.addToHotlist(
+        await this.addToFocus(
           action,
           file,
           finalLineResult.lineNumber!,
@@ -667,7 +667,7 @@ export class SphereView extends ItemView {
     }
   }
 
-  private async addToHotlist(
+  private async addToFocus(
     text: string,
     file: string,
     lineNumber: number,
@@ -676,7 +676,7 @@ export class SphereView extends ItemView {
     isGeneral: boolean,
     element?: HTMLElement
   ): Promise<void> {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file,
       lineNumber,
       lineContent,
@@ -686,51 +686,51 @@ export class SphereView extends ItemView {
       addedAt: Date.now(),
     };
 
-    this.settings.hotlist.push(item);
+    this.settings.focus.push(item);
     await this.saveSettings();
-    await this.activateHotlistView();
-    await this.refreshHotlistView();
+    await this.activateFocusView();
+    await this.refreshFocusView();
 
     // Update styling on the specific element instead of refreshing entire view
     if (element) {
-      element.classList.add("sphere-action-in-hotlist");
+      element.classList.add("sphere-action-in-focus");
     }
   }
 
-  private async removeFromHotlist(
+  private async removeFromFocus(
     file: string,
     lineNumber: number,
     element?: HTMLElement
   ): Promise<void> {
-    this.settings.hotlist = this.settings.hotlist.filter(
+    this.settings.focus = this.settings.focus.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
     await this.saveSettings();
-    await this.activateHotlistView();
-    await this.refreshHotlistView();
+    await this.activateFocusView();
+    await this.refreshFocusView();
 
     // Update styling on the specific element instead of refreshing entire view
     if (element) {
-      element.classList.remove("sphere-action-in-hotlist");
+      element.classList.remove("sphere-action-in-focus");
     }
   }
 
-  private isOnHotlist(file: string, lineNumber: number): boolean {
-    return this.settings.hotlist.some(
+  private isOnFocus(file: string, lineNumber: number): boolean {
+    return this.settings.focus.some(
       (item) => item.file === file && item.lineNumber === lineNumber
     );
   }
 
-  private async activateHotlistView(): Promise<void> {
+  private async activateFocusView(): Promise<void> {
     const { workspace } = this.app;
 
-    let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+    let leaf = workspace.getLeavesOfType(FOCUS_VIEW_TYPE)[0];
 
     if (!leaf) {
       const rightLeaf = workspace.getRightLeaf(false);
       if (rightLeaf) {
         await rightLeaf.setViewState({
-          type: HOTLIST_VIEW_TYPE,
+          type: FOCUS_VIEW_TYPE,
           active: true,
         });
         leaf = rightLeaf;
@@ -742,9 +742,9 @@ export class SphereView extends ItemView {
     }
   }
 
-  private async refreshHotlistView(): Promise<void> {
+  private async refreshFocusView(): Promise<void> {
     const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
+    const leaves = workspace.getLeavesOfType(FOCUS_VIEW_TYPE);
 
     if (leaves.length > 0) {
       for (const leaf of leaves) {

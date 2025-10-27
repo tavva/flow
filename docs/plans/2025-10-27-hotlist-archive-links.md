@@ -1,8 +1,8 @@
-# Hotlist Archive Links Implementation Plan
+# Focus Archive Links Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add wikilinks to archived hotlist items linking back to source files.
+**Goal:** Add wikilinks to archived focus items linking back to source files.
 
 **Architecture:** Modify `archiveClearedTasks()` formatting logic to generate wikilinks from file paths. Project items format as `- [[path]] text`, general actions format as `- [[Next actions|text]]`.
 
@@ -14,7 +14,7 @@
 
 **Files:**
 
-- Modify: `tests/hotlist-auto-clear.test.ts:232-280`
+- Modify: `tests/focus-auto-clear.test.ts:232-280`
 
 **Step 1: Update test to expect new wikilink format**
 
@@ -36,13 +36,13 @@ expect(createdContent).not.toContain("- [w]");
 
 **Step 2: Run test to verify it fails**
 
-Run: `npm test -- hotlist-auto-clear.test.ts`
+Run: `npm test -- focus-auto-clear.test.ts`
 Expected: FAIL - archived content doesn't match expected wikilink format
 
 **Step 3: Commit**
 
 ```bash
-git add tests/hotlist-auto-clear.test.ts
+git add tests/focus-auto-clear.test.ts
 git commit -m "test: update archive test to expect wikilinks"
 ```
 
@@ -52,7 +52,7 @@ git commit -m "test: update archive test to expect wikilinks"
 
 **Files:**
 
-- Modify: `src/hotlist-auto-clear.ts:80-91`
+- Modify: `src/focus-auto-clear.ts:80-91`
 
 **Step 1: Replace formatting logic with wikilink generation**
 
@@ -75,7 +75,7 @@ tasksContent =
 
 **Step 2: Run test to verify it passes**
 
-Run: `npm test -- hotlist-auto-clear.test.ts`
+Run: `npm test -- focus-auto-clear.test.ts`
 Expected: PASS - all tests green
 
 **Step 3: Run full test suite**
@@ -86,8 +86,8 @@ Expected: All 551 tests pass
 **Step 4: Commit**
 
 ```bash
-git add src/hotlist-auto-clear.ts
-git commit -m "feat: add wikilinks to archived hotlist items"
+git add src/focus-auto-clear.ts
+git commit -m "feat: add wikilinks to archived focus items"
 ```
 
 ---
@@ -96,7 +96,7 @@ git commit -m "feat: add wikilinks to archived hotlist items"
 
 **Files:**
 
-- Modify: `tests/hotlist-auto-clear.test.ts` (add after line 280)
+- Modify: `tests/focus-auto-clear.test.ts` (add after line 280)
 
 **Step 1: Write failing test for mixed general and project items**
 
@@ -104,7 +104,7 @@ Add new test case:
 
 ```typescript
 it("formats general actions with display text and projects with file links", async () => {
-  const items: HotlistItem[] = [
+  const items: FocusItem[] = [
     {
       file: "Projects/Work Project.md",
       lineNumber: 15,
@@ -153,13 +153,13 @@ it("formats general actions with display text and projects with file links", asy
 
 **Step 2: Run test to verify it passes**
 
-Run: `npm test -- hotlist-auto-clear.test.ts -t "formats general actions"`
+Run: `npm test -- focus-auto-clear.test.ts -t "formats general actions"`
 Expected: PASS - implementation already handles this
 
 **Step 3: Commit**
 
 ```bash
-git add tests/hotlist-auto-clear.test.ts
+git add tests/focus-auto-clear.test.ts
 git commit -m "test: add comprehensive test for general vs project formatting"
 ```
 
@@ -169,7 +169,7 @@ git commit -m "test: add comprehensive test for general vs project formatting"
 
 **Files:**
 
-- Modify: `tests/hotlist-auto-clear.test.ts` (add after previous test)
+- Modify: `tests/focus-auto-clear.test.ts` (add after previous test)
 
 **Step 1: Write test for edge case**
 
@@ -177,7 +177,7 @@ Add new test case:
 
 ```typescript
 it("handles files without .md extension gracefully", async () => {
-  const items: HotlistItem[] = [
+  const items: FocusItem[] = [
     {
       file: "Projects/README",
       lineNumber: 5,
@@ -204,7 +204,7 @@ it("handles files without .md extension gracefully", async () => {
 
 **Step 2: Run test to verify it passes**
 
-Run: `npm test -- hotlist-auto-clear.test.ts -t "handles files without"`
+Run: `npm test -- focus-auto-clear.test.ts -t "handles files without"`
 Expected: PASS - `.replace(/\.md$/, "")` handles this correctly (no match = no change)
 
 **Step 3: Run full test suite to ensure no regressions**
@@ -215,7 +215,7 @@ Expected: All tests pass
 **Step 4: Commit**
 
 ```bash
-git add tests/hotlist-auto-clear.test.ts
+git add tests/focus-auto-clear.test.ts
 git commit -m "test: verify handling of files without .md extension"
 ```
 

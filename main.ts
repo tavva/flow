@@ -7,9 +7,9 @@ import { ReviewModal } from "./src/review-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
-import { HotlistView, HOTLIST_VIEW_TYPE } from "./src/hotlist-view";
-import { shouldClearHotlist, archiveClearedTasks } from "./src/hotlist-auto-clear";
-import { registerHotlistEditorMenu } from "./src/hotlist-editor-menu";
+import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
+import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
+import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 
 type InboxCommandConfig = {
   id: string;
@@ -23,13 +23,13 @@ export default class FlowGTDCoachPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Check and clear hotlist if needed
-    await this.checkAndClearHotlist();
+    // Check and clear focus if needed
+    await this.checkAndClearFocus();
 
     // Set up periodic check (every hour)
     this.autoClearInterval = window.setInterval(
       async () => {
-        await this.checkAndClearHotlist();
+        await this.checkAndClearFocus();
       },
       60 * 60 * 1000
     ); // 1 hour
@@ -51,10 +51,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Register the waiting for view
     this.registerView(WAITING_FOR_VIEW_TYPE, (leaf) => new WaitingForView(leaf));
 
-    // Register the hotlist view
+    // Register the focus view
     this.registerView(
-      HOTLIST_VIEW_TYPE,
-      (leaf) => new HotlistView(leaf, this.settings, this.saveSettings.bind(this))
+      FOCUS_VIEW_TYPE,
+      (leaf) => new FocusView(leaf, this.settings, this.saveSettings.bind(this))
     );
 
     // Add ribbon icon
@@ -67,9 +67,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
       this.activateWaitingForView();
     });
 
-    // Add hotlist ribbon icon
-    this.addRibbonIcon("list-checks", "Open Hotlist", () => {
-      this.activateHotlistView();
+    // Add focus ribbon icon
+    this.addRibbonIcon("list-checks", "Open Focus", () => {
+      this.activateFocusView();
     });
 
     const inboxCommands: InboxCommandConfig[] = [
@@ -112,22 +112,22 @@ export default class FlowGTDCoachPlugin extends Plugin {
       },
     });
 
-    // Add hotlist command
+    // Add focus command
     this.addCommand({
-      id: "open-hotlist",
-      name: "Open hotlist",
+      id: "open-focus",
+      name: "Open focus",
       callback: () => {
-        this.activateHotlistView();
+        this.activateFocusView();
       },
     });
 
-    // Register hotlist editor menu (right-click context menu)
+    // Register focus editor menu (right-click context menu)
     this.registerEvent(
-      registerHotlistEditorMenu(
+      registerFocusEditorMenu(
         this.app,
         this.settings,
         this.saveSettings.bind(this),
-        this.refreshHotlistView.bind(this)
+        this.refreshFocusView.bind(this)
       )
     );
 
@@ -148,8 +148,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
     // Detach all waiting for views
     this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
-    // Detach all hotlist views
-    this.app.workspace.detachLeavesOfType(HOTLIST_VIEW_TYPE);
+    // Detach all focus views
+    this.app.workspace.detachLeavesOfType(FOCUS_VIEW_TYPE);
   }
 
   async loadSettings() {
@@ -253,8 +253,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
         this.app.workspace.revealLeaf(leaf);
         this.app.workspace.setActiveLeaf(leaf, { focus: true });
         await view.onOpen(); // Refresh the view with latest data
-        // Open hotlist if not already open
-        await this.activateHotlistView();
+        // Open focus if not already open
+        await this.activateFocusView();
         return;
       }
     }
@@ -270,8 +270,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     const view = leaf.view as SphereView;
     await view.setSphere(sphere, this.settings, this.saveSettings.bind(this));
 
-    // Open hotlist if not already open
-    await this.activateHotlistView();
+    // Open focus if not already open
+    await this.activateFocusView();
   }
 
   private getDisplaySphereName(sphere: string): string {
@@ -324,16 +324,16 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
   }
 
-  async activateHotlistView() {
+  async activateFocusView() {
     const { workspace } = this.app;
 
-    let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+    let leaf = workspace.getLeavesOfType(FOCUS_VIEW_TYPE)[0];
 
     if (!leaf) {
       const rightLeaf = workspace.getRightLeaf(false);
       if (rightLeaf) {
         await rightLeaf.setViewState({
-          type: HOTLIST_VIEW_TYPE,
+          type: FOCUS_VIEW_TYPE,
           active: true,
         });
         leaf = rightLeaf;
@@ -346,12 +346,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
   }
 
-  private async checkAndClearHotlist(): Promise<void> {
-    // Check if it's time to clear the hotlist
+  private async checkAndClearFocus(): Promise<void> {
+    // Check if it's time to clear the focus
     if (
-      !shouldClearHotlist(
-        this.settings.hotlistAutoClearTime,
-        this.settings.lastHotlistClearTimestamp
+      !shouldClearFocus(
+        this.settings.focusAutoClearTime,
+        this.settings.lastFocusClearTimestamp
       )
     ) {
       return;
@@ -359,32 +359,32 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Archive the tasks if archive file is configured
     let archiveSucceeded = false;
-    if (this.settings.hotlistArchiveFile && this.settings.hotlist.length > 0) {
+    if (this.settings.focusArchiveFile && this.settings.focus.length > 0) {
       try {
         await archiveClearedTasks(
           this.app.vault,
-          this.settings.hotlist,
-          this.settings.hotlistArchiveFile,
+          this.settings.focus,
+          this.settings.focusArchiveFile,
           new Date()
         );
         archiveSucceeded = true;
       } catch (error) {
-        console.error("Failed to archive cleared hotlist tasks", error);
+        console.error("Failed to archive cleared focus tasks", error);
         archiveSucceeded = false;
       }
     }
 
-    // Clear the hotlist
-    this.settings.hotlist = [];
-    this.settings.lastHotlistClearTimestamp = Date.now();
-    this.settings.lastHotlistArchiveSucceeded = archiveSucceeded;
-    this.settings.hotlistClearedNotificationDismissed = false; // Reset so user sees notification
+    // Clear the focus
+    this.settings.focus = [];
+    this.settings.lastFocusClearTimestamp = Date.now();
+    this.settings.lastFocusArchiveSucceeded = archiveSucceeded;
+    this.settings.focusClearedNotificationDismissed = false; // Reset so user sees notification
     await this.saveSettings();
   }
 
-  private async refreshHotlistView(): Promise<void> {
+  private async refreshFocusView(): Promise<void> {
     const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE);
+    const leaves = workspace.getLeavesOfType(FOCUS_VIEW_TYPE);
 
     if (leaves.length > 0) {
       for (const leaf of leaves) {

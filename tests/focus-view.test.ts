@@ -1,12 +1,12 @@
-// tests/hotlist-view.test.ts
-import { HotlistView, HOTLIST_VIEW_TYPE } from "../src/hotlist-view";
-import { HotlistItem } from "../src/types";
+// tests/focus-view.test.ts
+import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
+import { FocusItem } from "../src/types";
 import { WorkspaceLeaf } from "obsidian";
 
 jest.mock("obsidian");
 
-describe("HotlistView", () => {
-  let view: HotlistView;
+describe("FocusView", () => {
+  let view: FocusView;
   let mockLeaf: any;
   let mockApp: any;
   let mockSettings: any;
@@ -14,12 +14,12 @@ describe("HotlistView", () => {
 
   beforeEach(() => {
     mockSettings = {
-      hotlist: [],
-      hotlistAutoClearTime: "03:00",
-      hotlistArchiveFile: "Hotlist Archive.md",
-      lastHotlistClearTimestamp: 0,
-      lastHotlistArchiveSucceeded: false,
-      hotlistClearedNotificationDismissed: false,
+      focus: [],
+      focusAutoClearTime: "03:00",
+      focusArchiveFile: "Focus Archive.md",
+      lastFocusClearTimestamp: 0,
+      lastFocusArchiveSucceeded: false,
+      focusClearedNotificationDismissed: false,
     };
     mockApp = {
       vault: {
@@ -46,7 +46,7 @@ describe("HotlistView", () => {
     } as any;
     mockSaveSettings = jest.fn();
 
-    view = new HotlistView(mockLeaf, mockSettings, mockSaveSettings);
+    view = new FocusView(mockLeaf, mockSettings, mockSaveSettings);
     (view as any).app = mockApp;
     // Re-initialize scanner with mocked app
     (view as any).scanner = {
@@ -55,11 +55,11 @@ describe("HotlistView", () => {
   });
 
   it("should have correct view type", () => {
-    expect(view.getViewType()).toBe(HOTLIST_VIEW_TYPE);
+    expect(view.getViewType()).toBe(FOCUS_VIEW_TYPE);
   });
 
   it("should have correct display text", () => {
-    expect(view.getDisplayText()).toBe("Hotlist");
+    expect(view.getDisplayText()).toBe("Focus");
   });
 
   it("should have correct icon", () => {
@@ -67,7 +67,7 @@ describe("HotlistView", () => {
   });
 
   it("should group items by project and general actions", () => {
-    const items: HotlistItem[] = [
+    const items: FocusItem[] = [
       {
         file: "Projects/Project A.md",
         lineNumber: 5,
@@ -115,8 +115,8 @@ describe("HotlistView", () => {
     expect(grouped.generalActions["personal"]).toHaveLength(1);
   });
 
-  it("should call saveSettings when removing item from hotlist", async () => {
-    const item: HotlistItem = {
+  it("should call saveSettings when removing item from focus", async () => {
+    const item: FocusItem = {
       file: "Test.md",
       lineNumber: 5,
       lineContent: "- [ ] Test action",
@@ -125,16 +125,16 @@ describe("HotlistView", () => {
       isGeneral: false,
       addedAt: 123456,
     };
-    mockSettings.hotlist = [item];
+    mockSettings.focus = [item];
 
-    await (view as any).removeFromHotlist(item);
+    await (view as any).removeFromFocus(item);
 
     expect(mockSaveSettings).toHaveBeenCalled();
-    expect(mockSettings.hotlist).toHaveLength(0);
+    expect(mockSettings.focus).toHaveLength(0);
   });
 
-  it("should refresh sphere views when removing item from hotlist", async () => {
-    const item: HotlistItem = {
+  it("should refresh sphere views when removing item from focus", async () => {
+    const item: FocusItem = {
       file: "Test.md",
       lineNumber: 5,
       lineContent: "- [ ] Test action",
@@ -143,7 +143,7 @@ describe("HotlistView", () => {
       isGeneral: false,
       addedAt: 123456,
     };
-    mockSettings.hotlist = [item];
+    mockSettings.focus = [item];
 
     // Mock sphere view leaves
     const mockSphereView = {
@@ -155,7 +155,7 @@ describe("HotlistView", () => {
       },
     ]);
 
-    await (view as any).removeFromHotlist(item);
+    await (view as any).removeFromFocus(item);
 
     expect(mockApp.workspace.getLeavesOfType).toHaveBeenCalledWith("flow-gtd-sphere-view");
     expect(mockSphereView.onOpen).toHaveBeenCalled();
@@ -164,10 +164,10 @@ describe("HotlistView", () => {
   describe("Waiting-for items", () => {
     it("should keep waiting-for items during refresh (not remove them like completed items)", async () => {
       // This test verifies that [w] items are NOT removed during refresh
-      // Currently the code DOES remove them (line 162 in hotlist-view.ts checks for [w])
+      // Currently the code DOES remove them (line 162 in focus-view.ts checks for [w])
       // We want to change this behavior
 
-      const waitingItem: HotlistItem = {
+      const waitingItem: FocusItem = {
         file: "Test.md",
         lineNumber: 5,
         lineContent: "- [w] Waiting for response from client",
@@ -177,7 +177,7 @@ describe("HotlistView", () => {
         addedAt: Date.now(),
       };
 
-      const regularItem: HotlistItem = {
+      const regularItem: FocusItem = {
         file: "Test.md",
         lineNumber: 6,
         lineContent: "- [ ] Regular action",
@@ -187,7 +187,7 @@ describe("HotlistView", () => {
         addedAt: Date.now(),
       };
 
-      mockSettings.hotlist = [waitingItem, regularItem];
+      mockSettings.focus = [waitingItem, regularItem];
 
       // Create a proper TFile mock
       const { TFile } = require("obsidian");
@@ -233,16 +233,16 @@ describe("HotlistView", () => {
 
       await (view as any).refresh();
 
-      // Both items should remain in the hotlist (waiting-for items should NOT be removed)
-      expect(mockSettings.hotlist).toHaveLength(2);
-      const waitingItemStillThere = mockSettings.hotlist.find((i: HotlistItem) =>
+      // Both items should remain in the focus (waiting-for items should NOT be removed)
+      expect(mockSettings.focus).toHaveLength(2);
+      const waitingItemStillThere = mockSettings.focus.find((i: FocusItem) =>
         i.lineContent.includes("[w]")
       );
       expect(waitingItemStillThere).toBeDefined();
     });
 
-    it("should keep item in hotlist when converting to waiting-for", async () => {
-      const regularItem: HotlistItem = {
+    it("should keep item in focus when converting to waiting-for", async () => {
+      const regularItem: FocusItem = {
         file: "Test.md",
         lineNumber: 5,
         lineContent: "- [ ] Call client about proposal",
@@ -252,7 +252,7 @@ describe("HotlistView", () => {
         addedAt: Date.now(),
       };
 
-      mockSettings.hotlist = [regularItem];
+      mockSettings.focus = [regularItem];
 
       // Create a proper TFile mock
       const { TFile } = require("obsidian");
@@ -284,13 +284,13 @@ describe("HotlistView", () => {
 
       await (view as any).convertToWaitingFor(regularItem);
 
-      // Item should still be in hotlist
-      expect(mockSettings.hotlist).toHaveLength(1);
-      expect(mockSettings.hotlist[0].file).toBe("Test.md");
-      expect(mockSettings.hotlist[0].lineNumber).toBe(5);
+      // Item should still be in focus
+      expect(mockSettings.focus).toHaveLength(1);
+      expect(mockSettings.focus[0].file).toBe("Test.md");
+      expect(mockSettings.focus[0].lineNumber).toBe(5);
 
       // lineContent should be updated to show [w] status
-      expect(mockSettings.hotlist[0].lineContent).toBe("- [w] Call client about proposal");
+      expect(mockSettings.focus[0].lineContent).toBe("- [w] Call client about proposal");
 
       // File should have been modified with [w] checkbox
       expect(mockApp.vault.modify).toHaveBeenCalledWith(
@@ -319,9 +319,9 @@ describe("HotlistView", () => {
   describe("Clear notification", () => {
     it("should show notification when items were recently cleared and archiving succeeded", () => {
       const now = Date.now();
-      mockSettings.lastHotlistClearTimestamp = now - 1000; // Cleared 1 second ago
-      mockSettings.lastHotlistArchiveSucceeded = true;
-      mockSettings.hotlistClearedNotificationDismissed = false;
+      mockSettings.lastFocusClearTimestamp = now - 1000; // Cleared 1 second ago
+      mockSettings.lastFocusArchiveSucceeded = true;
+      mockSettings.focusClearedNotificationDismissed = false;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
@@ -330,9 +330,9 @@ describe("HotlistView", () => {
 
     it("should not show notification when archiving failed", () => {
       const now = Date.now();
-      mockSettings.lastHotlistClearTimestamp = now - 1000; // Cleared 1 second ago
-      mockSettings.lastHotlistArchiveSucceeded = false;
-      mockSettings.hotlistClearedNotificationDismissed = false;
+      mockSettings.lastFocusClearTimestamp = now - 1000; // Cleared 1 second ago
+      mockSettings.lastFocusArchiveSucceeded = false;
+      mockSettings.focusClearedNotificationDismissed = false;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
@@ -341,8 +341,8 @@ describe("HotlistView", () => {
 
     it("should not show notification when dismissed", () => {
       const now = Date.now();
-      mockSettings.lastHotlistClearTimestamp = now - 1000;
-      mockSettings.hotlistClearedNotificationDismissed = true;
+      mockSettings.lastFocusClearTimestamp = now - 1000;
+      mockSettings.focusClearedNotificationDismissed = true;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
@@ -350,8 +350,8 @@ describe("HotlistView", () => {
     });
 
     it("should not show notification when never cleared", () => {
-      mockSettings.lastHotlistClearTimestamp = 0;
-      mockSettings.hotlistClearedNotificationDismissed = false;
+      mockSettings.lastFocusClearTimestamp = 0;
+      mockSettings.focusClearedNotificationDismissed = false;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
@@ -360,8 +360,8 @@ describe("HotlistView", () => {
 
     it("should not show notification when cleared more than 24 hours ago", () => {
       const dayAndAHalfAgo = Date.now() - 36 * 60 * 60 * 1000;
-      mockSettings.lastHotlistClearTimestamp = dayAndAHalfAgo;
-      mockSettings.hotlistClearedNotificationDismissed = false;
+      mockSettings.lastFocusClearTimestamp = dayAndAHalfAgo;
+      mockSettings.focusClearedNotificationDismissed = false;
 
       const shouldShow = (view as any).shouldShowClearNotification();
 
@@ -371,16 +371,16 @@ describe("HotlistView", () => {
     it("should dismiss notification and save settings", async () => {
       await (view as any).dismissClearNotification();
 
-      expect(mockSettings.hotlistClearedNotificationDismissed).toBe(true);
+      expect(mockSettings.focusClearedNotificationDismissed).toBe(true);
       expect(mockSaveSettings).toHaveBeenCalled();
     });
   });
 
-  describe("HotlistView - Pinned Items", () => {
+  describe("FocusView - Pinned Items", () => {
     it("should filter pinned items from unpinned items", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -404,7 +404,7 @@ describe("HotlistView", () => {
         ],
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
@@ -412,7 +412,7 @@ describe("HotlistView", () => {
       await testView.onOpen();
 
       const container = testView.containerEl.children[1] as HTMLElement;
-      const sections = container.querySelectorAll(".flow-gtd-hotlist-section");
+      const sections = container.querySelectorAll(".flow-gtd-focus-section");
 
       // Should have 2 sections: Pinned and Project Actions
       expect(sections.length).toBe(2);
@@ -423,7 +423,7 @@ describe("HotlistView", () => {
     it("should treat items without isPinned as unpinned (backward compatibility)", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -433,11 +433,11 @@ describe("HotlistView", () => {
             isGeneral: false,
             addedAt: Date.now(),
             // No isPinned property
-          } as HotlistItem,
+          } as FocusItem,
         ],
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
@@ -445,7 +445,7 @@ describe("HotlistView", () => {
       await testView.onOpen();
 
       const container = testView.containerEl.children[1] as HTMLElement;
-      const sections = container.querySelectorAll(".flow-gtd-hotlist-section");
+      const sections = container.querySelectorAll(".flow-gtd-focus-section");
 
       // Should only have Project Actions section (no pinned)
       expect(sections.length).toBe(1);
@@ -455,7 +455,7 @@ describe("HotlistView", () => {
     it("should pin an unpinned item and move to end of pinned section", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -489,20 +489,20 @@ describe("HotlistView", () => {
         ],
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
 
       // Pin the second item
-      await (testView as any).pinItem(settings.hotlist[1]);
+      await (testView as any).pinItem(settings.focus[1]);
 
       // Check isPinned flag is set
-      expect(settings.hotlist[1].isPinned).toBe(true);
+      expect(settings.focus[1].isPinned).toBe(true);
 
       // Check it moved to end of pinned section (index 1, after existing pinned item)
-      const pinnedItems = settings.hotlist.filter((i) => i.isPinned);
+      const pinnedItems = settings.focus.filter((i) => i.isPinned);
       expect(pinnedItems.length).toBe(2);
       expect(pinnedItems[1].text).toBe("To be pinned");
 
@@ -513,7 +513,7 @@ describe("HotlistView", () => {
     it("should unpin a pinned item", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -527,17 +527,17 @@ describe("HotlistView", () => {
         ],
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
 
       // Unpin the item
-      await (testView as any).unpinItem(settings.hotlist[0]);
+      await (testView as any).unpinItem(settings.focus[0]);
 
       // Check isPinned flag is cleared
-      expect(settings.hotlist[0].isPinned).toBe(false);
+      expect(settings.focus[0].isPinned).toBe(false);
 
       // Check saveSettings was called
       expect(mockSaveSettings).toHaveBeenCalled();
@@ -546,7 +546,7 @@ describe("HotlistView", () => {
     it("should reorder pinned items on drop", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -580,15 +580,15 @@ describe("HotlistView", () => {
         ],
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
 
       // Simulate dragging third item to first position
-      const draggedItem = settings.hotlist[2];
-      const dropTarget = settings.hotlist[0];
+      const draggedItem = settings.focus[2];
+      const dropTarget = settings.focus[0];
 
       // Set up drag state
       (testView as any).draggedItem = draggedItem;
@@ -601,14 +601,14 @@ describe("HotlistView", () => {
       await (testView as any).onDrop(mockDropEvent, dropTarget);
 
       // Check order changed: "Third" should now be at index 0
-      expect(settings.hotlist[0].text).toBe("Third pinned");
-      expect(settings.hotlist[1].text).toBe("First pinned");
-      expect(settings.hotlist[2].text).toBe("Second pinned");
+      expect(settings.focus[0].text).toBe("Third pinned");
+      expect(settings.focus[1].text).toBe("First pinned");
+      expect(settings.focus[2].text).toBe("Second pinned");
 
       // Check all are still pinned
-      expect(settings.hotlist[0].isPinned).toBe(true);
-      expect(settings.hotlist[1].isPinned).toBe(true);
-      expect(settings.hotlist[2].isPinned).toBe(true);
+      expect(settings.focus[0].isPinned).toBe(true);
+      expect(settings.focus[1].isPinned).toBe(true);
+      expect(settings.focus[2].isPinned).toBe(true);
 
       // Check saveSettings was called
       expect(mockSaveSettings).toHaveBeenCalled();
@@ -617,7 +617,7 @@ describe("HotlistView", () => {
     it("should preserve isPinned state when validating and updating line numbers", async () => {
       const settings = {
         ...mockSettings,
-        hotlist: [
+        focus: [
           {
             file: "Projects/Project A.md",
             lineNumber: 10,
@@ -639,7 +639,7 @@ describe("HotlistView", () => {
         }),
       };
 
-      const testView = new HotlistView(mockLeaf, settings, mockSaveSettings);
+      const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).validator = mockValidator;
 
@@ -649,8 +649,8 @@ describe("HotlistView", () => {
       await (testView as any).refresh();
 
       // Check isPinned state is preserved
-      expect(settings.hotlist[0].isPinned).toBe(true);
-      expect(settings.hotlist[0].lineNumber).toBe(15);
+      expect(settings.focus[0].isPinned).toBe(true);
+      expect(settings.focus[0].lineNumber).toBe(15);
     });
   });
 

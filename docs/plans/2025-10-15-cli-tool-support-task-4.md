@@ -2,7 +2,7 @@
 
 **Goal:** Fill in the TODO stubs in ToolExecutor with real file operations
 
-**Architecture:** Use FileWriter methods and direct vault operations. Add hotlist helper logic extracted from hotlist-view.
+**Architecture:** Use FileWriter methods and direct vault operations. Add focus helper logic extracted from focus-view.
 
 **Tech Stack:** Obsidian vault API, FileWriter, frontmatter processing
 
@@ -45,14 +45,14 @@ describe("ToolExecutor - Real Execution", () => {
     } as any;
 
     mockSettings = {
-      hotlist: [],
+      focus: [],
     } as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
   });
 
   describe("moveToHotlist", () => {
-    it("should add action to hotlist from project file", async () => {
+    it("should add action to focus from project file", async () => {
       const mockFile = {
         path: "Projects/Test.md",
         basename: "Test",
@@ -88,10 +88,10 @@ tags:
 
       expect(result.is_error).not.toBe(true);
       expect(result.content).toContain("Added");
-      expect(mockSettings.hotlist).toHaveLength(1);
-      expect(mockSettings.hotlist[0].text).toBe("First action");
-      expect(mockSettings.hotlist[0].file).toBe("Projects/Test.md");
-      expect(mockSettings.hotlist[0].sphere).toBe("work");
+      expect(mockSettings.focus).toHaveLength(1);
+      expect(mockSettings.focus[0].text).toBe("First action");
+      expect(mockSettings.focus[0].file).toBe("Projects/Test.md");
+      expect(mockSettings.focus[0].sphere).toBe("work");
     });
 
     it("should extract sphere from tags", async () => {
@@ -115,7 +115,7 @@ tags:
 
       const result = await executor.executeTool(toolCall);
 
-      expect(mockSettings.hotlist[0].sphere).toBe("personal");
+      expect(mockSettings.focus[0].sphere).toBe("personal");
     });
 
     it("should default to 'personal' sphere if no tags", async () => {
@@ -135,7 +135,7 @@ tags:
 
       await executor.executeTool(toolCall);
 
-      expect(mockSettings.hotlist[0].sphere).toBe("personal");
+      expect(mockSettings.focus[0].sphere).toBe("personal");
     });
   });
 
@@ -344,8 +344,8 @@ Replace the `moveToHotlist` method:
     const sphereTag = tagsArray.find((tag: string) => tag.startsWith("project/"));
     const sphere = sphereTag ? sphereTag.replace("project/", "") : "personal";
 
-    // Add to hotlist
-    this.settings.hotlist.push({
+    // Add to focus
+    this.settings.focus.push({
       file: project_path,
       lineNumber,
       lineContent,
@@ -357,7 +357,7 @@ Replace the `moveToHotlist` method:
 
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added "${action_text}" to hotlist`,
+      content: `✓ Added "${action_text}" to focus`,
     };
   }
 ```
@@ -483,14 +483,14 @@ Replace the `updateProjectStatus` method:
   }
 ```
 
-### Step 7: Add HotlistItem import
+### Step 7: Add FocusItem import
 
 **File:** `src/cli-tools.ts`
 
 Update the imports at the top:
 
 ```typescript
-import { PluginSettings, FlowProject, HotlistItem } from "./types";
+import { PluginSettings, FlowProject, FocusItem } from "./types";
 ```
 
 ### Step 8: Run tests to verify they pass
@@ -522,7 +522,7 @@ git commit -m "feat: implement tool execution logic for all 4 CLI tools"
 
 ## Acceptance Criteria
 
-- [x] `moveToHotlist` finds action line, extracts sphere, adds to hotlist
+- [x] `moveToHotlist` finds action line, extracts sphere, adds to focus
 - [x] `updateNextAction` finds and replaces action text in file
 - [x] `addNextActionToProject` uses FileWriter to add action
 - [x] `updateProjectStatus` uses processFrontMatter to update status

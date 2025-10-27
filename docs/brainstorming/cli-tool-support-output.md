@@ -10,7 +10,7 @@ The CLI GTD coach is currently read-only. We want to enable it to suggest and ap
 ## Use Cases
 
 - User asks CLI to review projects/actions, CLI suggests improvements (e.g., renaming vague actions)
-- User asks "what should I focus on?", CLI suggests moving specific action to hotlist
+- User asks "what should I focus on?", CLI suggests moving specific action to focus
 - User discusses a project, CLI suggests it should be archived or split into sub-projects
 - User approves suggestions inline ("yes") or in batch ("apply 1,3,5")
 
@@ -27,7 +27,7 @@ After evaluating options (Google ADK vs native tool calling), we chose **native 
 
 Starting with 4 tools to validate the pattern:
 
-1. **`move_to_hotlist`** - Add action to hotlist for today
+1. **`move_to_hotlist`** - Add action to focus for today
 2. **`update_next_action`** - Rename/improve an existing action
 3. **`add_next_action_to_project`** - Add new action to project
 4. **`update_project_status`** - Archive or change project status
@@ -76,9 +76,9 @@ Future expansion can add: `create_project`, `move_action_to_project`, `update_pr
    - Update from "read-only" to "can suggest and apply changes with approval"
    - List available tools and when to use them
 
-8. **Hotlist Support** (FileWriter or new helper)
+8. **Focus Support** (FileWriter or new helper)
    - Add `addToHotlist(file, lineContent, sphere)` method
-   - Reuse logic from `hotlist-view.ts`
+   - Reuse logic from `focus-view.ts`
 
 ## Detailed Design
 
@@ -131,13 +131,13 @@ export interface LanguageModelClient {
 ```typescript
 import { App, TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
-import { PluginSettings, FlowProject, HotlistItem } from "./types";
+import { PluginSettings, FlowProject, FocusItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 
 export const CLI_TOOLS: ToolDefinition[] = [
   {
     name: "move_to_hotlist",
-    description: "Add a next action to the hotlist for immediate focus today",
+    description: "Add a next action to the focus for immediate focus today",
     input_schema: {
       type: "object",
       properties: {
@@ -147,7 +147,7 @@ export const CLI_TOOLS: ToolDefinition[] = [
         },
         action_text: {
           type: "string",
-          description: "Full text of the action to add to hotlist (without checkbox)",
+          description: "Full text of the action to add to focus (without checkbox)",
         },
       },
       required: ["project_path", "action_text"],
@@ -257,13 +257,13 @@ export class ToolExecutor {
       action_text: string;
     };
 
-    // Implementation: Add to hotlist using FileWriter or new helper
+    // Implementation: Add to focus using FileWriter or new helper
     // Extract sphere from project tags
     // Return success message
 
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added "${action_text}" to hotlist`,
+      content: `✓ Added "${action_text}" to focus`,
     };
   }
 
@@ -389,7 +389,7 @@ async function batchApproval(toolCalls: ToolCall[]): Promise<ApprovalResult> {
 function formatToolCallDescription(toolCall: ToolCall): string {
   switch (toolCall.name) {
     case "move_to_hotlist":
-      return `Move to hotlist: "${toolCall.input.action_text}"\n  (from ${toolCall.input.project_path})`;
+      return `Move to focus: "${toolCall.input.action_text}"\n  (from ${toolCall.input.project_path})`;
     case "update_next_action":
       return `Rename action in ${toolCall.input.project_path}\n  Current: "${toolCall.input.old_action}"\n  Suggested: "${toolCall.input.new_action}"`;
     case "add_next_action_to_project":
@@ -543,7 +543,7 @@ prompt += `Important: You are read-only. Provide advice and recommendations, but
 
 // NEW:
 prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
-prompt += `- Move important actions to the hotlist for today\n`;
+prompt += `- Move important actions to the focus for today\n`;
 prompt += `- Improve vague or unclear next actions to be more specific\n`;
 prompt += `- Add missing next actions to projects\n`;
 prompt += `- Update project status (archive completed projects, etc.)\n\n`;
@@ -739,21 +739,21 @@ Need to properly format message history for each provider:
 3. **Integration tests** for clients - verify tool call round-trip
 4. **Manual testing** for full flow - verify UX and file modifications
 
-### Hotlist Integration
+### Focus Integration
 
-Review `src/hotlist-view.ts` for:
+Review `src/focus-view.ts` for:
 
-- `HotlistItem` structure (file, lineNumber, lineContent, text, sphere, addedAt)
+- `FocusItem` structure (file, lineNumber, lineContent, text, sphere, addedAt)
 - Validation logic for checking if action exists at line number
-- How hotlist is stored in settings and persisted
+- How focus is stored in settings and persisted
 
 Implement similar logic in tool executor or extend FileWriter with `addToHotlist` method.
 
 ## Open Questions for Implementation
 
-1. **Hotlist method location:** Add to FileWriter or create separate HotlistManager?
+1. **Focus method location:** Add to FileWriter or create separate FocusManager?
 2. **Project object construction:** How to create minimal FlowProject from file path in CLI context?
-3. **Sphere extraction:** How to determine sphere for hotlist from project tags in CLI?
+3. **Sphere extraction:** How to determine sphere for focus from project tags in CLI?
 4. **Tool result message history:** Exact format for storing tool calls/results in messages array?
 
 ## Success Criteria

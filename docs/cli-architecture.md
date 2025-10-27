@@ -278,7 +278,7 @@ When modifying MockApp or the compatibility layer:
 1. Build the CLI: `npm run build:cli`
 2. Test with a real vault: `./dist/cli.mjs --vault ~/path/to/vault --sphere work`
 3. Verify vault statistics are correct
-4. Test tool execution (hotlist add, action updates)
+4. Test tool execution (focus add, action updates)
 
 ## Adding New Obsidian API Dependencies
 

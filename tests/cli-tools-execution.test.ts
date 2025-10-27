@@ -30,14 +30,14 @@ describe("ToolExecutor - Real Execution", () => {
     } as any;
 
     mockSettings = {
-      hotlist: [],
+      focus: [],
     } as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
   });
 
-  describe("moveToHotlist", () => {
-    it("should add action to hotlist from project file", async () => {
+  describe("moveToFocus", () => {
+    it("should add action to focus from project file", async () => {
       const mockFile = new TFile();
       mockFile.path = "Projects/Test.md";
       mockFile.basename = "Test";
@@ -61,7 +61,7 @@ tags:
 
       const toolCall: ToolCall = {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: {
           project_path: "Projects/Test.md",
           action_text: "First action",
@@ -72,10 +72,10 @@ tags:
 
       expect(result.is_error).not.toBe(true);
       expect(result.content).toContain("Added");
-      expect(mockSettings.hotlist).toHaveLength(1);
-      expect(mockSettings.hotlist[0].text).toBe("First action");
-      expect(mockSettings.hotlist[0].file).toBe("Projects/Test.md");
-      expect(mockSettings.hotlist[0].sphere).toBe("work");
+      expect(mockSettings.focus).toHaveLength(1);
+      expect(mockSettings.focus[0].text).toBe("First action");
+      expect(mockSettings.focus[0].file).toBe("Projects/Test.md");
+      expect(mockSettings.focus[0].sphere).toBe("work");
     });
 
     it("should extract sphere from tags", async () => {
@@ -91,7 +91,7 @@ tags:
 
       const toolCall: ToolCall = {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: {
           project_path: "Projects/Personal.md",
           action_text: "Test action",
@@ -100,7 +100,7 @@ tags:
 
       const result = await executor.executeTool(toolCall);
 
-      expect(mockSettings.hotlist[0].sphere).toBe("personal");
+      expect(mockSettings.focus[0].sphere).toBe("personal");
     });
 
     it("should default to 'personal' sphere if no tags", async () => {
@@ -112,7 +112,7 @@ tags:
 
       const toolCall: ToolCall = {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: {
           project_path: "Projects/NoTags.md",
           action_text: "Action",
@@ -121,10 +121,10 @@ tags:
 
       await executor.executeTool(toolCall);
 
-      expect(mockSettings.hotlist[0].sphere).toBe("personal");
+      expect(mockSettings.focus[0].sphere).toBe("personal");
     });
 
-    it("should reject duplicate hotlist additions", async () => {
+    it("should reject duplicate focus additions", async () => {
       const mockFile = new TFile();
       mockFile.path = "Projects/Test.md";
       (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
@@ -136,7 +136,7 @@ tags:
       // Add action first time
       const toolCall: ToolCall = {
         id: "call_1",
-        name: "move_to_hotlist",
+        name: "move_to_focus",
         input: {
           project_path: "Projects/Test.md",
           action_text: "Test action",
@@ -144,13 +144,13 @@ tags:
       };
 
       await executor.executeTool(toolCall);
-      expect(mockSettings.hotlist).toHaveLength(1);
+      expect(mockSettings.focus).toHaveLength(1);
 
       // Try to add same action again
       const result = await executor.executeTool(toolCall);
       expect(result.is_error).toBe(true);
-      expect(result.content).toContain("already in hotlist");
-      expect(mockSettings.hotlist).toHaveLength(1); // Still only one
+      expect(result.content).toContain("already in focus");
+      expect(mockSettings.focus).toHaveLength(1); // Still only one
     });
   });
 

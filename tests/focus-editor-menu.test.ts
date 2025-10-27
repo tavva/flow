@@ -1,18 +1,18 @@
-// ABOUTME: Tests for hotlist editor menu functionality - right-click context menu for adding/removing from hotlist.
-// ABOUTME: Verifies checkbox detection, action text extraction, sphere detection, and hotlist state checks.
+// ABOUTME: Tests for focus editor menu functionality - right-click context menu for adding/removing from focus.
+// ABOUTME: Verifies checkbox detection, action text extraction, sphere detection, and focus state checks.
 
 import {
   isCheckboxLine,
   extractActionText,
   determineActionSphere,
-  isActionOnHotlist,
-} from "../src/hotlist-editor-menu";
-import { FlowProject, HotlistItem } from "../src/types";
+  isActionOnFocus,
+} from "../src/focus-editor-menu";
+import { FlowProject, FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 
 jest.mock("obsidian");
 
-describe("hotlist-editor-menu", () => {
+describe("focus-editor-menu", () => {
   describe("isCheckboxLine", () => {
     it("should return true for unchecked task", () => {
       expect(isCheckboxLine("- [ ] Some action")).toBe(true);
@@ -161,8 +161,8 @@ describe("hotlist-editor-menu", () => {
     });
   });
 
-  describe("isActionOnHotlist", () => {
-    const hotlist: HotlistItem[] = [
+  describe("isActionOnFocus", () => {
+    const focus: FocusItem[] = [
       {
         file: "Projects/Project1.md",
         lineNumber: 5,
@@ -183,24 +183,24 @@ describe("hotlist-editor-menu", () => {
       },
     ];
 
-    it("should return true when action is on hotlist", () => {
-      expect(isActionOnHotlist("Projects/Project1.md", 5, hotlist)).toBe(true);
+    it("should return true when action is on focus", () => {
+      expect(isActionOnFocus("Projects/Project1.md", 5, focus)).toBe(true);
     });
 
     it("should return false when file matches but line number doesn't", () => {
-      expect(isActionOnHotlist("Projects/Project1.md", 99, hotlist)).toBe(false);
+      expect(isActionOnFocus("Projects/Project1.md", 99, focus)).toBe(false);
     });
 
     it("should return false when line matches but file doesn't", () => {
-      expect(isActionOnHotlist("Projects/Different.md", 5, hotlist)).toBe(false);
+      expect(isActionOnFocus("Projects/Different.md", 5, focus)).toBe(false);
     });
 
-    it("should return false when action not on hotlist", () => {
-      expect(isActionOnHotlist("Projects/Other.md", 20, hotlist)).toBe(false);
+    it("should return false when action not on focus", () => {
+      expect(isActionOnFocus("Projects/Other.md", 20, focus)).toBe(false);
     });
 
-    it("should return false for empty hotlist", () => {
-      expect(isActionOnHotlist("Projects/Project1.md", 5, [])).toBe(false);
+    it("should return false for empty focus", () => {
+      expect(isActionOnFocus("Projects/Project1.md", 5, [])).toBe(false);
     });
   });
 });

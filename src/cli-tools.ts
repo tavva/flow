@@ -3,13 +3,13 @@
 import type { App } from "obsidian";
 import { TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
-import { PluginSettings, FlowProject, HotlistItem } from "./types";
+import { PluginSettings, FlowProject, FocusItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 
 export const CLI_TOOLS: ToolDefinition[] = [
   {
-    name: "move_to_hotlist",
-    description: "Add a next action to the hotlist for immediate focus today",
+    name: "move_to_focus",
+    description: "Add a next action to the focus for immediate focus today",
     input_schema: {
       type: "object",
       properties: {
@@ -19,7 +19,7 @@ export const CLI_TOOLS: ToolDefinition[] = [
         },
         action_text: {
           type: "string",
-          description: "Full text of the action to add to hotlist (without checkbox)",
+          description: "Full text of the action to add to focus (without checkbox)",
         },
       },
       required: ["project_path", "action_text"],
@@ -99,8 +99,8 @@ export class ToolExecutor {
   async executeTool(toolCall: ToolCall): Promise<ToolResult> {
     try {
       switch (toolCall.name) {
-        case "move_to_hotlist":
-          return await this.moveToHotlist(toolCall);
+        case "move_to_focus":
+          return await this.moveToFocus(toolCall);
         case "update_next_action":
           return await this.updateNextAction(toolCall);
         case "add_next_action_to_project":
@@ -123,7 +123,7 @@ export class ToolExecutor {
     }
   }
 
-  private async moveToHotlist(toolCall: ToolCall): Promise<ToolResult> {
+  private async moveToFocus(toolCall: ToolCall): Promise<ToolResult> {
     const { project_path, action_text } = toolCall.input as {
       project_path: string;
       action_text: string;
@@ -164,15 +164,15 @@ export class ToolExecutor {
     const sphere = sphereTag ? sphereTag.replace("project/", "") : "personal";
 
     // Check for duplicates before adding
-    const alreadyExists = this.settings.hotlist.some(
+    const alreadyExists = this.settings.focus.some(
       (item) => item.file === project_path && item.text === action_text
     );
     if (alreadyExists) {
-      throw new Error(`Action "${action_text}" is already in hotlist`);
+      throw new Error(`Action "${action_text}" is already in focus`);
     }
 
-    // Add to hotlist
-    this.settings.hotlist.push({
+    // Add to focus
+    this.settings.focus.push({
       file: project_path,
       lineNumber,
       lineContent,
@@ -184,7 +184,7 @@ export class ToolExecutor {
 
     return {
       tool_use_id: toolCall.id,
-      content: `✓ Added "${action_text}" to hotlist`,
+      content: `✓ Added "${action_text}" to focus`,
     };
   }
 

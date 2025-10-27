@@ -1,8 +1,8 @@
-import { HotlistItem } from "../src/types";
+import { FocusItem } from "../src/types";
 
-describe("HotlistItem type", () => {
+describe("FocusItem type", () => {
   it("should have all required properties", () => {
-    const item: HotlistItem = {
+    const item: FocusItem = {
       file: "Projects/Test.md",
       lineNumber: 5,
       lineContent: "- [ ] Test action",

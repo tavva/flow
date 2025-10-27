@@ -259,7 +259,7 @@ function createMockSphereView() {
   const mockLeaf = {} as any;
   const mockSettings = {
     nextActionsFilePath: "Next actions.md",
-    hotlist: [],
+    focus: [],
   } as any;
   const mockSaveSettings = jest.fn();
 
@@ -375,7 +375,7 @@ describe("Search UI rendering", () => {
 
     const mockSettings = {
       nextActionsFilePath: "Next actions.md",
-      hotlist: [],
+      focus: [],
     } as any;
     const mockSaveSettings = jest.fn();
 
@@ -757,7 +757,7 @@ Open Obsidian with the Flow plugin loaded from the worktree directory. Test:
 7. Test Cmd/Ctrl+F keyboard shortcut
 8. Test Escape key to clear
 9. Verify empty state message when no results
-10. Verify hotlist operations work on filtered results
+10. Verify focus operations work on filtered results
 11. Verify hierarchy preserved when filtering
 12. Verify waiting-for items (🕐) searchable
 

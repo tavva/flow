@@ -214,7 +214,7 @@ describe("InboxItemPersistenceService", () => {
     );
   });
 
-  it("does not add completed items to hotlist", async () => {
+  it("does not add completed items to focus", async () => {
     const mockApp = {
       vault: {
         getAbstractFileByPath: jest.fn(),
@@ -224,12 +224,12 @@ describe("InboxItemPersistenceService", () => {
 
     const mockSettings = {
       nextActionsFilePath: "Next actions.md",
-      hotlist: [],
+      focus: [],
     };
 
     const mockSaveSettings = jest.fn();
 
-    const serviceWithHotlist = new InboxItemPersistenceService(
+    const serviceWithFocus = new InboxItemPersistenceService(
       writerMocks as unknown as FileWriter,
       mockApp as any,
       mockSettings as any,
@@ -242,14 +242,14 @@ describe("InboxItemPersistenceService", () => {
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
       editedName: "Call dentist",
-      addToHotlist: true,
+      addToFocus: true,
       markAsDone: [true],
     };
 
-    await serviceWithHotlist.persist(item);
+    await serviceWithFocus.persist(item);
 
-    // Should not attempt to add to hotlist because item is marked as done
-    expect(mockSettings.hotlist.length).toBe(0);
+    // Should not attempt to add to focus because item is marked as done
+    expect(mockSettings.focus.length).toBe(0);
     expect(mockSaveSettings).not.toHaveBeenCalled();
   });
 });

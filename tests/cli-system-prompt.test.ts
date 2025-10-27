@@ -38,7 +38,7 @@ describe("CLI System Prompt - Tool Support", () => {
   it("should list tool capabilities", () => {
     const prompt = buildSystemPrompt(mockProjects, "work", mockContext);
 
-    expect(prompt).toContain("hotlist");
+    expect(prompt).toContain("focus");
     expect(prompt).toContain("next actions");
     expect(prompt).toContain("project status");
   });

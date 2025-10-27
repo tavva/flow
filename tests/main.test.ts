@@ -4,7 +4,7 @@ import { App, WorkspaceLeaf } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-processing-view";
 import { WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
-import { HOTLIST_VIEW_TYPE } from "../src/hotlist-view";
+import { FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { SPHERE_VIEW_TYPE } from "../src/sphere-view";
 
 // Mock the view modules
@@ -21,9 +21,9 @@ jest.mock("../src/waiting-for-view", () => ({
   WaitingForView: jest.fn(),
 }));
 
-jest.mock("../src/hotlist-view", () => ({
-  HOTLIST_VIEW_TYPE: "flow-gtd-hotlist",
-  HotlistView: jest.fn(),
+jest.mock("../src/focus-view", () => ({
+  FOCUS_VIEW_TYPE: "flow-gtd-focus",
+  FocusView: jest.fn(),
 }));
 
 jest.mock("../src/sphere-view", () => ({
@@ -109,13 +109,13 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
   });
 
-  describe("activateHotlistView", () => {
-    it("should focus existing hotlist view if already open", async () => {
-      // Setup: Existing leaf with hotlist view
+  describe("activateFocusView", () => {
+    it("should focus existing focus view if already open", async () => {
+      // Setup: Existing leaf with focus view
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([mockLeaf]);
 
       // Execute
-      await plugin.activateHotlistView();
+      await plugin.activateFocusView();
 
       // Verify: Should reveal the leaf
       expect(mockApp.workspace.revealLeaf).toHaveBeenCalledWith(mockLeaf);
@@ -124,19 +124,19 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(mockLeaf, { focus: true });
     });
 
-    it("should create new hotlist view if none exists", async () => {
+    it("should create new focus view if none exists", async () => {
       // Setup: No existing leaves
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([]);
       const rightLeaf = new WorkspaceLeaf();
       (mockApp.workspace.getRightLeaf as jest.Mock).mockReturnValue(rightLeaf);
 
       // Execute
-      await plugin.activateHotlistView();
+      await plugin.activateFocusView();
 
       // Verify: Should create view in right leaf
       expect(mockApp.workspace.getRightLeaf).toHaveBeenCalledWith(false);
       expect(rightLeaf.setViewState).toHaveBeenCalledWith({
-        type: HOTLIST_VIEW_TYPE,
+        type: FOCUS_VIEW_TYPE,
         active: true,
       });
 
@@ -146,9 +146,9 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
   });
 
-  describe("openSphereView - hotlist integration", () => {
-    it("should open hotlist view when opening sphere view if hotlist not already open", async () => {
-      // Setup: No existing sphere or hotlist views
+  describe("openSphereView - focus integration", () => {
+    it("should open focus view when opening sphere view if focus not already open", async () => {
+      // Setup: No existing sphere or focus views
       const sphereLeaf = new WorkspaceLeaf();
       const rightLeaf = new WorkspaceLeaf();
 
@@ -160,7 +160,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockImplementation((type: string) => {
         if (type === SPHERE_VIEW_TYPE) return [];
-        if (type === HOTLIST_VIEW_TYPE) return []; // No hotlist open
+        if (type === FOCUS_VIEW_TYPE) return []; // No focus open
         return [];
       });
 
@@ -170,22 +170,22 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       // Execute: Open a sphere view
       await (plugin as any).openSphereView("personal");
 
-      // Verify: Should open both sphere view and hotlist view
+      // Verify: Should open both sphere view and focus view
       expect(sphereLeaf.setViewState).toHaveBeenCalledWith({
         type: SPHERE_VIEW_TYPE,
         active: true,
       });
 
       expect(rightLeaf.setViewState).toHaveBeenCalledWith({
-        type: HOTLIST_VIEW_TYPE,
+        type: FOCUS_VIEW_TYPE,
         active: true,
       });
     });
 
-    it("should not open hotlist view when opening sphere view if hotlist already open", async () => {
-      // Setup: Existing hotlist view
+    it("should not open focus view when opening sphere view if focus already open", async () => {
+      // Setup: Existing focus view
       const sphereLeaf = new WorkspaceLeaf();
-      const existingHotlistLeaf = new WorkspaceLeaf();
+      const existingFocusLeaf = new WorkspaceLeaf();
 
       // Mock sphere view with required methods
       const mockSphereView = {
@@ -195,7 +195,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockImplementation((type: string) => {
         if (type === SPHERE_VIEW_TYPE) return [];
-        if (type === HOTLIST_VIEW_TYPE) return [existingHotlistLeaf]; // Hotlist already open
+        if (type === FOCUS_VIEW_TYPE) return [existingFocusLeaf]; // Focus already open
         return [];
       });
 
@@ -204,7 +204,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       // Execute: Open a sphere view
       await (plugin as any).openSphereView("personal");
 
-      // Verify: Should only reveal existing hotlist, not create new one
+      // Verify: Should only reveal existing focus, not create new one
       expect(mockApp.workspace.getRightLeaf).not.toHaveBeenCalled();
     });
   });

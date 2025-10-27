@@ -439,13 +439,13 @@ export function renderEditableItemContent(
     renderSphereSelector(itemEl, item, state);
   }
 
-  // Show hotlist checkbox for actions that create next actions
+  // Show focus checkbox for actions that create next actions
   if (
     item.selectedAction === "create-project" ||
     item.selectedAction === "add-to-project" ||
     item.selectedAction === "next-actions-file"
   ) {
-    renderHotlistCheckbox(itemEl, item, state);
+    renderFocusCheckbox(itemEl, item, state);
   }
 }
 
@@ -1222,30 +1222,30 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
   }
 }
 
-function renderHotlistCheckbox(container: HTMLElement, item: EditableItem, state: InboxModalState) {
+function renderFocusCheckbox(container: HTMLElement, item: EditableItem, state: InboxModalState) {
   const checkboxesContainer = container.createDiv("flow-gtd-action-checkboxes");
   checkboxesContainer.style.marginTop = "12px";
   checkboxesContainer.style.display = "flex";
   checkboxesContainer.style.gap = "24px";
 
-  // Add to hotlist checkbox
-  const hotlistContainer = checkboxesContainer.createDiv("flow-gtd-hotlist-checkbox");
-  hotlistContainer.style.display = "flex";
-  hotlistContainer.style.alignItems = "center";
-  hotlistContainer.style.gap = "8px";
+  // Add to focus checkbox
+  const focusContainer = checkboxesContainer.createDiv("flow-gtd-focus-checkbox");
+  focusContainer.style.display = "flex";
+  focusContainer.style.alignItems = "center";
+  focusContainer.style.gap = "8px";
 
-  const hotlistCheckbox = hotlistContainer.createEl("input", {
+  const focusCheckbox = focusContainer.createEl("input", {
     type: "checkbox",
   });
-  hotlistCheckbox.id = state.getUniqueId("add-to-hotlist");
-  hotlistCheckbox.checked = item.addToHotlist || false;
+  focusCheckbox.id = state.getUniqueId("add-to-focus");
+  focusCheckbox.checked = item.addToFocus || false;
 
-  const hotlistLabel = hotlistContainer.createEl("label");
-  hotlistLabel.setAttribute("for", hotlistCheckbox.id);
-  hotlistLabel.setText("Add to hotlist");
-  hotlistLabel.style.cursor = "pointer";
-  hotlistLabel.style.fontSize = "14px";
-  hotlistLabel.style.color = "var(--text-normal)";
+  const focusLabel = focusContainer.createEl("label");
+  focusLabel.setAttribute("for", focusCheckbox.id);
+  focusLabel.setText("Add to focus");
+  focusLabel.style.cursor = "pointer";
+  focusLabel.style.fontSize = "14px";
+  focusLabel.style.color = "var(--text-normal)";
 
   // Mark as done checkbox
   const doneContainer = checkboxesContainer.createDiv("flow-gtd-mark-done-checkbox");
@@ -1271,9 +1271,9 @@ function renderHotlistCheckbox(container: HTMLElement, item: EditableItem, state
   doneLabel.style.color = "var(--text-normal)";
 
   // Mutual exclusion: when one is checked, uncheck the other
-  hotlistCheckbox.addEventListener("change", (e) => {
+  focusCheckbox.addEventListener("change", (e) => {
     const isChecked = (e.target as HTMLInputElement).checked;
-    item.addToHotlist = isChecked;
+    item.addToFocus = isChecked;
 
     if (isChecked && item.markAsDone && item.markAsDone[0]) {
       item.markAsDone[0] = false;
@@ -1288,9 +1288,9 @@ function renderHotlistCheckbox(container: HTMLElement, item: EditableItem, state
     }
     item.markAsDone[0] = isChecked;
 
-    if (isChecked && item.addToHotlist) {
-      item.addToHotlist = false;
-      hotlistCheckbox.checked = false;
+    if (isChecked && item.addToFocus) {
+      item.addToFocus = false;
+      focusCheckbox.checked = false;
     }
   });
 }

@@ -2,7 +2,7 @@ import { App } from "obsidian";
 import { FileWriter } from "./file-writer";
 import { GTDResponseValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
-import { GTDProcessingResult, PluginSettings, HotlistItem } from "./types";
+import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { validateReminderDate } from "./validation";
 
@@ -33,18 +33,18 @@ export class InboxItemPersistenceService {
     const result = this.buildResultForSaving(item, finalNextActions);
     const writtenFilePath = await this.writeResult(item, finalNextActions, result);
 
-    // Add to hotlist if requested and dependencies are available
-    // Don't add completed items to hotlist (they're already done)
+    // Add to focus if requested and dependencies are available
+    // Don't add completed items to focus (they're already done)
     const hasCompletedItems = item.markAsDone && item.markAsDone.some((done) => done === true);
     if (
-      item.addToHotlist &&
+      item.addToFocus &&
       !hasCompletedItems &&
       writtenFilePath &&
       this.app &&
       this.settings &&
       this.saveSettings
     ) {
-      await this.addActionsToHotlist(writtenFilePath, finalNextActions, item);
+      await this.addActionsToFocus(writtenFilePath, finalNextActions, item);
     }
   }
 
@@ -215,7 +215,7 @@ export class InboxItemPersistenceService {
     }
   }
 
-  private async addActionsToHotlist(
+  private async addActionsToFocus(
     filePath: string,
     actions: string[],
     item: EditableItem
@@ -228,12 +228,12 @@ export class InboxItemPersistenceService {
     const primarySphere = item.selectedSpheres[0];
     const isGeneral = filePath === (this.settings.nextActionsFilePath?.trim() || "Next actions.md");
 
-    // Add each action to the hotlist
+    // Add each action to the focus
     for (const action of actions) {
       const result = await finder.findActionLine(filePath, action);
 
       if (result.found && result.lineNumber && result.lineContent) {
-        const hotlistItem: HotlistItem = {
+        const focusItem: FocusItem = {
           file: filePath,
           lineNumber: result.lineNumber,
           lineContent: result.lineContent,
@@ -243,7 +243,7 @@ export class InboxItemPersistenceService {
           addedAt: Date.now(),
         };
 
-        this.settings.hotlist.push(hotlistItem);
+        this.settings.focus.push(focusItem);
       }
     }
 

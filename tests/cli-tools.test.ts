@@ -11,10 +11,10 @@ describe("CLI Tool Definitions", () => {
     expect(CLI_TOOLS.length).toBe(4);
   });
 
-  it("should include move_to_hotlist tool", () => {
-    const tool = CLI_TOOLS.find((t) => t.name === "move_to_hotlist");
+  it("should include move_to_focus tool", () => {
+    const tool = CLI_TOOLS.find((t) => t.name === "move_to_focus");
     expect(tool).toBeDefined();
-    expect(tool?.description).toContain("hotlist");
+    expect(tool?.description).toContain("focus");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
     expect(tool?.input_schema.properties.action_text).toBeDefined();
     expect(tool?.input_schema.required).toContain("project_path");
@@ -81,7 +81,7 @@ describe("ToolExecutor", () => {
     } as any;
 
     mockSettings = {
-      hotlist: [],
+      focus: [],
     } as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
@@ -105,10 +105,10 @@ describe("ToolExecutor", () => {
     expect(result.content).toContain("Unknown tool");
   });
 
-  it("should handle move_to_hotlist tool call", async () => {
+  it("should handle move_to_focus tool call", async () => {
     const toolCall: ToolCall = {
       id: "call_1",
-      name: "move_to_hotlist",
+      name: "move_to_focus",
       input: {
         project_path: "Projects/Test.md",
         action_text: "Test action",
@@ -202,7 +202,7 @@ describe("ToolExecutor", () => {
   it("should catch and return errors", async () => {
     const toolCall: ToolCall = {
       id: "call_5",
-      name: "move_to_hotlist",
+      name: "move_to_focus",
       input: {
         project_path: "NonExistent.md",
         action_text: "Test",

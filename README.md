@@ -144,9 +144,9 @@ Project description and context.
 Plan your day and maintain focus:
 
 - **Sphere Views**: See all projects and actions within a life area
-- **Hotlist**: Curate a focused set of next actions from across your vault
-- **Planning Mode**: Click actions from sphere view to add them to your hotlist
-- **Visual Indicators**: See which actions are in your hotlist at a glance
+- **Focus**: Curate a focused set of next actions from across your vault
+- **Planning Mode**: Click actions from sphere view to add them to your focus
+- **Visual Indicators**: See which actions are in your focus at a glance
 - **Priority-Based Planning**: Focus on high-priority projects and actions
 
 ### Waiting For Management
@@ -253,11 +253,11 @@ Decide what to work on today:
 1. Run "Open planning view" command
 2. Open the sphere you want to plan from (work, personal, etc.)
 3. Enter planning mode
-4. Click actions from projects to add them to your hotlist
+4. Click actions from projects to add them to your focus
 5. Exit planning mode
-6. Open your hotlist to see your curated actions
+6. Open your focus to see your curated actions
 
-**Using the Hotlist:**
+**Using the Focus:**
 
 Your focused list of actions for today or this week:
 
@@ -410,8 +410,8 @@ src/
 ├── waiting-for-scanner.ts      # Waiting-for items scanner
 ├── waiting-for-view.ts         # Waiting-for view
 ├── task-status-cycler.ts       # Checkbox status cycling
-├── hotlist-validator.ts        # Hotlist validation
-├── hotlist-view.ts             # Hotlist view
+├── focus-validator.ts        # Focus validation
+├── focus-view.ts             # Focus view
 ├── action-line-finder.ts       # Action line number detection
 ├── project-hierarchy.ts        # Project hierarchy building
 ├── sphere-view.ts              # Sphere view with planning mode
@@ -452,7 +452,7 @@ See `CLAUDE.md` for detailed architecture documentation, including:
 
 - Core processing flow
 - Waiting For support
-- Hotlist support
+- Focus support
 - Sub-projects support
 - Flow project structure
 - API integration patterns

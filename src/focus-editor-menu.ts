@@ -1,10 +1,10 @@
-// ABOUTME: Right-click context menu for adding/removing actions from hotlist.
+// ABOUTME: Right-click context menu for adding/removing actions from focus.
 // ABOUTME: Provides menu items when right-clicking checkbox lines in editor.
 
 import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
-import { HotlistItem, PluginSettings } from "./types";
+import { FocusItem, PluginSettings } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
-import { HOTLIST_VIEW_TYPE } from "./hotlist-view";
+import { FOCUS_VIEW_TYPE } from "./focus-view";
 
 /**
  * Check if a line contains a checkbox (task)
@@ -63,24 +63,24 @@ export async function determineActionSphere(
 }
 
 /**
- * Check if an action is already on the hotlist
+ * Check if an action is already on the focus
  */
-export function isActionOnHotlist(
+export function isActionOnFocus(
   filePath: string,
   lineNumber: number,
-  hotlist: HotlistItem[]
+  focus: FocusItem[]
 ): boolean {
-  return hotlist.some((item) => item.file === filePath && item.lineNumber === lineNumber);
+  return focus.some((item) => item.file === filePath && item.lineNumber === lineNumber);
 }
 
 /**
  * Register the editor menu handler
  */
-export function registerHotlistEditorMenu(
+export function registerFocusEditorMenu(
   app: App,
   settings: PluginSettings,
   saveSettings: () => Promise<void>,
-  refreshHotlistView: () => Promise<void>
+  refreshFocusView: () => Promise<void>
 ) {
   return app.workspace.on("editor-menu", (menu: Menu, editor: Editor, view: MarkdownView) => {
     const cursor = editor.getCursor();
@@ -127,30 +127,30 @@ export function registerHotlistEditorMenu(
     }
 
     if (!sphere) {
-      // No sphere found, can't add to hotlist
+      // No sphere found, can't add to focus
       return;
     }
 
-    // Check if already on hotlist
-    const onHotlist = isActionOnHotlist(filePath, lineNumber, settings.hotlist);
+    // Check if already on focus
+    const onFocus = isActionOnFocus(filePath, lineNumber, settings.focus);
 
     // Add menu item
     menu.addItem((item) => {
       item
-        .setTitle(onHotlist ? "Remove from Hotlist" : "Add to Hotlist")
-        .setIcon(onHotlist ? "x" : "plus")
+        .setTitle(onFocus ? "Remove from Focus" : "Add to Focus")
+        .setIcon(onFocus ? "x" : "plus")
         .onClick(async () => {
-          if (onHotlist) {
-            await removeFromHotlist(
+          if (onFocus) {
+            await removeFromFocus(
               app,
               filePath,
               lineNumber,
               settings,
               saveSettings,
-              refreshHotlistView
+              refreshFocusView
             );
           } else {
-            await addToHotlist(
+            await addToFocus(
               app,
               filePath,
               lineNumber,
@@ -158,7 +158,7 @@ export function registerHotlistEditorMenu(
               sphere,
               settings,
               saveSettings,
-              refreshHotlistView
+              refreshFocusView
             );
           }
         });
@@ -167,9 +167,9 @@ export function registerHotlistEditorMenu(
 }
 
 /**
- * Add an action to the hotlist
+ * Add an action to the focus
  */
-async function addToHotlist(
+async function addToFocus(
   app: App,
   filePath: string,
   lineNumber: number,
@@ -177,7 +177,7 @@ async function addToHotlist(
   sphere: string,
   settings: PluginSettings,
   saveSettings: () => Promise<void>,
-  refreshHotlistView: () => Promise<void>
+  refreshFocusView: () => Promise<void>
 ): Promise<void> {
   const actionText = extractActionText(lineContent);
   if (!actionText) {
@@ -187,7 +187,7 @@ async function addToHotlist(
   // Determine if this is a general action (from next actions file)
   const isGeneral = filePath === (settings.nextActionsFilePath?.trim() || "Next actions.md");
 
-  const item: HotlistItem = {
+  const item: FocusItem = {
     file: filePath,
     lineNumber,
     lineContent,
@@ -197,44 +197,44 @@ async function addToHotlist(
     addedAt: Date.now(),
   };
 
-  settings.hotlist.push(item);
+  settings.focus.push(item);
   await saveSettings();
-  await activateHotlistView(app);
-  await refreshHotlistView();
+  await activateFocusView(app);
+  await refreshFocusView();
 }
 
 /**
- * Remove an action from the hotlist
+ * Remove an action from the focus
  */
-async function removeFromHotlist(
+async function removeFromFocus(
   app: App,
   filePath: string,
   lineNumber: number,
   settings: PluginSettings,
   saveSettings: () => Promise<void>,
-  refreshHotlistView: () => Promise<void>
+  refreshFocusView: () => Promise<void>
 ): Promise<void> {
-  settings.hotlist = settings.hotlist.filter(
+  settings.focus = settings.focus.filter(
     (item) => !(item.file === filePath && item.lineNumber === lineNumber)
   );
   await saveSettings();
-  await activateHotlistView(app);
-  await refreshHotlistView();
+  await activateFocusView(app);
+  await refreshFocusView();
 }
 
 /**
- * Activate (open/reveal) the hotlist view in the right sidebar
+ * Activate (open/reveal) the focus view in the right sidebar
  */
-async function activateHotlistView(app: App): Promise<void> {
+async function activateFocusView(app: App): Promise<void> {
   const { workspace } = app;
 
-  let leaf = workspace.getLeavesOfType(HOTLIST_VIEW_TYPE)[0];
+  let leaf = workspace.getLeavesOfType(FOCUS_VIEW_TYPE)[0];
 
   if (!leaf) {
     const rightLeaf = workspace.getRightLeaf(false);
     if (rightLeaf) {
       await rightLeaf.setViewState({
-        type: HOTLIST_VIEW_TYPE,
+        type: FOCUS_VIEW_TYPE,
         active: true,
       });
       leaf = rightLeaf;

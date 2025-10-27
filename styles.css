@@ -1134,28 +1134,28 @@ select.flow-gtd-inline-select option,
 	color: var(--text-on-accent);
 }
 
-/* Hotlist View Styles */
-.flow-gtd-hotlist-view {
+/* Focus View Styles */
+.flow-gtd-focus-view {
 	padding: 20px;
 }
 
-.flow-gtd-hotlist-title {
+.flow-gtd-focus-title {
 	margin-bottom: 20px;
 	color: var(--text-normal);
 }
 
-.flow-gtd-hotlist-empty {
+.flow-gtd-focus-empty {
 	color: var(--text-muted);
 	font-style: italic;
 	padding: 20px 0;
 	text-align: center;
 }
 
-.flow-gtd-hotlist-section {
+.flow-gtd-focus-section {
 	margin-bottom: 30px;
 }
 
-.flow-gtd-hotlist-section-title {
+.flow-gtd-focus-section-title {
 	font-size: 18px;
 	font-weight: 600;
 	margin-bottom: 16px;
@@ -1164,38 +1164,38 @@ select.flow-gtd-inline-select option,
 	color: var(--text-normal);
 }
 
-.flow-gtd-hotlist-file-section,
-.flow-gtd-hotlist-sphere-section {
+.flow-gtd-focus-file-section,
+.flow-gtd-focus-sphere-section {
 	margin-bottom: 24px;
 }
 
-.flow-gtd-hotlist-file-header,
-.flow-gtd-hotlist-sphere-header {
+.flow-gtd-focus-file-header,
+.flow-gtd-focus-sphere-header {
 	font-size: 15px;
 	font-weight: 600;
 	margin-bottom: 12px;
 	color: var(--text-accent);
 }
 
-.flow-gtd-hotlist-file-link {
+.flow-gtd-focus-file-link {
 	color: var(--text-accent);
 	text-decoration: none;
 	cursor: pointer;
 	transition: color 0.2s ease;
 }
 
-.flow-gtd-hotlist-file-link:hover {
+.flow-gtd-focus-file-link:hover {
 	text-decoration: underline;
 	color: var(--interactive-accent);
 }
 
-.flow-gtd-hotlist-items {
+.flow-gtd-focus-items {
 	list-style: none;
 	padding-left: 0;
 	margin: 0;
 }
 
-.flow-gtd-hotlist-item {
+.flow-gtd-focus-item {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -1207,12 +1207,12 @@ select.flow-gtd-inline-select option,
 	transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.flow-gtd-hotlist-item:hover {
+.flow-gtd-focus-item:hover {
 	background: var(--background-secondary-alt);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.flow-gtd-hotlist-item-text {
+.flow-gtd-focus-item-text {
 	flex: 1;
 	cursor: pointer;
 	color: var(--text-normal);
@@ -1223,17 +1223,17 @@ select.flow-gtd-inline-select option,
 	overflow-wrap: break-word;
 }
 
-.flow-gtd-hotlist-item-text:hover {
+.flow-gtd-focus-item-text:hover {
 	color: var(--text-accent);
 }
 
-.flow-gtd-hotlist-item-actions {
+.flow-gtd-focus-item-actions {
 	display: flex;
 	gap: 6px;
 	flex-shrink: 0;
 }
 
-.flow-gtd-hotlist-action-btn {
+.flow-gtd-focus-action-btn {
 	padding: 6px 12px;
 	border: 1px solid var(--background-modifier-border);
 	background: var(--interactive-normal);
@@ -1247,14 +1247,14 @@ select.flow-gtd-inline-select option,
 	text-align: center;
 }
 
-.flow-gtd-hotlist-action-btn:hover {
+.flow-gtd-focus-action-btn:hover {
 	background: var(--interactive-hover);
 	border-color: var(--interactive-accent);
 	transform: translateY(-1px);
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.flow-gtd-hotlist-action-btn:active {
+.flow-gtd-focus-action-btn:active {
 	transform: translateY(0);
 }
 
@@ -1316,28 +1316,28 @@ select.flow-gtd-inline-select option,
 	transform: translateX(4px);
 }
 
-.flow-gtd-hotlist-indicator {
+.flow-gtd-focus-indicator {
 	background: var(--background-modifier-success);
 	font-weight: 600;
 	border-color: var(--color-green) !important;
 }
 
-.flow-gtd-hotlist-indicator::before {
+.flow-gtd-focus-indicator::before {
 	content: "✓ ";
 	color: var(--color-green);
 	font-weight: 700;
 	margin-right: 4px;
 }
 
-/* Sphere view: Visual indicator for actions in hotlist */
-.sphere-action-in-hotlist {
+/* Sphere view: Visual indicator for actions in focus */
+.sphere-action-in-focus {
 	background-color: rgba(33, 150, 243, 0.15);
 	border-radius: 4px;
 	padding-left: 4px;
 	padding-right: 4px;
 }
 
-.sphere-action-in-hotlist:hover {
+.sphere-action-in-focus:hover {
 	background-color: rgba(33, 150, 243, 0.25);
 }
 
@@ -1451,7 +1451,7 @@ select.flow-gtd-inline-select option,
 }
 
 /* Pinned section styling */
-.flow-gtd-hotlist-pinned-items {
+.flow-gtd-focus-pinned-items {
 	background: var(--background-primary-alt);
 	border-radius: 4px;
 	padding: 8px;
@@ -1459,7 +1459,7 @@ select.flow-gtd-inline-select option,
 }
 
 /* Drag handle - hidden by default, visible on hover */
-.flow-gtd-hotlist-drag-handle {
+.flow-gtd-focus-drag-handle {
 	opacity: 0.3;
 	cursor: grab;
 	margin-right: 8px;
@@ -1468,37 +1468,37 @@ select.flow-gtd-inline-select option,
 	align-items: center;
 }
 
-.flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-drag-handle {
+.flow-gtd-focus-pinned-item:hover .flow-gtd-focus-drag-handle {
 	opacity: 0.7;
 }
 
-.flow-gtd-hotlist-drag-handle:active {
+.flow-gtd-focus-drag-handle:active {
 	cursor: grabbing;
 }
 
 /* Dragging state */
-.flow-gtd-hotlist-item.dragging {
+.flow-gtd-focus-item.dragging {
 	opacity: 0.5;
 }
 
-.flow-gtd-hotlist-item.drag-over {
+.flow-gtd-focus-item.drag-over {
 	border-top: 2px solid var(--interactive-accent);
 }
 
 /* Pin indicator */
-.flow-gtd-hotlist-pin-indicator {
+.flow-gtd-focus-pin-indicator {
 	margin-right: 4px;
 }
 
 /* Action button visibility - show only primary by default, all on hover */
-.flow-gtd-hotlist-item-actions {
+.flow-gtd-focus-item-actions {
 	position: relative;
 	display: inline-flex;
 	align-items: center;
 	gap: 4px;
 }
 
-.flow-gtd-hotlist-action-secondary {
+.flow-gtd-focus-action-secondary {
 	position: absolute;
 	right: 0;
 	top: 100%;
@@ -1517,26 +1517,26 @@ select.flow-gtd-inline-select option,
 	z-index: 10;
 }
 
-.flow-gtd-hotlist-item:hover .flow-gtd-hotlist-action-secondary {
+.flow-gtd-focus-item:hover .flow-gtd-focus-action-secondary {
 	opacity: 1;
 	pointer-events: auto;
 }
 
-.flow-gtd-hotlist-pinned-item:hover .flow-gtd-hotlist-action-secondary {
+.flow-gtd-focus-pinned-item:hover .flow-gtd-focus-action-secondary {
 	opacity: 1;
 	pointer-events: auto;
 }
 
 /* Three-dot menu button - hide on desktop (hover-capable devices), show on mobile */
 @media (hover: hover) {
-	.flow-gtd-hotlist-action-menu {
+	.flow-gtd-focus-action-menu {
 		display: none;
 	}
 }
 
 /* Show secondary actions when menu-open class is present (mobile) */
-.flow-gtd-hotlist-item.menu-open .flow-gtd-hotlist-action-secondary,
-.flow-gtd-hotlist-pinned-item.menu-open .flow-gtd-hotlist-action-secondary {
+.flow-gtd-focus-item.menu-open .flow-gtd-focus-action-secondary,
+.flow-gtd-focus-pinned-item.menu-open .flow-gtd-focus-action-secondary {
 	opacity: 1;
 	pointer-events: auto;
 }
