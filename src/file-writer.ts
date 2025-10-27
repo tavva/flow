@@ -3,6 +3,7 @@ import { TFile } from "obsidian";
 import { normalizePath } from "./obsidian-compat";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError } from "./errors";
+import { EditableItem } from "./inbox-types";
 
 export class FileWriter {
   constructor(
@@ -215,6 +216,37 @@ export class FileWriter {
     let content = await this.app.vault.read(file);
     const sectionName = "## Discuss next";
     content = this.addActionToSection(content, sectionName, item);
+
+    await this.app.vault.modify(file, content);
+  }
+
+  /**
+   * Add an action to a person note from an EditableItem
+   */
+  async addToPersonNote(item: EditableItem): Promise<void> {
+    if (!item.selectedPerson) {
+      throw new Error("No person selected for person note action");
+    }
+
+    if (!item.editedName) {
+      throw new Error("No action text provided for person note");
+    }
+
+    const file = this.app.vault.getAbstractFileByPath(item.selectedPerson.file);
+    if (!(file instanceof TFile)) {
+      throw new Error(`Person file not found: ${item.selectedPerson.file}`);
+    }
+
+    let content = await this.app.vault.read(file);
+    const sectionName = "## Actions";
+    content = this.addActionToSection(
+      content,
+      sectionName,
+      item.editedName,
+      false,
+      false,
+      item.dueDate
+    );
 
     await this.app.vault.modify(file, content);
   }

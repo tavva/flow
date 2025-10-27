@@ -1,5 +1,6 @@
 import { FileWriter } from "../src/file-writer";
 import { GTDProcessingResult, PluginSettings, FlowProject, PersonNote } from "../src/types";
+import { EditableItem } from "../src/inbox-types";
 
 // Import mocked obsidian
 jest.mock("obsidian");
@@ -810,6 +811,47 @@ Some notes here`;
       expect(newContent).toContain("- [ ] Urgent new topic");
       expect(newContent).toContain("- [ ] Existing item 1");
       expect(newContent).toContain("- [ ] Existing item 2");
+    });
+  });
+
+  describe("addToPersonNote", () => {
+    const mockPerson: PersonNote = {
+      file: "people/Sarah Johnson.md",
+      title: "Sarah Johnson",
+      tags: ["person"],
+    };
+
+    it("should add action with due date to person note", async () => {
+      const existingContent = `# Sarah Johnson
+
+## Actions
+
+- [ ] Existing action
+`;
+
+      class MockTFile extends TFile {}
+      const mockFile = new MockTFile();
+      mockFile.path = "people/Sarah Johnson.md";
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+      (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
+
+      const item: EditableItem = {
+        original: "Follow up with Sarah",
+        isAIProcessed: true,
+        selectedAction: "person",
+        selectedPerson: mockPerson,
+        selectedSpheres: ["work"],
+        editedName: "Follow up about Q4 planning",
+        dueDate: "2025-11-02",
+      };
+
+      await fileWriter.addToPersonNote(item);
+
+      const expectedContent = expect.stringContaining(
+        "- [ ] Follow up about Q4 planning 📅 2025-11-02"
+      );
+      expect(mockVault.modify).toHaveBeenCalledWith(mockFile, expectedContent);
     });
   });
 
