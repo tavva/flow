@@ -84,8 +84,13 @@ export async function archiveClearedTasks(
     tasksContent =
       items
         .map((item) => {
-          // Strip checkbox markers from archived items
-          return item.lineContent.replace(/^(\s*-\s*)\[[^\]]*\]\s*/, "$1");
+          const wikilinkPath = item.file.replace(/\.md$/, "");
+
+          if (item.isGeneral) {
+            return `- [[Next actions|${item.text}]]`;
+          } else {
+            return `- [[${wikilinkPath}]] ${item.text}`;
+          }
         })
         .join("\n") + "\n\n";
   }

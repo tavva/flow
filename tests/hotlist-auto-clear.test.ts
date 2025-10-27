@@ -142,11 +142,11 @@ describe("archiveClearedTasks", () => {
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- Do something")
+      expect.stringContaining("- [[Projects/Test]] Do something")
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- Call someone")
+      expect.stringContaining("- [[Next actions|Call someone]]")
     );
   });
 
@@ -177,7 +177,10 @@ describe("archiveClearedTasks", () => {
       mockFile,
       expect.stringContaining("## Cleared 15 October 2025 at 03:00")
     );
-    expect(mockVault.modify).toHaveBeenCalledWith(mockFile, expect.stringContaining("- Task one"));
+    expect(mockVault.modify).toHaveBeenCalledWith(
+      mockFile,
+      expect.stringContaining("- [[Projects/Test]] Task one")
+    );
     expect(mockVault.modify).toHaveBeenCalledWith(
       mockFile,
       expect.stringContaining(existingContent)
@@ -268,14 +271,88 @@ describe("archiveClearedTasks", () => {
 
     const createdContent = mockVault.create.mock.calls[0][1];
 
-    // Should contain plain list items without checkbox markers
-    expect(createdContent).toContain("- Do something important");
-    expect(createdContent).toContain("- Already completed");
-    expect(createdContent).toContain("- Waiting for response");
+    // Should contain wikilinks to source files
+    expect(createdContent).toContain("- [[Projects/Test]] Do something important");
+    expect(createdContent).toContain("- [[Next actions|Already completed]]");
+    expect(createdContent).toContain("- [[Next actions|Waiting for response]]");
 
     // Should NOT contain checkbox markers
     expect(createdContent).not.toContain("- [ ]");
     expect(createdContent).not.toContain("- [x]");
     expect(createdContent).not.toContain("- [w]");
+  });
+
+  it("formats general actions with display text and projects with file links", async () => {
+    const items: HotlistItem[] = [
+      {
+        file: "Projects/Work Project.md",
+        lineNumber: 15,
+        lineContent: "- [ ] Review design document",
+        text: "Review design document",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Next actions.md",
+        lineNumber: 8,
+        lineContent: "- [ ] Call dentist",
+        text: "Call dentist",
+        sphere: "personal",
+        isGeneral: true,
+        addedAt: Date.now(),
+      },
+      {
+        file: "Projects/Health/Annual Checkup.md",
+        lineNumber: 20,
+        lineContent: "- [ ] Schedule appointment",
+        text: "Schedule appointment",
+        sphere: "personal",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+    ];
+
+    const archiveFilePath = "Archive.md";
+    const clearTime = new Date("2025-10-27T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Project items should have file link before text
+    expect(createdContent).toContain("- [[Projects/Work Project]] Review design document");
+    expect(createdContent).toContain(
+      "- [[Projects/Health/Annual Checkup]] Schedule appointment"
+    );
+
+    // General actions should use display text format
+    expect(createdContent).toContain("- [[Next actions|Call dentist]]");
+  });
+
+  it("handles files without .md extension gracefully", async () => {
+    const items: HotlistItem[] = [
+      {
+        file: "Projects/README",
+        lineNumber: 5,
+        lineContent: "- [ ] Update documentation",
+        text: "Update documentation",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      },
+    ];
+
+    const archiveFilePath = "Archive.md";
+    const clearTime = new Date("2025-10-27T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Should create wikilink even without .md extension
+    expect(createdContent).toContain("- [[Projects/README]] Update documentation");
   });
 });
