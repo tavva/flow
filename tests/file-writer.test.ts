@@ -22,6 +22,7 @@ describe("FileWriter", () => {
     defaultStatus: "live",
     inboxFilesFolderPath: "Flow Inbox Files",
     inboxFolderPath: "Flow Inbox Folder",
+    processedInboxFolderPath: "Processed Inbox Folder Notes",
     nextActionsFilePath: "Next actions.md",
     somedayFilePath: "Someday.md",
     projectsFolderPath: "Projects",
@@ -1135,6 +1136,110 @@ tags:
       const allCalls = (mockVault.create as jest.Mock).mock.calls;
       expect(allCalls[0][1]).toBe("- [ ] Learn Spanish #sphere/personal\n");
       expect(allCalls[1][1]).toBe("- [ ] Write a book #sphere/personal\n");
+    });
+  });
+
+  describe("source note link support", () => {
+    it("should add next action with source link to next actions file", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Call dentist for appointment"],
+        ["personal"],
+        [false],
+        [false],
+        undefined,
+        "[[meeting-notes|source]]"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe(
+        "- [ ] Call dentist for appointment ([[meeting-notes|source]]) #sphere/personal\n"
+      );
+    });
+
+    it("should add next action with source link and due date to next actions file", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Call dentist for appointment"],
+        ["personal"],
+        [false],
+        [false],
+        "2025-11-15",
+        "[[meeting-notes|source]]"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe(
+        "- [ ] Call dentist for appointment 📅 2025-11-15 ([[meeting-notes|source]]) #sphere/personal\n"
+      );
+    });
+
+    it("should add someday item with source link", async () => {
+      await fileWriter.addToSomedayFile(
+        "Learn Spanish",
+        ["personal"],
+        undefined,
+        "[[language-learning-ideas|source]]"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe(
+        "- [ ] Learn Spanish ([[language-learning-ideas|source]]) #sphere/personal\n"
+      );
+    });
+
+    it("should add someday item with source link and due date", async () => {
+      await fileWriter.addToSomedayFile(
+        "Learn Spanish",
+        ["personal"],
+        "2026-01-12",
+        "[[language-learning-ideas|source]]"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe(
+        "- [ ] Learn Spanish 📅 2026-01-12 ([[language-learning-ideas|source]]) #sphere/personal\n"
+      );
+    });
+
+    it("should create project with source link in description", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Website Redesign Complete",
+        nextAction: "Meet with designer",
+        reasoning: "Multi-step project",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Complex project",
+      };
+
+      const mockFile = new TFile("Website-Redesign-Complete.md", "Website Redesign Complete");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
+
+      await fileWriter.createProject(
+        result,
+        "redesign website",
+        ["work"],
+        [],
+        undefined,
+        [],
+        undefined,
+        "[[project-brief|source]]"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+
+      // Source link should appear in the description
+      expect(content).toContain("Original inbox item: redesign website ([[project-brief|source]])");
     });
   });
 });

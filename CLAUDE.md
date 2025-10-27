@@ -144,6 +144,40 @@ Supporting utilities for core functionality:
 - **Inbox Item Persistence** (`src/inbox-item-persistence.ts`) - Persists inbox items across sessions
 - **Project Title Prompt** (`src/project-title-prompt.ts`) - Generates prompts for project title suggestions
 
+### Inbox Note Archiving and Source Links
+
+When processing note-type inbox items (whole notes from the "Flow Inbox Folder"), the plugin archives the source note instead of deleting it, and adds a link back to the archived note for traceability:
+
+- **Archive Folder** - Processed notes are moved to a configurable "Processed Inbox Folder Notes" folder (default: `Processed Inbox Folder Notes`)
+- **Source Links** - Actions and projects created from archived notes include a wikilink back to the source: `([[note-name|source]])`
+- **Link Placement** - Source links appear inline with the action text or in the project description
+- **Line Items Unchanged** - Line-by-line processing from "Flow Inbox Files" folder still deletes the processed line (no archiving)
+
+**Example outputs with source links:**
+
+```markdown
+# Next Actions file
+- [ ] Call Dr. Smith's office ([[meeting-notes-2025-10-27|source]]) #sphere/personal
+
+# Project file
+---
+tags: project/work
+---
+
+# Website Redesign
+
+Original inbox item: redesign website ([[project-brief|source]])
+
+## Next actions
+- [ ] Meet with designer
+```
+
+**Implementation:**
+- `inbox-scanner.ts:92-125` - Archives note items instead of deleting, returns wikilink
+- `inbox-processing-controller.ts:154-164` - Captures source link before persisting
+- `file-writer.ts` - Appends source links to actions and project descriptions
+- `inbox-item-persistence.ts` - Passes source links through to file writer
+
 ### Waiting For Support
 
 The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
@@ -647,6 +681,7 @@ The plugin supports several configurable settings accessible via Settings → Fl
 
 - **Inbox Files Folder**: Path for files to be processed (default: "Flow Inbox Files")
 - **Inbox Folder**: Path for general inbox items (default: "Flow Inbox Folder")
+- **Processed Inbox Folder**: Path where processed inbox notes are archived (default: "Processed Inbox Folder Notes")
 - **Next Actions File**: Path to central next actions file (default: "Next actions.md")
 - **Someday File**: Path to someday/maybe file (default: "Someday.md")
 - **Projects Folder**: Where new project files are created (default: "Projects")

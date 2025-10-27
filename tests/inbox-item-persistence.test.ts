@@ -49,7 +49,9 @@ describe("InboxItemPersistenceService", () => {
       ["work"],
       [false, false], // waitingFor
       undefined, // parentProject
-      [false, false] // markAsDone
+      [false, false], // markAsDone
+      undefined, // dueDate
+      undefined // sourceNoteLink
     );
   });
 
@@ -162,7 +164,9 @@ describe("InboxItemPersistenceService", () => {
       ["work"],
       [false, false], // waitingFor
       undefined, // parentProject
-      [true, false] // markAsDone
+      [true, false], // markAsDone
+      undefined, // dueDate
+      undefined // sourceNoteLink
     );
   });
 
@@ -183,7 +187,8 @@ describe("InboxItemPersistenceService", () => {
       ["personal"],
       [false], // waitingFor
       [true], // markAsDone
-      undefined // dueDate
+      undefined, // dueDate
+      undefined // sourceNoteLink
     );
   });
 

@@ -152,11 +152,15 @@ export class InboxProcessingController {
   }
 
   async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
-    await this.persistence.persist(item);
-
+    // If this is a note item, capture the source link before persisting
     if (item.inboxItem) {
-      await this.removeInboxItem(item.inboxItem, deletionOffsets);
+      const sourceLink = await this.removeInboxItem(item.inboxItem, deletionOffsets);
+      if (sourceLink) {
+        item.sourceNoteLink = sourceLink;
+      }
     }
+
+    await this.persistence.persist(item);
   }
 
   async discardInboxItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
@@ -176,10 +180,11 @@ export class InboxProcessingController {
   private async removeInboxItem(
     inboxItem: InboxItem,
     deletionOffsets: Map<string, number>
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const deletionManager = this.createDeletionManager(deletionOffsets);
     const inboxItemToDelete = deletionManager.prepareForDeletion(inboxItem);
-    await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
+    const sourceLink = await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
     deletionManager.recordDeletion(inboxItem);
+    return sourceLink;
   }
 }

@@ -88,6 +88,7 @@ export interface PluginSettings {
   defaultStatus: string;
   inboxFilesFolderPath: string;
   inboxFolderPath: string;
+  processedInboxFolderPath: string;
   nextActionsFilePath: string;
   somedayFilePath: string;
   projectsFolderPath: string;
@@ -113,6 +114,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   defaultStatus: "live",
   inboxFilesFolderPath: "Flow Inbox Files",
   inboxFolderPath: "Flow Inbox Folder",
+  processedInboxFolderPath: "Processed Inbox Folder Notes",
   nextActionsFilePath: "Next actions.md",
   somedayFilePath: "Someday.md",
   projectsFolderPath: "Projects",

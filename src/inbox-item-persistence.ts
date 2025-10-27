@@ -154,7 +154,9 @@ export class InboxItemPersistenceService {
           item.selectedSpheres,
           finalWaitingFor,
           parentProjectLink,
-          finalMarkAsDone
+          finalMarkAsDone,
+          item.dueDate,
+          item.sourceNoteLink
         );
         return file.path;
       }
@@ -178,12 +180,18 @@ export class InboxItemPersistenceService {
           item.selectedSpheres,
           finalWaitingFor,
           finalMarkAsDone,
-          item.dueDate
+          item.dueDate,
+          item.sourceNoteLink
         );
         return this.settings?.nextActionsFilePath || null;
 
       case "someday-file":
-        await this.writer.addToSomedayFile(finalNextActions, item.selectedSpheres, item.dueDate);
+        await this.writer.addToSomedayFile(
+          finalNextActions,
+          item.selectedSpheres,
+          item.dueDate,
+          item.sourceNoteLink
+        );
         return null;
 
       case "reference":

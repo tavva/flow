@@ -21,7 +21,8 @@ export class FileWriter {
     waitingFor: boolean[] = [],
     parentProject?: string,
     markAsDone: boolean[] = [],
-    dueDate?: string
+    dueDate?: string,
+    sourceNoteLink?: string
   ): Promise<TFile> {
     if (!result.nextAction || result.nextAction.trim().length === 0) {
       throw new GTDResponseValidationError(
@@ -51,7 +52,8 @@ export class FileWriter {
       waitingFor,
       parentProject,
       markAsDone,
-      dueDate
+      dueDate,
+      sourceNoteLink
     );
     const file = await this.app.vault.create(filePath, content);
 
@@ -83,17 +85,20 @@ export class FileWriter {
    * @param waitingFor - Array of booleans indicating which actions are waiting-for items
    * @param markAsDone - Array of booleans indicating which actions should be marked as complete
    * @param dueDate - Optional due date in YYYY-MM-DD format (e.g., "2025-11-15")
+   * @param sourceNoteLink - Optional wikilink to source note (e.g., "[[note-name|source]]")
    */
   async addToNextActionsFile(
     actions: string | string[],
     spheres: string[] = [],
     waitingFor: boolean[] = [],
     markAsDone: boolean[] = [],
-    dueDate?: string
+    dueDate?: string,
+    sourceNoteLink?: string
   ): Promise<void> {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
     const dateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+    const sourceSuffix = sourceNoteLink ? ` (${sourceNoteLink})` : "";
 
     for (let i = 0; i < actionsArray.length; i++) {
       const action = actionsArray[i];
@@ -114,8 +119,8 @@ export class FileWriter {
       }
 
       const content = sphereTags
-        ? `${checkbox} ${actionText}${dateSuffix} ${sphereTags}`
-        : `${checkbox} ${actionText}${dateSuffix}`;
+        ? `${checkbox} ${actionText}${dateSuffix}${sourceSuffix} ${sphereTags}`
+        : `${checkbox} ${actionText}${dateSuffix}${sourceSuffix}`;
       await this.appendToFile(this.settings.nextActionsFilePath, content);
     }
   }
@@ -126,16 +131,18 @@ export class FileWriter {
   async addToSomedayFile(
     items: string | string[],
     spheres: string[] = [],
-    dueDate?: string
+    dueDate?: string,
+    sourceNoteLink?: string
   ): Promise<void> {
     const itemsArray = Array.isArray(items) ? items : [items];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
+    const sourceSuffix = sourceNoteLink ? ` (${sourceNoteLink})` : "";
 
     for (const item of itemsArray) {
       const dateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
       const content = sphereTags
-        ? `- [ ] ${item}${dateSuffix} ${sphereTags}`
-        : `- [ ] ${item}${dateSuffix}`;
+        ? `- [ ] ${item}${dateSuffix}${sourceSuffix} ${sphereTags}`
+        : `- [ ] ${item}${dateSuffix}${sourceSuffix}`;
       await this.appendToFile(this.settings.somedayFilePath, content);
     }
   }
@@ -271,9 +278,12 @@ export class FileWriter {
     return cleaned.length > 0 ? cleaned : "Project";
   }
 
-  private formatOriginalInboxItem(originalItem: string): string {
+  private formatOriginalInboxItem(originalItem: string, sourceNoteLink?: string): string {
     const normalized = originalItem.replace(/\s+/g, " ").trim();
-    return normalized.length > 0 ? `Original inbox item: ${normalized}` : "Original inbox item:";
+    const sourceSuffix = sourceNoteLink ? ` (${sourceNoteLink})` : "";
+    return normalized.length > 0
+      ? `Original inbox item: ${normalized}${sourceSuffix}`
+      : "Original inbox item:";
   }
 
   /**
@@ -286,7 +296,8 @@ export class FileWriter {
     waitingFor: boolean[] = [],
     parentProject?: string,
     markAsDone: boolean[] = [],
-    dueDate?: string
+    dueDate?: string,
+    sourceNoteLink?: string
   ): Promise<string> {
     const templateFile = this.app.vault.getAbstractFileByPath(
       this.settings.projectTemplateFilePath
@@ -301,7 +312,8 @@ export class FileWriter {
         waitingFor,
         parentProject,
         markAsDone,
-        dueDate
+        dueDate,
+        sourceNoteLink
       );
     }
 
@@ -324,7 +336,7 @@ export class FileWriter {
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem));
+      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem, sourceNoteLink));
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
@@ -420,11 +432,12 @@ export class FileWriter {
     waitingFor: boolean[] = [],
     parentProject?: string,
     markAsDone: boolean[] = [],
-    dueDate?: string
+    dueDate?: string,
+    sourceNoteLink?: string
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
-    const originalItemDescription = this.formatOriginalInboxItem(originalItem);
+    const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =

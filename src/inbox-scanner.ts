@@ -89,7 +89,7 @@ export class InboxScanner {
     return items;
   }
 
-  async deleteInboxItem(item: InboxItem): Promise<void> {
+  async deleteInboxItem(item: InboxItem): Promise<string | undefined> {
     if (item.type === "line" && item.lineNumber !== undefined) {
       const content = await this.app.vault.read(item.sourceFile);
       const lines = content.split("\n");
@@ -102,10 +102,26 @@ export class InboxScanner {
         lines.splice(lineIndex, 1);
         await this.app.vault.modify(item.sourceFile, lines.join("\n"));
       }
+      return undefined;
     } else if (item.type === "note") {
-      // Delete the entire file
-      await this.app.vault.delete(item.sourceFile);
+      // Archive the note instead of deleting it
+      const processedFolder = this.settings.processedInboxFolderPath;
+
+      // Ensure the processed folder exists
+      const folder = this.app.vault.getAbstractFileByPath(processedFolder);
+      if (!folder) {
+        await this.app.vault.createFolder(processedFolder);
+      }
+
+      // Move the file to the processed folder
+      const newPath = `${processedFolder}/${item.sourceFile.name}`;
+      await this.app.fileManager.renameFile(item.sourceFile, newPath);
+
+      // Return wikilink to archived note (without .md extension)
+      const baseName = item.sourceFile.basename;
+      return `[[${baseName}|source]]`;
     }
+    return undefined;
   }
 
   async getInboxCount(): Promise<{ lineCount: number; noteCount: number }> {

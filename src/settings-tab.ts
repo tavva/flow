@@ -221,6 +221,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Processed inbox folder
+    new Setting(containerEl)
+      .setName("Processed inbox folder")
+      .setDesc("Processed notes from the inbox folder are archived here instead of being deleted.")
+      .addText((text) =>
+        text
+          .setPlaceholder("Processed Inbox Folder Notes")
+          .setValue(this.plugin.settings.processedInboxFolderPath)
+          .onChange(async (value) => {
+            this.plugin.settings.processedInboxFolderPath = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Output Files
     new Setting(containerEl).setHeading().setName("Output Files & Folders");
     containerEl.createDiv("setting-item-description").innerHTML = `
