@@ -336,7 +336,10 @@ export class FileWriter {
     templateContent = templateContent
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
-      .replace(/{{\s*description\s*}}/g, this.formatOriginalInboxItem(originalItem, sourceNoteLink));
+      .replace(
+        /{{\s*description\s*}}/g,
+        this.formatOriginalInboxItem(originalItem, sourceNoteLink)
+      );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
     // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats

@@ -406,7 +406,9 @@ export function createGitHubRelease(version: string): boolean {
       );
       console.log(`✓ Release created in ${repo}\n`);
     } catch (error) {
-      console.error(`\nError creating release in ${repo}. Manifest was updated but release failed.`);
+      console.error(
+        `\nError creating release in ${repo}. Manifest was updated but release failed.`
+      );
       console.error(error instanceof Error ? error.message : String(error));
       console.error("To rollback: git checkout manifest.json\n");
       return false;

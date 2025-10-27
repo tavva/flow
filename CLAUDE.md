@@ -157,22 +157,26 @@ When processing note-type inbox items (whole notes from the "Flow Inbox Folder")
 
 ```markdown
 # Next Actions file
+
 - [ ] Call Dr. Smith's office ([[meeting-notes-2025-10-27|source]]) #sphere/personal
 
 # Project file
+
 ---
-tags: project/work
----
+
+## tags: project/work
 
 # Website Redesign
 
 Original inbox item: redesign website ([[project-brief|source]])
 
 ## Next actions
+
 - [ ] Meet with designer
 ```
 
 **Implementation:**
+
 - `inbox-scanner.ts:92-125` - Archives note items instead of deleting, returns wikilink
 - `inbox-processing-controller.ts:154-164` - Captures source link before persisting
 - `file-writer.ts` - Appends source links to actions and project descriptions
