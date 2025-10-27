@@ -30,3 +30,6 @@ npm-debug.log*
 
 # Data files
 data.json
+
+# Worktrees
+.worktrees/
