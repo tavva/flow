@@ -383,6 +383,7 @@ export function confirmRelease(version: string): Promise<boolean> {
 export function createGitHubRelease(version: string): boolean {
   const assets = getReleaseAssets();
   const repositories = ["tavva/flow", "tavva/flow-release"];
+  const releaseNotes = `Beta release v${version}`;
 
   console.log("\nCreating GitHub releases...\n");
 
@@ -399,6 +400,8 @@ export function createGitHubRelease(version: string): boolean {
           repo,
           "--title",
           `Beta v${version}`,
+          "--notes",
+          releaseNotes,
           "--prerelease",
           ...assets,
         ],
