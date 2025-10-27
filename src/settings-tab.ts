@@ -149,7 +149,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     updateProviderVisibility();
 
-    containerEl.createEl("h3", { text: "Default Project Settings" });
+    new Setting(containerEl).setHeading().setName("Default Project Settings");
     containerEl.createDiv("setting-item-description").innerHTML = `
 			<p>These settings are used when creating new Flow projects.</p>
 		`;
@@ -190,7 +190,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       );
 
     // Inbox Settings
-    containerEl.createEl("h3", { text: "Inbox Settings" });
+    new Setting(containerEl).setHeading().setName("Inbox Settings");
     containerEl.createDiv("setting-item-description").innerHTML = `
 			<p>Configure inbox folders for processing. These match the Flow plugin's inbox settings.</p>
 		`;
@@ -224,7 +224,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       );
 
     // Output Files
-    containerEl.createEl("h3", { text: "Output Files & Folders" });
+    new Setting(containerEl).setHeading().setName("Output Files & Folders");
     containerEl.createDiv("setting-item-description").innerHTML = `
 			<p>Configure where processed items should be saved.</p>
 		`;
@@ -288,7 +288,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       );
 
     // Spheres
-    containerEl.createEl("h3", { text: "Spheres" });
+    new Setting(containerEl).setHeading().setName("Spheres");
     containerEl.createDiv("setting-item-description").innerHTML = `
 			<p>Spheres help categorise projects and actions (e.g., personal, work, health).</p>
 		`;
@@ -310,7 +310,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       );
 
     // Hotlist Settings
-    containerEl.createEl("h3", { text: "Hotlist" });
+    new Setting(containerEl).setHeading().setName("Hotlist");
     containerEl.createDiv("setting-item-description").innerHTML = `
 			<p>Configure automatic clearing and archiving of your hotlist.</p>
 		`;
@@ -350,6 +350,5 @@ export class FlowGTDSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-
   }
 }
