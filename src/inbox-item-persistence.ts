@@ -88,8 +88,8 @@ export class InboxItemPersistenceService {
     }
 
     // Validate reminder date for someday items
-    if (item.selectedAction === "someday-file" && item.reminderDate) {
-      const validation = validateReminderDate(item.reminderDate);
+    if (item.selectedAction === "someday-file" && item.dueDate) {
+      const validation = validateReminderDate(item.dueDate);
       if (!validation.valid) {
         throw new GTDResponseValidationError(
           `Invalid reminder date: ${validation.error || "Unknown error"}`
@@ -185,7 +185,7 @@ export class InboxItemPersistenceService {
         await this.writer.addToSomedayFile(
           finalNextActions,
           item.selectedSpheres,
-          item.reminderDate
+          item.dueDate
         );
         return null;
 

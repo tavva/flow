@@ -21,7 +21,7 @@ export interface EditableItem {
   parentProject?: FlowProject; // Parent project if creating as sub-project
   isSubProject?: boolean; // Whether to create as sub-project
   addToFocus?: boolean; // Whether to add next actions to focus after creation
-  reminderDate?: string; // Optional reminder date for someday items (YYYY-MM-DD format)
+  dueDate?: string; // Optional date in YYYY-MM-DD format (due date, reminder, or follow-up depending on context)
 }
 
 export interface ProcessingOutcome {

@@ -1123,13 +1123,13 @@ function renderSomedayReminderSection(
   reminderInput.style.backgroundColor = "var(--background-primary)";
   reminderInput.style.color = "var(--text-normal)";
 
-  if (item.reminderDate) {
-    reminderInput.value = item.reminderDate;
+  if (item.dueDate) {
+    reminderInput.value = item.dueDate;
   }
 
   reminderInput.addEventListener("input", (e) => {
     const value = (e.target as HTMLInputElement).value;
-    item.reminderDate = value || undefined;
+    item.dueDate = value || undefined;
   });
 
   const helpText = reminderSectionEl.createEl("div");

@@ -115,13 +115,13 @@ export class FileWriter {
   async addToSomedayFile(
     items: string | string[],
     spheres: string[] = [],
-    reminderDate?: string
+    dueDate?: string
   ): Promise<void> {
     const itemsArray = Array.isArray(items) ? items : [items];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
 
     for (const item of itemsArray) {
-      const reminderSuffix = reminderDate ? ` 📅 ${reminderDate}` : "";
+      const reminderSuffix = dueDate ? ` 📅 ${dueDate}` : "";
       const content = sphereTags
         ? `- [ ] ${item}${reminderSuffix} ${sphereTags}`
         : `- [ ] ${item}${reminderSuffix}`;
