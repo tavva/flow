@@ -177,7 +177,8 @@ export class InboxItemPersistenceService {
           finalNextActions,
           item.selectedSpheres,
           finalWaitingFor,
-          finalMarkAsDone
+          finalMarkAsDone,
+          item.dueDate
         );
         return this.settings?.nextActionsFilePath || null;
 

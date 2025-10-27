@@ -869,6 +869,36 @@ tags:
     });
   });
 
+  describe("due date support for next actions", () => {
+    it("should write next action with due date to next actions file", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Call dentist for appointment"],
+        ["personal"],
+        [false],
+        [false],
+        "2025-11-15"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe("- [ ] Call dentist for appointment 📅 2025-11-15 #sphere/personal\n");
+    });
+
+    it("should write waiting-for action with due date to next actions file", async () => {
+      await fileWriter.addToNextActionsFile(
+        ["Wait for Sarah's feedback"],
+        ["work"],
+        [true],
+        [false],
+        "2025-11-01"
+      );
+
+      expect(mockVault.create).toHaveBeenCalled();
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toBe("- [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work\n");
+    });
+  });
+
   describe("addToSomedayFile", () => {
     it("should add item without reminder date to someday file", async () => {
       await fileWriter.addToSomedayFile("Learn Spanish", ["personal"]);

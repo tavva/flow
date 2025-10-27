@@ -79,10 +79,12 @@ export class FileWriter {
     actions: string | string[],
     spheres: string[] = [],
     waitingFor: boolean[] = [],
-    markAsDone: boolean[] = []
+    markAsDone: boolean[] = [],
+    dueDate?: string
   ): Promise<void> {
     const actionsArray = Array.isArray(actions) ? actions : [actions];
     const sphereTags = spheres.map((s) => `#sphere/${s}`).join(" ");
+    const dateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
 
     for (let i = 0; i < actionsArray.length; i++) {
       const action = actionsArray[i];
@@ -103,8 +105,8 @@ export class FileWriter {
       }
 
       const content = sphereTags
-        ? `${checkbox} ${actionText} ${sphereTags}`
-        : `${checkbox} ${actionText}`;
+        ? `${checkbox} ${actionText}${dateSuffix} ${sphereTags}`
+        : `${checkbox} ${actionText}${dateSuffix}`;
       await this.appendToFile(this.settings.nextActionsFilePath, content);
     }
   }

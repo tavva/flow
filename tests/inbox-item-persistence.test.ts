@@ -182,7 +182,8 @@ describe("InboxItemPersistenceService", () => {
       ["Call dentist to schedule cleaning"],
       ["personal"],
       [false], // waitingFor
-      [true] // markAsDone
+      [true], // markAsDone
+      undefined // dueDate
     );
   });
 
