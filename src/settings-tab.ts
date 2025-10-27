@@ -15,8 +15,6 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Flow Settings" });
-
     // AI Enable/Disable Toggle
     new Setting(containerEl)
       .setName("Enable AI features")
