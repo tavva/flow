@@ -350,6 +350,12 @@ export function confirmRelease(version: string): Promise<boolean> {
 
     console.log("The following commands will be executed:\n");
     console.log(`  gh release create ${version} \\`);
+    console.log("    --repo tavva/flow \\");
+    console.log(`    --title "Beta v${version}" \\`);
+    console.log("    --prerelease \\");
+    console.log(`    ${assets}\n`);
+    console.log(`  gh release create ${version} \\`);
+    console.log("    --repo tavva/flow-release \\");
     console.log(`    --title "Beta v${version}" \\`);
     console.log("    --prerelease \\");
     console.log(`    ${assets}\n`);
@@ -370,29 +376,45 @@ export function confirmRelease(version: string): Promise<boolean> {
 }
 
 /**
- * Creates GitHub release
+ * Creates GitHub release in both tavva/flow and tavva/flow-release
  * @param version - Version to release
  * @returns true if successful, false otherwise
  */
 export function createGitHubRelease(version: string): boolean {
   const assets = getReleaseAssets();
+  const repositories = ["tavva/flow", "tavva/flow-release"];
 
-  console.log("\nCreating GitHub release...\n");
+  console.log("\nCreating GitHub releases...\n");
 
-  try {
-    execFileSync(
-      "gh",
-      ["release", "create", version, "--title", `Beta v${version}`, "--prerelease", ...assets],
-      { stdio: "inherit" }
-    );
-    console.log("\n✓ GitHub release created\n");
-    return true;
-  } catch (error) {
-    console.error("\nError creating release. Manifest was updated but release failed.");
-    console.error(error instanceof Error ? error.message : String(error));
-    console.error("To rollback: git checkout manifest.json\n");
-    return false;
+  for (const repo of repositories) {
+    console.log(`Creating release in ${repo}...`);
+    try {
+      execFileSync(
+        "gh",
+        [
+          "release",
+          "create",
+          version,
+          "--repo",
+          repo,
+          "--title",
+          `Beta v${version}`,
+          "--prerelease",
+          ...assets,
+        ],
+        { stdio: "inherit" }
+      );
+      console.log(`✓ Release created in ${repo}\n`);
+    } catch (error) {
+      console.error(`\nError creating release in ${repo}. Manifest was updated but release failed.`);
+      console.error(error instanceof Error ? error.message : String(error));
+      console.error("To rollback: git checkout manifest.json\n");
+      return false;
+    }
   }
+
+  console.log("✓ All GitHub releases created\n");
+  return true;
 }
 
 /**
