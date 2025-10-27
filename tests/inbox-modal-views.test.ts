@@ -278,8 +278,12 @@ describe("renderEditableItemContent - date section", () => {
     renderEditableItemContent(container, item, state);
 
     const dateSection = container.querySelector(".flow-gtd-date-section");
-    const dateSectionHeader = dateSection?.querySelector(".flow-gtd-date-section-header") as HTMLElement;
-    const dateInputContainer = dateSection?.querySelector(".flow-gtd-date-input-container") as HTMLElement;
+    const dateSectionHeader = dateSection?.querySelector(
+      ".flow-gtd-date-section-header"
+    ) as HTMLElement;
+    const dateInputContainer = dateSection?.querySelector(
+      ".flow-gtd-date-input-container"
+    ) as HTMLElement;
     const chevron = dateSection?.querySelector(".flow-gtd-date-chevron") as HTMLElement;
 
     expect(dateSectionHeader).toBeTruthy();

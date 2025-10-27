@@ -186,6 +186,7 @@ The plugin supports optional due dates for all processing action types:
 - **Manual Entry** - No AI suggestions for dates; user sets them explicitly during review
 
 **Date semantic meaning by action type:**
+
 - **Next actions**: Due date (when action must be completed)
 - **Projects**: Target date (desired completion timeline)
 - **Someday items**: Reminder date (when to review the item)
@@ -196,11 +197,14 @@ The plugin supports optional due dates for all processing action types:
 
 ```markdown
 # Next Actions file
+
 - [ ] Call dentist for appointment 📅 2025-11-15 #sphere/personal
 - [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work
 
 # Project file
+
 ## Next actions
+
 - [ ] Draft proposal outline 📅 2025-11-05
 ```
 

@@ -182,7 +182,14 @@ export class FileWriter {
       const action = actionsArray[i];
       const isWaiting = waitingFor[i] || false;
       const isDone = markAsDone[i] || false;
-      content = this.addActionToSection(content, "## Next actions", action, isWaiting, isDone, dueDate);
+      content = this.addActionToSection(
+        content,
+        "## Next actions",
+        action,
+        isWaiting,
+        isDone,
+        dueDate
+      );
     }
 
     await this.app.vault.modify(file, content);
@@ -530,7 +537,14 @@ ${originalItemDescription}
 
     if (sectionIndex === -1) {
       // Section doesn't exist, create it at the end
-      return this.createSectionWithAction(content, sectionHeading, action, isWaiting, isDone, dueDate);
+      return this.createSectionWithAction(
+        content,
+        sectionHeading,
+        action,
+        isWaiting,
+        isDone,
+        dueDate
+      );
     }
 
     // Find where to insert the action (after the heading, before next section)

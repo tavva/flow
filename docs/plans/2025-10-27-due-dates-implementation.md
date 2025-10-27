@@ -13,6 +13,7 @@
 ## Task 1: Rename reminderDate to dueDate in Data Model
 
 **Files:**
+
 - Modify: `src/inbox-types.ts:24`
 - Modify: `src/inbox-item-persistence.ts` (references to reminderDate)
 - Modify: `tests/inbox-item-persistence.test.ts` (test assertions)
@@ -34,6 +35,7 @@ dueDate?: string; // Optional date in YYYY-MM-DD format (due date, reminder, or 
 **Step 2: Update persistence logic**
 
 In `src/inbox-item-persistence.ts`, replace all occurrences of `reminderDate` with `dueDate`:
+
 - When saving: `item.reminderDate` → `item.dueDate`
 - When loading: `reminderDate` property → `dueDate` property
 
@@ -61,6 +63,7 @@ git commit -m "refactor: rename reminderDate to dueDate in data model"
 ## Task 2: Update File Writer for Next Actions
 
 **Files:**
+
 - Modify: `src/file-writer.ts` (writeToNextActionsFile function)
 - Modify: `tests/file-writer.test.ts`
 
@@ -158,6 +161,7 @@ git commit -m "feat: add due date support to next actions file writing"
 ## Task 3: Update File Writer for Someday Items
 
 **Files:**
+
 - Modify: `src/file-writer.ts` (writeToSomedayFile function)
 - Modify: `tests/file-writer.test.ts`
 
@@ -214,6 +218,7 @@ git commit -m "refactor: update someday file writing to use dueDate"
 ## Task 4: Update File Writer for Projects
 
 **Files:**
+
 - Modify: `src/file-writer.ts` (createProjectFile and updateProjectFile functions)
 - Modify: `tests/file-writer.test.ts`
 
@@ -308,9 +313,7 @@ Develop AI capabilities
 
   await writer.updateProjectFile(item);
 
-  const expectedContent = expect.stringContaining(
-    "- [ ] Complete impact analysis 📅 2025-11-10"
-  );
+  const expectedContent = expect.stringContaining("- [ ] Complete impact analysis 📅 2025-11-10");
   expect(mockVault.modify).toHaveBeenCalledWith(mockProjectFile, expectedContent);
 });
 ```
@@ -344,6 +347,7 @@ git commit -m "feat: add due date support to project file writing"
 ## Task 5: Update File Writer for Person Notes
 
 **Files:**
+
 - Modify: `src/file-writer.ts` (addToPersonNote function)
 - Modify: `tests/file-writer.test.ts`
 
@@ -418,6 +422,7 @@ git commit -m "feat: add due date support to person note writing"
 ## Task 6: Add Collapsible Date Section to UI
 
 **Files:**
+
 - Modify: `src/inbox-modal-views.ts` (renderEditableItemsView function)
 - Modify: `tests/inbox-modal-views.test.ts`
 
@@ -624,6 +629,7 @@ git commit -m "feat: add collapsible date section to inbox processing UI"
 ## Task 7: Change Waiting-For Icons to Handshake
 
 **Files:**
+
 - Modify: `src/inbox-modal-views.ts`
 - Modify: `src/sphere-view.ts`
 - Modify: `src/focus-view.ts`
@@ -696,7 +702,8 @@ expect(waitingToggle.textContent).toBe("🤝"); // Changed from ⏰
 In `tests/sphere-view.test.ts`, find the "waiting-for visual indicator" describe block and update test:
 
 ```typescript
-it("should display handshake emoji for waiting-for items", async () => { // Changed from "clock emoji"
+it("should display handshake emoji for waiting-for items", async () => {
+  // Changed from "clock emoji"
   // ... test setup ...
 
   // Should have handshake emoji prefix in markdown
@@ -708,7 +715,8 @@ it("should display handshake emoji for waiting-for items", async () => { // Chan
   );
 });
 
-it("should not display handshake emoji for regular actions", async () => { // Changed from "clock emoji"
+it("should not display handshake emoji for regular actions", async () => {
+  // Changed from "clock emoji"
   // ... test code with updated description ...
 });
 ```
@@ -737,6 +745,7 @@ git commit -m "refactor: change waiting-for icon from clock to handshake emoji"
 ## Task 8: Update Documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 **Step 1: Update Someday/Maybe section**
@@ -761,7 +770,7 @@ The plugin supports adding optional dates to items in the Someday/Maybe file:
 
 After the Someday/Maybe section, add:
 
-```markdown
+````markdown
 ### Due Date Support
 
 The plugin supports optional due dates for all processing action types:
@@ -774,6 +783,7 @@ The plugin supports optional due dates for all processing action types:
 - **Manual Entry** - No AI suggestions for dates; user sets them explicitly during review
 
 **Date semantic meaning by action type:**
+
 - **Next actions**: Due date (when action must be completed)
 - **Projects**: Target date (desired completion timeline)
 - **Someday items**: Reminder date (when to review the item)
@@ -784,14 +794,19 @@ The plugin supports optional due dates for all processing action types:
 
 ```markdown
 # Next Actions file
+
 - [ ] Call dentist for appointment 📅 2025-11-15 #sphere/personal
 - [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work
 
 # Project file
+
 ## Next actions
+
 - [ ] Draft proposal outline 📅 2025-11-05
 ```
-```
+````
+
+````
 
 **Step 3: Update Waiting For Support section**
 
@@ -807,7 +822,7 @@ The plugin supports GTD "Waiting For" items using `[w]` checkbox status:
 - **Status Cycler** (`src/task-status-cycler.ts`) - Cycles checkbox status: [ ] → [w] → [x]
 - **Visual Indicator** - Waiting-for items show 🤝 handshake emoji in sphere and focus views
 - **AI Integration** - Processor recognizes waiting-for scenarios during inbox processing
-```
+````
 
 **Step 4: Commit**
 
@@ -821,6 +836,7 @@ git commit -m "docs: update CLAUDE.md with due date support and handshake icon"
 ## Task 9: Run Full Test Suite and Format
 
 **Files:**
+
 - All modified files
 
 **Step 1: Run complete test suite**
@@ -874,6 +890,7 @@ Expected: All tests pass, code formatted
 - [ ] Ready for code review using @superpowers:requesting-code-review
 
 **After implementation:**
+
 1. Use @superpowers:verification-before-completion to verify all changes work
 2. Use @superpowers:requesting-code-review to review against plan
 3. Use @superpowers:finishing-a-development-branch to merge or create PR

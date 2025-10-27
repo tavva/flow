@@ -608,7 +608,13 @@ tags: project/work
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(existingContent);
 
-      await fileWriter.addNextActionToProject(mockProject, "Complete impact analysis", [], [], "2025-11-10");
+      await fileWriter.addNextActionToProject(
+        mockProject,
+        "Complete impact analysis",
+        [],
+        [],
+        "2025-11-10"
+      );
 
       const [, newContent] = (mockVault.modify as jest.Mock).mock.calls[0];
 

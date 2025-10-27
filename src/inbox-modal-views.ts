@@ -456,10 +456,7 @@ export function renderEditableItemContent(
 
 function renderDateSection(container: HTMLElement, item: EditableItem, state: InboxModalState) {
   // Get label based on action type
-  const getDateLabel = (
-    action: string,
-    waitingFor?: boolean[]
-  ): string | null => {
+  const getDateLabel = (action: string, waitingFor?: boolean[]): string | null => {
     // Check if any actions are waiting-for
     const isWaiting = waitingFor?.some((w) => w) || false;
     if (isWaiting) return "Set follow-up date (optional)";

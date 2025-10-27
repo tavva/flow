@@ -46,6 +46,7 @@ export interface EditableItem {
 ```
 
 **Migration:**
+
 - Rename `reminderDate` → `dueDate` throughout codebase
 - No changes to validation logic
 - Reuse existing `validateReminderDate()` function
@@ -58,23 +59,30 @@ All action types use consistent format: `text 📅 YYYY-MM-DD #sphere/tag`
 
 ```markdown
 # Next Actions file
+
 - [ ] Call dentist for appointment 📅 2025-11-15 #sphere/personal
 - [w] Wait for Sarah's feedback 📅 2025-11-01 #sphere/work
 
 # Someday file
+
 - [ ] Learn Spanish 📅 2026-01-12 #sphere/personal
 
 # Project file
+
 ## Next actions
+
 - [ ] Draft proposal outline 📅 2025-11-05
 - [w] Review with stakeholders 📅 2025-11-10
 
 # Person note
+
 ## Actions
+
 - [ ] Follow up about meeting 📅 2025-11-02
 ```
 
 **Format rules:**
+
 - Space before emoji for readability
 - Date appears after action text, before sphere tag
 - Optional - only added if `dueDate` exists
@@ -87,6 +95,7 @@ All action types use consistent format: `text 📅 YYYY-MM-DD #sphere/tag`
 **Location:** After main action controls (edit/waiting/done toggles) in inbox processing modal
 
 **Behavior:**
+
 - Hidden by default (collapsed)
 - Click to expand and show HTML5 date picker
 - Clear button (×) appears when date is set
@@ -94,6 +103,7 @@ All action types use consistent format: `text 📅 YYYY-MM-DD #sphere/tag`
 - Updates label when user changes action type
 
 **Visual design:**
+
 - Chevron icon (▶/▼) for collapsed/expanded state
 - Subtle styling - doesn't dominate interface
 - Consistent with existing someday date picker UI
@@ -103,16 +113,17 @@ All action types use consistent format: `text 📅 YYYY-MM-DD #sphere/tag`
 
 ```typescript
 const dateLabels = {
-  'next-action': 'Set due date (optional)',
-  'project': 'Set target date (optional)',
-  'someday': 'Set reminder date (optional)',
-  'person': 'Set follow-up date (optional)',
-  'reference': null, // No date support
-  'waiting-for': 'Set follow-up date (optional)'
+  "next-action": "Set due date (optional)",
+  project: "Set target date (optional)",
+  someday: "Set reminder date (optional)",
+  person: "Set follow-up date (optional)",
+  reference: null, // No date support
+  "waiting-for": "Set follow-up date (optional)",
 };
 ```
 
 **Rationale:**
+
 - Labels communicate semantic meaning in context
 - "Optional" signals this isn't required
 - Different contexts need different mental models (due vs reminder vs follow-up)
@@ -122,10 +133,12 @@ const dateLabels = {
 ### Files Requiring Updates
 
 **Data model:**
+
 - `src/inbox-types.ts` - Rename `reminderDate` → `dueDate`
 - `src/inbox-item-persistence.ts` - Update persistence logic
 
 **File writing:**
+
 - `src/file-writer.ts` - Update all action writing functions to include `dueDate`
   - `writeToNextActionsFile()`
   - `writeToSomedayFile()`
@@ -134,21 +147,25 @@ const dateLabels = {
   - Writing to person notes
 
 **UI:**
+
 - `src/inbox-modal-views.ts` - Add collapsible date section with dynamic labels
 - `src/inbox-modal-state.ts` - Track collapsed/expanded state
 
 **Icon changes:**
+
 - `src/inbox-modal-views.ts` - Toggle button: ⏰ → 🤝
 - `src/sphere-view.ts` - Action display: 🕐 → 🤝
 - `src/focus-view.ts` - Waiting indicator: 🕐 → 🤝 (two locations)
 
 **Documentation:**
+
 - `CLAUDE.md` - Update waiting-for icon documentation
 - `CLAUDE.md` - Add due date feature documentation
 
 ### Validation
 
 Reuse existing `validateReminderDate()` from `src/validation.ts`:
+
 - Format: YYYY-MM-DD
 - Valid calendar date
 - Empty string is valid (optional field)
@@ -160,11 +177,13 @@ No changes needed to validation logic.
 ### Unit Tests
 
 **Data model:**
+
 - `tests/inbox-types.test.ts` - Type definitions include `dueDate`
 - `tests/validation.test.ts` - Already covers date validation (no changes)
 - `tests/inbox-item-persistence.test.ts` - Persistence includes `dueDate`
 
 **File writing:**
+
 - `tests/file-writer.test.ts` - Add due date tests for:
   - Next actions (regular and waiting-for)
   - Someday items (rename `reminderDate` tests to `dueDate`)
@@ -173,6 +192,7 @@ No changes needed to validation logic.
   - Verify format: `text 📅 YYYY-MM-DD #sphere/tag`
 
 **UI:**
+
 - `tests/inbox-modal-views.test.ts` - Collapsible section rendering
 - Dynamic label based on action type
 - Date input validation and error display
@@ -186,6 +206,7 @@ No changes needed to validation logic.
 ### Icon Change Tests
 
 Update all tests expecting clock emojis to expect handshake:
+
 - `tests/sphere-view.test.ts` - "display clock emoji" → "display handshake emoji"
 - `tests/focus-view.test.ts` - Waiting-for indicator tests
 - `tests/inbox-modal-views.test.ts` - Toggle button tests
