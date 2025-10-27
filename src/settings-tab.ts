@@ -332,19 +332,5 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    // GTD Principles Info
-    containerEl.createEl("h3", { text: "GTD Principles" });
-    const gtdInfo = containerEl.createDiv("flow-gtd-info");
-    gtdInfo.innerHTML = `
-			<p><strong>This plugin helps you implement GTD (Getting Things Done) methodology:</strong></p>
-			<ul>
-				<li><strong>Capture:</strong> Collect everything that has your attention</li>
-				<li><strong>Clarify:</strong> Process what each item means and what to do about it</li>
-				<li><strong>Organise:</strong> Put it where it belongs (projects, next actions, etc.)</li>
-				<li><strong>Review:</strong> Look over your system regularly</li>
-				<li><strong>Engage:</strong> Simply do what needs to be done</li>
-			</ul>
-			<p>This plugin focuses on the Capture, Clarify, and Organise steps, helping you process inbox items into well-formed projects and next actions.</p>
-		`;
   }
 }
