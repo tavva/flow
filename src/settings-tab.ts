@@ -31,7 +31,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(containerEl)
+    const providerDropdownContainer = containerEl.createDiv();
+    new Setting(providerDropdownContainer)
       .setName("AI Provider")
       .setDesc("Choose which language model to use for GTD processing.")
       .addDropdown((dropdown) =>
@@ -140,7 +141,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       const aiEnabled = this.plugin.settings.aiEnabled;
       const isAnthropic = this.plugin.settings.llmProvider === "anthropic";
 
-      // Show/hide provider-specific settings based on AI enabled state and provider selection
+      // Show/hide all AI-related settings based on AI enabled state
+      providerDropdownContainer.style.display = aiEnabled ? "" : "none";
       anthropicContainer.style.display = aiEnabled && isAnthropic ? "" : "none";
       openAIContainer.style.display = aiEnabled && !isAnthropic ? "" : "none";
     };

@@ -97,12 +97,14 @@ export function renderEditableItemsView(
 
   headerLeft.createEl("h2", { text: "Flow inbox processing" });
   headerLeft.createEl("p", {
-    text: "Review your inbox items. You can edit them manually or refine with AI, then save them to your vault.",
+    text: state.settingsSnapshot.aiEnabled
+      ? "Review your inbox items. You can edit them manually or refine with AI, then save them to your vault."
+      : "Review your inbox items. Edit them manually, then save them to your vault.",
     cls: "flow-gtd-description",
   });
 
-  // Refine all button (right-aligned)
-  if (state.editableItems.length > 0) {
+  // Refine all button (right-aligned) - only show if AI is enabled
+  if (state.settingsSnapshot.aiEnabled && state.editableItems.length > 0) {
     const unprocessedCount = state.editableItems.filter((item) => !item.isAIProcessed).length;
 
     if (unprocessedCount > 0) {
@@ -177,8 +179,8 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
         text: "Processing…",
         cls: "flow-gtd-item-pill flow-gtd-item-pill-warn",
       });
-    } else {
-      // AI Refine button (only if not processed and not processing) - on the left
+    } else if (state.settingsSnapshot.aiEnabled) {
+      // AI Refine button (only if AI enabled, not processed and not processing) - on the left
       const refineBtn = leftSide.createEl("button", {
         type: "button",
         cls: "flow-gtd-ai-refine-button",
