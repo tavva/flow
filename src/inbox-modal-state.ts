@@ -85,6 +85,11 @@ export class InboxModalState {
   }
 
   async refineAllWithAI() {
+    if (!this.settings.aiEnabled) {
+      new Notice("AI features are disabled. Enable them in settings to use AI refinement.");
+      return;
+    }
+
     const unprocessedIndexes = this.editableItems.reduce<number[]>((indexes, item, index) => {
       if (!item.isAIProcessed) {
         indexes.push(index);
@@ -156,6 +161,11 @@ export class InboxModalState {
   }
 
   async refineIndividualItem(item: EditableItem) {
+    if (!this.settings.aiEnabled) {
+      new Notice("AI features are disabled. Enable them in settings to use AI refinement.");
+      return;
+    }
+
     if (item.isProcessing || item.isAIProcessed) {
       return;
     }
@@ -240,6 +250,10 @@ export class InboxModalState {
   }
 
   async suggestProjectName(originalItem: string): Promise<string> {
+    if (!this.settings.aiEnabled) {
+      throw new Error("AI features are disabled. Enable them in settings to use AI suggestions.");
+    }
+
     try {
       return await this.controller.suggestProjectName(originalItem);
     } catch (error) {

@@ -17,6 +17,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     containerEl.createEl("h2", { text: "Flow Settings" });
 
+    // AI Enable/Disable Toggle
+    new Setting(containerEl)
+      .setName("Enable AI features")
+      .setDesc(
+        "Enable AI-powered inbox processing and project review. When disabled, all AI functionality is unavailable."
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.aiEnabled).onChange(async (value) => {
+          this.plugin.settings.aiEnabled = value;
+          await this.plugin.saveSettings();
+          updateProviderVisibility();
+        })
+      );
+
     new Setting(containerEl)
       .setName("AI Provider")
       .setDesc("Choose which language model to use for GTD processing.")
@@ -123,9 +137,12 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                 `;
 
     const updateProviderVisibility = () => {
+      const aiEnabled = this.plugin.settings.aiEnabled;
       const isAnthropic = this.plugin.settings.llmProvider === "anthropic";
-      anthropicContainer.style.display = isAnthropic ? "" : "none";
-      openAIContainer.style.display = isAnthropic ? "none" : "";
+
+      // Show/hide provider-specific settings based on AI enabled state and provider selection
+      anthropicContainer.style.display = aiEnabled && isAnthropic ? "" : "none";
+      openAIContainer.style.display = aiEnabled && !isAnthropic ? "" : "none";
     };
 
     updateProviderVisibility();

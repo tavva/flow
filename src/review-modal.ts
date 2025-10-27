@@ -325,6 +325,20 @@ export class ReviewModal extends Modal {
   }
 
   private async startReview(sphere: string) {
+    if (!this.settings.aiEnabled) {
+      this.contentEl.empty();
+      this.contentEl.createEl("h2", { text: "AI Features Disabled" });
+      this.contentEl.createEl("p", {
+        text: "AI features are disabled. Enable them in settings to use project review.",
+        cls: "setting-item-description",
+      });
+
+      new Setting(this.contentEl).addButton((btn) =>
+        btn.setButtonText("Close").onClick(() => this.close())
+      );
+      return;
+    }
+
     this.selectedSphere = sphere;
 
     try {

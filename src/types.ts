@@ -77,6 +77,7 @@ export interface PersonSuggestion {
 export type LLMProvider = "anthropic" | "openai-compatible";
 
 export interface PluginSettings {
+  aiEnabled: boolean; // Master toggle for all AI functionality
   llmProvider: LLMProvider;
   anthropicApiKey: string;
   anthropicModel: string;
@@ -101,6 +102,7 @@ export interface PluginSettings {
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
+  aiEnabled: false, // Disabled by default
   llmProvider: "openai-compatible",
   openaiApiKey: "",
   openaiBaseUrl: "https://openrouter.ai/api/v1",
