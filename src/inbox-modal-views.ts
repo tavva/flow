@@ -541,10 +541,15 @@ function renderDateSection(container: HTMLElement, item: EditableItem, state: In
   // Initial clear button state
   updateClearButton();
 
+  // Initialize from persisted state
+  let isExpanded = item.isDateSectionExpanded || false;
+  dateInputContainer.style.display = isExpanded ? "block" : "none";
+  chevron.textContent = isExpanded ? "▼" : "▶";
+
   // Toggle collapsed/expanded
-  let isExpanded = false;
   dateSectionHeader.addEventListener("click", () => {
     isExpanded = !isExpanded;
+    item.isDateSectionExpanded = isExpanded; // Persist state
     dateInputContainer.style.display = isExpanded ? "block" : "none";
     chevron.textContent = isExpanded ? "▼" : "▶";
   });
