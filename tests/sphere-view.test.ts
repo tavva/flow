@@ -483,7 +483,7 @@ describe("SphereView", () => {
   });
 
   describe("waiting-for visual indicator", () => {
-    it("should display clock emoji for waiting-for items", async () => {
+    it("should display handshake emoji for waiting-for items", async () => {
       // Mock line finder to return waiting-for checkbox for one action
       mockLineFinder.findActionLine.mockImplementation((file: string, action: string) => {
         if (action === "Wait for client response") {
@@ -525,9 +525,9 @@ describe("SphereView", () => {
         false
       );
 
-      // Should have clock emoji prefix in markdown
+      // Should have handshake emoji prefix in markdown
       expect(renderMarkdownSpy).toHaveBeenCalledWith(
-        "🕐 Wait for client response",
+        "🤝 Wait for client response",
         expect.anything(),
         "",
         view
@@ -544,7 +544,7 @@ describe("SphereView", () => {
         false
       );
 
-      // Should NOT have clock emoji prefix
+      // Should NOT have handshake emoji prefix
       expect(renderMarkdownSpy).toHaveBeenCalledWith("Regular action", expect.anything(), "", view);
 
       renderMarkdownSpy.mockRestore();

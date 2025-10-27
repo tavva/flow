@@ -647,7 +647,7 @@ function renderNextActionsEditor(
     // Waiting-for toggle button
     const waitingToggle = actionItem.createEl("button", {
       cls: "flow-gtd-next-action-waiting-toggle",
-      text: "⏰",
+      text: "🤝",
     });
     waitingToggle.setAttribute("type", "button");
     waitingToggle.title = "Toggle waiting for";

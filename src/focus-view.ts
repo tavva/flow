@@ -345,13 +345,13 @@ export class FocusView extends ItemView {
     const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";
 
-    // Add clock emoji for waiting-for items (outside the item box)
+    // Add handshake emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
-      const clockSpan = itemEl.createSpan({
+      const handshakeSpan = itemEl.createSpan({
         cls: "flow-gtd-focus-waiting-indicator",
-        text: "🕐 ",
+        text: "🤝 ",
       });
-      clockSpan.style.marginRight = "8px";
+      handshakeSpan.style.marginRight = "8px";
     }
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
@@ -447,13 +447,13 @@ export class FocusView extends ItemView {
     const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";
 
-    // Add clock emoji for waiting-for items (outside the item box)
+    // Add handshake emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
-      const clockSpan = itemEl.createSpan({
+      const handshakeSpan = itemEl.createSpan({
         cls: "flow-gtd-focus-waiting-indicator",
-        text: "🕐 ",
+        text: "🤝 ",
       });
-      clockSpan.style.marginRight = "8px";
+      handshakeSpan.style.marginRight = "8px";
     }
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });

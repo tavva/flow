@@ -449,8 +449,8 @@ export class SphereView extends ItemView {
         ? /^[-*]\s*\[w\]/i.test(lineResult.lineContent)
         : false;
 
-    // Create the display text with clock emoji if waiting-for
-    const displayText = isWaitingFor ? `🕐 ${action}` : action;
+    // Create the display text with handshake emoji if waiting-for
+    const displayText = isWaitingFor ? `🤝 ${action}` : action;
 
     const item = list.createEl("li");
     await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
