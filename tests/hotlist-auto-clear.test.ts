@@ -142,11 +142,11 @@ describe("archiveClearedTasks", () => {
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- Do something")
+      expect.stringContaining("- [[Projects/Test]] Do something")
     );
     expect(mockVault.create).toHaveBeenCalledWith(
       archiveFilePath,
-      expect.stringContaining("- Call someone")
+      expect.stringContaining("- [[Next actions|Call someone]]")
     );
   });
 
@@ -177,7 +177,10 @@ describe("archiveClearedTasks", () => {
       mockFile,
       expect.stringContaining("## Cleared 15 October 2025 at 03:00")
     );
-    expect(mockVault.modify).toHaveBeenCalledWith(mockFile, expect.stringContaining("- Task one"));
+    expect(mockVault.modify).toHaveBeenCalledWith(
+      mockFile,
+      expect.stringContaining("- [[Projects/Test]] Task one")
+    );
     expect(mockVault.modify).toHaveBeenCalledWith(
       mockFile,
       expect.stringContaining(existingContent)
