@@ -157,7 +157,7 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       // Simple original text display for refined items with completion icon
       const originalContainer = itemEl.createDiv();
       originalContainer.style.display = "flex";
-      originalContainer.style.alignItems = "flex-start";
+      originalContainer.style.alignItems = "center";
       originalContainer.style.gap = "8px";
 
       const originalBox = originalContainer.createDiv("flow-gtd-original-box");
@@ -184,14 +184,14 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
         completionIcon.style.justifyContent = "center";
         completionIcon.style.color = "var(--color-green)";
         completionIcon.style.flexShrink = "0";
-        completionIcon.style.marginTop = "2px";
+        completionIcon.style.marginLeft = "8px";
         setIcon(completionIcon, "check-circle");
       }
     } else {
       // Prominent box for non-refined items with refine button on the right
       const originalContainer = itemEl.createDiv();
       originalContainer.style.display = "flex";
-      originalContainer.style.alignItems = "flex-start";
+      originalContainer.style.alignItems = "center";
       originalContainer.style.gap = "8px";
 
       const originalBox = originalContainer.createDiv("flow-gtd-original-unprocessed");
@@ -225,7 +225,7 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
         refineBtn.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
         refineBtn.style.color = item.isProcessing ? "var(--text-muted)" : "var(--interactive-accent)";
         refineBtn.style.flexShrink = "0";
-        refineBtn.style.marginTop = "2px";
+        refineBtn.style.marginLeft = "8px";
         refineBtn.disabled = item.isProcessing === true;
 
         if (item.isProcessing) {
