@@ -1415,39 +1415,41 @@ select.flow-gtd-inline-select option,
 
 /* Fix Setting component layout in project section */
 .flow-gtd-project-section .setting-item {
-	display: block !important;
+	display: flex !important;
+	align-items: center;
+	justify-content: space-between;
 	padding: 16px 0;
 	border: none;
 	margin: 0;
+	gap: 16px;
 }
 
 .flow-gtd-project-section .setting-item-info {
-	display: block;
-	width: 100%;
+	flex: 0 0 auto;
 	margin-right: 0;
-	margin-bottom: 8px;
-	float: none;
+	margin-bottom: 0;
 }
 
 .flow-gtd-project-section .setting-item-control {
-	display: block;
-	width: 100%;
-	max-width: none;
-	flex-grow: 0;
+	flex: 0 0 auto;
+	width: auto;
+	min-width: 120px;
 	margin-left: 0;
-	float: none;
 }
 
 .flow-gtd-project-section .setting-item-name {
 	font-size: 14px;
 	font-weight: 600;
-	margin-bottom: 4px;
+	margin-bottom: 0;
+	display: inline;
+	margin-right: 8px;
 }
 
 .flow-gtd-project-section .setting-item-description {
 	font-size: 12px;
 	color: var(--text-muted);
 	margin-bottom: 0;
+	display: inline;
 }
 
 /* Pinned section styling */
