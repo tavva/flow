@@ -118,8 +118,16 @@ The CLI supports time-triggered custom review routines:
 - **Format**: Markdown with optional YAML frontmatter
 - **Triggers**: Day of week + time period (morning/afternoon/evening)
 - **Spheres**: Optional sphere filtering for multi-sphere reviews
-- **Auto-suggestion**: Matching reviews are suggested on CLI startup
-- **Manual invocation**: User can request reviews by name anytime (implementation pending)
+- **Auto-suggestion**: Matching reviews are suggested on CLI startup with numbered selection
+- **Manual invocation**: Request reviews anytime with patterns like "run friday review" or "start weekly review"
+- **Protocol selection**: Number (1, 2), name ("friday"), or partial match at startup
+- **Step-by-step**: AI follows protocol content and waits for acknowledgment between sections
+
+**Selection Patterns:**
+- Startup: Type number, name, or "no"
+- During conversation: "run X review", "start X review", "begin X review", "X review"
+
+**Testing**: See `docs/manual-testing-custom-reviews.md` for test scenarios and example protocols
 
 **Protocol scanning** (`protocol-scanner.ts`):
 
