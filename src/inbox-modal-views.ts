@@ -686,15 +686,24 @@ function renderNextActionsEditor(
     removeBtn.setAttribute("aria-label", "Remove action");
     removeBtn.setAttribute("title", "Remove action");
     removeBtn.innerHTML = "✕";
-    removeBtn.addEventListener("click", () => {
-      currentNextActions.splice(index, 1);
-      waitingForArray.splice(index, 1);
-      item.editedNames = [...currentNextActions];
-      if (currentNextActions.length === 1) {
-        item.editedName = currentNextActions[0];
-      }
-      state.queueRender("editable");
-    });
+
+    // Disable remove button if there's only one action
+    const isOnlyAction = currentNextActions.length === 1;
+    if (isOnlyAction) {
+      removeBtn.disabled = true;
+      removeBtn.style.opacity = "0.3";
+      removeBtn.style.cursor = "not-allowed";
+    } else {
+      removeBtn.addEventListener("click", () => {
+        currentNextActions.splice(index, 1);
+        waitingForArray.splice(index, 1);
+        item.editedNames = [...currentNextActions];
+        if (currentNextActions.length === 1) {
+          item.editedName = currentNextActions[0];
+        }
+        state.queueRender("editable");
+      });
+    }
   });
 
   // Add action button
