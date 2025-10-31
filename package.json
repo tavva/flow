@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "gray-matter": "^4.0.3",
     "ink": "^5.2.1",
     "ink-spinner": "^5.0.0",
     "marked": "^15.0.12",
