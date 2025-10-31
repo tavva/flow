@@ -110,6 +110,39 @@ The CLI provides the LLM with 4 tools to modify the vault (`src/cli-tools.ts`):
 
 The CLI requires user approval before executing any tool calls that modify the vault.
 
+**Custom Review Routines:**
+
+The CLI supports time-triggered custom review routines:
+
+- **Review files location**: `{vault}/.flow/reviews/*.md`
+- **Format**: Markdown with optional YAML frontmatter
+- **Triggers**: Day of week + time period (morning/afternoon/evening)
+- **Spheres**: Optional sphere filtering for multi-sphere reviews
+- **Auto-suggestion**: Matching reviews are suggested on CLI startup with numbered selection
+- **Manual invocation**: Request reviews anytime with patterns like "run friday review" or "start weekly review"
+- **Protocol selection**: Number (1, 2), name ("friday"), or partial match at startup
+- **Step-by-step**: AI follows protocol content and waits for acknowledgment between sections
+
+**Selection Patterns:**
+- Startup: Type number, name, or "no"
+- During conversation: "run X review", "start X review", "begin X review", "X review"
+
+**Testing**: See `docs/manual-testing-custom-reviews.md` for test scenarios and example protocols
+
+**Protocol scanning** (`protocol-scanner.ts`):
+
+- Finds all `.md` files in reviews directory
+- Parses YAML frontmatter for triggers and spheres
+- Extracts protocol name from first H1 heading (fallback to filename)
+- Gracefully handles invalid YAML or missing frontmatter
+
+**Protocol matching** (`protocol-matcher.ts`):
+
+- Matches protocols against current day/time
+- Time periods: morning (5am-12pm), afternoon (12pm-6pm), evening (6pm-5am)
+- Evening period correctly handles midnight crossing
+- Protocols without triggers are never auto-suggested but can be manually invoked
+
 ## Architecture
 
 ### Core Processing Flow
@@ -128,6 +161,8 @@ The CLI requires user approval before executing any tool calls that modify the v
 12. **Validation** (`src/validation.ts`) - Input validation and error handling
 13. **Errors** (`src/errors.ts`) - Custom error types and handling
 14. **Network Retry** (`src/network-retry.ts`) - Automatic retry logic for network errors with exponential backoff
+15. **Protocol Scanner** (`src/protocol-scanner.ts`) - Scans for review protocol files in vault
+16. **Protocol Matcher** (`src/protocol-matcher.ts`) - Matches protocols to current day/time
 
 ### Utility Components
 
@@ -520,6 +555,9 @@ CLI tests:
 - `cli-approval.test.ts` - CLI approval workflows
 - `cli-opening-message.test.ts` - CLI opening message generation
 - `cli-system-prompt.test.ts` - CLI system prompt construction
+- `cli-protocol-integration.test.ts` - CLI protocol scanning and selection
+- `protocol-scanner.test.ts` - Review protocol file scanning
+- `protocol-matcher.test.ts` - Time-based protocol matching
 
 Other tests:
 

@@ -22,6 +22,9 @@ import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
 import { FileWriter } from "./file-writer";
 import wrapAnsi from 'wrap-ansi';
 import { SystemAnalyzer, SystemIssues } from "./system-analyzer";
+import { scanReviewProtocols } from './protocol-scanner';
+import { matchProtocolsForTime } from './protocol-matcher';
+import { ReviewProtocol } from './types';
 
 /**
  * Wraps text to terminal width whilst preserving ANSI color codes.
@@ -82,7 +85,8 @@ export function loadPluginSettings(vaultPath: string): PluginSettings {
 export function buildSystemPrompt(
   projects: FlowProject[],
   sphere: string,
-  gtdContext: GTDContext
+  gtdContext: GTDContext,
+  protocol?: ReviewProtocol
 ): string {
   // Build hierarchy to get correct count including all sub-projects
   const hierarchy = buildProjectHierarchy(projects);
@@ -171,6 +175,15 @@ export function buildSystemPrompt(
   prompt += `- Suggest improvements using available tools\n`;
   prompt += `- Wait for acknowledgment before proceeding\n`;
   prompt += `- Accept questions or requests to skip steps\n\n`;
+
+  // Add custom review protocol if provided
+  if (protocol) {
+    prompt += `Custom Review in Progress:\n`;
+    prompt += `The user has selected the "${protocol.name}" review. Follow the protocol below:\n\n`;
+    prompt += `---\n${protocol.content}\n---\n\n`;
+    prompt += `Follow this protocol step-by-step. After presenting each section or completing each task, `;
+    prompt += `wait for the user to acknowledge before moving to the next step.\n\n`;
+  }
 
   if (projectCount === 0 && nextActionsCount === 0 && somedayCount === 0 && inboxCount === 0) {
     prompt += `No GTD data found. You can still answer general GTD methodology questions.\n`;
@@ -320,6 +333,37 @@ export function buildAnalysisPrompt(issues: SystemIssues): string {
   return prompt;
 }
 
+function detectProtocolInvocation(input: string, protocols: ReviewProtocol[]): ReviewProtocol | null {
+  const lowerInput = input.toLowerCase();
+
+  // Check for review/protocol invocation patterns
+  const patterns = [
+    /(?:run|start|do|begin)\s+(?:the\s+)?(.+?)\s+(?:review|protocol)/i,
+    /(?:review|protocol):\s*(.+)/i,
+    /^(.+?)\s+review$/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = input.match(pattern);
+    if (match) {
+      const searchTerm = match[1].trim().toLowerCase();
+
+      // Try to find matching protocol
+      const protocol = protocols.find(
+        (p) =>
+          p.name.toLowerCase().includes(searchTerm) ||
+          p.filename.toLowerCase().includes(searchTerm)
+      );
+
+      if (protocol) {
+        return protocol;
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function runREPL(
   languageModelClient: LanguageModelClient,
   model: string,
@@ -329,7 +373,8 @@ export async function runREPL(
   projectCount: number,
   sphere: string,
   mockApp: App,
-  settings: PluginSettings
+  settings: PluginSettings,
+  protocols: ReviewProtocol[]
 ): Promise<void> {
   const messages: ChatMessage[] = [];
 
@@ -463,11 +508,29 @@ export async function runREPL(
       continue;
     }
 
-    // Add user message
-    messages.push({
-      role: "user",
-      content: input,
-    });
+    // Check for protocol invocation
+    const invokedProtocol = detectProtocolInvocation(input, protocols);
+    if (invokedProtocol) {
+      console.log(`Loading ${invokedProtocol.name}...\n`);
+
+      // Add protocol content as a system message
+      messages.push({
+        role: "system",
+        content: `The user has requested the "${invokedProtocol.name}" review. Follow the protocol below:\n\n---\n${invokedProtocol.content}\n---\n\nFollow this protocol step-by-step. After presenting each section or completing each task, wait for the user to acknowledge before moving to the next step.`,
+      });
+
+      // Add confirmation message from user
+      messages.push({
+        role: "user",
+        content: `Let's do the ${invokedProtocol.name}.`,
+      });
+    } else {
+      // Add user message as normal
+      messages.push({
+        role: "user",
+        content: input,
+      });
+    }
 
     try {
       // Show thinking indicator
@@ -739,6 +802,22 @@ class MockApp {
   }
 }
 
+function getCurrentTimeDescription(): string {
+  const now = new Date();
+  const hour = now.getHours();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const day = days[now.getDay()];
+
+  let timeOfDay = 'morning';
+  if (hour >= 12 && hour < 18) {
+    timeOfDay = 'afternoon';
+  } else if (hour >= 18 || hour < 5) {
+    timeOfDay = 'evening';
+  }
+
+  return `${day} ${timeOfDay}`;
+}
+
 export async function main() {
   // Handle Ctrl+C gracefully
   process.on('SIGINT', () => {
@@ -770,18 +849,87 @@ export async function main() {
       process.exit(1);
     }
 
+    // Scan for review protocols
+    const protocols = scanReviewProtocols(args.vaultPath);
+    const matchedProtocols = matchProtocolsForTime(protocols, new Date());
+
+    // If protocols matched, offer to run one
+    let selectedProtocol: ReviewProtocol | null = null;
+    if (matchedProtocols.length > 0) {
+      console.log('\nI found these reviews for ' + getCurrentTimeDescription() + ':');
+      matchedProtocols.forEach((protocol, index) => {
+        console.log(`${index + 1}. ${protocol.name}`);
+      });
+      console.log('\nWould you like to run one? (type number, name, or "no")\n');
+
+      // Get user selection
+      const selection = await new Promise<string>((resolve) => {
+        const { unmount } = render(
+          <InboxApp
+            onComplete={(text) => {
+              unmount();
+              console.log(`${colors.user}You:${colors.reset} ${text.trim()}\n`);
+              resolve(text);
+            }}
+          />
+        );
+      });
+
+      const trimmed = selection.trim().toLowerCase();
+
+      // Parse selection
+      if (trimmed !== 'no' && trimmed !== '') {
+        // Try to parse as number
+        const index = parseInt(trimmed, 10);
+        if (!isNaN(index) && index >= 1 && index <= matchedProtocols.length) {
+          selectedProtocol = matchedProtocols[index - 1];
+        } else {
+          // Try to match by name (case-insensitive partial match)
+          const match = matchedProtocols.find(p =>
+            p.name.toLowerCase().includes(trimmed) ||
+            p.filename.toLowerCase().includes(trimmed)
+          );
+          if (match) {
+            selectedProtocol = match;
+          } else {
+            console.log(`Could not find review matching "${selection}". Continuing without review.\n`);
+          }
+        }
+      }
+
+      if (selectedProtocol) {
+        console.log(`Starting ${selectedProtocol.name}...\n`);
+      }
+    }
+
     // Scan vault for projects
     const mockApp = new MockApp(args.vaultPath);
     const scanner = new FlowProjectScanner(mockApp as any);
     const allProjects = await scanner.scanProjects();
 
-    // Filter by sphere
+    // Determine which spheres to include
+    let spheresToInclude: string[];
+    let sphereLabel: string;
+
+    if (selectedProtocol && selectedProtocol.spheres && selectedProtocol.spheres.length > 0) {
+      // Protocol specifies spheres - use those instead
+      spheresToInclude = selectedProtocol.spheres;
+      sphereLabel = spheresToInclude.join(', ');
+    } else {
+      // Use CLI argument sphere
+      spheresToInclude = [args.sphere];
+      sphereLabel = args.sphere;
+    }
+
+    // Filter projects by sphere(s)
     const projects = allProjects.filter((project) =>
-      project.tags.some((tag) => tag === `project/${args.sphere}`)
+      project.tags.some((tag) =>
+        spheresToInclude.some(sphere => tag === `project/${sphere}`)
+      )
     );
 
     if (projects.length === 0) {
-      console.warn(`Warning: No projects found for sphere "${args.sphere}"`);
+      console.warn(`Warning: No projects found for sphere(s) "${sphereLabel}"`);
       console.warn("Continuing anyway - you can discuss why projects might be missing.\n");
     }
 
@@ -789,8 +937,13 @@ export async function main() {
     const gtdScanner = new GTDContextScanner(mockApp as any, settings);
     const gtdContext = await gtdScanner.scanContext();
 
-    // Build system prompt
-    const systemPrompt = buildSystemPrompt(projects, args.sphere, gtdContext);
+    // Build system prompt with protocol if selected
+    const systemPrompt = buildSystemPrompt(
+      projects,
+      sphereLabel,
+      gtdContext,
+      selectedProtocol ?? undefined
+    );
 
     // Create language model
     const languageModelClient = createLanguageModelClient(settings);
@@ -810,9 +963,10 @@ export async function main() {
       gtdContext,
       projects,
       projects.length,
-      args.sphere,
+      sphereLabel,
       mockApp as any,
-      settings
+      settings,
+      protocols
     );
   } catch (error) {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
