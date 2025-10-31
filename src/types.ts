@@ -164,3 +164,14 @@ export interface ProjectReviewResponse {
   merges: ProjectMerge[];
   statusChanges: ProjectStatusChange[];
 }
+
+export interface ReviewProtocol {
+  filename: string;        // e.g., "friday-afternoon.md"
+  name: string;            // Extracted from first H1, fallback to filename
+  trigger?: {
+    day?: string;          // monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    time?: string;         // morning, afternoon, evening
+  };
+  spheres?: string[];      // e.g., ["work", "personal"]
+  content: string;         // Full markdown body (without frontmatter)
+}
