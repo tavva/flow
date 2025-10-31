@@ -12,7 +12,7 @@ describe("MultilineTextarea", () => {
       />
     );
 
-    expect(lastFrame()).toContain("Ctrl+Enter for new line");
+    expect(lastFrame()).toContain("Ctrl+J for new line");
 
     unmount();
   });
@@ -25,7 +25,7 @@ describe("MultilineTextarea", () => {
     const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component structure
-    expect(lastFrame()).toContain("Ctrl+Enter for new line");
+    expect(lastFrame()).toContain("Ctrl+J for new line");
     expect(lastFrame()).toContain(">");
 
     unmount();
@@ -44,15 +44,15 @@ describe("MultilineTextarea", () => {
     unmount();
   });
 
-  it("should support Shift+Enter newline (structure test)", () => {
-    // Note: Shift+Enter newline insertion will be verified via integration testing
+  it("should support Ctrl+J newline (structure test)", () => {
+    // Note: Ctrl+J newline insertion will be verified via integration testing
     // in Task 10, as our custom ink mocks don't support interactive keyboard event
     // simulation. This test validates that the component structure supports multiline input.
     const onSubmit = jest.fn();
     const { lastFrame, unmount } = render(<MultilineTextarea prompt="Enter text" onSubmit={onSubmit} />);
 
     // Verify component renders with newline instructions
-    expect(lastFrame()).toContain("Ctrl+Enter for new line");
+    expect(lastFrame()).toContain("Ctrl+J for new line");
 
     unmount();
   });

@@ -96,22 +96,53 @@ export function MultilineTextarea({ prompt, onSubmit }: MultilineTextareaProps) 
       return;
     }
 
-    // Handle regular character input (including Shift+character for capitals)
-    if (!key.return && !key.ctrl && !key.meta && input.length === 1) {
-      setLines((prevLines) => {
-        const newLines = [...prevLines];
-        const currentLine = newLines[cursorRow];
-        newLines[cursorRow] =
-          currentLine.slice(0, cursorCol) + input + currentLine.slice(cursorCol);
-        return newLines;
-      });
-      setCursorCol((prev) => prev + 1);
+    // Handle regular character input and paste (including Shift+character for capitals)
+    if (!key.return && !key.ctrl && !key.meta && input.length > 0) {
+      // Check if pasted content contains newlines
+      if (input.includes('\n')) {
+        const pastedLines = input.split('\n');
+        setLines((prevLines) => {
+          const newLines = [...prevLines];
+          const currentLine = newLines[cursorRow];
+          const before = currentLine.slice(0, cursorCol);
+          const after = currentLine.slice(cursorCol);
+
+          // Replace current line with before + first pasted line
+          newLines[cursorRow] = before + pastedLines[0];
+
+          // Insert all middle and remaining pasted lines
+          for (let i = 1; i < pastedLines.length; i++) {
+            newLines.splice(cursorRow + i, 0, pastedLines[i]);
+          }
+
+          // Append after to the last pasted line
+          const lastLineIndex = cursorRow + pastedLines.length - 1;
+          newLines[lastLineIndex] = newLines[lastLineIndex] + after;
+
+          return newLines;
+        });
+
+        // Move cursor to end of last pasted content (before the 'after' part)
+        const lastPastedLine = pastedLines[pastedLines.length - 1];
+        setCursorRow((prev) => prev + pastedLines.length - 1);
+        setCursorCol(lastPastedLine.length);
+      } else {
+        // Single or multi-character input without newlines
+        setLines((prevLines) => {
+          const newLines = [...prevLines];
+          const currentLine = newLines[cursorRow];
+          newLines[cursorRow] =
+            currentLine.slice(0, cursorCol) + input + currentLine.slice(cursorCol);
+          return newLines;
+        });
+        setCursorCol((prev) => prev + input.length);
+      }
     }
   });
 
   return (
     <Box flexDirection="column">
-      <Text>• Ctrl+Enter for new line, Enter to submit</Text>
+      <Text>• Ctrl+J for new line, Enter to submit</Text>
       <Text>{""}</Text>
       {lines.map((line, index) => {
         const isCurrentLine = index === cursorRow;
