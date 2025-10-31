@@ -124,6 +124,7 @@ The CLI supports time-triggered custom review routines:
 - **Step-by-step**: AI follows protocol content and waits for acknowledgment between sections
 
 **Selection Patterns:**
+
 - Startup: Type number, name, or "no"
 - During conversation: "run X review", "start X review", "begin X review", "X review"
 

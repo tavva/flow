@@ -38,6 +38,7 @@ Time to wrap up the week and plan for the weekend.
 ## 1. Week Completion
 
 Review what you accomplished this week in your personal sphere:
+
 - What went well?
 - What didn't get done?
 - Any wins to celebrate?
@@ -49,6 +50,7 @@ Process all personal inbox items to zero.
 ## 3. Weekend Planning
 
 Set intentions for the weekend:
+
 - What do you want to accomplish?
 - What do you want to rest and recharge?
 - Any social commitments or family time?
@@ -80,6 +82,7 @@ What are your top 3 goals for this week?
 ## 2. Calendar Review
 
 Review your calendar for the week:
+
 - Any conflicts?
 - Any prep needed for meetings?
 - Time blocked for deep work?
@@ -87,6 +90,7 @@ Review your calendar for the week:
 ## 3. Project Check
 
 Review active projects:
+
 - Which need attention this week?
 - Any stalled projects to restart or archive?
 
@@ -117,6 +121,7 @@ Process all inboxes to zero.
 ## 2. Get Current
 
 Review and update:
+
 - All active projects
 - Next actions lists
 - Waiting for items
@@ -125,6 +130,7 @@ Review and update:
 ## 3. Get Creative
 
 Review someday/maybe list:
+
 - Anything ready to activate?
 - Anything to prune?
 - New ideas to capture?
