@@ -12,6 +12,7 @@ Allow users to define custom review routines in editable text files, replacing t
 The current CLI has a hardcoded weekly review protocol that works for a general GTD workflow, but doesn't accommodate different review styles or schedules. Ben's review process is split across Friday afternoon (personal focus) and Monday commute (work focus), which the current single protocol can't support.
 
 Users must be able to:
+
 - Define their own review structure and steps
 - Schedule reviews for specific days and times
 - Create multiple review routines for different purposes
@@ -42,11 +43,13 @@ spheres:
 Part 1: Close Work Week (15-20 min)
 
 Quick Capture & Empty
+
 - Collect any loose work notes, emails, Slack messages into work inbox
 - Empty work inbox in Flow (just capture, don't process)
 - Quick scan: did I complete anything this week that isn't marked done?
 
 Review & Release
+
 - Review past week calendar - capture any open loops or follow-ups
 - Check waiting-for list - does anything need a nudge Monday?
 - Brain dump: what's on my mind about work? (capture to work inbox for Monday)
@@ -55,21 +58,24 @@ Review & Release
 Part 2: Full Personal Review (40-45 min)
 
 Get Clear
+
 - Collect loose items (personal emails, notes, random captures) into personal inbox
 - Process personal inbox to zero
 - Empty head - brain dump anything rattling around
 
 Get Current
+
 - Review past week personal calendar - any loose ends?
 - Review upcoming personal calendar (next 2-4 weeks) - anything need preparation?
 - Review all personal projects (~30 projects):
-  * Is status current?
-  * Does each have a clear next action?
-  * Anything to move to someday/maybe or complete?
+  - Is status current?
+  - Does each have a clear next action?
+  - Anything to move to someday/maybe or complete?
 - Review personal next actions list - still relevant and actionable?
 - Review personal waiting-for list - need to follow up on anything?
 
 Get Creative
+
 - Review someday/maybe list - anything ready to activate?
 - Any new personal projects or ideas to capture?
 - Reflect: what went well this week? What could improve?
@@ -80,6 +86,7 @@ Get Creative
 **Automatic suggestion:**
 
 When user starts CLI on Friday afternoon:
+
 ```
 $ npm run cli -- --vault ~/notes
 
@@ -92,6 +99,7 @@ Would you like to run one? (type number, name, or 'no')
 **Manual invocation:**
 
 User can always request a review by name:
+
 ```
 > Run my Friday review
 > Do the weekly review
@@ -112,6 +120,7 @@ User can always request a review by name:
 **Review files location:** `{vault}/.flow/reviews/*.md`
 
 Each file contains:
+
 - YAML frontmatter (optional) with trigger and sphere configuration
 - Markdown body with free-form review instructions
 
@@ -119,18 +128,19 @@ Each file contains:
 
 ```typescript
 interface ReviewProtocol {
-  filename: string;        // e.g., "friday-afternoon.md"
-  name: string;            // Extracted from first H1, fallback to filename
+  filename: string; // e.g., "friday-afternoon.md"
+  name: string; // Extracted from first H1, fallback to filename
   trigger?: {
-    day?: string;          // monday, tuesday, wednesday, thursday, friday, saturday, sunday
-    time?: string;         // morning, afternoon, evening
+    day?: string; // monday, tuesday, wednesday, thursday, friday, saturday, sunday
+    time?: string; // morning, afternoon, evening
   };
-  spheres?: string[];      // e.g., ["work", "personal"]
-  content: string;         // Full markdown body (without frontmatter)
+  spheres?: string[]; // e.g., ["work", "personal"]
+  content: string; // Full markdown body (without frontmatter)
 }
 ```
 
 **Time period definitions:**
+
 - morning: 05:00-11:59
 - afternoon: 12:00-17:59
 - evening: 18:00-04:59 (crosses midnight)
@@ -140,6 +150,7 @@ interface ReviewProtocol {
 #### 1. Protocol Scanner (`src/protocol-scanner.ts`)
 
 Responsibilities:
+
 - Check if `{vault}/.flow/reviews/` exists
 - Find all `.md` files in the directory
 - Parse YAML frontmatter using `gray-matter` or similar
@@ -147,6 +158,7 @@ Responsibilities:
 - Return array of `ReviewProtocol` objects
 
 Error handling:
+
 - Missing directory → return empty array
 - Invalid YAML → log warning, skip that file
 - No H1 heading → use filename as name
@@ -155,11 +167,13 @@ Error handling:
 #### 2. Protocol Matcher (`src/protocol-matcher.ts`)
 
 Responsibilities:
+
 - Take current date/time and array of protocols
 - Match protocols with triggers for current day/time
 - Return matched protocols
 
 Logic:
+
 - Compare current day of week against `trigger.day`
 - Compare current time against `trigger.time` period
 - Protocols without triggers never auto-match (but can be manually invoked)
@@ -168,23 +182,27 @@ Logic:
 #### 3. CLI Integration (`src/cli.tsx` modifications)
 
 **On startup:**
+
 1. Scan for review files using protocol scanner
 2. Match against current day/time using protocol matcher
 3. If matches found, display numbered list and prompt user
 4. If no matches, proceed with normal CLI startup
 
 **When review selected:**
+
 1. Display full review content to user
 2. Append review content to system prompt with instruction: "Guide the user through this review. Follow the structure and steps outlined. Be conversational and adaptive - accept questions, allow skipping steps, and use available tools to help with each section."
 3. Load GTD data for spheres specified in `protocol.spheres` (or all spheres if not specified)
 4. Begin coaching session
 
 **During session:**
+
 - AI follows review structure
 - AI can use existing CLI tools
 - User can deviate, ask questions, skip sections
 
 **On completion:**
+
 - AI detects when all review steps are complete
 - Display: "✓ {Review Name} complete. You can end the session or continue with additional coaching."
 - Wait for user response
@@ -193,28 +211,30 @@ Logic:
 ### Sphere Handling
 
 **Loading data:**
+
 - If protocol has `spheres` field: load only those spheres
 - If protocol has no `spheres` field: load all spheres (safest default)
 - If `--sphere` CLI flag provided: override protocol and load only that sphere
 
 **During review:**
+
 - Protocol content can reference specific spheres (e.g., "Review work projects", "Process personal inbox")
 - AI understands context from protocol text
 - All loaded sphere data is available for AI to reference
 
 ### Error Handling
 
-| Scenario | Behaviour |
-|----------|-----------|
-| `.flow/reviews/` doesn't exist | Skip protocol features, CLI works normally |
-| Invalid YAML frontmatter | Log warning, skip that file, continue with others |
-| No H1 heading in protocol | Use filename as protocol name |
-| Empty protocol body | Skip that file |
-| No protocols match current time | No auto-suggestion, normal CLI startup |
-| Multiple protocols match | Show numbered list, let user choose |
-| User types non-existent protocol name | Show available protocols |
-| Protocol references non-existent sphere | AI mentions it but continues |
-| User stops protocol mid-way | AI switches to normal coaching mode |
+| Scenario                                | Behaviour                                         |
+| --------------------------------------- | ------------------------------------------------- |
+| `.flow/reviews/` doesn't exist          | Skip protocol features, CLI works normally        |
+| Invalid YAML frontmatter                | Log warning, skip that file, continue with others |
+| No H1 heading in protocol               | Use filename as protocol name                     |
+| Empty protocol body                     | Skip that file                                    |
+| No protocols match current time         | No auto-suggestion, normal CLI startup            |
+| Multiple protocols match                | Show numbered list, let user choose               |
+| User types non-existent protocol name   | Show available protocols                          |
+| Protocol references non-existent sphere | AI mentions it but continues                      |
+| User stops protocol mid-way             | AI switches to normal coaching mode               |
 
 ### Backwards Compatibility
 
@@ -228,6 +248,7 @@ Logic:
 ### Unit Tests
 
 **`tests/protocol-scanner.test.ts`:**
+
 - ✓ Scans folder and finds .md files
 - ✓ Parses YAML frontmatter correctly
 - ✓ Handles missing frontmatter gracefully
@@ -238,6 +259,7 @@ Logic:
 - ✓ Skips files with empty body
 
 **`tests/protocol-matcher.test.ts`:**
+
 - ✓ Matches protocols by day and time correctly
 - ✓ Handles morning/afternoon/evening time periods
 - ✓ Handles evening crossing midnight boundary
@@ -246,6 +268,7 @@ Logic:
 - ✓ Handles protocols without triggers
 
 **`tests/cli-protocol-integration.test.ts`:**
+
 - ✓ CLI suggests matched protocols on startup
 - ✓ User can select protocol from list
 - ✓ Protocol content added to system prompt

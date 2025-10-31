@@ -3,9 +3,7 @@ import { getAnthropicClient } from "./anthropic-client";
 import { getOpenAICompatibleClient } from "./openai-compatible-client";
 import { PluginSettings } from "./types";
 
-export function createLanguageModelClient(
-  settings: PluginSettings
-): LanguageModelClient | null {
+export function createLanguageModelClient(settings: PluginSettings): LanguageModelClient | null {
   // When AI is disabled, return null instead of throwing errors
   if (!settings.aiEnabled) {
     return null;
