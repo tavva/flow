@@ -475,10 +475,6 @@
 	border-color: var(--background-modifier-border-hover);
 }
 
-.flow-gtd-action-item:hover .flow-gtd-action-remove {
-	opacity: 1;
-}
-
 .flow-gtd-action-number {
 	flex-shrink: 0;
 	width: 24px;
@@ -496,25 +492,29 @@
 
 .flow-gtd-action-remove {
 	flex-shrink: 0;
-	border: none;
-	background: none;
-	color: var(--text-faint);
+	padding: 4px 8px;
+	background: var(--interactive-normal);
+	border: 1px solid var(--background-modifier-border);
 	border-radius: 4px;
-	width: 20px;
-	height: 20px;
-	padding: 0;
-	line-height: 1;
+	color: var(--text-muted);
 	cursor: pointer;
+	opacity: 0.6;
+	font-size: 16px;
+	line-height: 1;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	opacity: 0;
-	transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+	transition: opacity 0.2s ease, background 0.2s ease;
 }
 
-.flow-gtd-action-remove:hover {
-	background: rgba(244, 67, 54, 0.1);
-	color: var(--color-red);
+.flow-gtd-action-remove:hover:not(:disabled) {
+	opacity: 1;
+	background: var(--interactive-hover);
+}
+
+.flow-gtd-action-remove:disabled {
+	opacity: 0.3;
+	cursor: not-allowed;
 }
 
 /* Legacy class for backwards compatibility */
