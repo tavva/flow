@@ -3,7 +3,14 @@ import { getAnthropicClient } from "./anthropic-client";
 import { getOpenAICompatibleClient } from "./openai-compatible-client";
 import { PluginSettings } from "./types";
 
-export function createLanguageModelClient(settings: PluginSettings): LanguageModelClient {
+export function createLanguageModelClient(
+  settings: PluginSettings
+): LanguageModelClient | null {
+  // When AI is disabled, return null instead of throwing errors
+  if (!settings.aiEnabled) {
+    return null;
+  }
+
   if (settings.llmProvider === "openai-compatible") {
     if (!settings.openaiApiKey) {
       throw new Error("OpenAI-compatible API key is not set");

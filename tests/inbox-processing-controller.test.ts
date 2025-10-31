@@ -103,3 +103,64 @@ describe("InboxProcessingController discardInboxItem", () => {
     expect(projects).toEqual([liveProject, noStatusProject]);
   });
 });
+
+describe("InboxProcessingController with AI disabled", () => {
+  const createControllerWithAIDisabled = () => {
+    const app = new App();
+    const settings: PluginSettings = {
+      ...DEFAULT_SETTINGS,
+      aiEnabled: false,
+    };
+
+    return new InboxProcessingController(app as unknown as any, settings, {
+      scanner: { scanProjects: jest.fn().mockResolvedValue([]) } as any,
+      personScanner: { scanPersons: jest.fn().mockResolvedValue([]) } as any,
+      writer: {} as any,
+      inboxScanner: {
+        deleteInboxItem: jest.fn(),
+        getAllInboxItems: jest.fn(),
+      } as any,
+      persistenceService: { persist: jest.fn() } as any,
+    });
+  };
+
+  it("should create controller without throwing when AI is disabled", () => {
+    expect(() => createControllerWithAIDisabled()).not.toThrow();
+  });
+
+  it("should throw error when trying to refine item with AI disabled", async () => {
+    const controller = createControllerWithAIDisabled();
+    const item: EditableItem = {
+      original: "Test item",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+    };
+
+    await expect(controller.refineItem(item, [])).rejects.toThrow(
+      "AI features are disabled. Enable AI in settings to use refinement."
+    );
+  });
+
+  it("should throw error when trying to suggest project name with AI disabled", async () => {
+    const controller = createControllerWithAIDisabled();
+
+    await expect(controller.suggestProjectName("Test project")).rejects.toThrow(
+      "AI features are disabled. Enable AI in settings to use suggestions."
+    );
+  });
+
+  it("should still allow loading projects when AI is disabled", async () => {
+    const controller = createControllerWithAIDisabled();
+    const projects = await controller.loadExistingProjects();
+
+    expect(projects).toEqual([]);
+  });
+
+  it("should still allow loading persons when AI is disabled", async () => {
+    const controller = createControllerWithAIDisabled();
+    const persons = await controller.loadExistingPersons();
+
+    expect(persons).toEqual([]);
+  });
+});

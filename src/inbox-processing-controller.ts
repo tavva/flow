@@ -26,7 +26,7 @@ interface ControllerDependencies {
 }
 
 export class InboxProcessingController {
-  private processor: GTDProcessor;
+  private processor: GTDProcessor | null;
   private scanner: FlowProjectScanner;
   private personScanner: PersonScanner;
   private writer: FileWriter;
@@ -43,14 +43,20 @@ export class InboxProcessingController {
     saveSettings?: () => Promise<void>
   ) {
     this.settings = settings;
+
+    // Only create processor if we have a client (AI is enabled)
+    const client = dependencies.client ?? createLanguageModelClient(settings);
     this.processor =
       dependencies.processor ??
-      new GTDProcessor(
-        dependencies.client ?? createLanguageModelClient(settings),
-        settings.spheres,
-        getModelForSettings(settings),
-        settings.projectTemplateFilePath
-      );
+      (client
+        ? new GTDProcessor(
+            client,
+            settings.spheres,
+            getModelForSettings(settings),
+            settings.projectTemplateFilePath
+          )
+        : null);
+
     this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
     this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
     this.writer = dependencies.writer ?? new FileWriter(app, settings);
@@ -108,6 +114,10 @@ export class InboxProcessingController {
     existingProjects: FlowProject[],
     existingPersons: PersonNote[] = []
   ): Promise<EditableItem> {
+    if (!this.processor) {
+      throw new Error("AI features are disabled. Enable AI in settings to use refinement.");
+    }
+
     const result = await this.processor.processInboxItem(
       item.original,
       existingProjects,
@@ -172,6 +182,10 @@ export class InboxProcessingController {
   }
 
   async suggestProjectName(originalItem: string): Promise<string> {
+    if (!this.processor) {
+      throw new Error("AI features are disabled. Enable AI in settings to use suggestions.");
+    }
+
     const prompt = this.projectTitlePromptBuilder(originalItem);
     const response = await this.processor.callAI(prompt);
     return response.trim();

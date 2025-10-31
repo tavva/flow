@@ -370,6 +370,10 @@ export class ReviewModal extends Modal {
 
       // Create LLM client
       const client = createLanguageModelClient(this.settings);
+      if (!client) {
+        throw new Error("Failed to create LLM client");
+      }
+
       const model =
         this.settings.llmProvider === "anthropic"
           ? this.settings.anthropicModel

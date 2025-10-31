@@ -761,6 +761,15 @@ export async function main() {
     // Load plugin settings
     const settings = loadPluginSettings(args.vaultPath);
 
+    // Check if AI is enabled
+    if (!settings.aiEnabled) {
+      console.error("Error: AI features are disabled in plugin settings.");
+      console.error(
+        "Please enable AI features in Obsidian → Settings → Flow GTD Coach → Enable AI features"
+      );
+      process.exit(1);
+    }
+
     // Scan vault for projects
     const mockApp = new MockApp(args.vaultPath);
     const scanner = new FlowProjectScanner(mockApp as any);
@@ -785,6 +794,12 @@ export async function main() {
 
     // Create language model
     const languageModelClient = createLanguageModelClient(settings);
+    if (!languageModelClient) {
+      console.error("Error: Failed to create language model client.");
+      console.error("Please check your API key settings in the Flow GTD Coach plugin.");
+      process.exit(1);
+    }
+
     const model = getModelForSettings(settings);
 
     // Run REPL
