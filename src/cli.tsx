@@ -100,6 +100,29 @@ export function buildSystemPrompt(
   prompt += `- ${somedayCount} items in someday/maybe\n`;
   prompt += `- ${inboxCount} unprocessed inbox items\n\n`;
 
+  prompt += `The Flow System:\n`;
+  prompt += `Flow is a GTD implementation for Obsidian with specific conventions:\n\n`;
+  prompt += `Spheres:\n`;
+  prompt += `- Life areas for categorising projects (work, personal, etc.)\n`;
+  prompt += `- Projects belong to one sphere via their tags (project/work, project/personal)\n`;
+  prompt += `- You are currently coaching in the ${sphere} sphere\n\n`;
+  prompt += `File Organisation:\n`;
+  prompt += `- Projects folder: Individual project files\n`;
+  prompt += `- Next actions file: Central list for actions not tied to specific projects\n`;
+  prompt += `- Someday file: Future aspirations and maybes\n`;
+  prompt += `- Inbox: Unprocessed items awaiting GTD categorisation\n\n`;
+  prompt += `Project Structure:\n`;
+  prompt += `- Projects are Markdown files with frontmatter (tags, priority, status, creation-date)\n`;
+  prompt += `- Sub-projects reference parents using parent-project: "[[Parent Name]]" in frontmatter\n`;
+  prompt += `- Next actions are Markdown checkboxes under "## Next actions" heading\n`;
+  prompt += `- Projects should have clear outcomes (what does "done" look like?)\n`;
+  prompt += `- Priority: 1-5 scale (1=highest priority, 5=lowest priority)\n\n`;
+  prompt += `Project Statuses:\n`;
+  prompt += `- live: Active projects with ongoing work\n`;
+  prompt += `- hold: Paused projects (waiting on external factors)\n`;
+  prompt += `- archived: Completed or cancelled projects\n`;
+  prompt += `- someday: Projects not yet committed to\n\n`;
+
   prompt += `Your role is to provide expert GTD advice:\n`;
   prompt += `- Help prioritise projects and actions based on goals, context, energy, and time\n`;
   prompt += `- Review project quality: Are outcomes clear? Are next actions specific and actionable?\n`;
@@ -167,7 +190,7 @@ export function buildSystemPrompt(
       prompt += `${indent}### ${project.title}\n`;
       prompt += `${indent}File: ${project.file}\n`;
       prompt += `${indent}Description: ${project.description || "No description"}\n`;
-      prompt += `${indent}Priority: ${project.priority} (1=highest, 3=lowest)\n`;
+      prompt += `${indent}Priority: ${project.priority} (1=highest, 5=lowest)\n`;
       prompt += `${indent}Status: ${project.status}\n`;
 
       if (node.depth > 0) {

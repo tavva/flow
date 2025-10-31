@@ -108,4 +108,18 @@ describe("CLI System Prompt - Tool Support", () => {
     expect(prompt).toContain("Present relevant data");
     expect(prompt).toContain("Wait for acknowledgment before proceeding");
   });
+
+  it("should include Flow System explanation", () => {
+    const prompt = buildSystemPrompt(mockProjects, "work", mockContext);
+
+    expect(prompt).toContain("The Flow System:");
+    expect(prompt).toContain("Flow is a GTD implementation for Obsidian");
+    expect(prompt).toContain("Spheres:");
+    expect(prompt).toContain("File Organisation:");
+    expect(prompt).toContain("Project Structure:");
+    expect(prompt).toContain("Priority: 1-5 scale");
+    expect(prompt).toContain("1=highest priority, 5=lowest priority");
+    expect(prompt).toContain("Project Statuses:");
+    expect(prompt).toContain("live: Active projects");
+  });
 });
