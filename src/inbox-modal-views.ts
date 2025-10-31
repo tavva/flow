@@ -657,6 +657,7 @@ function renderNextActionsEditor(
       } else {
         item.editedName = value;
       }
+      state.queueRender("editable");
     });
 
     // Waiting-for toggle button
@@ -689,11 +690,9 @@ function renderNextActionsEditor(
 
     // Disable remove button if there's only one action
     const isOnlyAction = currentNextActions.length === 1;
-    if (isOnlyAction) {
-      removeBtn.disabled = true;
-      removeBtn.style.opacity = "0.3";
-      removeBtn.style.cursor = "not-allowed";
-    } else {
+    removeBtn.disabled = isOnlyAction;
+
+    if (!isOnlyAction) {
       removeBtn.addEventListener("click", () => {
         currentNextActions.splice(index, 1);
         waitingForArray.splice(index, 1);
@@ -713,12 +712,23 @@ function renderNextActionsEditor(
   addActionBtn.setAttribute("type", "button");
   addActionBtn.setAttribute("aria-label", "Add action");
   addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
-  addActionBtn.addEventListener("click", () => {
-    currentNextActions.push("");
-    item.editedNames = [...currentNextActions];
-    waitingForArray.push(false);
-    state.queueRender("editable");
-  });
+
+  // Disable add button if any action is empty
+  const hasEmptyAction = currentNextActions.some((action) => action.trim() === "");
+  addActionBtn.disabled = hasEmptyAction;
+  if (hasEmptyAction) {
+    addActionBtn.style.opacity = "0.5";
+    addActionBtn.style.cursor = "not-allowed";
+  }
+
+  if (!hasEmptyAction) {
+    addActionBtn.addEventListener("click", () => {
+      currentNextActions.push("");
+      item.editedNames = [...currentNextActions];
+      waitingForArray.push(false);
+      state.queueRender("editable");
+    });
+  }
 
   if (currentNextActions.length === 1) {
     item.editedName = currentNextActions[0];
