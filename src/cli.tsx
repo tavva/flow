@@ -22,6 +22,9 @@ import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
 import { FileWriter } from "./file-writer";
 import wrapAnsi from 'wrap-ansi';
 import { SystemAnalyzer, SystemIssues } from "./system-analyzer";
+import { scanReviewProtocols } from './protocol-scanner';
+import { matchProtocolsForTime } from './protocol-matcher';
+import { ReviewProtocol } from './types';
 
 /**
  * Wraps text to terminal width whilst preserving ANSI color codes.
@@ -739,6 +742,22 @@ class MockApp {
   }
 }
 
+function getCurrentTimeDescription(): string {
+  const now = new Date();
+  const hour = now.getHours();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const day = days[now.getDay()];
+
+  let timeOfDay = 'morning';
+  if (hour >= 12 && hour < 18) {
+    timeOfDay = 'afternoon';
+  } else if (hour >= 18 || hour < 5) {
+    timeOfDay = 'evening';
+  }
+
+  return `${day} ${timeOfDay}`;
+}
+
 export async function main() {
   // Handle Ctrl+C gracefully
   process.on('SIGINT', () => {
@@ -760,6 +779,22 @@ export async function main() {
 
     // Load plugin settings
     const settings = loadPluginSettings(args.vaultPath);
+
+    // Scan for review protocols
+    const protocols = scanReviewProtocols(args.vaultPath);
+    const matchedProtocols = matchProtocolsForTime(protocols, new Date());
+
+    // If protocols matched, suggest them
+    if (matchedProtocols.length > 0) {
+      console.log('\nI found these reviews for ' + getCurrentTimeDescription() + ':');
+      matchedProtocols.forEach((protocol, index) => {
+        console.log(`${index + 1}. ${protocol.name}`);
+      });
+      console.log('\nWould you like to run one? (type number, name, or "no")\n');
+
+      // Wait for user input and handle protocol selection
+      // This will be implemented in next task
+    }
 
     // Scan vault for projects
     const mockApp = new MockApp(args.vaultPath);
