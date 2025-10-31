@@ -396,8 +396,8 @@ export async function runREPL(
         <InboxApp
           onComplete={(text) => {
             unmount();
-            // Add newline after Ink unmounts to prevent output appearing on same line
-            console.log("");
+            // Echo user message immediately after unmounting so it stays visible
+            console.log(`${colors.user}You:${colors.reset} ${text.trim()}\n`);
             resolve(text);
           }}
         />
@@ -430,9 +430,6 @@ export async function runREPL(
       role: "user",
       content: input,
     });
-
-    // Echo user message
-    console.log(`${colors.user}You:${colors.reset} ${input}\n`);
 
     try {
       // Show thinking indicator
