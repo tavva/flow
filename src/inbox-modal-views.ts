@@ -223,7 +223,9 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
         refineBtn.style.border = "none";
         refineBtn.style.background = "transparent";
         refineBtn.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
-        refineBtn.style.color = item.isProcessing ? "var(--text-muted)" : "var(--interactive-accent)";
+        refineBtn.style.color = item.isProcessing
+          ? "var(--text-muted)"
+          : "var(--interactive-accent)";
         refineBtn.style.flexShrink = "0";
         refineBtn.style.marginLeft = "8px";
         refineBtn.disabled = item.isProcessing === true;
