@@ -141,14 +141,6 @@ export function renderEditableItemsView(
 function renderIndividualEditableItems(container: HTMLElement, state: InboxModalState) {
   const listContainer = container.createDiv("flow-gtd-items-list");
 
-  if (state.editableItems.length === 0) {
-    listContainer.createEl("p", {
-      text: "No items to display.",
-      cls: "flow-gtd-empty",
-    });
-    return;
-  }
-
   state.editableItems.forEach((item, index) => {
     const itemEl = listContainer.createDiv("flow-gtd-editable-item");
 
