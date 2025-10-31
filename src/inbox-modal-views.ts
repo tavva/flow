@@ -154,19 +154,11 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
 
     // Header with item number and AI badge/button
     const metaRow = itemEl.createDiv("flow-gtd-item-meta");
-    const showIndex = state.editableItems.length > 1;
 
     const leftSide = metaRow.createDiv();
     leftSide.style.display = "flex";
     leftSide.style.alignItems = "center";
     leftSide.style.gap = "12px";
-
-    if (showIndex) {
-      leftSide.createSpan({
-        text: `#${index + 1}`,
-        cls: "flow-gtd-item-index",
-      });
-    }
 
     if (item.isAIProcessed) {
       const aiBadge = leftSide.createSpan({
@@ -212,13 +204,6 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       originalBox.style.backgroundColor = "rgba(33, 150, 243, 0.05)";
       originalBox.style.border = "2px solid rgba(33, 150, 243, 0.2)";
       originalBox.style.borderRadius = "8px";
-
-      const label = originalBox.createDiv();
-      label.style.fontSize = "14px";
-      label.style.fontWeight = "600";
-      label.style.marginBottom = "8px";
-      label.style.color = "var(--text-normal)";
-      label.setText("Item to Process:");
 
       const textDiv = originalBox.createDiv();
       textDiv.style.color = "var(--text-normal)";
