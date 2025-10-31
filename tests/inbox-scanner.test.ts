@@ -2,6 +2,7 @@ import { InboxScanner, InboxItem } from "../src/inbox-scanner";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { InboxProcessingController } from "../src/inbox-processing-controller";
 import { GTDProcessingResult, PluginSettings } from "../src/types";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 jest.mock("obsidian");
 import { App, TFile, Vault } from "obsidian";
@@ -16,7 +17,7 @@ describe("Inbox deletion handling", () => {
 
   const baseSettings: PluginSettings = {
     llmProvider: "anthropic",
-    anthropicApiKey: "test-key",
+    anthropicApiKey: generateDeterministicFakeApiKey("inbox-scanner"),
     anthropicModel: "claude-sonnet-4-20250514",
     openaiApiKey: "",
     openaiBaseUrl: "https://openrouter.ai/api/v1",

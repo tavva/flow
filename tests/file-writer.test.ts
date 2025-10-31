@@ -1,6 +1,7 @@
 import { FileWriter } from "../src/file-writer";
 import { GTDProcessingResult, PluginSettings, FlowProject, PersonNote } from "../src/types";
 import { EditableItem } from "../src/inbox-types";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Import mocked obsidian
 jest.mock("obsidian");
@@ -13,7 +14,7 @@ describe("FileWriter", () => {
   let mockFileManager: Partial<FileManager>;
   const mockSettings: PluginSettings = {
     llmProvider: "anthropic",
-    anthropicApiKey: "test-key",
+    anthropicApiKey: generateDeterministicFakeApiKey("file-writer"),
     anthropicModel: "claude-sonnet-4-20250514",
     openaiApiKey: "",
     openaiBaseUrl: "https://openrouter.ai/api/v1",

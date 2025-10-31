@@ -1,6 +1,7 @@
 import { parseCliArgs, loadPluginSettings, buildSystemPrompt } from "../src/cli";
 import * as fs from "fs";
 import { FlowProject, GTDContext } from "../src/types";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 jest.mock("fs");
 
@@ -64,9 +65,10 @@ describe("Plugin settings loading", () => {
   });
 
   it("should load settings from Obsidian plugin data.json", () => {
+    const fakeApiKey = generateDeterministicFakeApiKey("cli-settings-load");
     const mockSettings = {
       llmProvider: "anthropic",
-      anthropicApiKey: "test-key",
+      anthropicApiKey: fakeApiKey,
       anthropicModel: "claude-sonnet-4-20250514",
     };
 
@@ -80,7 +82,7 @@ describe("Plugin settings loading", () => {
       "utf-8"
     );
     expect(result.llmProvider).toBe("anthropic");
-    expect(result.anthropicApiKey).toBe("test-key");
+    expect(result.anthropicApiKey).toBe(fakeApiKey);
   });
 
   it("should throw error if settings file does not exist", () => {

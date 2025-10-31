@@ -3,6 +3,7 @@ import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-pr
 import { DEFAULT_SETTINGS } from "../src/types";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { renderInboxView, renderEditableItemsView } from "../src/inbox-modal-views";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock the view modules
 jest.mock("../src/inbox-modal-views", () => ({
@@ -16,7 +17,7 @@ describe("InboxProcessingView", () => {
 
   const testSettings = {
     ...DEFAULT_SETTINGS,
-    openaiApiKey: "test-api-key",
+    openaiApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
   };
 
   beforeEach(() => {

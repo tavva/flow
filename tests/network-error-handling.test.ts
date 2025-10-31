@@ -3,6 +3,7 @@
 
 import { OpenAICompatibleClient } from "../src/openai-compatible-client";
 import { RateLimitedAnthropicClient } from "../src/anthropic-client";
+import { generateFakeApiKey } from "./test-utils";
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -15,7 +16,7 @@ describe("Network Error Handling", () => {
   describe("OpenAICompatibleClient", () => {
     it("should provide user-friendly error for fetch failures", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -34,7 +35,7 @@ describe("Network Error Handling", () => {
 
     it("should provide user-friendly error for network failures", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -53,7 +54,7 @@ describe("Network Error Handling", () => {
 
     it("should provide user-friendly error for timeout failures", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -72,7 +73,7 @@ describe("Network Error Handling", () => {
 
     it("should preserve other error messages", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -89,7 +90,7 @@ describe("Network Error Handling", () => {
 
     it("should handle non-Error thrown values", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -106,7 +107,7 @@ describe("Network Error Handling", () => {
 
     it("should handle HTTP error responses normally", async () => {
       const client = new OpenAICompatibleClient({
-        apiKey: "test-key",
+        apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
       });
 
@@ -133,7 +134,7 @@ describe("Network Error Handling", () => {
       // Mock the Anthropic SDK to throw network errors
       const mockCreate = jest.fn().mockRejectedValue(new Error("fetch failed"));
 
-      const client = new RateLimitedAnthropicClient("test-key");
+      const client = new RateLimitedAnthropicClient(generateFakeApiKey());
       // Replace the SDK's create method
       (client as any).sdk = {
         messages: {
@@ -155,7 +156,7 @@ describe("Network Error Handling", () => {
     it("should handle ECONNREFUSED errors", async () => {
       const mockCreate = jest.fn().mockRejectedValue(new Error("connect ECONNREFUSED"));
 
-      const client = new RateLimitedAnthropicClient("test-key");
+      const client = new RateLimitedAnthropicClient(generateFakeApiKey());
       (client as any).sdk = {
         messages: {
           create: mockCreate,
@@ -176,7 +177,7 @@ describe("Network Error Handling", () => {
     it("should handle ENOTFOUND errors", async () => {
       const mockCreate = jest.fn().mockRejectedValue(new Error("getaddrinfo ENOTFOUND"));
 
-      const client = new RateLimitedAnthropicClient("test-key");
+      const client = new RateLimitedAnthropicClient(generateFakeApiKey());
       (client as any).sdk = {
         messages: {
           create: mockCreate,
@@ -197,7 +198,7 @@ describe("Network Error Handling", () => {
     it("should handle timeout errors", async () => {
       const mockCreate = jest.fn().mockRejectedValue(new Error("Request timeout exceeded"));
 
-      const client = new RateLimitedAnthropicClient("test-key");
+      const client = new RateLimitedAnthropicClient(generateFakeApiKey());
       (client as any).sdk = {
         messages: {
           create: mockCreate,
@@ -218,7 +219,7 @@ describe("Network Error Handling", () => {
     it("should preserve non-network error messages", async () => {
       const mockCreate = jest.fn().mockRejectedValue(new Error("Invalid model specified"));
 
-      const client = new RateLimitedAnthropicClient("test-key");
+      const client = new RateLimitedAnthropicClient(generateFakeApiKey());
       (client as any).sdk = {
         messages: {
           create: mockCreate,

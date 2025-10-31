@@ -1,12 +1,13 @@
 import { getOpenAICompatibleClient } from "../src/openai-compatible-client";
 import { LanguageModelRequest, ToolDefinition } from "../src/language-model";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock fetch
 global.fetch = jest.fn();
 
 describe("OpenAICompatibleClient - Tool Support", () => {
   const mockConfig = {
-    apiKey: "test-key",
+    apiKey: generateDeterministicFakeApiKey("openai-client-tools"),
     baseUrl: "https://api.openai.com/v1",
   };
 
