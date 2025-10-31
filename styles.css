@@ -1425,15 +1425,14 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-gtd-project-section .setting-item-info {
-	flex: 0 0 auto;
-	margin-right: 0;
+	flex: 1;
+	margin-right: 16px;
 	margin-bottom: 0;
 }
 
 .flow-gtd-project-section .setting-item-control {
-	flex: 0 0 auto;
-	width: auto;
-	min-width: 120px;
+	flex: 0 0 80px;
+	width: 80px;
 	margin-left: 0;
 }
 
