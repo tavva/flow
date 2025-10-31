@@ -1,23 +1,15 @@
 // ABOUTME: Matches review protocols against current date/time to determine which should be suggested.
 // ABOUTME: Supports day-of-week and time-of-day matching (morning/afternoon/evening).
 
-import { ReviewProtocol } from './types';
+import { ReviewProtocol } from "./types";
 
 const TIME_PERIODS = {
-  morning: { start: 5, end: 12 },      // 05:00-11:59
-  afternoon: { start: 12, end: 18 },   // 12:00-17:59
-  evening: { start: 18, end: 5 },      // 18:00-04:59 (crosses midnight)
+  morning: { start: 5, end: 12 }, // 05:00-11:59
+  afternoon: { start: 12, end: 18 }, // 12:00-17:59
+  evening: { start: 18, end: 5 }, // 18:00-04:59 (crosses midnight)
 };
 
-const DAYS_OF_WEEK = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-];
+const DAYS_OF_WEEK = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export function matchProtocolsForTime(
   protocols: ReviewProtocol[],

@@ -1,13 +1,13 @@
 // ABOUTME: Scans vault for review protocol files and parses their frontmatter and content.
 // ABOUTME: Returns array of ReviewProtocol objects for use by protocol matcher and CLI.
 
-import * as fs from 'fs';
-import * as path from 'path';
-import matter from 'gray-matter';
-import { ReviewProtocol } from './types';
+import * as fs from "fs";
+import * as path from "path";
+import matter from "gray-matter";
+import { ReviewProtocol } from "./types";
 
 export function scanReviewProtocols(vaultPath: string): ReviewProtocol[] {
-  const reviewsDir = path.join(vaultPath, '.flow', 'reviews');
+  const reviewsDir = path.join(vaultPath, ".flow", "reviews");
 
   if (!fs.existsSync(reviewsDir)) {
     return [];
@@ -18,12 +18,12 @@ export function scanReviewProtocols(vaultPath: string): ReviewProtocol[] {
 
   for (const file of files) {
     // Skip non-markdown files
-    if (!file.endsWith('.md')) {
+    if (!file.endsWith(".md")) {
       continue;
     }
 
     const filePath = path.join(reviewsDir, file);
-    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const fileContent = fs.readFileSync(filePath, "utf-8");
 
     try {
       const parsed = matter(fileContent);
@@ -67,5 +67,5 @@ function extractProtocolName(content: string, filename: string): string {
   }
 
   // Fallback to filename without extension
-  return filename.replace('.md', '');
+  return filename.replace(".md", "");
 }

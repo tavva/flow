@@ -122,12 +122,14 @@ The CLI supports time-triggered custom review routines:
 - **Manual invocation**: User can request reviews by name anytime (implementation pending)
 
 **Protocol scanning** (`protocol-scanner.ts`):
+
 - Finds all `.md` files in reviews directory
 - Parses YAML frontmatter for triggers and spheres
 - Extracts protocol name from first H1 heading (fallback to filename)
 - Gracefully handles invalid YAML or missing frontmatter
 
 **Protocol matching** (`protocol-matcher.ts`):
+
 - Matches protocols against current day/time
 - Time periods: morning (5am-12pm), afternoon (12pm-6pm), evening (6pm-5am)
 - Evening period correctly handles midnight crossing

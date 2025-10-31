@@ -76,23 +76,28 @@ For each step:
 The review uses existing CLI tools:
 
 **During project review:**
+
 - update_project - Add next actions to stalled projects, update descriptions, change status
 - create_project - Convert someday items to projects
 
 **During next actions review:**
+
 - update_next_action - Improve vague actions
 - move_to_focus - Add important actions to weekly focus
 
 **During someday/maybe review:**
+
 - create_project - Activate someday items as projects
 - update_project - Add someday items as next actions to existing projects
 
 **During waiting-for review:**
+
 - update_next_action - Convert waiting-for items to active next actions
 
 ## Approval Workflow
 
 All tool calls follow the existing CLI approval pattern:
+
 1. AI suggests a change
 2. User approves or rejects each suggestion
 3. Changes are applied via FileWriter
