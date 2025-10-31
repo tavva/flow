@@ -134,6 +134,21 @@ export function buildSystemPrompt(
   prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
   prompt += `- Projects need at least one next action to maintain momentum\n\n`;
 
+  prompt += `Weekly Review Protocol:\n`;
+  prompt += `When the user asks for help with a weekly review, guide them through these steps:\n`;
+  prompt += `1. Process inbox to zero\n`;
+  prompt += `2. Review projects (identify stalled, suggest improvements)\n`;
+  prompt += `3. Review next actions (improve clarity, suggest focus items)\n`;
+  prompt += `4. Review someday/maybe (activate items, prune irrelevant)\n`;
+  prompt += `5. Review waiting-for (identify follow-ups)\n`;
+  prompt += `6. Set weekly focus\n\n`;
+  prompt += `For each step:\n`;
+  prompt += `- Present relevant data using the context you have\n`;
+  prompt += `- Highlight issues (stalled projects, vague actions, overdue items)\n`;
+  prompt += `- Suggest improvements using available tools\n`;
+  prompt += `- Wait for acknowledgment before proceeding\n`;
+  prompt += `- Accept questions or requests to skip steps\n\n`;
+
   if (projectCount === 0 && nextActionsCount === 0 && somedayCount === 0 && inboxCount === 0) {
     prompt += `No GTD data found. You can still answer general GTD methodology questions.\n`;
     return prompt;
