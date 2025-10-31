@@ -152,40 +152,16 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   state.editableItems.forEach((item, index) => {
     const itemEl = listContainer.createDiv("flow-gtd-editable-item");
 
-    // Header with item number and AI badge/button
-    const metaRow = itemEl.createDiv("flow-gtd-item-meta");
-
-    const leftSide = metaRow.createDiv();
-    leftSide.style.display = "flex";
-    leftSide.style.alignItems = "center";
-    leftSide.style.gap = "12px";
-
-    if (item.isAIProcessed) {
-      const aiBadge = leftSide.createSpan({
-        cls: "flow-gtd-item-pill flow-gtd-item-pill-success",
-      });
-      aiBadge.createSpan({ text: "✨ " });
-      aiBadge.createSpan({ text: "AI Refined" });
-    } else if (item.isProcessing === true) {
-      leftSide.createSpan({
-        text: "Processing…",
-        cls: "flow-gtd-item-pill flow-gtd-item-pill-warn",
-      });
-    } else if (state.settingsSnapshot.aiEnabled) {
-      // AI Refine button (only if AI enabled, not processed and not processing) - on the left
-      const refineBtn = leftSide.createEl("button", {
-        type: "button",
-        cls: "flow-gtd-ai-refine-button",
-      });
-      refineBtn.setAttribute("aria-label", "Refine with AI");
-      refineBtn.innerHTML = "✨ AI Refine";
-      refineBtn.addEventListener("click", () => state.refineIndividualItem(item));
-    }
-
     // Original Text - different display based on refined status
     if (item.isAIProcessed) {
-      // Simple original text display for refined items
-      const originalBox = itemEl.createDiv("flow-gtd-original-box");
+      // Simple original text display for refined items with completion icon
+      const originalContainer = itemEl.createDiv();
+      originalContainer.style.display = "flex";
+      originalContainer.style.alignItems = "flex-start";
+      originalContainer.style.gap = "8px";
+
+      const originalBox = originalContainer.createDiv("flow-gtd-original-box");
+      originalBox.style.flex = "1";
 
       const label = originalBox.createDiv();
       label.addClass("flow-gtd-section-label");
@@ -197,9 +173,29 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       textDiv.style.userSelect = "text";
       textDiv.style.cursor = "text";
       textDiv.setText(item.original);
+
+      // Completion icon (same position as refine button would be)
+      if (state.settingsSnapshot.aiEnabled) {
+        const completionIcon = originalContainer.createDiv("flow-gtd-ai-completion-icon");
+        completionIcon.style.width = "24px";
+        completionIcon.style.height = "24px";
+        completionIcon.style.display = "flex";
+        completionIcon.style.alignItems = "center";
+        completionIcon.style.justifyContent = "center";
+        completionIcon.style.color = "var(--color-green)";
+        completionIcon.style.flexShrink = "0";
+        completionIcon.style.marginTop = "2px";
+        setIcon(completionIcon, "check-circle");
+      }
     } else {
-      // Prominent box for non-refined items
-      const originalBox = itemEl.createDiv("flow-gtd-original-unprocessed");
+      // Prominent box for non-refined items with refine button on the right
+      const originalContainer = itemEl.createDiv();
+      originalContainer.style.display = "flex";
+      originalContainer.style.alignItems = "flex-start";
+      originalContainer.style.gap = "8px";
+
+      const originalBox = originalContainer.createDiv("flow-gtd-original-unprocessed");
+      originalBox.style.flex = "1";
       originalBox.style.padding = "16px";
       originalBox.style.backgroundColor = "rgba(33, 150, 243, 0.05)";
       originalBox.style.border = "2px solid rgba(33, 150, 243, 0.2)";
@@ -211,6 +207,38 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       textDiv.style.userSelect = "text";
       textDiv.style.cursor = "text";
       textDiv.setText(item.original);
+
+      // AI Refine icon button or processing indicator (only if AI enabled)
+      if (state.settingsSnapshot.aiEnabled) {
+        const refineBtn = originalContainer.createEl("button", {
+          type: "button",
+          cls: "flow-gtd-ai-refine-icon-button",
+        });
+        refineBtn.style.width = "24px";
+        refineBtn.style.height = "24px";
+        refineBtn.style.display = "flex";
+        refineBtn.style.alignItems = "center";
+        refineBtn.style.justifyContent = "center";
+        refineBtn.style.padding = "0";
+        refineBtn.style.border = "none";
+        refineBtn.style.background = "transparent";
+        refineBtn.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
+        refineBtn.style.color = item.isProcessing ? "var(--text-muted)" : "var(--interactive-accent)";
+        refineBtn.style.flexShrink = "0";
+        refineBtn.style.marginTop = "2px";
+        refineBtn.disabled = item.isProcessing === true;
+
+        if (item.isProcessing) {
+          refineBtn.setAttribute("aria-label", "Processing with AI");
+          setIcon(refineBtn, "loader-2");
+          // Add spinning animation
+          refineBtn.style.animation = "spin 1s linear infinite";
+        } else {
+          refineBtn.setAttribute("aria-label", "Refine with AI");
+          setIcon(refineBtn, "sparkles");
+          refineBtn.addEventListener("click", () => state.refineIndividualItem(item));
+        }
+      }
     }
 
     renderEditableItemContent(itemEl, item, state);

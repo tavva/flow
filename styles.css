@@ -1540,3 +1540,13 @@ select.flow-gtd-inline-select option,
 	opacity: 1;
 	pointer-events: auto;
 }
+
+/* Spinning animation for AI processing icon */
+@keyframes spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
