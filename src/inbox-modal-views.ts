@@ -625,6 +625,17 @@ function renderNextActionsEditor(
   const waitingForArray = item.waitingFor;
 
   const actionsList = actionsContainer.createDiv("flow-gtd-actions-list");
+
+  // Helper function to update add button state
+  let addActionBtn: HTMLButtonElement;
+  const updateAddButtonState = () => {
+    if (!addActionBtn) return;
+    const hasEmptyAction = currentNextActions.some((action) => action.trim() === "");
+    addActionBtn.disabled = hasEmptyAction;
+    addActionBtn.style.opacity = hasEmptyAction ? "0.5" : "1";
+    addActionBtn.style.cursor = hasEmptyAction ? "not-allowed" : "pointer";
+  };
+
   currentNextActions.forEach((action, index) => {
     const actionItem = actionsList.createDiv("flow-gtd-action-item");
 
@@ -657,7 +668,7 @@ function renderNextActionsEditor(
       } else {
         item.editedName = value;
       }
-      state.queueRender("editable");
+      updateAddButtonState();
     });
 
     // Waiting-for toggle button
@@ -706,29 +717,23 @@ function renderNextActionsEditor(
   });
 
   // Add action button
-  const addActionBtn = actionsList.createEl("button", {
+  addActionBtn = actionsList.createEl("button", {
     cls: "flow-gtd-add-action-btn",
   });
   addActionBtn.setAttribute("type", "button");
   addActionBtn.setAttribute("aria-label", "Add action");
   addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
 
-  // Disable add button if any action is empty
-  const hasEmptyAction = currentNextActions.some((action) => action.trim() === "");
-  addActionBtn.disabled = hasEmptyAction;
-  if (hasEmptyAction) {
-    addActionBtn.style.opacity = "0.5";
-    addActionBtn.style.cursor = "not-allowed";
-  }
+  // Set initial state
+  updateAddButtonState();
 
-  if (!hasEmptyAction) {
-    addActionBtn.addEventListener("click", () => {
-      currentNextActions.push("");
-      item.editedNames = [...currentNextActions];
-      waitingForArray.push(false);
-      state.queueRender("editable");
-    });
-  }
+  addActionBtn.addEventListener("click", () => {
+    if (addActionBtn.disabled) return;
+    currentNextActions.push("");
+    item.editedNames = [...currentNextActions];
+    waitingForArray.push(false);
+    state.queueRender("editable");
+  });
 
   if (currentNextActions.length === 1) {
     item.editedName = currentNextActions[0];
