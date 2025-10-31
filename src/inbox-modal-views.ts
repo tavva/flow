@@ -602,7 +602,7 @@ function renderNextActionsEditor(
     text: "Next Actions",
     cls: "flow-gtd-label",
   });
-  actionsLabel.style.marginBottom = "0";
+  actionsLabel.style.marginBottom = "8px";
   actionsLabel.style.fontSize = "14px";
   actionsLabel.style.fontWeight = "600";
   actionsLabel.style.color = "var(--text-normal)";
