@@ -94,4 +94,18 @@ describe("CLI System Prompt - Tool Support", () => {
     expect(prompt).toContain("Use high-level counts only");
     expect(prompt).toContain("never list specific project names in the opening");
   });
+
+  it("should include weekly review protocol", () => {
+    const prompt = buildSystemPrompt(mockProjects, "work", mockContext);
+
+    expect(prompt).toContain("Weekly Review Protocol:");
+    expect(prompt).toContain("Process inbox to zero");
+    expect(prompt).toContain("Review projects");
+    expect(prompt).toContain("Review next actions");
+    expect(prompt).toContain("Review someday/maybe");
+    expect(prompt).toContain("Review waiting-for");
+    expect(prompt).toContain("Set weekly focus");
+    expect(prompt).toContain("Present relevant data");
+    expect(prompt).toContain("Wait for acknowledgment before proceeding");
+  });
 });
