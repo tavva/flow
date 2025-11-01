@@ -8,6 +8,7 @@ export interface WaitingForItem {
   file: string;
   fileName: string;
   lineNumber: number;
+  lineContent: string; // Full line content for validation
   text: string;
 }
 
@@ -23,7 +24,7 @@ export class WaitingForScanner {
     try {
       const dv = getAPI(this.app);
       if (dv) {
-        return this.scanWithDataview(dv);
+        return await this.scanWithDataview(dv);
       }
     } catch (error) {
       // Dataview not available or not properly initialized, fall back to manual scanning
@@ -33,7 +34,7 @@ export class WaitingForScanner {
     return this.scanManually();
   }
 
-  private scanWithDataview(dv: any): WaitingForItem[] {
+  private async scanWithDataview(dv: any): Promise<WaitingForItem[]> {
     const items: WaitingForItem[] = [];
 
     // Query all tasks with status 'w' (case insensitive)
@@ -42,10 +43,24 @@ export class WaitingForScanner {
     });
 
     for (const task of tasks) {
+      // Read file to get full line content for validation
+      const file = this.app.vault.getAbstractFileByPath(task.path);
+      let lineContent = "";
+
+      if (file instanceof TFile) {
+        const content = await this.app.vault.read(file);
+        const lines = content.split(/\r?\n/);
+        const lineIndex = task.line - 1;
+        if (lineIndex >= 0 && lineIndex < lines.length) {
+          lineContent = lines[lineIndex];
+        }
+      }
+
       items.push({
         file: task.path,
         fileName: task.link.path.split("/").pop()?.replace(".md", "") || task.path,
         lineNumber: task.line,
+        lineContent,
         text: task.text,
       });
     }
@@ -88,6 +103,7 @@ export class WaitingForScanner {
           file: file.path,
           fileName: file.basename,
           lineNumber: index + 1,
+          lineContent: line,
           text,
         });
       }

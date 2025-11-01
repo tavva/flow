@@ -46,6 +46,7 @@ tags: project/work
       file: "Projects/Project A.md",
       fileName: "Project A",
       lineNumber: 10,
+      lineContent: "- [w] Call John after he returns from holiday",
       text: "Call John after he returns from holiday",
     });
   });

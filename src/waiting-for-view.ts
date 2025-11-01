@@ -4,6 +4,7 @@
 import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
+import { WaitingForValidator } from "./waiting-for-validator";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -13,6 +14,7 @@ interface GroupedItems {
 
 export class WaitingForView extends ItemView {
   private scanner: WaitingForScanner;
+  private validator: WaitingForValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private modifyEventRef: EventRef | null = null;
   private refreshTimeout: NodeJS.Timeout | null = null;
@@ -22,6 +24,7 @@ export class WaitingForView extends ItemView {
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
     this.scanner = new WaitingForScanner(this.app);
+    this.validator = new WaitingForValidator(this.app);
 
     // Check if Dataview is available for fast refreshes
     try {
@@ -275,6 +278,12 @@ export class WaitingForView extends ItemView {
   }
 
   private async toggleItemComplete(item: WaitingForItem): Promise<void> {
+    const validation = await this.validator.validateItem(item);
+    if (!validation.found) {
+      console.error("Cannot mark item complete: item not found");
+      return;
+    }
+
     const file = this.app.vault.getAbstractFileByPath(item.file);
     if (!(file instanceof TFile)) {
       return;
@@ -282,7 +291,7 @@ export class WaitingForView extends ItemView {
 
     const content = await this.app.vault.read(file);
     const lines = content.split(/\r?\n/);
-    const lineIndex = item.lineNumber - 1;
+    const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
 
     if (lineIndex >= 0 && lineIndex < lines.length) {
       lines[lineIndex] = lines[lineIndex].replace(/\[w\]/i, "[x]");
@@ -291,6 +300,12 @@ export class WaitingForView extends ItemView {
   }
 
   private async convertToAction(item: WaitingForItem): Promise<void> {
+    const validation = await this.validator.validateItem(item);
+    if (!validation.found) {
+      console.error("Cannot convert item: item not found");
+      return;
+    }
+
     const file = this.app.vault.getAbstractFileByPath(item.file);
     if (!(file instanceof TFile)) {
       return;
@@ -298,7 +313,7 @@ export class WaitingForView extends ItemView {
 
     const content = await this.app.vault.read(file);
     const lines = content.split(/\r?\n/);
-    const lineIndex = item.lineNumber - 1;
+    const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
 
     if (lineIndex >= 0 && lineIndex < lines.length) {
       lines[lineIndex] = lines[lineIndex].replace(/\[w\]/i, "[ ]");
