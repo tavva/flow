@@ -2,7 +2,19 @@ import { CLI_TOOLS, ToolExecutor } from "../src/cli-tools";
 import { ToolCall, ToolResult } from "../src/language-model";
 import { App, TFile } from "obsidian";
 import { FileWriter } from "../src/file-writer";
-import { PluginSettings } from "../src/types";
+import { PluginSettings, FocusItem } from "../src/types";
+
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
 describe("CLI Tool Definitions", () => {
   it("should export CLI_TOOLS array with 4 tools", () => {
@@ -62,6 +74,10 @@ describe("ToolExecutor", () => {
   let executor: ToolExecutor;
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
     mockApp = {
       vault: {
         getAbstractFileByPath: jest.fn(),
@@ -80,9 +96,7 @@ describe("ToolExecutor", () => {
       addNextActionToProject: jest.fn(),
     } as any;
 
-    mockSettings = {
-      focus: [],
-    } as any;
+    mockSettings = {} as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
   });

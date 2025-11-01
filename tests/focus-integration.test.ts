@@ -5,10 +5,22 @@ import { FocusView } from "../src/focus-view";
 import { SphereView } from "../src/sphere-view";
 import { FocusValidator } from "../src/focus-validator";
 import { ActionLineFinder } from "../src/action-line-finder";
-import { PluginSettings, FocusItem } from "../src/types";
+import { PluginSettings, FocusItem, DEFAULT_SETTINGS } from "../src/types";
 import { TFile } from "obsidian";
 
 jest.mock("obsidian");
+
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
 describe("Focus Integration", () => {
   let mockApp: any;
@@ -16,6 +28,10 @@ describe("Focus Integration", () => {
   let mockSettings: PluginSettings;
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
     mockVault = {
       getAbstractFileByPath: jest.fn(),
       read: jest.fn(),
@@ -27,23 +43,7 @@ describe("Focus Integration", () => {
         getLeaf: jest.fn(),
       },
     };
-    mockSettings = {
-      anthropicApiKey: "",
-      anthropicModel: "claude-sonnet-4-20250514",
-      provider: "anthropic",
-      openAIApiKey: "",
-      openAIBaseURL: "https://openrouter.ai/api/v1",
-      openAIModel: "openrouter/anthropic/claude-3.5-sonnet",
-      defaultPriority: 2,
-      defaultStatus: "live",
-      inboxFilesFolder: "Flow Inbox Files",
-      inboxFolder: "Flow Inbox Folder",
-      nextActionsFilePath: "Next actions.md",
-      somedayFilePath: "Someday.md",
-      projectsFolder: "Projects",
-      spheres: ["work", "personal"],
-      focus: [],
-    };
+    mockSettings = { ...DEFAULT_SETTINGS };
   });
 
   it("should add action to focus and validate it", async () => {
@@ -71,7 +71,7 @@ describe("Focus Integration", () => {
       isGeneral: false,
       addedAt: Date.now(),
     };
-    mockSettings.focus.push(item);
+    mockFocusItems.push(item);
 
     // Validate the item
     const validator = new FocusValidator(mockApp);
@@ -82,7 +82,7 @@ describe("Focus Integration", () => {
 
     expect(validation.found).toBe(true);
     expect(validation.updatedLineNumber).toBeUndefined();
-    expect(mockSettings.focus).toHaveLength(1);
+    expect(mockFocusItems).toHaveLength(1);
   });
 
   it("should handle line number changes after file edits", async () => {
@@ -292,26 +292,15 @@ describe("Focus Integration", () => {
 describe("Focus Manual Reordering Integration", () => {
   let mockLeaf: any;
   let mockApp: any;
+  let mockSettings: PluginSettings;
   let saveSettingsMock: jest.Mock;
-  const DEFAULT_SETTINGS = {
-    anthropicApiKey: "",
-    anthropicModel: "claude-sonnet-4-20250514",
-    provider: "anthropic" as const,
-    openAIApiKey: "",
-    openAIBaseURL: "https://openrouter.ai/api/v1",
-    openAIModel: "openrouter/anthropic/claude-3.5-sonnet",
-    defaultPriority: 2,
-    defaultStatus: "live",
-    inboxFilesFolder: "Flow Inbox Files",
-    inboxFolder: "Flow Inbox Folder",
-    nextActionsFilePath: "Next actions.md",
-    somedayFilePath: "Someday.md",
-    projectsFolder: "Projects",
-    spheres: ["work", "personal"],
-    focus: [],
-  };
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
+    mockSettings = { ...DEFAULT_SETTINGS };
     mockApp = {
       vault: {
         getAbstractFileByPath: jest.fn(),
@@ -341,43 +330,40 @@ describe("Focus Manual Reordering Integration", () => {
   });
 
   it("should support full pin/reorder/unpin workflow", async () => {
-    const settings: PluginSettings = {
-      ...DEFAULT_SETTINGS,
-      focus: [
-        {
-          file: "Projects/Project A.md",
-          lineNumber: 10,
-          lineContent: "- [ ] Action A",
-          text: "Action A",
-          sphere: "work",
-          isGeneral: false,
-          addedAt: Date.now() - 3000,
-          isPinned: false,
-        },
-        {
-          file: "Projects/Project B.md",
-          lineNumber: 15,
-          lineContent: "- [ ] Action B",
-          text: "Action B",
-          sphere: "work",
-          isGeneral: false,
-          addedAt: Date.now() - 2000,
-          isPinned: false,
-        },
-        {
-          file: "Projects/Project C.md",
-          lineNumber: 20,
-          lineContent: "- [ ] Action C",
-          text: "Action C",
-          sphere: "work",
-          isGeneral: false,
-          addedAt: Date.now() - 1000,
-          isPinned: false,
-        },
-      ],
-    };
+    mockFocusItems = [
+      {
+        file: "Projects/Project A.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Action A",
+        text: "Action A",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now() - 3000,
+        isPinned: false,
+      },
+      {
+        file: "Projects/Project B.md",
+        lineNumber: 15,
+        lineContent: "- [ ] Action B",
+        text: "Action B",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now() - 2000,
+        isPinned: false,
+      },
+      {
+        file: "Projects/Project C.md",
+        lineNumber: 20,
+        lineContent: "- [ ] Action C",
+        text: "Action C",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now() - 1000,
+        isPinned: false,
+      },
+    ];
 
-    const view = new FocusView(mockLeaf, settings, saveSettingsMock);
+    const view = new FocusView(mockLeaf, mockSettings, saveSettingsMock);
     (view as any).app = mockApp;
     // Re-initialize scanner with mocked app
     (view as any).scanner = {
@@ -385,30 +371,33 @@ describe("Focus Manual Reordering Integration", () => {
     };
     await view.onOpen();
 
+    // Get reference to view's internal focusItems after onOpen loads them
+    const focusItems = (view as any).focusItems;
+
     // Step 1: Pin first item
-    await (view as any).pinItem(settings.focus[0]);
-    expect(settings.focus[0].isPinned).toBe(true);
+    await (view as any).pinItem(focusItems[0]);
+    expect(mockFocusItems[0].isPinned).toBe(true);
 
     // Step 2: Pin third item
-    await (view as any).pinItem(settings.focus[2]);
-    expect(settings.focus[1].isPinned).toBe(true);
-    expect(settings.focus[1].text).toBe("Action C");
+    await (view as any).pinItem(focusItems[2]);
+    expect(mockFocusItems[1].isPinned).toBe(true);
+    expect(mockFocusItems[1].text).toBe("Action C");
 
     // Step 3: Reorder pinned items (swap them)
-    (view as any).draggedItem = settings.focus[1]; // Action C
+    (view as any).draggedItem = mockFocusItems[1]; // Action C
     const mockDropEvent = { preventDefault: jest.fn() } as unknown as DragEvent;
-    await (view as any).onDrop(mockDropEvent, settings.focus[0]); // Drop on Action A
+    await (view as any).onDrop(mockDropEvent, mockFocusItems[0]); // Drop on Action A
 
     // Check order: C should now be first
-    expect(settings.focus[0].text).toBe("Action C");
-    expect(settings.focus[1].text).toBe("Action A");
+    expect(mockFocusItems[0].text).toBe("Action C");
+    expect(mockFocusItems[1].text).toBe("Action A");
 
     // Step 4: Unpin first item (Action C)
-    await (view as any).unpinItem(settings.focus[0]);
-    expect(settings.focus[0].isPinned).toBe(false);
+    await (view as any).unpinItem(mockFocusItems[0]);
+    expect(mockFocusItems[0].isPinned).toBe(false);
 
     // Check only Action A is still pinned
-    const pinnedItems = settings.focus.filter((i) => i.isPinned);
+    const pinnedItems = mockFocusItems.filter((i) => i.isPinned);
     expect(pinnedItems.length).toBe(1);
     expect(pinnedItems[0].text).toBe("Action A");
   });

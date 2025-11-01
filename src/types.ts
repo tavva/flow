@@ -94,7 +94,7 @@ export interface PluginSettings {
   projectsFolderPath: string;
   projectTemplateFilePath: string;
   spheres: string[];
-  focus: FocusItem[];
+  focus?: FocusItem[]; // DEPRECATED: Migrated to file storage (.flow/focus.json)
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
   focusArchiveFile: string; // Path to archive file for cleared tasks
   lastFocusClearTimestamp: number; // Timestamp of last auto-clear
@@ -120,7 +120,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
   spheres: ["personal", "work"],
-  focus: [],
   focusAutoClearTime: "03:00",
   focusArchiveFile: "Focus Archive.md",
   lastFocusClearTimestamp: 0,

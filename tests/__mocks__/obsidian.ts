@@ -10,11 +10,28 @@ export class TFile {
   }
 }
 
+export class TFolder {
+  path: string;
+  name: string;
+
+  constructor(path?: string, name?: string) {
+    this.path = path || "";
+    this.name = name || "";
+  }
+}
+
 export class Vault {
   create = jest.fn();
   modify = jest.fn();
   read = jest.fn();
   getAbstractFileByPath = jest.fn();
+  createFolder = jest.fn();
+  adapter = {
+    exists: jest.fn().mockResolvedValue(false),
+    read: jest.fn().mockResolvedValue(""),
+    write: jest.fn().mockResolvedValue(undefined),
+    stat: jest.fn().mockResolvedValue(null),
+  };
 }
 
 export class MetadataCache {

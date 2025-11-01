@@ -3,13 +3,25 @@
 
 import { App, TFile, WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 import { SphereView } from "../src/sphere-view";
-import { PluginSettings } from "../src/types";
+import { PluginSettings, FocusItem } from "../src/types";
 import { FlowProjectScanner } from "../src/flow-scanner";
 import { ActionLineFinder } from "../src/action-line-finder";
 
 // Mock the scanner and line finder
 jest.mock("../src/flow-scanner");
 jest.mock("../src/action-line-finder");
+
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
 describe("SphereView", () => {
   let app: App;
@@ -20,6 +32,10 @@ describe("SphereView", () => {
   let mockLineFinder: jest.Mocked<ActionLineFinder>;
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
     app = new App();
     leaf = new WorkspaceLeaf();
     mockSaveSettings = jest.fn();
@@ -38,7 +54,6 @@ describe("SphereView", () => {
       somedayFilePath: "Someday.md",
       projectsFolder: "Projects",
       availableSpheres: ["personal", "work"],
-      focus: [],
     };
 
     // Mock scanner to return empty array by default
@@ -561,7 +576,7 @@ describe("SphereView", () => {
     });
 
     it("should add action to focus when clicked", async () => {
-      settings.focus = [];
+      mockFocusItems = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -574,13 +589,13 @@ describe("SphereView", () => {
         false
       );
 
-      expect(settings.focus).toHaveLength(1);
-      expect(settings.focus[0].text).toBe("Test action");
-      expect(settings.focus[0].file).toBe("Projects/Test.md");
+      expect(mockFocusItems).toHaveLength(1);
+      expect(mockFocusItems[0].text).toBe("Test action");
+      expect(mockFocusItems[0].file).toBe("Projects/Test.md");
     });
 
     it("should remove action from focus when clicked again", async () => {
-      settings.focus = [
+      mockFocusItems = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -596,11 +611,11 @@ describe("SphereView", () => {
 
       await (view as any).removeFromFocus("Projects/Test.md", 5);
 
-      expect(settings.focus).toHaveLength(0);
+      expect(mockFocusItems).toHaveLength(0);
     });
 
-    it("should check if action is on focus", () => {
-      settings.focus = [
+    it("should check if action is on focus", async () => {
+      mockFocusItems = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -614,13 +629,13 @@ describe("SphereView", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
-      expect((view as any).isOnFocus("Projects/Test.md", 5)).toBe(true);
-      expect((view as any).isOnFocus("Projects/Test.md", 6)).toBe(false);
-      expect((view as any).isOnFocus("Projects/Other.md", 5)).toBe(false);
+      expect(await (view as any).isOnFocus("Projects/Test.md", 5)).toBe(true);
+      expect(await (view as any).isOnFocus("Projects/Test.md", 6)).toBe(false);
+      expect(await (view as any).isOnFocus("Projects/Other.md", 5)).toBe(false);
     });
 
     it("should toggle focus item off when clicked again (add then remove)", async () => {
-      settings.focus = [];
+      mockFocusItems = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -634,19 +649,19 @@ describe("SphereView", () => {
         false
       );
 
-      expect(settings.focus).toHaveLength(1);
-      expect(settings.focus[0].text).toBe("Toggle action");
-      expect(mockSaveSettings).toHaveBeenCalledTimes(1);
+      expect(mockFocusItems).toHaveLength(1);
+      expect(mockFocusItems[0].text).toBe("Toggle action");
+      expect(mockSaveFocusItems).toHaveBeenCalledTimes(1);
 
       // Second click: remove from focus
       await (view as any).removeFromFocus("Projects/Toggle.md", 10);
 
-      expect(settings.focus).toHaveLength(0);
-      expect(mockSaveSettings).toHaveBeenCalledTimes(2);
+      expect(mockFocusItems).toHaveLength(0);
+      expect(mockSaveFocusItems).toHaveBeenCalledTimes(2);
     });
 
     it("should add CSS class to element when adding to focus", async () => {
-      settings.focus = [];
+      mockFocusItems = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -673,7 +688,7 @@ describe("SphereView", () => {
     });
 
     it("should remove CSS class from element when removing from focus", async () => {
-      settings.focus = [
+      mockFocusItems = [
         {
           file: "Projects/Test.md",
           lineNumber: 5,
@@ -702,7 +717,7 @@ describe("SphereView", () => {
     });
 
     it("should not refresh view when element is provided", async () => {
-      settings.focus = [];
+      mockFocusItems = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -729,7 +744,7 @@ describe("SphereView", () => {
     });
 
     it("should add items from planning mode as unpinned by default", async () => {
-      settings.focus = [];
+      mockFocusItems = [];
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -742,9 +757,9 @@ describe("SphereView", () => {
       await (view as any).addToFocus(action, file, lineNumber, lineContent, "work", false);
 
       // Check item was added with isPinned: false (or undefined, which is treated as false)
-      expect(settings.focus.length).toBe(1);
-      expect(settings.focus[0].isPinned).toBeFalsy();
-      expect(settings.focus[0].text).toBe(action);
+      expect(mockFocusItems.length).toBe(1);
+      expect(mockFocusItems[0].isPinned).toBeFalsy();
+      expect(mockFocusItems[0].text).toBe(action);
     });
   });
 });

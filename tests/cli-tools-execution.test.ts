@@ -2,7 +2,19 @@ import { ToolExecutor } from "../src/cli-tools";
 import { ToolCall } from "../src/language-model";
 import { App, TFile } from "obsidian";
 import { FileWriter } from "../src/file-writer";
-import { PluginSettings } from "../src/types";
+import { PluginSettings, FocusItem } from "../src/types";
+
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
 describe("ToolExecutor - Real Execution", () => {
   let mockApp: App;
@@ -11,6 +23,10 @@ describe("ToolExecutor - Real Execution", () => {
   let executor: ToolExecutor;
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
     mockApp = {
       vault: {
         getAbstractFileByPath: jest.fn(),
@@ -29,9 +45,7 @@ describe("ToolExecutor - Real Execution", () => {
       addNextActionToProject: jest.fn().mockResolvedValue(undefined),
     } as any;
 
-    mockSettings = {
-      focus: [],
-    } as any;
+    mockSettings = {} as any;
 
     executor = new ToolExecutor(mockApp, mockFileWriter, mockSettings);
   });
@@ -72,10 +86,10 @@ tags:
 
       expect(result.is_error).not.toBe(true);
       expect(result.content).toContain("Added");
-      expect(mockSettings.focus).toHaveLength(1);
-      expect(mockSettings.focus[0].text).toBe("First action");
-      expect(mockSettings.focus[0].file).toBe("Projects/Test.md");
-      expect(mockSettings.focus[0].sphere).toBe("work");
+      expect(mockFocusItems).toHaveLength(1);
+      expect(mockFocusItems[0].text).toBe("First action");
+      expect(mockFocusItems[0].file).toBe("Projects/Test.md");
+      expect(mockFocusItems[0].sphere).toBe("work");
     });
 
     it("should extract sphere from tags", async () => {
@@ -100,7 +114,7 @@ tags:
 
       const result = await executor.executeTool(toolCall);
 
-      expect(mockSettings.focus[0].sphere).toBe("personal");
+      expect(mockFocusItems[0].sphere).toBe("personal");
     });
 
     it("should default to 'personal' sphere if no tags", async () => {
@@ -121,7 +135,7 @@ tags:
 
       await executor.executeTool(toolCall);
 
-      expect(mockSettings.focus[0].sphere).toBe("personal");
+      expect(mockFocusItems[0].sphere).toBe("personal");
     });
 
     it("should reject duplicate focus additions", async () => {
@@ -144,13 +158,13 @@ tags:
       };
 
       await executor.executeTool(toolCall);
-      expect(mockSettings.focus).toHaveLength(1);
+      expect(mockFocusItems).toHaveLength(1);
 
       // Try to add same action again
       const result = await executor.executeTool(toolCall);
       expect(result.is_error).toBe(true);
       expect(result.content).toContain("already in focus");
-      expect(mockSettings.focus).toHaveLength(1); // Still only one
+      expect(mockFocusItems).toHaveLength(1); // Still only one
     });
   });
 

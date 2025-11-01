@@ -5,6 +5,7 @@ import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { validateReminderDate } from "./validation";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
 const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "create-project",
@@ -233,6 +234,9 @@ export class InboxItemPersistenceService {
     const primarySphere = item.selectedSpheres[0];
     const isGeneral = filePath === (this.settings.nextActionsFilePath?.trim() || "Next actions.md");
 
+    // Load current focus items
+    const focusItems = await loadFocusItems(this.app.vault);
+
     // Add each action to the focus
     for (const action of actions) {
       const result = await finder.findActionLine(filePath, action);
@@ -248,10 +252,11 @@ export class InboxItemPersistenceService {
           addedAt: Date.now(),
         };
 
-        this.settings.focus.push(focusItem);
+        focusItems.push(focusItem);
       }
     }
 
-    await this.saveSettings();
+    // Save focus items
+    await saveFocusItems(this.app.vault, focusItems);
   }
 }

@@ -5,6 +5,18 @@ import { WorkspaceLeaf } from "obsidian";
 
 jest.mock("obsidian");
 
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
+
 describe("FocusView", () => {
   let view: FocusView;
   let mockLeaf: any;
@@ -13,8 +25,11 @@ describe("FocusView", () => {
   let mockSaveSettings: jest.Mock;
 
   beforeEach(() => {
+    // Reset mock focus items
+    mockFocusItems = [];
+    (mockSaveFocusItems as jest.Mock).mockClear();
+
     mockSettings = {
-      focus: [],
       focusAutoClearTime: "03:00",
       focusArchiveFile: "Focus Archive.md",
       lastFocusClearTimestamp: 0,
@@ -115,7 +130,7 @@ describe("FocusView", () => {
     expect(grouped.generalActions["personal"]).toHaveLength(1);
   });
 
-  it("should call saveSettings when removing item from focus", async () => {
+  it("should save focus when removing item from focus", async () => {
     const item: FocusItem = {
       file: "Test.md",
       lineNumber: 5,
@@ -125,12 +140,13 @@ describe("FocusView", () => {
       isGeneral: false,
       addedAt: 123456,
     };
-    mockSettings.focus = [item];
+    mockFocusItems = [item];
+    (view as any).focusItems = [...mockFocusItems];
 
     await (view as any).removeFromFocus(item);
 
-    expect(mockSaveSettings).toHaveBeenCalled();
-    expect(mockSettings.focus).toHaveLength(0);
+    expect(mockSaveFocusItems).toHaveBeenCalled();
+    expect(mockFocusItems).toHaveLength(0);
   });
 
   it("should refresh sphere views when removing item from focus", async () => {
@@ -143,7 +159,7 @@ describe("FocusView", () => {
       isGeneral: false,
       addedAt: 123456,
     };
-    mockSettings.focus = [item];
+    mockFocusItems = [item];
 
     // Mock sphere view leaves
     const mockSphereView = {
@@ -187,7 +203,7 @@ describe("FocusView", () => {
         addedAt: Date.now(),
       };
 
-      mockSettings.focus = [waitingItem, regularItem];
+      mockFocusItems = [waitingItem, regularItem];
 
       // Create a proper TFile mock
       const { TFile } = require("obsidian");
@@ -234,8 +250,8 @@ describe("FocusView", () => {
       await (view as any).refresh();
 
       // Both items should remain in the focus (waiting-for items should NOT be removed)
-      expect(mockSettings.focus).toHaveLength(2);
-      const waitingItemStillThere = mockSettings.focus.find((i: FocusItem) =>
+      expect(mockFocusItems).toHaveLength(2);
+      const waitingItemStillThere = mockFocusItems.find((i: FocusItem) =>
         i.lineContent.includes("[w]")
       );
       expect(waitingItemStillThere).toBeDefined();
@@ -252,7 +268,9 @@ describe("FocusView", () => {
         addedAt: Date.now(),
       };
 
-      mockSettings.focus = [regularItem];
+      mockFocusItems = [regularItem];
+      // Initialize the view's internal focusItems array
+      (view as any).focusItems = [...mockFocusItems];
 
       // Create a proper TFile mock
       const { TFile } = require("obsidian");
@@ -282,15 +300,15 @@ describe("FocusView", () => {
       (view as any).onOpen = jest.fn();
       (view as any).refreshSphereViews = jest.fn();
 
-      await (view as any).convertToWaitingFor(regularItem);
+      await (view as any).convertToWaitingFor((view as any).focusItems[0]);
 
       // Item should still be in focus
-      expect(mockSettings.focus).toHaveLength(1);
-      expect(mockSettings.focus[0].file).toBe("Test.md");
-      expect(mockSettings.focus[0].lineNumber).toBe(5);
+      expect(mockFocusItems).toHaveLength(1);
+      expect(mockFocusItems[0].file).toBe("Test.md");
+      expect(mockFocusItems[0].lineNumber).toBe(5);
 
       // lineContent should be updated to show [w] status
-      expect(mockSettings.focus[0].lineContent).toBe("- [w] Call client about proposal");
+      expect(mockFocusItems[0].lineContent).toBe("- [w] Call client about proposal");
 
       // File should have been modified with [w] checkbox
       expect(mockApp.vault.modify).toHaveBeenCalledWith(
@@ -298,8 +316,8 @@ describe("FocusView", () => {
         expect.stringContaining("- [w] Call client about proposal")
       );
 
-      // Settings should be saved
-      expect(mockSaveSettings).toHaveBeenCalled();
+      // Focus should be saved
+      expect(mockSaveFocusItems).toHaveBeenCalled();
 
       // Restore original methods
       (view as any).onOpen = originalOnOpen;
@@ -378,31 +396,30 @@ describe("FocusView", () => {
 
   describe("FocusView - Pinned Items", () => {
     it("should filter pinned items from unpinned items", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] Pinned action",
-            text: "Pinned action",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 2000,
-            isPinned: true,
-          },
-          {
-            file: "Projects/Project B.md",
-            lineNumber: 15,
-            lineContent: "- [ ] Unpinned action",
-            text: "Unpinned action",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 1000,
-            isPinned: false,
-          },
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Pinned action",
+          text: "Pinned action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 2000,
+          isPinned: true,
+        },
+        {
+          file: "Projects/Project B.md",
+          lineNumber: 15,
+          lineContent: "- [ ] Unpinned action",
+          text: "Unpinned action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 1000,
+          isPinned: false,
+        },
+      ];
+
+      const settings = { ...mockSettings };
 
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
@@ -421,21 +438,20 @@ describe("FocusView", () => {
     });
 
     it("should treat items without isPinned as unpinned (backward compatibility)", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] Legacy action",
-            text: "Legacy action",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now(),
-            // No isPinned property
-          } as FocusItem,
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Legacy action",
+          text: "Legacy action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          // No isPinned property
+        } as FocusItem,
+      ];
+
+      const settings = { ...mockSettings };
 
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
@@ -453,142 +469,144 @@ describe("FocusView", () => {
     });
 
     it("should pin an unpinned item and move to end of pinned section", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] Already pinned",
-            text: "Already pinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 3000,
-            isPinned: true,
-          },
-          {
-            file: "Projects/Project B.md",
-            lineNumber: 15,
-            lineContent: "- [ ] To be pinned",
-            text: "To be pinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 2000,
-            isPinned: false,
-          },
-          {
-            file: "Projects/Project C.md",
-            lineNumber: 20,
-            lineContent: "- [ ] Another unpinned",
-            text: "Another unpinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 1000,
-            isPinned: false,
-          },
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Already pinned",
+          text: "Already pinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 3000,
+          isPinned: true,
+        },
+        {
+          file: "Projects/Project B.md",
+          lineNumber: 15,
+          lineContent: "- [ ] To be pinned",
+          text: "To be pinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 2000,
+          isPinned: false,
+        },
+        {
+          file: "Projects/Project C.md",
+          lineNumber: 20,
+          lineContent: "- [ ] Another unpinned",
+          text: "Another unpinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 1000,
+          isPinned: false,
+        },
+      ];
+
+      const settings = { ...mockSettings };
 
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
+      // Initialize the view's internal focusItems array
+      (testView as any).focusItems = [...mockFocusItems];
 
       // Pin the second item
-      await (testView as any).pinItem(settings.focus[1]);
+      await (testView as any).pinItem((testView as any).focusItems[1]);
 
       // Check isPinned flag is set
-      expect(settings.focus[1].isPinned).toBe(true);
+      expect(mockFocusItems[1].isPinned).toBe(true);
 
       // Check it moved to end of pinned section (index 1, after existing pinned item)
-      const pinnedItems = settings.focus.filter((i) => i.isPinned);
+      const pinnedItems = mockFocusItems.filter((i) => i.isPinned);
       expect(pinnedItems.length).toBe(2);
       expect(pinnedItems[1].text).toBe("To be pinned");
 
-      // Check saveSettings was called
-      expect(mockSaveSettings).toHaveBeenCalled();
+      // Check saveFocusItems was called
+      expect(mockSaveFocusItems).toHaveBeenCalled();
     });
 
     it("should unpin a pinned item", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] Pinned action",
-            text: "Pinned action",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now(),
-            isPinned: true,
-          },
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Pinned action",
+          text: "Pinned action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          isPinned: true,
+        },
+      ];
 
+      const settings = { ...mockSettings };
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
+      // Initialize the view's internal focusItems array
+      (testView as any).focusItems = [...mockFocusItems];
 
       // Unpin the item
-      await (testView as any).unpinItem(settings.focus[0]);
+      await (testView as any).unpinItem((testView as any).focusItems[0]);
 
       // Check isPinned flag is cleared
-      expect(settings.focus[0].isPinned).toBe(false);
+      expect(mockFocusItems[0].isPinned).toBe(false);
 
-      // Check saveSettings was called
-      expect(mockSaveSettings).toHaveBeenCalled();
+      // Check saveFocusItems was called
+      expect(mockSaveFocusItems).toHaveBeenCalled();
     });
 
     it("should reorder pinned items on drop", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] First pinned",
-            text: "First pinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 3000,
-            isPinned: true,
-          },
-          {
-            file: "Projects/Project B.md",
-            lineNumber: 15,
-            lineContent: "- [ ] Second pinned",
-            text: "Second pinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 2000,
-            isPinned: true,
-          },
-          {
-            file: "Projects/Project C.md",
-            lineNumber: 20,
-            lineContent: "- [ ] Third pinned",
-            text: "Third pinned",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now() - 1000,
-            isPinned: true,
-          },
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] First pinned",
+          text: "First pinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 3000,
+          isPinned: true,
+        },
+        {
+          file: "Projects/Project B.md",
+          lineNumber: 15,
+          lineContent: "- [ ] Second pinned",
+          text: "Second pinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 2000,
+          isPinned: true,
+        },
+        {
+          file: "Projects/Project C.md",
+          lineNumber: 20,
+          lineContent: "- [ ] Third pinned",
+          text: "Third pinned",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now() - 1000,
+          isPinned: true,
+        },
+      ];
+
+      const settings = { ...mockSettings };
 
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).scanner = {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
+      // Initialize the view's internal focusItems array
+      (testView as any).focusItems = [...mockFocusItems];
 
       // Simulate dragging third item to first position
-      const draggedItem = settings.focus[2];
-      const dropTarget = settings.focus[0];
+      const draggedItem = (testView as any).focusItems[2];
+      const dropTarget = (testView as any).focusItems[0];
 
       // Set up drag state
       (testView as any).draggedItem = draggedItem;
@@ -601,35 +619,34 @@ describe("FocusView", () => {
       await (testView as any).onDrop(mockDropEvent, dropTarget);
 
       // Check order changed: "Third" should now be at index 0
-      expect(settings.focus[0].text).toBe("Third pinned");
-      expect(settings.focus[1].text).toBe("First pinned");
-      expect(settings.focus[2].text).toBe("Second pinned");
+      expect(mockFocusItems[0].text).toBe("Third pinned");
+      expect(mockFocusItems[1].text).toBe("First pinned");
+      expect(mockFocusItems[2].text).toBe("Second pinned");
 
       // Check all are still pinned
-      expect(settings.focus[0].isPinned).toBe(true);
-      expect(settings.focus[1].isPinned).toBe(true);
-      expect(settings.focus[2].isPinned).toBe(true);
+      expect(mockFocusItems[0].isPinned).toBe(true);
+      expect(mockFocusItems[1].isPinned).toBe(true);
+      expect(mockFocusItems[2].isPinned).toBe(true);
 
-      // Check saveSettings was called
-      expect(mockSaveSettings).toHaveBeenCalled();
+      // Check saveFocusItems was called
+      expect(mockSaveFocusItems).toHaveBeenCalled();
     });
 
     it("should preserve isPinned state when validating and updating line numbers", async () => {
-      const settings = {
-        ...mockSettings,
-        focus: [
-          {
-            file: "Projects/Project A.md",
-            lineNumber: 10,
-            lineContent: "- [ ] Pinned action",
-            text: "Pinned action",
-            sphere: "work",
-            isGeneral: false,
-            addedAt: Date.now(),
-            isPinned: true,
-          },
-        ],
-      };
+      mockFocusItems = [
+        {
+          file: "Projects/Project A.md",
+          lineNumber: 10,
+          lineContent: "- [ ] Pinned action",
+          text: "Pinned action",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          isPinned: true,
+        },
+      ];
+
+      const settings = { ...mockSettings };
 
       // Mock validator to return updated line number
       const mockValidator = {
@@ -642,6 +659,8 @@ describe("FocusView", () => {
       const testView = new FocusView(mockLeaf, settings, mockSaveSettings);
       (testView as any).app = mockApp;
       (testView as any).validator = mockValidator;
+      // Initialize the view's internal focusItems array
+      (testView as any).focusItems = [...mockFocusItems];
 
       // Mock file read
       mockApp.vault.read = jest.fn().mockResolvedValue("- [ ] Pinned action");
@@ -649,8 +668,8 @@ describe("FocusView", () => {
       await (testView as any).refresh();
 
       // Check isPinned state is preserved
-      expect(settings.focus[0].isPinned).toBe(true);
-      expect(settings.focus[0].lineNumber).toBe(15);
+      expect(mockFocusItems[0].isPinned).toBe(true);
+      expect(mockFocusItems[0].lineNumber).toBe(15);
     });
   });
 

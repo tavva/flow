@@ -10,6 +10,7 @@ import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
+import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
 
 type InboxCommandConfig = {
   id: string;
@@ -22,6 +23,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+
+    // Migrate focus from settings to file (one-time migration)
+    await this.migrateFocusToFile();
 
     // Check and clear focus if needed
     await this.checkAndClearFocus();
@@ -346,6 +350,24 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
   }
 
+  private async migrateFocusToFile(): Promise<void> {
+    // Check if settings has focus items (old storage)
+    if (this.settings.focus && this.settings.focus.length > 0) {
+      try {
+        // Save to file
+        await saveFocusItems(this.app.vault, this.settings.focus);
+
+        // Clear from settings
+        this.settings.focus = [];
+        await this.saveSettings();
+
+        console.log("Migrated focus items from settings to file");
+      } catch (error) {
+        console.error("Failed to migrate focus items to file", error);
+      }
+    }
+  }
+
   private async checkAndClearFocus(): Promise<void> {
     // Check if it's time to clear the focus
     if (
@@ -354,13 +376,16 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return;
     }
 
+    // Load focus items
+    const focusItems = await loadFocusItems(this.app.vault);
+
     // Archive the tasks if archive file is configured
     let archiveSucceeded = false;
-    if (this.settings.focusArchiveFile && this.settings.focus.length > 0) {
+    if (this.settings.focusArchiveFile && focusItems.length > 0) {
       try {
         await archiveClearedTasks(
           this.app.vault,
-          this.settings.focus,
+          focusItems,
           this.settings.focusArchiveFile,
           new Date()
         );
@@ -372,7 +397,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     // Clear the focus
-    this.settings.focus = [];
+    await saveFocusItems(this.app.vault, []);
     this.settings.lastFocusClearTimestamp = Date.now();
     this.settings.lastFocusArchiveSucceeded = archiveSucceeded;
     this.settings.focusClearedNotificationDismissed = false; // Reset so user sees notification

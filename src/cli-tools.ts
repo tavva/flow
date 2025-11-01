@@ -5,6 +5,7 @@ import { TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
 import { PluginSettings, FlowProject, FocusItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
 export const CLI_TOOLS: ToolDefinition[] = [
   {
@@ -163,8 +164,11 @@ export class ToolExecutor {
     const sphereTag = tagsArray.find((tag: string) => tag.startsWith("project/"));
     const sphere = sphereTag ? sphereTag.replace("project/", "") : "personal";
 
+    // Load current focus items
+    const focusItems = await loadFocusItems(this.app.vault);
+
     // Check for duplicates before adding
-    const alreadyExists = this.settings.focus.some(
+    const alreadyExists = focusItems.some(
       (item) => item.file === project_path && item.text === action_text
     );
     if (alreadyExists) {
@@ -172,7 +176,7 @@ export class ToolExecutor {
     }
 
     // Add to focus
-    this.settings.focus.push({
+    focusItems.push({
       file: project_path,
       lineNumber,
       lineContent,
@@ -181,6 +185,9 @@ export class ToolExecutor {
       isGeneral: false,
       addedAt: Date.now(),
     });
+
+    // Save focus items
+    await saveFocusItems(this.app.vault, focusItems);
 
     return {
       tool_use_id: toolCall.id,

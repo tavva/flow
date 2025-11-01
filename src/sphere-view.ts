@@ -10,6 +10,7 @@ import {
 } from "./project-hierarchy";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -457,7 +458,8 @@ export class SphereView extends ItemView {
     item.style.cursor = "pointer";
 
     // Check if this action is in the focus and add CSS class if so
-    const inFocus = this.settings.focus.some(
+    const focusItems = await loadFocusItems(this.app.vault);
+    const inFocus = focusItems.some(
       (focusItem) => focusItem.file === file && focusItem.text === action
     );
     if (inFocus) {
@@ -478,7 +480,7 @@ export class SphereView extends ItemView {
         return;
       }
 
-      if (this.isOnFocus(file, finalLineResult.lineNumber!)) {
+      if (await this.isOnFocus(file, finalLineResult.lineNumber!)) {
         await this.removeFromFocus(file, finalLineResult.lineNumber!, clickedElement);
       } else {
         await this.addToFocus(
@@ -730,8 +732,9 @@ export class SphereView extends ItemView {
       addedAt: Date.now(),
     };
 
-    this.settings.focus.push(item);
-    await this.saveSettings();
+    const focusItems = await loadFocusItems(this.app.vault);
+    focusItems.push(item);
+    await saveFocusItems(this.app.vault, focusItems);
     await this.activateFocusView();
     await this.refreshFocusView();
 
@@ -746,10 +749,11 @@ export class SphereView extends ItemView {
     lineNumber: number,
     element?: HTMLElement
   ): Promise<void> {
-    this.settings.focus = this.settings.focus.filter(
+    const focusItems = await loadFocusItems(this.app.vault);
+    const updatedFocus = focusItems.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
-    await this.saveSettings();
+    await saveFocusItems(this.app.vault, updatedFocus);
     await this.activateFocusView();
     await this.refreshFocusView();
 
@@ -759,8 +763,9 @@ export class SphereView extends ItemView {
     }
   }
 
-  private isOnFocus(file: string, lineNumber: number): boolean {
-    return this.settings.focus.some((item) => item.file === file && item.lineNumber === lineNumber);
+  private async isOnFocus(file: string, lineNumber: number): Promise<boolean> {
+    const focusItems = await loadFocusItems(this.app.vault);
+    return focusItems.some((item) => item.file === file && item.lineNumber === lineNumber);
   }
 
   private async activateFocusView(): Promise<void> {

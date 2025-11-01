@@ -5,6 +5,7 @@ import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
 /**
  * Check if a line contains a checkbox (task)
@@ -127,35 +128,19 @@ export function registerFocusEditorMenu(
       return;
     }
 
-    // Check if already on focus
-    const onFocus = isActionOnFocus(filePath, lineNumber, settings.focus);
-
-    // Add menu item
+    // Add menu item (load focus asynchronously in onClick)
     menu.addItem((item) => {
       item
-        .setTitle(onFocus ? "Remove from Focus" : "Add to Focus")
-        .setIcon(onFocus ? "x" : "plus")
+        .setTitle("Toggle Focus")
+        .setIcon("list-checks")
         .onClick(async () => {
+          const focusItems = await loadFocusItems(app.vault);
+          const onFocus = isActionOnFocus(filePath, lineNumber, focusItems);
+
           if (onFocus) {
-            await removeFromFocus(
-              app,
-              filePath,
-              lineNumber,
-              settings,
-              saveSettings,
-              refreshFocusView
-            );
+            await removeFromFocus(app, filePath, lineNumber, focusItems, refreshFocusView);
           } else {
-            await addToFocus(
-              app,
-              filePath,
-              lineNumber,
-              line,
-              sphere,
-              settings,
-              saveSettings,
-              refreshFocusView
-            );
+            await addToFocus(app, filePath, lineNumber, line, sphere, settings, focusItems, refreshFocusView);
           }
         });
     });
@@ -172,7 +157,7 @@ async function addToFocus(
   lineContent: string,
   sphere: string,
   settings: PluginSettings,
-  saveSettings: () => Promise<void>,
+  focusItems: FocusItem[],
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
   const actionText = extractActionText(lineContent);
@@ -193,8 +178,8 @@ async function addToFocus(
     addedAt: Date.now(),
   };
 
-  settings.focus.push(item);
-  await saveSettings();
+  focusItems.push(item);
+  await saveFocusItems(app.vault, focusItems);
   await activateFocusView(app);
   await refreshFocusView();
 }
@@ -206,14 +191,13 @@ async function removeFromFocus(
   app: App,
   filePath: string,
   lineNumber: number,
-  settings: PluginSettings,
-  saveSettings: () => Promise<void>,
+  focusItems: FocusItem[],
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
-  settings.focus = settings.focus.filter(
+  const updatedFocus = focusItems.filter(
     (item) => !(item.file === filePath && item.lineNumber === lineNumber)
   );
-  await saveSettings();
+  await saveFocusItems(app.vault, updatedFocus);
   await activateFocusView(app);
   await refreshFocusView();
 }

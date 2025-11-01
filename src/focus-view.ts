@@ -7,6 +7,7 @@ import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator, ValidationResult } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -27,6 +28,7 @@ export class FocusView extends ItemView {
   private hasDataview: boolean = false;
   private allProjects: FlowProject[] = [];
   private draggedItem: FocusItem | null = null;
+  private focusItems: FocusItem[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -68,6 +70,9 @@ export class FocusView extends ItemView {
     // Show loading state immediately
     this.renderLoadingState(container as HTMLElement);
 
+    // Load focus items from file
+    await this.loadFocus();
+
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
 
@@ -77,7 +82,7 @@ export class FocusView extends ItemView {
       const cache = this.app.metadataCache.getFileCache(file);
       if (cache?.listItems && cache.listItems.length > 0) {
         // Check if this file contains any focus items
-        const hasFocusItems = this.settings.focus.some((item) => item.file === file.path);
+        const hasFocusItems = this.focusItems.some((item) => item.file === file.path);
         if (hasFocusItems) {
           this.scheduleRefresh();
         }
@@ -96,12 +101,20 @@ export class FocusView extends ItemView {
       this.renderClearNotification(container as HTMLElement);
     }
 
-    if (this.settings.focus.length === 0) {
+    if (this.focusItems.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
     }
 
-    this.renderGroupedItems(container as HTMLElement, this.settings.focus);
+    this.renderGroupedItems(container as HTMLElement, this.focusItems);
+  }
+
+  private async loadFocus(): Promise<void> {
+    this.focusItems = await loadFocusItems(this.app.vault);
+  }
+
+  private async saveFocus(): Promise<void> {
+    await saveFocusItems(this.app.vault, this.focusItems);
   }
 
   async onClose() {
@@ -141,16 +154,19 @@ export class FocusView extends ItemView {
     this.isRefreshing = true;
 
     try {
+      // Reload focus items from file to pick up changes from other views
+      await this.loadFocus();
+
       // Validate all focus items and remove completed ones
       const validatedItems: FocusItem[] = [];
-      let needsSettingsSave = false;
+      let needsSave = false;
 
-      for (const item of this.settings.focus) {
+      for (const item of this.focusItems) {
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {
           // Item no longer exists or line content changed significantly
-          needsSettingsSave = true;
+          needsSave = true;
           continue;
         }
 
@@ -166,7 +182,7 @@ export class FocusView extends ItemView {
             // If marked as complete [x], remove from focus
             // Note: We keep waiting-for [w] items in the focus
             if (line.match(/\[x\]/i)) {
-              needsSettingsSave = true;
+              needsSave = true;
               continue;
             }
           }
@@ -176,16 +192,16 @@ export class FocusView extends ItemView {
         if (validation.updatedLineNumber && validation.updatedLineNumber !== item.lineNumber) {
           // Update line number if it moved
           validatedItems.push({ ...item, lineNumber: validation.updatedLineNumber });
-          needsSettingsSave = true;
+          needsSave = true;
         } else {
           validatedItems.push(item);
         }
       }
 
-      // Update settings if any items were removed or updated
-      if (needsSettingsSave) {
-        this.settings.focus = validatedItems;
-        await this.saveSettings();
+      // Update focus if any items were removed or updated
+      if (needsSave) {
+        this.focusItems = validatedItems;
+        await this.saveFocus();
       }
 
       // Re-render the view
@@ -697,14 +713,14 @@ export class FocusView extends ItemView {
       await this.app.vault.modify(file, lines.join("\n"));
 
       // Update the item's lineContent in the focus instead of removing it
-      const focusIndex = this.settings.focus.findIndex(
+      const focusIndex = this.focusItems.findIndex(
         (i) =>
           i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
       );
 
       if (focusIndex !== -1) {
-        this.settings.focus[focusIndex].lineContent = updatedLine;
-        await this.saveSettings();
+        this.focusItems[focusIndex].lineContent = updatedLine;
+        await this.saveFocus();
         await this.refreshSphereViews();
         await this.onOpen(); // Re-render
       }
@@ -712,46 +728,46 @@ export class FocusView extends ItemView {
   }
 
   private async removeFromFocus(item: FocusItem): Promise<void> {
-    this.settings.focus = this.settings.focus.filter(
+    this.focusItems = this.focusItems.filter(
       (i) =>
         !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
-    await this.saveSettings();
+    await this.saveFocus();
     await this.refreshSphereViews();
     await this.onOpen(); // Re-render
   }
 
   private async pinItem(item: FocusItem): Promise<void> {
-    // Find item in settings.focus
-    const index = this.settings.focus.findIndex(
+    // Find item in focusItems
+    const index = this.focusItems.findIndex(
       (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
     );
 
     if (index === -1) return;
 
     // Set isPinned flag
-    this.settings.focus[index].isPinned = true;
+    this.focusItems[index].isPinned = true;
 
     // Move to end of pinned section
-    const pinnedCount = this.settings.focus.filter((i) => i.isPinned).length;
-    const [pinnedItem] = this.settings.focus.splice(index, 1);
-    this.settings.focus.splice(pinnedCount - 1, 0, pinnedItem);
+    const pinnedCount = this.focusItems.filter((i) => i.isPinned).length;
+    const [pinnedItem] = this.focusItems.splice(index, 1);
+    this.focusItems.splice(pinnedCount - 1, 0, pinnedItem);
 
-    await this.saveSettings();
+    await this.saveFocus();
     await this.onOpen(); // Re-render
   }
 
   private async unpinItem(item: FocusItem): Promise<void> {
-    const index = this.settings.focus.findIndex(
+    const index = this.focusItems.findIndex(
       (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
     );
 
     if (index === -1) return;
 
     // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
-    this.settings.focus[index].isPinned = false;
+    this.focusItems[index].isPinned = false;
 
-    await this.saveSettings();
+    await this.saveFocus();
     await this.onOpen(); // Re-render
   }
 
@@ -776,14 +792,14 @@ export class FocusView extends ItemView {
     e.preventDefault();
     if (!this.draggedItem || this.draggedItem === dropTarget) return;
 
-    // Find indices in settings.focus
-    const draggedIndex = this.settings.focus.findIndex(
+    // Find indices in focusItems
+    const draggedIndex = this.focusItems.findIndex(
       (i) =>
         i.file === this.draggedItem!.file &&
         i.lineNumber === this.draggedItem!.lineNumber &&
         i.addedAt === this.draggedItem!.addedAt
     );
-    const targetIndex = this.settings.focus.findIndex(
+    const targetIndex = this.focusItems.findIndex(
       (i) =>
         i.file === dropTarget.file &&
         i.lineNumber === dropTarget.lineNumber &&
@@ -793,10 +809,10 @@ export class FocusView extends ItemView {
     if (draggedIndex === -1 || targetIndex === -1) return;
 
     // Remove dragged item and insert at target position
-    const [item] = this.settings.focus.splice(draggedIndex, 1);
-    this.settings.focus.splice(targetIndex, 0, item);
+    const [item] = this.focusItems.splice(draggedIndex, 1);
+    this.focusItems.splice(targetIndex, 0, item);
 
-    await this.saveSettings();
+    await this.saveFocus();
     await this.onOpen(); // Re-render
   }
 
