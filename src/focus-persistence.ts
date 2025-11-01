@@ -1,10 +1,10 @@
 // ABOUTME: Handles persistence of focus items to a JSON file in the vault
-// ABOUTME: Provides methods to load and save focus items with automatic migration
+// ABOUTME: Stores focus items in flow/focus.json for reliable cross-device sync
 
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 
-const FOCUS_FILE_PATH = ".flow/focus.json";
+const FOCUS_FILE_PATH = "flow/focus.json";
 const FOCUS_FILE_VERSION = 1;
 
 interface FocusFileFormat {
@@ -92,14 +92,14 @@ export async function saveFocusItems(vault: Vault, items: FocusItem[]): Promise<
 }
 
 /**
- * Ensure the .flow directory exists
+ * Ensure the flow directory exists
  */
 async function ensureFlowDirectory(vault: Vault): Promise<void> {
   // Check if folder exists on disk first (adapter is more reliable than cache)
   try {
-    const exists = await vault.adapter.exists(".flow");
+    const exists = await vault.adapter.exists("flow");
     if (exists) {
-      const stat = await vault.adapter.stat(".flow");
+      const stat = await vault.adapter.stat("flow");
       if (stat?.type === "folder") {
         return;
       }
@@ -109,22 +109,22 @@ async function ensureFlowDirectory(vault: Vault): Promise<void> {
   }
 
   // Try to get from cache
-  const flowDir = vault.getAbstractFileByPath(".flow");
+  const flowDir = vault.getAbstractFileByPath("flow");
 
   if (flowDir instanceof TFolder) {
     return;
   }
 
   if (flowDir) {
-    throw new Error(".flow exists but is not a folder");
+    throw new Error("flow exists but is not a folder");
   }
 
   // Create the folder
   try {
-    await vault.createFolder(".flow");
+    await vault.createFolder("flow");
   } catch (error) {
     // Might have been created in race condition, check if it exists now
-    const exists = await vault.adapter.exists(".flow");
+    const exists = await vault.adapter.exists("flow");
     if (exists) {
       return;
     }
