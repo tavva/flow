@@ -294,7 +294,13 @@ export class WaitingForView extends ItemView {
     const lineIndex = (validation.updatedLineNumber || item.lineNumber) - 1;
 
     if (lineIndex >= 0 && lineIndex < lines.length) {
-      lines[lineIndex] = lines[lineIndex].replace(/\[w\]/i, "[x]");
+      // Get today's date in YYYY-MM-DD format
+      const today = new Date();
+      const dateStr = today.toISOString().split("T")[0];
+
+      // Replace [w] with [x] and add completion date
+      lines[lineIndex] = lines[lineIndex].replace(/\[w\]/i, `[x]`) + ` ✅ ${dateStr}`;
+
       await this.app.vault.modify(file, lines.join("\n"));
     }
   }

@@ -42,24 +42,36 @@ export class WaitingForScanner {
       return t.status.toLowerCase() === "w";
     });
 
-    for (const task of tasks) {
-      // Read file to get full line content for validation
-      const file = this.app.vault.getAbstractFileByPath(task.path);
-      let lineContent = "";
+    // Read all files once to avoid re-reading for each task
+    const fileContents = new Map<string, string[]>();
 
-      if (file instanceof TFile) {
-        const content = await this.app.vault.read(file);
-        const lines = content.split(/\r?\n/);
-        const lineIndex = task.line - 1;
+    for (const task of tasks) {
+      // Get or cache file content
+      if (!fileContents.has(task.path)) {
+        const file = this.app.vault.getAbstractFileByPath(task.path);
+        if (file instanceof TFile) {
+          const content = await this.app.vault.read(file);
+          fileContents.set(task.path, content.split(/\r?\n/));
+        }
+      }
+
+      const lines = fileContents.get(task.path);
+      let lineContent = "";
+      let actualLineNumber = task.line;
+
+      if (lines) {
+        // Dataview's task.line is 0-indexed (position in array)
+        const lineIndex = task.line;
         if (lineIndex >= 0 && lineIndex < lines.length) {
           lineContent = lines[lineIndex];
+          actualLineNumber = lineIndex + 1; // Convert to 1-indexed for storage
         }
       }
 
       items.push({
         file: task.path,
         fileName: task.link.path.split("/").pop()?.replace(".md", "") || task.path,
-        lineNumber: task.line,
+        lineNumber: actualLineNumber,
         lineContent,
         text: task.text,
       });

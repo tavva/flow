@@ -720,4 +720,84 @@ describe("FocusView", () => {
       expect(mockOpenedLeaf.openFile).toHaveBeenCalledWith(mockFile2);
     });
   });
+
+  describe("markItemComplete", () => {
+    it("should add completion date when marking item complete", async () => {
+      const mockFile = {
+        path: "Projects/Test.md",
+      };
+      const TFile = require("obsidian").TFile;
+      const mockTFile = Object.create(TFile.prototype);
+      mockTFile.path = mockFile.path;
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
+      mockApp.vault.read.mockResolvedValue("- [ ] Test action");
+
+      const item: FocusItem = {
+        file: mockFile.path,
+        lineNumber: 1,
+        lineContent: "- [ ] Test action",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      // Mock validator
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).markItemComplete(item);
+
+      expect(mockApp.vault.modify).toHaveBeenCalled();
+      const modifiedContent = mockApp.vault.modify.mock.calls[0][1];
+
+      // Verify completion date format YYYY-MM-DD
+      expect(modifiedContent).toMatch(/^- \[x\] Test action ✅ \d{4}-\d{2}-\d{2}$/);
+
+      // Verify it's today's date
+      const today = new Date().toISOString().split("T")[0];
+      expect(modifiedContent).toContain(`✅ ${today}`);
+    });
+
+    it("should add completion date when marking waiting-for item complete", async () => {
+      const mockFile = {
+        path: "Projects/Test.md",
+      };
+      const TFile = require("obsidian").TFile;
+      const mockTFile = Object.create(TFile.prototype);
+      mockTFile.path = mockFile.path;
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
+      mockApp.vault.read.mockResolvedValue("- [w] Waiting action");
+
+      const item: FocusItem = {
+        file: mockFile.path,
+        lineNumber: 1,
+        lineContent: "- [w] Waiting action",
+        text: "Waiting action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      // Mock validator
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).markItemComplete(item);
+
+      expect(mockApp.vault.modify).toHaveBeenCalled();
+      const modifiedContent = mockApp.vault.modify.mock.calls[0][1];
+
+      // Verify completion date format YYYY-MM-DD
+      expect(modifiedContent).toMatch(/^- \[x\] Waiting action ✅ \d{4}-\d{2}-\d{2}$/);
+
+      // Verify it's today's date
+      const today = new Date().toISOString().split("T")[0];
+      expect(modifiedContent).toContain(`✅ ${today}`);
+    });
+  });
 });

@@ -106,16 +106,45 @@ describe("WaitingForView", () => {
 
     await (view as any).toggleItemComplete(item);
 
-    // Verify file was modified with the correct line changed
-    expect(mockApp.vault.modify).toHaveBeenCalledWith(
-      mockFile,
-      [
-        "# New line added at top",
-        "",
-        "## Next actions",
-        "- [x] Wait for review #sphere/work", // [w] replaced with [x]
-        "",
-      ].join("\n")
-    );
+    // Verify file was modified with the correct line changed and completion date added
+    expect(mockApp.vault.modify).toHaveBeenCalled();
+    const modifyCall = mockApp.vault.modify.mock.calls[0];
+    expect(modifyCall[0]).toBe(mockFile);
+
+    const modifiedContent = modifyCall[1];
+    const modifiedLines = modifiedContent.split("\n");
+
+    // Check the task was marked complete
+    expect(modifiedLines[3]).toMatch(/^- \[x\] Wait for review #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/);
+  });
+
+  test("should add completion date when marking item complete", async () => {
+    const mockFile = Object.create(TFile.prototype);
+    mockFile.path = "Test.md";
+
+    const fileContent = "- [w] Test waiting item #sphere/work";
+
+    mockApp.vault.getAbstractFileByPath.mockReturnValue(mockFile);
+    mockApp.vault.read.mockResolvedValue(fileContent);
+
+    const item: WaitingForItem = {
+      file: "Test.md",
+      fileName: "Test",
+      lineNumber: 1,
+      lineContent: "- [w] Test waiting item #sphere/work",
+      text: "Test waiting item",
+    };
+
+    await (view as any).toggleItemComplete(item);
+
+    expect(mockApp.vault.modify).toHaveBeenCalled();
+    const modifiedContent = mockApp.vault.modify.mock.calls[0][1];
+
+    // Verify completion date format YYYY-MM-DD
+    expect(modifiedContent).toMatch(/^- \[x\] Test waiting item #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/);
+
+    // Verify it's today's date
+    const today = new Date().toISOString().split("T")[0];
+    expect(modifiedContent).toContain(`✅ ${today}`);
   });
 });
