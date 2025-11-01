@@ -953,6 +953,46 @@ select.flow-gtd-inline-select option,
         text-transform: uppercase;
 }
 
+/* Priority dropdown container */
+.flow-gtd-sphere-project-priority-container {
+        position: relative;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+}
+
+/* Priority label (shown by default) */
+.flow-gtd-sphere-project-priority-label {
+        display: inline;
+}
+
+/* Priority dropdown (hidden by default) */
+.flow-gtd-sphere-project-priority-dropdown {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-normal);
+        background-color: var(--background-primary);
+        border: 1px solid var(--background-modifier-border);
+        border-radius: 4px;
+        padding: 2px 4px;
+        cursor: pointer;
+        min-width: 100px;
+}
+
+/* Show dropdown on hover over project box, hide label */
+.flow-gtd-sphere-project:hover .flow-gtd-sphere-project-priority-label {
+        display: none;
+}
+
+.flow-gtd-sphere-project:hover .flow-gtd-sphere-project-priority-dropdown {
+        display: inline-block;
+}
+
 .flow-gtd-sphere-next-actions {
         margin: 0;
         padding-left: 20px;

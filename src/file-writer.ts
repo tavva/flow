@@ -733,4 +733,18 @@ ${originalItemDescription}
       frontmatter.tags = [...new Set([...projectTags, ...newTags, ...otherTags])];
     });
   }
+
+  /**
+   * Update project priority in frontmatter
+   */
+  async updateProjectPriority(project: FlowProject, newPriority: number): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(project.file);
+    if (!(file instanceof TFile)) {
+      throw new Error(`Project file not found: ${project.file}`);
+    }
+
+    await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+      frontmatter.priority = newPriority;
+    });
+  }
 }

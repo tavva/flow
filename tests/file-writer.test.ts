@@ -1243,4 +1243,58 @@ tags:
       expect(content).toContain("Original inbox item: redesign website ([[project-brief|source]])");
     });
   });
+
+  describe("updateProjectPriority", () => {
+    const mockProject: FlowProject = {
+      file: "Projects/test-project.md",
+      title: "Test Project",
+      tags: ["project/work"],
+      priority: 2,
+      nextActions: [],
+    };
+
+    it("should update project priority using processFrontMatter", async () => {
+      const mockFile = new TFile("Projects/test-project.md", "Test Project");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+
+      let updatedPriority: number | undefined;
+      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation((file, callback) => {
+        const mockFrontmatter = { priority: 2, tags: ["project/work"], status: "live" };
+        callback(mockFrontmatter);
+        updatedPriority = mockFrontmatter.priority;
+        return Promise.resolve();
+      });
+
+      await fileWriter.updateProjectPriority(mockProject, 1);
+
+      expect(mockFileManager.processFrontMatter).toHaveBeenCalledWith(mockFile, expect.any(Function));
+      expect(updatedPriority).toBe(1);
+    });
+
+    it("should throw error if project file not found", async () => {
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+
+      await expect(fileWriter.updateProjectPriority(mockProject, 3)).rejects.toThrow(
+        "Project file not found: Projects/test-project.md"
+      );
+    });
+
+    it("should handle priority values 1-5", async () => {
+      const mockFile = new TFile("Projects/test-project.md", "Test Project");
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+
+      const priorities: number[] = [];
+      (mockFileManager.processFrontMatter as jest.Mock).mockImplementation((file, callback) => {
+        const mockFrontmatter = { priority: 2 };
+        callback(mockFrontmatter);
+        priorities.push(mockFrontmatter.priority);
+        return Promise.resolve();
+      });
+
+      await fileWriter.updateProjectPriority(mockProject, 1);
+      await fileWriter.updateProjectPriority(mockProject, 5);
+
+      expect(priorities).toEqual([1, 5]);
+    });
+  });
 });

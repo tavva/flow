@@ -9,6 +9,7 @@ import {
   ProjectNode,
 } from "./project-hierarchy";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
+import { FileWriter } from "./file-writer";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -28,6 +29,7 @@ interface SphereViewData {
 export class SphereView extends ItemView {
   private readonly scanner: FlowProjectScanner;
   private readonly lineFinder: ActionLineFinder;
+  private readonly fileWriter: FileWriter;
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
@@ -46,6 +48,7 @@ export class SphereView extends ItemView {
     this.settings = settings;
     this.scanner = new FlowProjectScanner(this.app);
     this.lineFinder = new ActionLineFinder(this.app);
+    this.fileWriter = new FileWriter(this.app, settings);
     this.saveSettings = saveSettings;
   }
 
@@ -389,10 +392,7 @@ export class SphereView extends ItemView {
         this.openProjectFile(project.file);
       });
       if (priority !== null) {
-        header.createSpan({
-          cls: "flow-gtd-sphere-project-priority",
-          text: `Priority ${priority}`,
-        });
+        this.renderPriorityDropdown(header, project, priority);
       }
 
       if (project.nextActions && project.nextActions.length > 0) {
@@ -490,6 +490,50 @@ export class SphereView extends ItemView {
           isGeneral,
           clickedElement
         );
+      }
+    });
+  }
+
+  private renderPriorityDropdown(
+    header: HTMLElement,
+    project: FlowProject,
+    currentPriority: number
+  ): void {
+    const container = header.createDiv({ cls: "flow-gtd-sphere-project-priority-container" });
+
+    // Create the priority label (shown by default)
+    const label = container.createSpan({
+      cls: "flow-gtd-sphere-project-priority-label",
+      text: `Priority ${currentPriority}`,
+    });
+
+    // Create the dropdown (hidden by default, shown on hover)
+    const select = container.createEl("select", {
+      cls: "flow-gtd-sphere-project-priority-dropdown",
+    });
+
+    // Add options 1-5
+    for (let i = 1; i <= 5; i++) {
+      const option = select.createEl("option", {
+        value: String(i),
+        text: `Priority ${i}`,
+      });
+      if (i === currentPriority) {
+        option.selected = true;
+      }
+    }
+
+    // Handle change event - save to file and refresh view
+    select.addEventListener("change", async (e) => {
+      const newPriority = parseInt((e.target as HTMLSelectElement).value, 10);
+      try {
+        await this.fileWriter.updateProjectPriority(project, newPriority);
+        // Update the label text immediately for responsiveness
+        label.setText(`Priority ${newPriority}`);
+        // Refresh the view to reflect the change in sorting if needed
+        await this.refresh();
+      } catch (error) {
+        console.error("Failed to update project priority", error);
       }
     });
   }
