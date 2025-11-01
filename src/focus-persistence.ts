@@ -42,7 +42,9 @@ export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
 
     // Validate version
     if (data.version !== FOCUS_FILE_VERSION) {
-      console.warn(`Focus file version mismatch: expected ${FOCUS_FILE_VERSION}, got ${data.version}`);
+      console.warn(
+        `Focus file version mismatch: expected ${FOCUS_FILE_VERSION}, got ${data.version}`
+      );
       // Could add migration logic here in the future
     }
 

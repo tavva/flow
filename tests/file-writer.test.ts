@@ -1267,7 +1267,10 @@ tags:
 
       await fileWriter.updateProjectPriority(mockProject, 1);
 
-      expect(mockFileManager.processFrontMatter).toHaveBeenCalledWith(mockFile, expect.any(Function));
+      expect(mockFileManager.processFrontMatter).toHaveBeenCalledWith(
+        mockFile,
+        expect.any(Function)
+      );
       expect(updatedPriority).toBe(1);
     });
 

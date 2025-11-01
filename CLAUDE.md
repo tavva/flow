@@ -533,7 +533,7 @@ const settings = {
 };
 ```
 
-The `generateDeterministicFakeApiKey()` function creates clearly fake keys with a "FAKE_KEY_" prefix and deterministic suffix based on the seed string, ensuring tests are reproducible while avoiding security scanner false positives.
+The `generateDeterministicFakeApiKey()` function creates clearly fake keys with a "FAKE*KEY*" prefix and deterministic suffix based on the seed string, ensuring tests are reproducible while avoiding security scanner false positives.
 
 ### Test Files
 

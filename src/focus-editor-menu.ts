@@ -140,7 +140,16 @@ export function registerFocusEditorMenu(
           if (onFocus) {
             await removeFromFocus(app, filePath, lineNumber, focusItems, refreshFocusView);
           } else {
-            await addToFocus(app, filePath, lineNumber, line, sphere, settings, focusItems, refreshFocusView);
+            await addToFocus(
+              app,
+              filePath,
+              lineNumber,
+              line,
+              sphere,
+              settings,
+              focusItems,
+              refreshFocusView
+            );
           }
         });
     });
