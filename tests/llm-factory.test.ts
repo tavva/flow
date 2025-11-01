@@ -1,5 +1,6 @@
 import { createLanguageModelClient } from "../src/llm-factory";
 import { PluginSettings, DEFAULT_SETTINGS } from "../src/types";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 describe("createLanguageModelClient", () => {
   describe("when AI is disabled", () => {
@@ -18,8 +19,8 @@ describe("createLanguageModelClient", () => {
       const settings: PluginSettings = {
         ...DEFAULT_SETTINGS,
         aiEnabled: false,
-        anthropicApiKey: "sk-ant-test-key",
-        openaiApiKey: "sk-or-test-key",
+        anthropicApiKey: generateDeterministicFakeApiKey("anthropic-disabled"),
+        openaiApiKey: generateDeterministicFakeApiKey("openai-disabled"),
       };
 
       const client = createLanguageModelClient(settings);
@@ -58,7 +59,7 @@ describe("createLanguageModelClient", () => {
         ...DEFAULT_SETTINGS,
         aiEnabled: true,
         llmProvider: "anthropic",
-        anthropicApiKey: "sk-ant-test-key-12345678901234567890",
+        anthropicApiKey: generateDeterministicFakeApiKey("anthropic-enabled"),
       };
 
       const client = createLanguageModelClient(settings);
@@ -72,7 +73,7 @@ describe("createLanguageModelClient", () => {
         ...DEFAULT_SETTINGS,
         aiEnabled: true,
         llmProvider: "openai-compatible",
-        openaiApiKey: "sk-or-test-key",
+        openaiApiKey: generateDeterministicFakeApiKey("openai-enabled"),
       };
 
       const client = createLanguageModelClient(settings);

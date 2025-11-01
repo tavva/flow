@@ -499,6 +499,42 @@ The plugin supports multiple LLM providers through a factory pattern:
 - Mock Obsidian API via `tests/__mocks__/obsidian.ts`
 - Coverage thresholds: 80% for branches, functions, lines, statements
 
+### Test API Keys and Secrets
+
+To avoid triggering security scanners (Snyk, etc.) when scanning for hardcoded secrets (CWE-547), NEVER hardcode API keys or secrets directly in test files.
+
+**Pattern:**
+
+Use the test utilities in `tests/test-utils.ts`:
+
+```typescript
+import { generateDeterministicFakeApiKey } from "./test-utils";
+
+// For consistent keys across test runs
+const mockApiKey = generateDeterministicFakeApiKey("test-identifier");
+
+// For random keys that don't need consistency
+const randomKey = generateFakeApiKey("FAKE_KEY");
+```
+
+**Example:**
+
+```typescript
+// ❌ BAD - triggers security scanners
+const settings = {
+  anthropicApiKey: "sk-ant-test-key",
+  openaiApiKey: "sk-or-test-key",
+};
+
+// ✅ GOOD - uses test utilities
+const settings = {
+  anthropicApiKey: generateDeterministicFakeApiKey("anthropic-test"),
+  openaiApiKey: generateDeterministicFakeApiKey("openai-test"),
+};
+```
+
+The `generateDeterministicFakeApiKey()` function creates clearly fake keys with a "FAKE_KEY_" prefix and deterministic suffix based on the seed string, ensuring tests are reproducible while avoiding security scanner false positives.
+
 ### Test Files
 
 Core functionality tests:
