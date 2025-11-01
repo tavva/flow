@@ -475,8 +475,6 @@ status: ${this.settings.defaultStatus}`;
 
 ${originalItemDescription}
 
-## Focus areas
-
 ## Next actions
 `;
 
@@ -529,10 +527,6 @@ ${originalItemDescription}
     content += `
 
 ## Notes + resources
-
-## Focus areas detail
-
-## Log
 `;
     return content;
   }

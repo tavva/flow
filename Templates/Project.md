@@ -10,14 +10,8 @@ status: live
 
 {{ description }}
 
-## Focus areas
-
 ## Next actions
 
 ## Future next actions
 
 ## Notes + resources
-
-## Focus areas detail
-
-## Log
