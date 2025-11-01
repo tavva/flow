@@ -190,7 +190,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     // Inbox Settings
     new Setting(containerEl).setHeading().setName("Inbox Settings");
     containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Configure inbox folders for processing. These match the Flow plugin's inbox settings.</p>
+			<p>Configure inbox folders for processing.</p>
 		`;
 
     // Line-at-a-time inbox
