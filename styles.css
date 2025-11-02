@@ -1,4 +1,5 @@
 /* Flow GTD Coach Plugin Styles */
+@import 'coach.css';
 
 .flow-gtd-inbox-modal {
 	padding: 20px;
