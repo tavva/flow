@@ -66,84 +66,6 @@ npm run evaluate
 
 The evaluation framework tests the AI processor against 15 curated test cases and generates detailed quality metrics. Results are saved to `evaluation/results/`. See `evaluation/README.md` for details.
 
-### GTD Coach CLI
-
-```bash
-# Build the CLI (required first time or after changes)
-npm run build:cli
-
-# Interactive GTD coaching for a specific sphere
-npm run cli -- --vault /path/to/vault --sphere work
-
-# Or run directly
-./dist/cli.mjs --vault /path/to/vault --sphere work
-```
-
-The CLI uses Ink (React for terminals) for multiline text input:
-
-- Enter submits input
-- Shift+Enter inserts newlines
-- Pasted content preserves formatting
-
-The CLI includes automatic retry logic for network errors with exponential backoff and user feedback.
-
-**Output Formatting:**
-
-- CLI output automatically wraps to terminal width using `wrap-ansi`
-- Width detection uses `process.stdout.columns` (fallback: 80 columns)
-- ANSI colours are preserved during wrapping
-
-**Documentation:**
-
-- `docs/gtd-coach-cli.md` - User guide and features
-- `docs/cli-ink-usage.md` - Ink-specific usage details
-- `docs/cli-architecture.md` - Build system and MockApp architecture (for developers)
-
-**CLI Tools:**
-
-The CLI provides the LLM with 4 tools to modify the vault (`src/cli-tools.ts`):
-
-- `move_to_focus` - Add a next action to the focus for immediate attention
-- `update_next_action` - Rename or improve the wording of an existing action
-- `create_project` - Create a new Flow project with GTD-compliant structure
-- `update_project` - Update an existing project's description or add next actions
-
-The CLI requires user approval before executing any tool calls that modify the vault.
-
-**Custom Review Routines:**
-
-The CLI supports time-triggered custom review routines:
-
-- **Review files location**: `{vault}/.flow/reviews/*.md`
-- **Format**: Markdown with optional YAML frontmatter
-- **Triggers**: Day of week + time period (morning/afternoon/evening)
-- **Spheres**: Optional sphere filtering for multi-sphere reviews
-- **Auto-suggestion**: Matching reviews are suggested on CLI startup with numbered selection
-- **Manual invocation**: Request reviews anytime with patterns like "run friday review" or "start weekly review"
-- **Protocol selection**: Number (1, 2), name ("friday"), or partial match at startup
-- **Step-by-step**: AI follows protocol content and waits for acknowledgment between sections
-
-**Selection Patterns:**
-
-- Startup: Type number, name, or "no"
-- During conversation: "run X review", "start X review", "begin X review", "X review"
-
-**Testing**: See `docs/manual-testing-custom-reviews.md` for test scenarios and example protocols
-
-**Protocol scanning** (`protocol-scanner.ts`):
-
-- Finds all `.md` files in reviews directory
-- Parses YAML frontmatter for triggers and spheres
-- Extracts protocol name from first H1 heading (fallback to filename)
-- Gracefully handles invalid YAML or missing frontmatter
-
-**Protocol matching** (`protocol-matcher.ts`):
-
-- Matches protocols against current day/time
-- Time periods: morning (5am-12pm), afternoon (12pm-6pm), evening (6pm-5am)
-- Evening period correctly handles midnight crossing
-- Protocols without triggers are never auto-suggested but can be manually invoked
-
 ## Architecture
 
 ### Core Processing Flow
@@ -179,6 +101,27 @@ Supporting utilities for core functionality:
 - **Inbox Types** (`src/inbox-types.ts`) - Type definitions for inbox processing
 - **Inbox Item Persistence** (`src/inbox-item-persistence.ts`) - Persists inbox items across sessions
 - **Project Title Prompt** (`src/project-title-prompt.ts`) - Generates prompts for project title suggestions
+
+### Flow Coach Chat Pane
+
+The plugin provides an in-Obsidian chat interface for GTD coaching conversations:
+
+- **FlowCoachView** (`src/flow-coach-view.ts`) - Chat pane view with conversation history
+- **CoachState** (`src/coach-state.ts`) - Conversation persistence and management
+- **CoachMessageRenderer** (`src/coach-message-renderer.ts`) - Message, card, and approval rendering
+- **CoachTools** (`src/coach-tools.ts`) - LLM tools for vault modifications and display cards
+- **CoachProtocolBanner** (`src/coach-protocol-banner.ts`) - Protocol suggestion UI
+
+**Features:**
+- Persistent conversation history across sessions
+- Multi-sphere access with protocol filtering
+- Inline tool approvals for suggested changes
+- Structured project/action cards
+- Protocol auto-suggestions based on time
+- Markdown message rendering
+
+**Commands:**
+- `open-flow-coach` - Opens Flow Coach view in right sidebar
 
 ### Inbox Note Archiving and Source Links
 
@@ -583,16 +526,16 @@ LLM integration tests:
 - `network-retry.test.ts` - Network retry logic
 - `network-error-handling.test.ts` - Network error handling
 
-CLI tests:
+Flow Coach tests:
 
-- `cli.test.ts` - CLI tool integration
-- `cli-tools.test.ts` - CLI tool implementations
-- `cli-tools-execution.test.ts` - CLI tool execution
-- `cli-repl-tools.test.ts` - CLI REPL tool handling
-- `cli-approval.test.ts` - CLI approval workflows
-- `cli-opening-message.test.ts` - CLI opening message generation
-- `cli-system-prompt.test.ts` - CLI system prompt construction
-- `cli-protocol-integration.test.ts` - CLI protocol scanning and selection
+- `coach-state.test.ts` - Coach state management
+- `coach-tools.test.ts` - Coach tool implementations
+- `coach-message-renderer.test.ts` - Message, card, and approval rendering
+- `coach-protocol-banner.test.ts` - Protocol suggestion banner
+- `flow-coach-view.test.ts` - Flow Coach view
+
+Protocol tests:
+
 - `protocol-scanner.test.ts` - Review protocol file scanning
 - `protocol-matcher.test.ts` - Time-based protocol matching
 
@@ -705,6 +648,7 @@ Examples:
 - `cycle-task-status`: Cycles checkbox status on current line ([ ] → [w] → [x])
 - `open-waiting-for-view`: Opens the Waiting For view in right sidebar
 - `open-focus`: Opens the Focus view in right sidebar
+- `open-flow-coach`: Opens the Flow Coach chat pane in right sidebar
 - `flow-review-projects`: Opens the project review modal to get AI suggestions for improvements
 - `sphere-view-{sphere}`: Opens a sphere view (dynamically created for each configured sphere)
 
