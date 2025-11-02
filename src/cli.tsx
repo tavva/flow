@@ -18,7 +18,7 @@ import { Marked } from "marked";
 import { markedTerminal } from "marked-terminal";
 import { withRetry } from "./network-retry";
 import { presentToolCallsForApproval } from "./cli-approval";
-import { CLI_TOOLS, ToolExecutor } from "./cli-tools";
+import { COACH_TOOLS, ToolExecutor } from "./coach-tools";
 import { FileWriter } from "./file-writer";
 import wrapAnsi from 'wrap-ansi';
 import { SystemAnalyzer, SystemIssues } from "./system-analyzer";
@@ -543,7 +543,7 @@ export async function runREPL(
           () =>
             languageModelClient.sendMessageWithTools!(
               { model, maxTokens: 4000, messages },
-              CLI_TOOLS
+              COACH_TOOLS
             ),
           { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 },
           (attempt, delayMs) => {

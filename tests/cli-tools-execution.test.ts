@@ -1,4 +1,4 @@
-import { ToolExecutor } from "../src/cli-tools";
+import { ToolExecutor } from "../src/coach-tools";
 import { ToolCall } from "../src/language-model";
 import { App, TFile } from "obsidian";
 import { FileWriter } from "../src/file-writer";

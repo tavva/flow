@@ -1,4 +1,4 @@
-// ABOUTME: Defines 4 CLI tools for LLM to suggest vault modifications
+// ABOUTME: Defines coach tools for LLM to suggest vault modifications and display cards
 // ABOUTME: ToolExecutor routes tool calls to appropriate file operations
 import type { App } from "obsidian";
 import { TFile } from "obsidian";
@@ -7,7 +7,7 @@ import { PluginSettings, FlowProject, FocusItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 
-export const CLI_TOOLS: ToolDefinition[] = [
+export const COACH_TOOLS: ToolDefinition[] = [
   {
     name: "move_to_focus",
     description: "Add a next action to the focus for immediate focus today",
@@ -86,6 +86,38 @@ export const CLI_TOOLS: ToolDefinition[] = [
         },
       },
       required: ["project_path", "new_status"],
+    },
+  },
+  {
+    name: "show_project_card",
+    description: "Display a project card in the conversation with structured project details",
+    input_schema: {
+      type: "object",
+      properties: {
+        project_file: {
+          type: "string",
+          description: "File path of the project to display",
+        },
+      },
+      required: ["project_file"],
+    },
+  },
+  {
+    name: "show_action_card",
+    description: "Display a next action card in the conversation with structured action details",
+    input_schema: {
+      type: "object",
+      properties: {
+        file: {
+          type: "string",
+          description: "File path containing the action",
+        },
+        line_number: {
+          type: "number",
+          description: "Line number of the action in the file",
+        },
+      },
+      required: ["file", "line_number"],
     },
   },
 ];

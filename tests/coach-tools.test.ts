@@ -1,4 +1,4 @@
-import { CLI_TOOLS, ToolExecutor } from "../src/cli-tools";
+import { COACH_TOOLS, ToolExecutor } from "../src/coach-tools";
 import { ToolCall, ToolResult } from "../src/language-model";
 import { App, TFile } from "obsidian";
 import { FileWriter } from "../src/file-writer";
@@ -16,15 +16,15 @@ jest.mock("../src/focus-persistence", () => ({
 
 import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
-describe("CLI Tool Definitions", () => {
-  it("should export CLI_TOOLS array with 4 tools", () => {
-    expect(CLI_TOOLS).toBeDefined();
-    expect(Array.isArray(CLI_TOOLS)).toBe(true);
-    expect(CLI_TOOLS.length).toBe(4);
+describe("Coach Tool Definitions", () => {
+  it("should export COACH_TOOLS array with 6 tools", () => {
+    expect(COACH_TOOLS).toBeDefined();
+    expect(Array.isArray(COACH_TOOLS)).toBe(true);
+    expect(COACH_TOOLS.length).toBe(6);
   });
 
   it("should include move_to_focus tool", () => {
-    const tool = CLI_TOOLS.find((t) => t.name === "move_to_focus");
+    const tool = COACH_TOOLS.find((t) => t.name === "move_to_focus");
     expect(tool).toBeDefined();
     expect(tool?.description).toContain("focus");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
@@ -34,7 +34,7 @@ describe("CLI Tool Definitions", () => {
   });
 
   it("should include update_next_action tool", () => {
-    const tool = CLI_TOOLS.find((t) => t.name === "update_next_action");
+    const tool = COACH_TOOLS.find((t) => t.name === "update_next_action");
     expect(tool).toBeDefined();
     expect(tool?.description).toContain("improve");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
@@ -46,7 +46,7 @@ describe("CLI Tool Definitions", () => {
   });
 
   it("should include add_next_action_to_project tool", () => {
-    const tool = CLI_TOOLS.find((t) => t.name === "add_next_action_to_project");
+    const tool = COACH_TOOLS.find((t) => t.name === "add_next_action_to_project");
     expect(tool).toBeDefined();
     expect(tool?.description).toContain("Add");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
@@ -57,13 +57,33 @@ describe("CLI Tool Definitions", () => {
   });
 
   it("should include update_project_status tool", () => {
-    const tool = CLI_TOOLS.find((t) => t.name === "update_project_status");
+    const tool = COACH_TOOLS.find((t) => t.name === "update_project_status");
     expect(tool).toBeDefined();
     expect(tool?.description).toContain("status");
     expect(tool?.input_schema.properties.project_path).toBeDefined();
     expect(tool?.input_schema.properties.new_status).toBeDefined();
     expect(tool?.input_schema.required).toContain("project_path");
     expect(tool?.input_schema.required).toContain("new_status");
+  });
+
+  describe("Display tools", () => {
+    it("should include show_project_card tool", () => {
+      const tool = COACH_TOOLS.find((t) => t.name === "show_project_card");
+      expect(tool).toBeDefined();
+      expect(tool?.description).toContain("Display a project card");
+      expect(tool?.input_schema.properties.project_file).toBeDefined();
+      expect(tool?.input_schema.required).toContain("project_file");
+    });
+
+    it("should include show_action_card tool", () => {
+      const tool = COACH_TOOLS.find((t) => t.name === "show_action_card");
+      expect(tool).toBeDefined();
+      expect(tool?.description).toContain("Display a next action card");
+      expect(tool?.input_schema.properties.file).toBeDefined();
+      expect(tool?.input_schema.properties.line_number).toBeDefined();
+      expect(tool?.input_schema.required).toContain("file");
+      expect(tool?.input_schema.required).toContain("line_number");
+    });
   });
 });
 
