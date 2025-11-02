@@ -40,6 +40,7 @@ export class FlowCoachView extends ItemView {
   private activeConversation: CoachConversation | null = null;
   private messagesContainerEl: HTMLElement | null = null;
   private newMessagesButtonEl: HTMLElement | null = null;
+  private loadingIndicatorEl: HTMLElement | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -326,6 +327,14 @@ export class FlowCoachView extends ItemView {
     prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
     prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
 
+    prompt += `Presenting Information:\n`;
+    prompt += `- NEVER list all projects in a table or enumerated list unless explicitly requested\n`;
+    prompt += `- Use high-level summaries by default (e.g., "You have 18 active projects, with 3 at priority-1")\n`;
+    prompt += `- When discussing specific projects, use the show_project_card tool to display them as structured cards\n`;
+    prompt += `- When discussing specific actions, use the show_action_card tool to display them as structured cards\n`;
+    prompt += `- Focus on the subset of projects/actions relevant to the current conversation\n`;
+    prompt += `- Only present detailed lists when the user specifically asks for them\n\n`;
+
     prompt += `GTD Quality Standards:\n`;
     prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
     prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
@@ -578,6 +587,32 @@ export class FlowCoachView extends ItemView {
     this.saveState();
   }
 
+  private showLoadingIndicator(): void {
+    if (!this.messagesContainerEl) {
+      return;
+    }
+
+    // Remove existing loading indicator if present
+    this.hideLoadingIndicator();
+
+    // Create loading indicator
+    const loadingEl = this.messagesContainerEl.createDiv({
+      cls: "coach-loading-indicator coach-message",
+    });
+    loadingEl.setText("...");
+    this.loadingIndicatorEl = loadingEl;
+
+    // Scroll to bottom to show loading indicator
+    this.messagesContainerEl.scrollTop = this.messagesContainerEl.scrollHeight;
+  }
+
+  private hideLoadingIndicator(): void {
+    if (this.loadingIndicatorEl) {
+      this.loadingIndicatorEl.remove();
+      this.loadingIndicatorEl = null;
+    }
+  }
+
   private async startProtocol(protocol: ReviewProtocol): Promise<void> {
     if (!this.activeConversation) {
       return;
@@ -607,6 +642,9 @@ export class FlowCoachView extends ItemView {
     // Save state and refresh
     await this.saveState();
     await this.refresh();
+
+    // Show loading indicator
+    this.showLoadingIndicator();
 
     // Get initial LLM response to start the protocol
     try {
@@ -642,6 +680,7 @@ export class FlowCoachView extends ItemView {
         content: text,
       });
 
+      this.hideLoadingIndicator();
       await this.saveState();
       await this.refresh();
     } catch (error) {
@@ -651,6 +690,7 @@ export class FlowCoachView extends ItemView {
         content: errorMessage,
       });
 
+      this.hideLoadingIndicator();
       await this.saveState();
       await this.refresh();
     }
@@ -786,6 +826,9 @@ export class FlowCoachView extends ItemView {
       content: `[Tool Results]\n${toolResultMessage}`,
     });
 
+    // Show loading indicator
+    this.showLoadingIndicator();
+
     try {
       // Create LLM client
       const languageModelClient = createLanguageModelClient(this.settings);
@@ -839,6 +882,7 @@ export class FlowCoachView extends ItemView {
       // Handle response
       if (typeof response !== "string" && response.toolCalls) {
         // More tool calls - handle them recursively
+        this.hideLoadingIndicator();
         await this.handleToolCalls(response);
       } else {
         // Regular text response
@@ -851,6 +895,7 @@ export class FlowCoachView extends ItemView {
         // Mark as seen so we auto-scroll to bottom
         this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
 
+        this.hideLoadingIndicator();
         await this.saveState();
         await this.refresh();
       }
@@ -865,6 +910,7 @@ export class FlowCoachView extends ItemView {
       // Mark as seen so we auto-scroll to bottom
       this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
 
+      this.hideLoadingIndicator();
       await this.saveState();
       await this.refresh();
     }
@@ -1036,6 +1082,9 @@ export class FlowCoachView extends ItemView {
     await this.saveState();
     await this.refresh();
 
+    // Show loading indicator
+    this.showLoadingIndicator();
+
     try {
       // Create LLM client
       const languageModelClient = createLanguageModelClient(this.settings);
@@ -1089,6 +1138,7 @@ export class FlowCoachView extends ItemView {
       // Handle response
       if (typeof response !== "string" && response.toolCalls) {
         // Tool calls present - handle them
+        this.hideLoadingIndicator();
         await this.handleToolCalls(response);
       } else {
         // Regular text response
@@ -1101,6 +1151,7 @@ export class FlowCoachView extends ItemView {
         // Mark as seen so we auto-scroll to bottom
         this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
 
+        this.hideLoadingIndicator();
         await this.saveState();
         await this.refresh();
       }
@@ -1115,6 +1166,7 @@ export class FlowCoachView extends ItemView {
       // Mark as seen so we auto-scroll to bottom
       this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
 
+      this.hideLoadingIndicator();
       await this.saveState();
       await this.refresh();
     }
