@@ -2,10 +2,12 @@
 // ABOUTME: Handles message rendering, protocol banners, tool approvals, and input.
 
 import { ItemView, WorkspaceLeaf } from "obsidian";
-import { PluginSettings, CoachState, CoachConversation } from "./types";
+import { PluginSettings, CoachState, CoachConversation, ReviewProtocol } from "./types";
 import { CoachStateManager } from "./coach-state";
 import { CoachMessageRenderer } from "./coach-message-renderer";
 import { CoachProtocolBanner } from "./coach-protocol-banner";
+import { scanReviewProtocols } from "./protocol-scanner";
+import { matchProtocolsForTime } from "./protocol-matcher";
 
 export const FLOW_COACH_VIEW_TYPE = "flow-coach-view";
 
@@ -54,13 +56,28 @@ export class FlowCoachView extends ItemView {
     container.empty();
     container.addClass("flow-coach-view");
 
-    // Render header
+    // Load state (will add persistence later)
+    await this.loadState();
+
+    // Create initial conversation if none exists
+    if (this.state.conversations.length === 0) {
+      await this.startNewConversation();
+    } else {
+      // Load active conversation
+      if (this.state.activeConversationId) {
+        this.activeConversation =
+          this.state.conversations.find((c) => c.id === this.state.activeConversationId) || null;
+      }
+
+      if (!this.activeConversation) {
+        await this.startNewConversation();
+      }
+    }
+
+    // Render UI
     this.renderHeader(container as HTMLElement);
-
-    // Render messages area
-    const messagesEl = (container as HTMLElement).createDiv({ cls: "coach-messages" });
-
-    // Render input area
+    this.renderProtocolBanner(container as HTMLElement);
+    this.renderMessages(container as HTMLElement);
     this.renderInputArea(container as HTMLElement);
   }
 
@@ -120,12 +137,92 @@ export class FlowCoachView extends ItemView {
     });
   }
 
-  private startNewConversation(): void {
-    // Placeholder - will implement in next task
+  private async loadState(): Promise<void> {
+    // Load from plugin data (implement after integrating with main.ts)
+    // For now, use empty state
+    this.state = {
+      conversations: [],
+      activeConversationId: null,
+    };
+  }
+
+  private async saveState(): Promise<void> {
+    // Save to plugin data
+    await this.saveSettings();
+  }
+
+  private async startNewConversation(): Promise<void> {
+    // Build system prompt
+    const systemPrompt = await this.buildSystemPrompt();
+
+    // Create conversation
+    const conversation = this.stateManager.createConversation(systemPrompt);
+
+    // Add to state
+    this.state.conversations.push(conversation);
+    this.state.activeConversationId = conversation.id;
+    this.activeConversation = conversation;
+
+    // Prune old conversations
+    this.state = this.stateManager.pruneOldConversations(this.state);
+
+    // Save state
+    await this.saveState();
   }
 
   private switchConversation(conversationId: string): void {
-    // Placeholder - will implement in next task
+    const conversation = this.state.conversations.find((c) => c.id === conversationId);
+
+    if (conversation) {
+      this.activeConversation = conversation;
+      this.state.activeConversationId = conversationId;
+      this.saveState();
+    }
+  }
+
+  private async buildSystemPrompt(): Promise<string> {
+    // Placeholder - will implement with actual scanning
+    return "You are a GTD coach.";
+  }
+
+  private renderProtocolBanner(container: HTMLElement): void {
+    // Only show if conversation is new (no messages)
+    if (!this.activeConversation || this.activeConversation.messages.length > 0) {
+      return;
+    }
+
+    // Scan for protocols
+    const vaultPath = (this.app.vault.adapter as any)?.basePath;
+    if (!vaultPath) {
+      return; // No vault path available (e.g., in tests)
+    }
+
+    const protocols = scanReviewProtocols(vaultPath);
+    const matched = matchProtocolsForTime(protocols, new Date());
+
+    this.protocolBanner.render(container, matched, {
+      onStart: (protocol) => this.startProtocol(protocol),
+      onDismiss: () => {
+        // Banner removes itself
+      },
+    });
+  }
+
+  private renderMessages(container: HTMLElement): void {
+    const messagesEl = container.createDiv({ cls: "coach-messages" });
+
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Render each message
+    for (const message of this.activeConversation.messages) {
+      this.messageRenderer.renderMessage(messagesEl, message);
+    }
+  }
+
+  private startProtocol(protocol: ReviewProtocol): void {
+    // Add protocol to system prompt (implement later)
   }
 
   async onClose() {

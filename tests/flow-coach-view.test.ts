@@ -71,4 +71,37 @@ describe("FlowCoachView", () => {
       expect(container.querySelector(".coach-input-area")).toBeTruthy();
     });
   });
+
+  describe("Conversation management", () => {
+    it("should create new conversation on startup", async () => {
+      await view.onOpen();
+
+      // Should have created a conversation
+      expect(view["activeConversation"]).toBeTruthy();
+      expect(view["state"].conversations.length).toBe(1);
+    });
+
+    it("should switch to existing conversation", async () => {
+      await view.onOpen();
+
+      const firstConversation = view["activeConversation"];
+
+      // Start new conversation
+      await view["startNewConversation"]();
+
+      expect(view["activeConversation"]?.id).not.toBe(firstConversation?.id);
+      expect(view["state"].conversations.length).toBe(2);
+
+      // Switch back to first
+      view["switchConversation"](firstConversation!.id);
+
+      expect(view["activeConversation"]?.id).toBe(firstConversation?.id);
+    });
+
+    it("should save state after creating conversation", async () => {
+      await view.onOpen();
+
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
+  });
 });
