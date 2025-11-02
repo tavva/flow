@@ -104,6 +104,14 @@
   background: var(--background-secondary);
 }
 
+.coach-loading-indicator {
+  align-self: flex-start;
+  background: var(--background-secondary);
+  opacity: 0.7;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 /* Cards */
 .coach-card {
   padding: 1rem;

@@ -138,4 +138,36 @@ describe("FlowCoachView", () => {
       expect(mockSaveSettings).toHaveBeenCalled();
     });
   });
+
+  describe("Loading indicator", () => {
+    it("should show loading indicator in messages container", async () => {
+      await view.onOpen();
+
+      // Verify messagesContainerEl is set
+      expect(view["messagesContainerEl"]).toBeTruthy();
+
+      // Initially no loading indicator
+      expect(view["messagesContainerEl"]?.querySelector(".coach-loading-indicator")).toBeFalsy();
+
+      // Call showLoadingIndicator directly
+      view["showLoadingIndicator"]();
+
+      // Should now show loading indicator
+      expect(view["messagesContainerEl"]?.querySelector(".coach-loading-indicator")).toBeTruthy();
+    });
+
+    it("should hide loading indicator from messages container", async () => {
+      await view.onOpen();
+
+      // Show the loading indicator first
+      view["showLoadingIndicator"]();
+      expect(view["messagesContainerEl"]?.querySelector(".coach-loading-indicator")).toBeTruthy();
+
+      // Hide it
+      view["hideLoadingIndicator"]();
+
+      // Should be removed
+      expect(view["messagesContainerEl"]?.querySelector(".coach-loading-indicator")).toBeFalsy();
+    });
+  });
 });
