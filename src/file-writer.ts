@@ -155,7 +155,23 @@ export class FileWriter {
 
     if (!file) {
       // Create the file if it doesn't exist
-      file = await this.app.vault.create(normalizedPath, content + "\n");
+      try {
+        file = await this.app.vault.create(normalizedPath, content + "\n");
+      } catch (error) {
+        // Handle race condition: file was created between getAbstractFileByPath and create
+        if (error instanceof Error && error.message.includes("already exists")) {
+          // Retry by fetching the file and modifying it
+          file = this.app.vault.getAbstractFileByPath(normalizedPath);
+          if (file instanceof TFile) {
+            const existingContent = await this.app.vault.read(file);
+            const newContent = existingContent.trim() + "\n" + content + "\n";
+            await this.app.vault.modify(file, newContent);
+            return;
+          }
+        }
+        // Re-throw if it's a different error
+        throw error;
+      }
     } else if (file instanceof TFile) {
       // Append to existing file
       const existingContent = await this.app.vault.read(file);

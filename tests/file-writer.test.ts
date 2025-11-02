@@ -1300,4 +1300,71 @@ tags:
       expect(priorities).toEqual([1, 5]);
     });
   });
+
+  describe("race condition handling", () => {
+    it("should handle file creation race condition when adding multiple actions", async () => {
+      let createCallCount = 0;
+      let getAbstractFileCallCount = 0;
+      const mockFile = new TFile("Next actions.md", "Next actions");
+
+      // Simulate race condition:
+      // 1. First appendToFile: getAbstractFileByPath returns null, create succeeds
+      // 2. Second appendToFile: getAbstractFileByPath still returns null (cache not updated),
+      //    but create fails with "already exists"
+      //    Then the retry getAbstractFileByPath returns the file
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Next actions.md") {
+          getAbstractFileCallCount++;
+          // First call: returns null (file doesn't exist yet)
+          // Second call: returns null (cache not updated - this triggers race condition)
+          // Third call (in catch block): returns the file
+          if (getAbstractFileCallCount <= 2) {
+            return null;
+          }
+          return mockFile;
+        }
+        return null;
+      });
+
+      (mockVault.create as jest.Mock).mockImplementation(() => {
+        createCallCount++;
+        if (createCallCount === 1) {
+          // First call succeeds
+          return Promise.resolve(mockFile);
+        } else {
+          // Second call fails with "already exists" error
+          throw new Error("File already exists.");
+        }
+      });
+
+      (mockVault.read as jest.Mock).mockResolvedValue("- [ ] First action #sphere/personal\n");
+      (mockVault.modify as jest.Mock).mockResolvedValue(undefined);
+
+      // Add multiple actions - this triggers the race condition
+      await fileWriter.addToNextActionsFile(
+        ["First action", "Second action"],
+        ["personal"],
+        [false, false],
+        [false, false]
+      );
+
+      // First action should create the file
+      expect(mockVault.create).toHaveBeenCalledTimes(2); // Called twice, second one fails
+      // Second action should modify instead of create (after catching the error)
+      expect(mockVault.modify).toHaveBeenCalledTimes(1);
+      expect(mockVault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("Second action")
+      );
+    });
+
+    it("should re-throw non-existence errors from vault.create", async () => {
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+      (mockVault.create as jest.Mock).mockRejectedValue(new Error("Some other error"));
+
+      await expect(
+        fileWriter.addToNextActionsFile(["Test action"], ["personal"], [false], [false])
+      ).rejects.toThrow("Some other error");
+    });
+  });
 });
