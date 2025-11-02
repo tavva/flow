@@ -254,4 +254,57 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       expect(plugin["coachState"].conversations.length).toBe(1);
     });
   });
+
+  describe("AI-disabled behavior", () => {
+    it("should return true from hasRequiredApiKey when AI is disabled", () => {
+      // Set AI to disabled with no API key
+      plugin.settings.aiEnabled = false;
+      plugin.settings.anthropicApiKey = "";
+      plugin.settings.openaiApiKey = "";
+
+      const hasKey = (plugin as any).hasRequiredApiKey();
+
+      expect(hasKey).toBe(true);
+    });
+
+    it("should return false from hasRequiredApiKey when AI is enabled but API key is missing", () => {
+      // Set AI to enabled with no API key (Anthropic provider)
+      plugin.settings.aiEnabled = true;
+      plugin.settings.llmProvider = "anthropic";
+      plugin.settings.anthropicApiKey = "";
+
+      const hasKey = (plugin as any).hasRequiredApiKey();
+
+      expect(hasKey).toBe(false);
+    });
+
+    it("should return true from hasRequiredApiKey when AI is enabled and API key is present", () => {
+      // Set AI to enabled with API key
+      plugin.settings.aiEnabled = true;
+      plugin.settings.llmProvider = "anthropic";
+      plugin.settings.anthropicApiKey = "sk-ant-test123456789";
+
+      const hasKey = (plugin as any).hasRequiredApiKey();
+
+      expect(hasKey).toBe(true);
+    });
+
+    it("should return appropriate message when AI is disabled", () => {
+      plugin.settings.aiEnabled = false;
+
+      const message = (plugin as any).getMissingApiKeyMessage();
+
+      expect(message).toContain("AI features are disabled");
+      expect(message).toContain("enable AI in the plugin settings");
+    });
+
+    it("should return appropriate message when AI is enabled but API key is missing", () => {
+      plugin.settings.aiEnabled = true;
+
+      const message = (plugin as any).getMissingApiKeyMessage();
+
+      expect(message).toContain("API key");
+      expect(message).not.toContain("AI features are disabled");
+    });
+  });
 });

@@ -235,10 +235,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   private async openInboxProcessingView() {
-    if (!this.hasRequiredApiKey()) {
-      new Notice(this.getMissingApiKeyMessage());
-      return;
-    }
+    // No API key required - inbox processing is manual only (AI was removed)
 
     // Check if inbox processing view already exists
     const existingLeaves = this.app.workspace.getLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
@@ -329,6 +326,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   private hasRequiredApiKey(): boolean {
+    // When AI is disabled, no API key is required
+    if (!this.settings.aiEnabled) {
+      return true;
+    }
+
     if (this.settings.llmProvider === "openai-compatible") {
       return Boolean(this.settings.openaiApiKey);
     }
@@ -337,6 +339,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   private getMissingApiKeyMessage(): string {
+    if (!this.settings.aiEnabled) {
+      return "AI features are disabled. Please enable AI in the plugin settings to use this feature.";
+    }
     return "Please set your API key in the plugin settings first";
   }
 
@@ -392,6 +397,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   async activateFlowCoachView() {
+    if (!this.hasRequiredApiKey()) {
+      new Notice(this.getMissingApiKeyMessage());
+      return;
+    }
+
     const { workspace } = this.app;
 
     let leaf: WorkspaceLeaf | null = null;

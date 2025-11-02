@@ -650,6 +650,9 @@ export class FlowCoachView extends ItemView {
     try {
       const languageModelClient = createLanguageModelClient(this.settings);
       if (!languageModelClient) {
+        if (!this.settings.aiEnabled) {
+          throw new Error("AI features are disabled. Please enable AI in plugin settings.");
+        }
         throw new Error("Failed to create language model client. Please check your API settings.");
       }
 
@@ -833,6 +836,9 @@ export class FlowCoachView extends ItemView {
       // Create LLM client
       const languageModelClient = createLanguageModelClient(this.settings);
       if (!languageModelClient) {
+        if (!this.settings.aiEnabled) {
+          throw new Error("AI features are disabled. Please enable AI in plugin settings.");
+        }
         throw new Error("Failed to create language model client. Please check your API settings.");
       }
 
@@ -1089,6 +1095,9 @@ export class FlowCoachView extends ItemView {
       // Create LLM client
       const languageModelClient = createLanguageModelClient(this.settings);
       if (!languageModelClient) {
+        if (!this.settings.aiEnabled) {
+          throw new Error("AI features are disabled. Please enable AI in plugin settings.");
+        }
         throw new Error("Failed to create language model client. Please check your API settings.");
       }
 
