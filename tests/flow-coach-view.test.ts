@@ -13,7 +13,28 @@ describe("FlowCoachView", () => {
   let mockCoachState: CoachState;
 
   beforeEach(() => {
-    mockLeaf = {} as WorkspaceLeaf;
+    // Mock app with vault methods
+    const mockApp = {
+      vault: {
+        getMarkdownFiles: jest.fn(() => []),
+        getAbstractFileByPath: jest.fn(() => null),
+        read: jest.fn().mockResolvedValue(""),
+        adapter: {
+          basePath: "/test/vault",
+        },
+      },
+      metadataCache: {
+        getFileCache: jest.fn(() => null),
+      },
+      workspace: {
+        openLinkText: jest.fn(),
+      },
+    };
+
+    mockLeaf = {
+      view: null as any,
+    } as WorkspaceLeaf;
+
     mockSettings = {
       aiEnabled: true,
       llmProvider: "anthropic",
@@ -48,6 +69,8 @@ describe("FlowCoachView", () => {
     });
 
     view = new FlowCoachView(mockLeaf, mockSettings, mockSaveSettings, mockGetState, mockSetState);
+    // Inject mock app
+    (view as any).app = mockApp;
   });
 
   describe("View metadata", () => {
