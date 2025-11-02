@@ -29,6 +29,8 @@ export class FlowCoachView extends ItemView {
   private protocolBanner: CoachProtocolBanner;
   private state: CoachState;
   private activeConversation: CoachConversation | null = null;
+  private messagesContainerEl: HTMLElement | null = null;
+  private newMessagesButtonEl: HTMLElement | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -432,10 +434,15 @@ export class FlowCoachView extends ItemView {
 
   private renderMessages(container: HTMLElement): void {
     const messagesEl = container.createDiv({ cls: "coach-messages" });
+    this.messagesContainerEl = messagesEl;
 
     if (!this.activeConversation) {
       return;
     }
+
+    // Check if we should scroll to bottom (user was already at bottom, or first load)
+    const shouldScrollToBottom = !this.activeConversation.lastSeenMessageCount ||
+      this.activeConversation.lastSeenMessageCount === this.activeConversation.messages.length;
 
     // Render each message
     for (const message of this.activeConversation.messages) {
@@ -471,6 +478,89 @@ export class FlowCoachView extends ItemView {
         messagesEl.appendChild(blockEl);
       }
     }
+
+    // Add scroll event listener to track position
+    messagesEl.addEventListener("scroll", () => {
+      this.updateNewMessagesButton();
+    });
+
+    // Render new messages button if needed
+    this.renderNewMessagesButton(container);
+
+    // Auto-scroll to bottom if appropriate
+    if (shouldScrollToBottom) {
+      setTimeout(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        this.markMessagesAsSeen();
+      }, 0);
+    }
+  }
+
+  private isScrolledToBottom(el: HTMLElement): boolean {
+    // Consider "at bottom" if within 50px of bottom
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+  }
+
+  private updateNewMessagesButton(): void {
+    if (!this.messagesContainerEl || !this.activeConversation || !this.newMessagesButtonEl) {
+      return;
+    }
+
+    const hasNewMessages = (this.activeConversation.lastSeenMessageCount || 0) < this.activeConversation.messages.length;
+    const isAtBottom = this.isScrolledToBottom(this.messagesContainerEl);
+
+    // Show button if there are new messages and user is not at bottom
+    if (hasNewMessages && !isAtBottom) {
+      this.newMessagesButtonEl.style.display = "flex";
+    } else {
+      this.newMessagesButtonEl.style.display = "none";
+
+      // Mark messages as seen if we're at the bottom
+      if (isAtBottom) {
+        this.markMessagesAsSeen();
+      }
+    }
+  }
+
+  private renderNewMessagesButton(container: HTMLElement): void {
+    const buttonEl = container.createDiv({ cls: "coach-new-messages-button" });
+    buttonEl.setText("New messages ↓");
+    buttonEl.style.display = "none"; // Hidden by default
+
+    this.newMessagesButtonEl = buttonEl;
+
+    buttonEl.addEventListener("click", () => {
+      this.scrollToFirstNewMessage();
+    });
+
+    // Initial update
+    this.updateNewMessagesButton();
+  }
+
+  private scrollToFirstNewMessage(): void {
+    if (!this.messagesContainerEl || !this.activeConversation) {
+      return;
+    }
+
+    const lastSeenCount = this.activeConversation.lastSeenMessageCount || 0;
+    const messageElements = this.messagesContainerEl.querySelectorAll(".coach-message");
+
+    if (messageElements.length > lastSeenCount) {
+      // Scroll to the first unseen message
+      const firstNewMessage = messageElements[lastSeenCount];
+      if (firstNewMessage) {
+        firstNewMessage.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }
+
+  private markMessagesAsSeen(): void {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
+    this.saveState();
   }
 
   private async startProtocol(protocol: ReviewProtocol): Promise<void> {

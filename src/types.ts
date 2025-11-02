@@ -187,6 +187,7 @@ export interface CoachConversation {
   lastUpdatedAt: number;
   toolApprovalBlocks?: ToolApprovalBlock[]; // Tool calls awaiting approval or completed
   displayCards?: DisplayCard[]; // Cards to render inline with messages
+  lastSeenMessageCount?: number; // Number of messages user has seen (for new message indicator)
 }
 
 export interface CoachState {
