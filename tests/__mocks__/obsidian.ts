@@ -58,6 +58,7 @@ export class Workspace {
   getRightLeaf = jest.fn();
   detachLeavesOfType = jest.fn();
   on = jest.fn(() => ({ unload: jest.fn() }));
+  viewRegistry: Record<string, any> = {};
 }
 
 export class App {
@@ -65,6 +66,9 @@ export class App {
   metadataCache = new MetadataCache();
   fileManager = new FileManager();
   workspace = new Workspace();
+  commands = {
+    commands: {} as Record<string, any>,
+  };
 }
 
 export class Modal {
@@ -141,8 +145,17 @@ export class Plugin {
   }
 
   addRibbonIcon(icon: string, title: string, callback: () => void) {}
-  addCommand(command: any) {}
+  addCommand(command: any) {
+    if (this.app.commands && this.app.commands.commands) {
+      this.app.commands.commands[`${this.manifest.id}:${command.id}`] = command;
+    }
+  }
   addSettingTab(tab: any) {}
+  registerView(type: string, viewCreator: any) {
+    if (this.app.workspace.viewRegistry) {
+      this.app.workspace.viewRegistry[type] = viewCreator;
+    }
+  }
   loadData() {
     return Promise.resolve({});
   }
@@ -152,7 +165,6 @@ export class Plugin {
   registerEvent(event: any) {}
   registerDomEvent(el: HTMLElement, event: string, callback: () => void) {}
   registerInterval(interval: number) {}
-  registerView(type: string, viewCreator: (leaf: WorkspaceLeaf) => any) {}
 }
 
 export class PluginSettingTab {

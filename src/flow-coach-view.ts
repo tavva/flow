@@ -14,6 +14,8 @@ export const FLOW_COACH_VIEW_TYPE = "flow-coach-view";
 export class FlowCoachView extends ItemView {
   private settings: PluginSettings;
   private saveSettings: () => Promise<void>;
+  private getState: () => CoachState;
+  private setState: (state: CoachState) => void;
   private stateManager: CoachStateManager;
   private messageRenderer: CoachMessageRenderer;
   private protocolBanner: CoachProtocolBanner;
@@ -23,11 +25,15 @@ export class FlowCoachView extends ItemView {
   constructor(
     leaf: WorkspaceLeaf,
     settings: PluginSettings,
-    saveSettings: () => Promise<void>
+    saveSettings: () => Promise<void>,
+    getState: () => CoachState,
+    setState: (state: CoachState) => void
   ) {
     super(leaf);
     this.settings = settings;
     this.saveSettings = saveSettings;
+    this.getState = getState;
+    this.setState = setState;
     this.stateManager = new CoachStateManager();
     this.messageRenderer = new CoachMessageRenderer();
     this.protocolBanner = new CoachProtocolBanner();
@@ -138,16 +144,11 @@ export class FlowCoachView extends ItemView {
   }
 
   private async loadState(): Promise<void> {
-    // Load from plugin data (implement after integrating with main.ts)
-    // For now, use empty state
-    this.state = {
-      conversations: [],
-      activeConversationId: null,
-    };
+    this.state = this.getState();
   }
 
   private async saveState(): Promise<void> {
-    // Save to plugin data
+    this.setState(this.state);
     await this.saveSettings();
   }
 
@@ -168,15 +169,19 @@ export class FlowCoachView extends ItemView {
 
     // Save state
     await this.saveState();
+
+    // Refresh view
+    await this.refresh();
   }
 
-  private switchConversation(conversationId: string): void {
+  private async switchConversation(conversationId: string): Promise<void> {
     const conversation = this.state.conversations.find((c) => c.id === conversationId);
 
     if (conversation) {
       this.activeConversation = conversation;
       this.state.activeConversationId = conversationId;
-      this.saveState();
+      await this.saveState();
+      await this.refresh();
     }
   }
 
@@ -223,6 +228,11 @@ export class FlowCoachView extends ItemView {
 
   private startProtocol(protocol: ReviewProtocol): void {
     // Add protocol to system prompt (implement later)
+  }
+
+  private async refresh(): Promise<void> {
+    // Re-render view
+    await this.onOpen();
   }
 
   async onClose() {

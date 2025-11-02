@@ -38,6 +38,11 @@ jest.mock("../src/settings-tab", () => ({
   FlowGTDSettingTab: jest.fn(),
 }));
 
+jest.mock("../src/flow-coach-view", () => ({
+  FLOW_COACH_VIEW_TYPE: "flow-coach-view",
+  FlowCoachView: jest.fn(),
+}));
+
 describe("FlowGTDCoachPlugin - View Focusing", () => {
   let plugin: FlowGTDCoachPlugin;
   let mockApp: App;
@@ -206,6 +211,47 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
       // Verify: Should only reveal existing focus, not create new one
       expect(mockApp.workspace.getRightLeaf).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Flow Coach View registration", () => {
+    it("should register flow-coach-view on load", async () => {
+      // The viewRegistry is populated by registerView calls
+      const viewTypes = Object.keys(mockApp.workspace.viewRegistry);
+      expect(viewTypes).toContain("flow-coach-view");
+    });
+
+    it("should register open-flow-coach command", async () => {
+      // Check if the command was registered
+      const commands = mockApp.commands.commands;
+      expect(commands["flow:open-flow-coach"]).toBeDefined();
+    });
+
+    it("should load and save coach state", async () => {
+      // Mock loadData to return coach state
+      const mockLoadData = jest.fn().mockResolvedValue({
+        settings: {},
+        coachState: {
+          conversations: [
+            {
+              id: "test-id",
+              title: "Test",
+              messages: [],
+              systemPrompt: "prompt",
+              createdAt: 123,
+              lastUpdatedAt: 123,
+            },
+          ],
+          activeConversationId: "test-id",
+        },
+      });
+      plugin.loadData = mockLoadData;
+
+      // Reload plugin
+      await plugin.loadSettings();
+
+      expect(plugin["coachState"]).toBeDefined();
+      expect(plugin["coachState"].conversations.length).toBe(1);
     });
   });
 });

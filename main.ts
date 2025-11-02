@@ -1,5 +1,5 @@
 import { App, Plugin, Notice, WorkspaceLeaf } from "obsidian";
-import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
+import { PluginSettings, DEFAULT_SETTINGS, CoachState } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
@@ -8,6 +8,7 @@ import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
+import { FlowCoachView, FLOW_COACH_VIEW_TYPE } from "./src/flow-coach-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
@@ -19,6 +20,10 @@ type InboxCommandConfig = {
 
 export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
+  coachState: CoachState = {
+    conversations: [],
+    activeConversationId: null,
+  };
   private autoClearInterval: number | null = null;
 
   async onload() {
@@ -59,6 +64,21 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.registerView(
       FOCUS_VIEW_TYPE,
       (leaf) => new FocusView(leaf, this.settings, this.saveSettings.bind(this))
+    );
+
+    // Register the Flow Coach view
+    this.registerView(
+      FLOW_COACH_VIEW_TYPE,
+      (leaf) =>
+        new FlowCoachView(
+          leaf,
+          this.settings,
+          () => this.saveSettings(),
+          () => this.coachState,
+          (state) => {
+            this.coachState = state;
+          }
+        )
     );
 
     // Add ribbon icon
@@ -125,6 +145,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       },
     });
 
+    // Add Flow Coach command
+    this.addCommand({
+      id: "open-flow-coach",
+      name: "Open Flow Coach",
+      callback: () => {
+        this.activateFlowCoachView();
+      },
+    });
+
     // Register focus editor menu (right-click context menu)
     this.registerEvent(
       registerFocusEditorMenu(
@@ -154,14 +183,26 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
     // Detach all focus views
     this.app.workspace.detachLeavesOfType(FOCUS_VIEW_TYPE);
+    // Detach all Flow Coach views
+    this.app.workspace.detachLeavesOfType(FLOW_COACH_VIEW_TYPE);
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    if (data) {
+      this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || data);
+      this.coachState = data.coachState || {
+        conversations: [],
+        activeConversationId: null,
+      };
+    }
   }
 
   async saveSettings() {
-    await this.saveData(this.settings);
+    await this.saveData({
+      settings: this.settings,
+      coachState: this.coachState,
+    });
   }
 
   private registerInboxCommand(config: InboxCommandConfig) {
@@ -347,6 +388,31 @@ export default class FlowGTDCoachPlugin extends Plugin {
     if (leaf) {
       workspace.revealLeaf(leaf);
       workspace.setActiveLeaf(leaf, { focus: true });
+    }
+  }
+
+  async activateFlowCoachView() {
+    const { workspace } = this.app;
+
+    let leaf: WorkspaceLeaf | null = null;
+    const leaves = workspace.getLeavesOfType(FLOW_COACH_VIEW_TYPE);
+
+    if (leaves.length > 0) {
+      // View already exists, activate it
+      leaf = leaves[0];
+    } else {
+      // Create new view in right sidebar
+      leaf = workspace.getRightLeaf(false);
+      if (leaf) {
+        await leaf.setViewState({
+          type: FLOW_COACH_VIEW_TYPE,
+          active: true,
+        });
+      }
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
     }
   }
 

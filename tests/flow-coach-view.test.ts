@@ -1,6 +1,6 @@
 import { FlowCoachView, FLOW_COACH_VIEW_TYPE } from "../src/flow-coach-view";
 import { WorkspaceLeaf } from "obsidian";
-import { PluginSettings } from "../src/types";
+import { PluginSettings, CoachState } from "../src/types";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
 describe("FlowCoachView", () => {
@@ -8,6 +8,9 @@ describe("FlowCoachView", () => {
   let mockLeaf: WorkspaceLeaf;
   let mockSettings: PluginSettings;
   let mockSaveSettings: jest.Mock;
+  let mockGetState: jest.Mock;
+  let mockSetState: jest.Mock;
+  let mockCoachState: CoachState;
 
   beforeEach(() => {
     mockLeaf = {} as WorkspaceLeaf;
@@ -35,8 +38,22 @@ describe("FlowCoachView", () => {
       inboxFileProcessingThreshold: 10,
     };
     mockSaveSettings = jest.fn().mockResolvedValue(undefined);
+    mockCoachState = {
+      conversations: [],
+      activeConversationId: null,
+    };
+    mockGetState = jest.fn(() => mockCoachState);
+    mockSetState = jest.fn((state: CoachState) => {
+      mockCoachState = state;
+    });
 
-    view = new FlowCoachView(mockLeaf, mockSettings, mockSaveSettings);
+    view = new FlowCoachView(
+      mockLeaf,
+      mockSettings,
+      mockSaveSettings,
+      mockGetState,
+      mockSetState
+    );
   });
 
   describe("View metadata", () => {
