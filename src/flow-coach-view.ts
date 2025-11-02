@@ -2,12 +2,20 @@
 // ABOUTME: Handles message rendering, protocol banners, tool approvals, and input.
 
 import { ItemView, WorkspaceLeaf } from "obsidian";
-import { PluginSettings, CoachState, CoachConversation, ReviewProtocol } from "./types";
+import { PluginSettings, CoachState, CoachConversation, ReviewProtocol, FlowProject } from "./types";
 import { CoachStateManager } from "./coach-state";
 import { CoachMessageRenderer } from "./coach-message-renderer";
 import { CoachProtocolBanner } from "./coach-protocol-banner";
 import { scanReviewProtocols } from "./protocol-scanner";
 import { matchProtocolsForTime } from "./protocol-matcher";
+import { ChatMessage, ToolCallResponse, LanguageModelClient } from "./language-model";
+import { FlowProjectScanner } from "./flow-scanner";
+import { GTDContext, GTDContextScanner } from "./gtd-context-scanner";
+import { buildProjectHierarchy, flattenHierarchy } from "./project-hierarchy";
+import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
+import { withRetry } from "./network-retry";
+import { COACH_TOOLS, ToolExecutor } from "./coach-tools";
+import { FileWriter } from "./file-writer";
 
 export const FLOW_COACH_VIEW_TYPE = "flow-coach-view";
 
@@ -141,6 +149,40 @@ export class FlowCoachView extends ItemView {
       cls: "coach-reset-btn",
       text: "↻",
     });
+
+    // Wire up send button
+    sendBtn.addEventListener("click", async () => {
+      const message = textareaEl.value.trim();
+      if (!message || !this.activeConversation) {
+        return;
+      }
+
+      // Disable inputs while processing
+      sendBtn.disabled = true;
+      textareaEl.disabled = true;
+
+      try {
+        await this.sendMessage(message);
+        textareaEl.value = "";
+      } finally {
+        sendBtn.disabled = false;
+        textareaEl.disabled = false;
+        textareaEl.focus();
+      }
+    });
+
+    // Wire up reset button
+    resetBtn.addEventListener("click", async () => {
+      await this.startNewConversation();
+    });
+
+    // Allow Enter to send (Shift+Enter for new line)
+    textareaEl.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
   }
 
   private async loadState(): Promise<void> {
@@ -185,9 +227,184 @@ export class FlowCoachView extends ItemView {
     }
   }
 
-  private async buildSystemPrompt(): Promise<string> {
-    // Placeholder - will implement with actual scanning
-    return "You are a GTD coach.";
+  private async buildSystemPrompt(protocol?: ReviewProtocol): Promise<string> {
+    // Scan projects from vault
+    const scanner = new FlowProjectScanner(this.app);
+    const allProjects = await scanner.scanProjects();
+
+    // Determine which spheres to include
+    let spheres: string[] = this.settings.spheres;
+    let sphereLabel = "all spheres";
+
+    if (protocol?.spheres && protocol.spheres.length > 0) {
+      // Protocol specifies spheres - filter to those
+      spheres = protocol.spheres;
+      sphereLabel = spheres.join(", ");
+    }
+
+    // Filter projects by sphere (if protocol specified)
+    const projects =
+      protocol?.spheres && protocol.spheres.length > 0
+        ? allProjects.filter((p) =>
+            p.tags.some((tag) => spheres.some((s) => tag === `project/${s}`))
+          )
+        : allProjects;
+
+    // Scan GTD context (inbox, next actions, someday)
+    const contextScanner = new GTDContextScanner(this.app, this.settings);
+    const gtdContext = await contextScanner.scanContext();
+
+    // Build project hierarchy
+    const hierarchy = buildProjectHierarchy(projects);
+    const flattenedHierarchy = flattenHierarchy(hierarchy);
+    const projectCount = flattenedHierarchy.length;
+
+    const nextActionsCount = gtdContext.nextActions.length;
+    const somedayCount = gtdContext.somedayItems.length;
+    const inboxCount = gtdContext.inboxItems.length;
+
+    let prompt = `You are Flow, a GTD (Getting Things Done) coach for ${sphereLabel}.\n\n`;
+    prompt += `You have context on the user's complete GTD system:\n`;
+    prompt += `- ${projectCount} active projects (including sub-projects) with their next actions and priorities\n`;
+    prompt += `- ${nextActionsCount} next actions from the central next actions file\n`;
+    prompt += `- ${somedayCount} items in someday/maybe\n`;
+    prompt += `- ${inboxCount} unprocessed inbox items\n\n`;
+
+    prompt += `The Flow System:\n`;
+    prompt += `Flow is a GTD implementation for Obsidian with specific conventions:\n\n`;
+    prompt += `Spheres:\n`;
+    prompt += `- Life areas for categorising projects (work, personal, etc.)\n`;
+    prompt += `- Projects belong to one sphere via their tags (project/work, project/personal)\n`;
+    prompt += `- You are currently coaching in: ${sphereLabel}\n\n`;
+    prompt += `File Organisation:\n`;
+    prompt += `- Projects folder: Individual project files\n`;
+    prompt += `- Next actions file: Central list for actions not tied to specific projects\n`;
+    prompt += `- Someday file: Future aspirations and maybes\n`;
+    prompt += `- Inbox: Unprocessed items awaiting GTD categorisation\n\n`;
+    prompt += `Project Structure:\n`;
+    prompt += `- Projects are Markdown files with frontmatter (tags, priority, status, creation-date)\n`;
+    prompt += `- Sub-projects reference parents using parent-project: "[[Parent Name]]" in frontmatter\n`;
+    prompt += `- Next actions are Markdown checkboxes under "## Next actions" heading\n`;
+    prompt += `- Projects should have clear outcomes (what does "done" look like?)\n`;
+    prompt += `- Priority: 1-5 scale (1=highest priority, 5=lowest priority)\n\n`;
+    prompt += `Project Statuses:\n`;
+    prompt += `- live: Active projects with ongoing work\n`;
+    prompt += `- hold: Paused projects (waiting on external factors)\n`;
+    prompt += `- archived: Completed or cancelled projects\n`;
+    prompt += `- someday: Projects not yet committed to\n\n`;
+
+    prompt += `Your role is to provide expert GTD advice:\n`;
+    prompt += `- Help prioritise projects and actions based on goals, context, energy, and time\n`;
+    prompt += `- Review project quality: Are outcomes clear? Are next actions specific and actionable?\n`;
+    prompt += `- Coach on GTD processes: weekly reviews, inbox processing, project planning\n`;
+    prompt += `- Answer methodology questions about GTD principles and best practices\n`;
+    prompt += `- Identify issues: projects with no next actions, vague actions, unclear outcomes\n\n`;
+
+    prompt += `You can suggest and apply changes to help improve the GTD system:\n`;
+    prompt += `- Move important actions to the focus for today\n`;
+    prompt += `- Improve vague or unclear next actions to be more specific\n`;
+    prompt += `- Add missing next actions to projects\n`;
+    prompt += `- Update project status (archive completed projects, etc.)\n\n`;
+    prompt += `When you identify improvements, use the available tools to suggest changes. `;
+    prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
+    prompt += `IMPORTANT: You should only add actions to projects with status 'live'. `;
+    prompt += `Projects with other statuses (hold, archived, etc.) are not active and should not have new actions added.\n\n`;
+
+    prompt += `Communication Style:\n`;
+    prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
+    prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
+    prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
+
+    prompt += `GTD Quality Standards:\n`;
+    prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
+    prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
+    prompt += `- Projects need at least one next action to maintain momentum\n\n`;
+
+    // Add custom review protocol if provided
+    if (protocol) {
+      prompt += `Custom Review in Progress:\n`;
+      prompt += `The user has selected the "${protocol.name}" review. Follow the protocol below:\n\n`;
+      prompt += `---\n${protocol.content}\n---\n\n`;
+      prompt += `Follow this protocol step-by-step. After presenting each section or completing each task, `;
+      prompt += `wait for the user to acknowledge before moving to the next step.\n\n`;
+    }
+
+    if (projectCount === 0 && nextActionsCount === 0 && somedayCount === 0 && inboxCount === 0) {
+      prompt += `No GTD data found. You can still answer general GTD methodology questions.\n`;
+      return prompt;
+    }
+
+    prompt += `---\n\n`;
+
+    if (projectCount > 0) {
+      prompt += `## Projects (${projectCount})\n\n`;
+      prompt += `Projects are shown hierarchically with sub-projects indented under their parents.\n\n`;
+
+      for (const node of flattenedHierarchy) {
+        const project = node.project;
+        const indent = "  ".repeat(node.depth);
+
+        prompt += `${indent}### ${project.title}\n`;
+        prompt += `${indent}File: ${project.file}\n`;
+        prompt += `${indent}Description: ${project.description || "No description"}\n`;
+        prompt += `${indent}Priority: ${project.priority} (1=highest, 5=lowest)\n`;
+        prompt += `${indent}Status: ${project.status}\n`;
+
+        if (node.depth > 0) {
+          prompt += `${indent}(Sub-project at depth ${node.depth})\n`;
+        }
+
+        // Warn about non-live projects
+        if (project.status !== "live") {
+          prompt += `${indent}⚠️ Project is paused - do not add actions to this project\n`;
+        }
+
+        if (project.milestones) {
+          prompt += `${indent}Milestones:\n`;
+          const milestoneLines = project.milestones.split("\n");
+          for (const line of milestoneLines) {
+            prompt += `${indent}${line}\n`;
+          }
+        }
+
+        if (project.nextActions && project.nextActions.length > 0) {
+          prompt += `${indent}Next Actions (${project.nextActions.length}):\n`;
+          for (const action of project.nextActions) {
+            prompt += `${indent}- ${action}\n`;
+          }
+        } else {
+          prompt += `${indent}⚠️ Next Actions: None defined (project may be stalled)\n`;
+        }
+
+        prompt += `\n`;
+      }
+    }
+
+    if (nextActionsCount > 0) {
+      prompt += `## Central Next Actions (${nextActionsCount})\n\n`;
+      for (const action of gtdContext.nextActions) {
+        prompt += `- ${action}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    if (somedayCount > 0) {
+      prompt += `## Someday/Maybe (${somedayCount})\n\n`;
+      for (const item of gtdContext.somedayItems) {
+        prompt += `- ${item}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    if (inboxCount > 0) {
+      prompt += `## Inbox Items (${inboxCount} unprocessed)\n\n`;
+      for (const item of gtdContext.inboxItems) {
+        prompt += `- ${item}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    return prompt;
   }
 
   private renderProtocolBanner(container: HTMLElement): void {
@@ -226,8 +443,257 @@ export class FlowCoachView extends ItemView {
     }
   }
 
-  private startProtocol(protocol: ReviewProtocol): void {
-    // Add protocol to system prompt (implement later)
+  private async startProtocol(protocol: ReviewProtocol): Promise<void> {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Add protocol content as system message
+    this.activeConversation.messages.push({
+      role: "system",
+      content: `The user has requested the "${protocol.name}" review. Follow the protocol below:\n\n---\n${protocol.content}\n---\n\nFollow this protocol step-by-step. After presenting each section or completing each task, wait for the user to acknowledge before moving to the next step.`,
+    });
+
+    // Add confirmation from user
+    this.activeConversation.messages.push({
+      role: "user",
+      content: `Let's do the ${protocol.name}.`,
+    });
+
+    // Update title if this is the first interaction
+    const nonSystemMessages = this.activeConversation.messages.filter((m) => m.role !== "system");
+    if (nonSystemMessages.length === 1) {
+      this.activeConversation.title = protocol.name;
+    }
+
+    // Update timestamp
+    this.activeConversation.lastUpdatedAt = Date.now();
+
+    // Save state and refresh
+    await this.saveState();
+    await this.refresh();
+
+    // Get initial LLM response to start the protocol
+    try {
+      const languageModelClient = createLanguageModelClient(this.settings);
+      if (!languageModelClient) {
+        throw new Error("Failed to create language model client. Please check your API settings.");
+      }
+
+      const model = getModelForSettings(this.settings);
+
+      const response = await withRetry(
+        () =>
+          languageModelClient.sendMessage({
+            model,
+            maxTokens: 4000,
+            messages: this.activeConversation!.messages,
+          }),
+        { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
+      );
+
+      const text = typeof response === "string" ? response : (response as any).content || "";
+      this.activeConversation.messages.push({
+        role: "assistant",
+        content: text,
+      });
+
+      await this.saveState();
+      await this.refresh();
+    } catch (error) {
+      const errorMessage = `Error starting protocol: ${error instanceof Error ? error.message : String(error)}`;
+      this.activeConversation.messages.push({
+        role: "assistant",
+        content: errorMessage,
+      });
+
+      await this.saveState();
+      await this.refresh();
+    }
+  }
+
+  private detectProtocolInvocation(input: string, protocols: ReviewProtocol[]): ReviewProtocol | null {
+    const lowerInput = input.toLowerCase();
+
+    // Check for review/protocol invocation patterns
+    const patterns = [
+      /(?:run|start|do|begin)\s+(?:the\s+)?(.+?)\s+(?:review|protocol)/i,
+      /(?:review|protocol):\s*(.+)/i,
+      /^(.+?)\s+review$/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = input.match(pattern);
+      if (match) {
+        const searchTerm = match[1].trim().toLowerCase();
+
+        // Try to find matching protocol
+        const protocol = protocols.find(
+          (p) =>
+            p.name.toLowerCase().includes(searchTerm) ||
+            p.filename.toLowerCase().includes(searchTerm)
+        );
+
+        if (protocol) {
+          return protocol;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async handleToolCalls(response: ToolCallResponse): Promise<void> {
+    if (!this.activeConversation || !response.toolCalls) {
+      return;
+    }
+
+    const { content, toolCalls } = response;
+
+    // Add assistant message with content
+    this.activeConversation.messages.push({
+      role: "assistant",
+      content: content || "",
+    });
+
+    // Separate display tools from action tools
+    const displayTools = toolCalls.filter(
+      (tc) => tc.name === "show_project_card" || tc.name === "show_action_card"
+    );
+    const actionTools = toolCalls.filter(
+      (tc) => tc.name !== "show_project_card" && tc.name !== "show_action_card"
+    );
+
+    // Auto-execute display tools (render cards inline)
+    for (const toolCall of displayTools) {
+      // Cards will be rendered when we refresh the view
+      // The message renderer will handle card rendering
+      // For now, just store them in a way we can retrieve them
+      // Actually, we need to render them immediately as part of the conversation
+      // Let me handle this differently - we'll render cards directly in the messages area
+    }
+
+    // Create approval blocks for action tools
+    if (actionTools.length > 0) {
+      // We need to render tool approval blocks in the UI
+      // For now, let's just acknowledge them in the conversation
+      // The user will need to approve them via UI
+
+      // Save state to persist the tool calls
+      // We'll handle approvals through the UI when refresh happens
+      await this.saveState();
+      await this.refresh();
+    } else {
+      // No action tools, just display tools
+      await this.saveState();
+      await this.refresh();
+    }
+  }
+
+  private async sendMessage(message: string): Promise<void> {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Check for protocol invocation
+    const vaultPath = (this.app.vault.adapter as any)?.basePath;
+    if (vaultPath) {
+      const protocols = scanReviewProtocols(vaultPath);
+      const invokedProtocol = this.detectProtocolInvocation(message, protocols);
+      if (invokedProtocol) {
+        // Inject protocol into conversation
+        await this.startProtocol(invokedProtocol);
+        // Don't add the user message - startProtocol handles it
+        return;
+      }
+    }
+
+    // Add user message
+    this.activeConversation.messages.push({
+      role: "user",
+      content: message,
+    });
+
+    // Update title if first message (excluding system message)
+    const nonSystemMessages = this.activeConversation.messages.filter((m) => m.role !== "system");
+    if (nonSystemMessages.length === 1) {
+      this.activeConversation.title = this.stateManager.updateConversationTitle(message);
+    }
+
+    // Update timestamp
+    this.activeConversation.lastUpdatedAt = Date.now();
+
+    // Save state and refresh to show user message
+    await this.saveState();
+    await this.refresh();
+
+    try {
+      // Create LLM client
+      const languageModelClient = createLanguageModelClient(this.settings);
+      if (!languageModelClient) {
+        throw new Error("Failed to create language model client. Please check your API settings.");
+      }
+
+      const model = getModelForSettings(this.settings);
+
+      // Check if client supports tools
+      const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
+
+      let response: string | ToolCallResponse;
+
+      if (supportsTools) {
+        // Call LLM with tools
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessageWithTools!(
+              {
+                model,
+                maxTokens: 4000,
+                messages: this.activeConversation!.messages,
+              },
+              COACH_TOOLS
+            ),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
+        );
+      } else {
+        // Call LLM without tools
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessage({
+              model,
+              maxTokens: 4000,
+              messages: this.activeConversation!.messages,
+            }),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
+        );
+      }
+
+      // Handle response
+      if (typeof response !== "string" && response.toolCalls) {
+        // Tool calls present - handle them
+        await this.handleToolCalls(response);
+      } else {
+        // Regular text response
+        const text = typeof response === "string" ? response : response.content || "";
+        this.activeConversation.messages.push({
+          role: "assistant",
+          content: text,
+        });
+
+        await this.saveState();
+        await this.refresh();
+      }
+    } catch (error) {
+      // Add error message to conversation
+      const errorMessage = `Error: ${error instanceof Error ? error.message : String(error)}`;
+      this.activeConversation.messages.push({
+        role: "assistant",
+        content: errorMessage,
+      });
+
+      await this.saveState();
+      await this.refresh();
+    }
   }
 
   private async refresh(): Promise<void> {
