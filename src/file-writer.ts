@@ -1,6 +1,5 @@
 import type { App } from "obsidian";
-import { TFile } from "obsidian";
-import { normalizePath } from "./obsidian-compat";
+import { TFile, normalizePath } from "obsidian";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
