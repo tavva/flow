@@ -3,7 +3,13 @@ import { ChatMessage, ToolCall } from "./language-model";
 /**
  * Valid project status values
  */
-export const VALID_PROJECT_STATUSES = ["live", "active", "planning", "paused", "completed"] as const;
+export const VALID_PROJECT_STATUSES = [
+  "live",
+  "active",
+  "planning",
+  "paused",
+  "completed",
+] as const;
 
 export interface FlowProject {
   file: string;

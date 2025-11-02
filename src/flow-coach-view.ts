@@ -2,7 +2,16 @@
 // ABOUTME: Handles message rendering, protocol banners, tool approvals, and input.
 
 import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
-import { PluginSettings, CoachState, CoachConversation, ReviewProtocol, FlowProject, ToolApprovalBlock, ProjectCardData, ActionCardData } from "./types";
+import {
+  PluginSettings,
+  CoachState,
+  CoachConversation,
+  ReviewProtocol,
+  FlowProject,
+  ToolApprovalBlock,
+  ProjectCardData,
+  ActionCardData,
+} from "./types";
 import { CoachStateManager } from "./coach-state";
 import { CoachMessageRenderer } from "./coach-message-renderer";
 import { CoachProtocolBanner } from "./coach-protocol-banner";
@@ -441,7 +450,8 @@ export class FlowCoachView extends ItemView {
     }
 
     // Check if we should scroll to bottom (user was already at bottom, or first load)
-    const shouldScrollToBottom = !this.activeConversation.lastSeenMessageCount ||
+    const shouldScrollToBottom =
+      !this.activeConversation.lastSeenMessageCount ||
       this.activeConversation.lastSeenMessageCount === this.activeConversation.messages.length;
 
     // Render messages with inline cards
@@ -510,7 +520,8 @@ export class FlowCoachView extends ItemView {
       return;
     }
 
-    const hasNewMessages = (this.activeConversation.lastSeenMessageCount || 0) < this.activeConversation.messages.length;
+    const hasNewMessages =
+      (this.activeConversation.lastSeenMessageCount || 0) < this.activeConversation.messages.length;
     const isAtBottom = this.isScrolledToBottom(this.messagesContainerEl);
 
     // Show button if there are new messages and user is not at bottom
@@ -645,7 +656,10 @@ export class FlowCoachView extends ItemView {
     }
   }
 
-  private detectProtocolInvocation(input: string, protocols: ReviewProtocol[]): ReviewProtocol | null {
+  private detectProtocolInvocation(
+    input: string,
+    protocols: ReviewProtocol[]
+  ): ReviewProtocol | null {
     const lowerInput = input.toLowerCase();
 
     // Check for review/protocol invocation patterns
@@ -737,7 +751,9 @@ export class FlowCoachView extends ItemView {
         }
       } catch (error) {
         // Ignore display tool errors silently
-        toolResults.push(`Error displaying card: ${error instanceof Error ? error.message : String(error)}`);
+        toolResults.push(
+          `Error displaying card: ${error instanceof Error ? error.message : String(error)}`
+        );
       }
     }
 
@@ -936,7 +952,10 @@ export class FlowCoachView extends ItemView {
     }
   }
 
-  private async extractActionCardData(filePath: string, lineNumber: number): Promise<ActionCardData | null> {
+  private async extractActionCardData(
+    filePath: string,
+    lineNumber: number
+  ): Promise<ActionCardData | null> {
     try {
       const file = this.app.vault.getAbstractFileByPath(filePath);
       if (!(file instanceof TFile)) {
