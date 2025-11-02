@@ -38,6 +38,7 @@ describe("FileWriter", () => {
       read: jest.fn(),
       getAbstractFileByPath: jest.fn(),
       createFolder: jest.fn().mockResolvedValue(undefined),
+      getMarkdownFiles: jest.fn().mockReturnValue([]),
     };
 
     mockFileManager = {
@@ -1365,6 +1366,99 @@ tags:
       await expect(
         fileWriter.addToNextActionsFile(["Test action"], ["personal"], [false], [false])
       ).rejects.toThrow("Some other error");
+    });
+  });
+
+  describe("case-insensitive file matching", () => {
+    it("should find and append to file with different case than settings", async () => {
+      // Simulate: settings say "Next actions.md" (lowercase 'a'), but file is "Next Actions.md" (capital 'A')
+      const mockFile = new TFile("Next Actions.md", "Next Actions");
+
+      // Mock getAbstractFileByPath to return null for exact match (case mismatch)
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+
+      // Mock getMarkdownFiles to return the file with actual casing
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([mockFile]);
+
+      (mockVault.read as jest.Mock).mockResolvedValue("- [ ] Existing action #sphere/work\n");
+      (mockVault.modify as jest.Mock).mockResolvedValue(undefined);
+
+      // Try to add to "Next actions.md" (lowercase 'a') when file is "Next Actions.md" (capital 'A')
+      await fileWriter.addToNextActionsFile(["New action"], ["personal"], [false], [false]);
+
+      // Should find the file with case-insensitive matching and modify it
+      expect(mockVault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("New action")
+      );
+      expect(mockVault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("Existing action")
+      );
+    });
+
+    it("should handle case mismatch for someday file", async () => {
+      // Settings say "Someday.md" but file is "someday.md"
+      const mockFile = new TFile("someday.md", "someday");
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([mockFile]);
+      (mockVault.read as jest.Mock).mockResolvedValue("- [ ] Existing someday item\n");
+      (mockVault.modify as jest.Mock).mockResolvedValue(undefined);
+
+      await fileWriter.addToSomedayFile(["New someday item"], ["work"]);
+
+      expect(mockVault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("New someday item")
+      );
+    });
+
+    it("should create file with settings casing if no case-insensitive match exists", async () => {
+      const mockFile = new TFile("Next actions.md", "Next actions");
+
+      // No existing file with any casing
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);
+      (mockVault.create as jest.Mock).mockResolvedValue(mockFile);
+
+      await fileWriter.addToNextActionsFile(["First action"], ["personal"], [false], [false]);
+
+      // Should create new file with the exact path from settings
+      expect(mockVault.create).toHaveBeenCalledWith(
+        "Next actions.md",
+        expect.stringContaining("First action")
+      );
+    });
+
+    it("should handle race condition with case mismatch", async () => {
+      // Simulate: settings say "Next actions.md", actual file is "Next Actions.md"
+      // Race condition: file created between our checks
+      const mockFile = new TFile("Next Actions.md", "Next Actions");
+
+      // First call to getMarkdownFiles: returns empty (file doesn't exist yet)
+      // Second call (in catch block): returns the file
+      let getMarkdownFilesCallCount = 0;
+      (mockVault.getMarkdownFiles as jest.Mock).mockImplementation(() => {
+        getMarkdownFilesCallCount++;
+        if (getMarkdownFilesCallCount === 1) {
+          return [];
+        }
+        return [mockFile];
+      });
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
+      (mockVault.create as jest.Mock).mockRejectedValue(new Error("File already exists."));
+      (mockVault.read as jest.Mock).mockResolvedValue("");
+      (mockVault.modify as jest.Mock).mockResolvedValue(undefined);
+
+      await fileWriter.addToNextActionsFile(["Test action"], ["personal"], [false], [false]);
+
+      // Should handle the race condition and modify the file
+      expect(mockVault.modify).toHaveBeenCalledWith(
+        mockFile,
+        expect.stringContaining("Test action")
+      );
     });
   });
 });
