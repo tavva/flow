@@ -1,5 +1,10 @@
 import { ChatMessage, ToolCall } from "./language-model";
 
+/**
+ * Valid project status values
+ */
+export const VALID_PROJECT_STATUSES = ["live", "active", "planning", "paused", "completed"] as const;
+
 export interface FlowProject {
   file: string;
   title: string;
@@ -212,8 +217,8 @@ export interface ActionCardData {
 }
 
 export type DisplayCard =
-  | { type: "project"; data: ProjectCardData }
-  | { type: "action"; data: ActionCardData };
+  | { type: "project"; data: ProjectCardData; messageIndex: number }
+  | { type: "action"; data: ActionCardData; messageIndex: number };
 
 export interface ToolApprovalBlock {
   toolCall: ToolCall;

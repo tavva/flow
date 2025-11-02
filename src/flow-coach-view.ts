@@ -306,11 +306,11 @@ export class FlowCoachView extends ItemView {
     prompt += `- Move important actions to the focus for today\n`;
     prompt += `- Improve vague or unclear next actions to be more specific\n`;
     prompt += `- Add missing next actions to projects\n`;
-    prompt += `- Update project status (archive completed projects, etc.)\n\n`;
+    prompt += `- Update project status (mark completed projects, pause projects, etc.)\n\n`;
     prompt += `When you identify improvements, use the available tools to suggest changes. `;
     prompt += `The user will review and approve each suggestion before it's applied.\n\n`;
     prompt += `IMPORTANT: You should only add actions to projects with status 'live'. `;
-    prompt += `Projects with other statuses (hold, archived, etc.) are not active and should not have new actions added.\n\n`;
+    prompt += `Projects with other statuses (paused, completed, etc.) are not active and should not have new actions added.\n\n`;
 
     prompt += `Communication Style:\n`;
     prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
@@ -444,31 +444,35 @@ export class FlowCoachView extends ItemView {
     const shouldScrollToBottom = !this.activeConversation.lastSeenMessageCount ||
       this.activeConversation.lastSeenMessageCount === this.activeConversation.messages.length;
 
-    // Render each message
-    for (const message of this.activeConversation.messages) {
+    // Render messages with inline cards
+    for (let i = 0; i < this.activeConversation.messages.length; i++) {
+      const message = this.activeConversation.messages[i];
       this.messageRenderer.renderMessage(messagesEl, message);
-    }
 
-    // Render display cards (if any)
-    if (this.activeConversation.displayCards) {
-      for (const card of this.activeConversation.displayCards) {
-        if (card.type === "project") {
-          const cardEl = this.messageRenderer.renderProjectCard(card.data, (file) => {
-            // Open project file
-            this.app.workspace.openLinkText(file, "", false);
-          });
-          messagesEl.appendChild(cardEl);
-        } else if (card.type === "action") {
-          const cardEl = this.messageRenderer.renderActionCard(card.data, (file, lineNumber) => {
-            // Open file at line number
-            this.app.workspace.openLinkText(file, "", false);
-          });
-          messagesEl.appendChild(cardEl);
+      // Render cards that belong to this message
+      if (this.activeConversation.displayCards) {
+        const cardsForMessage = this.activeConversation.displayCards.filter(
+          (card) => card.messageIndex === i
+        );
+        for (const card of cardsForMessage) {
+          if (card.type === "project") {
+            const cardEl = this.messageRenderer.renderProjectCard(card.data, (file) => {
+              // Open project file
+              this.app.workspace.openLinkText(file, "", false);
+            });
+            messagesEl.appendChild(cardEl);
+          } else if (card.type === "action") {
+            const cardEl = this.messageRenderer.renderActionCard(card.data, (file, lineNumber) => {
+              // Open file at line number
+              this.app.workspace.openLinkText(file, "", false);
+            });
+            messagesEl.appendChild(cardEl);
+          }
         }
       }
     }
 
-    // Render tool approval blocks (if any)
+    // Render tool approval blocks at the end (they don't have message association)
     if (this.activeConversation.toolApprovalBlocks) {
       for (const block of this.activeConversation.toolApprovalBlocks) {
         const blockEl = this.messageRenderer.renderToolApprovalBlock(block, {
@@ -702,6 +706,10 @@ export class FlowCoachView extends ItemView {
     );
 
     // Process display tools - extract card data and store
+    const toolResults: string[] = [];
+    // Cards should render after the assistant message we just added
+    const cardMessageIndex = this.activeConversation.messages.length - 1;
+
     for (const toolCall of displayTools) {
       try {
         if (toolCall.name === "show_project_card") {
@@ -711,7 +719,9 @@ export class FlowCoachView extends ItemView {
             this.activeConversation.displayCards.push({
               type: "project",
               data: cardData,
+              messageIndex: cardMessageIndex,
             });
+            toolResults.push(`Displayed project card: ${cardData.title}`);
           }
         } else if (toolCall.name === "show_action_card") {
           const { file, line_number } = toolCall.input as { file: string; line_number: number };
@@ -720,11 +730,14 @@ export class FlowCoachView extends ItemView {
             this.activeConversation.displayCards.push({
               type: "action",
               data: cardData,
+              messageIndex: cardMessageIndex,
             });
+            toolResults.push(`Displayed action card: ${cardData.text}`);
           }
         }
       } catch (error) {
         // Ignore display tool errors silently
+        toolResults.push(`Error displaying card: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 
@@ -738,6 +751,107 @@ export class FlowCoachView extends ItemView {
 
     await this.saveState();
     await this.refresh();
+
+    // If we have display tool results, continue the conversation with the LLM
+    if (toolResults.length > 0) {
+      await this.continueConversationAfterTools(toolResults);
+    }
+  }
+
+  private async continueConversationAfterTools(toolResults: string[]): Promise<void> {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Add tool results as a system message (will be filtered from UI rendering)
+    const toolResultMessage = toolResults.join("\n");
+    this.activeConversation.messages.push({
+      role: "system",
+      content: `[Tool Results]\n${toolResultMessage}`,
+    });
+
+    try {
+      // Create LLM client
+      const languageModelClient = createLanguageModelClient(this.settings);
+      if (!languageModelClient) {
+        throw new Error("Failed to create language model client. Please check your API settings.");
+      }
+
+      const model = getModelForSettings(this.settings);
+
+      // Build messages array with system prompt prepended
+      const messagesWithSystemPrompt: ChatMessage[] = [
+        {
+          role: "system",
+          content: this.activeConversation.systemPrompt,
+        },
+        ...this.activeConversation.messages,
+      ];
+
+      // Check if client supports tools
+      const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
+
+      let response: string | ToolCallResponse;
+
+      if (supportsTools) {
+        // Call LLM with tools
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessageWithTools!(
+              {
+                model,
+                maxTokens: 4000,
+                messages: messagesWithSystemPrompt,
+              },
+              COACH_TOOLS
+            ),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
+        );
+      } else {
+        // Call LLM without tools
+        response = await withRetry(
+          () =>
+            languageModelClient.sendMessage({
+              model,
+              maxTokens: 4000,
+              messages: messagesWithSystemPrompt,
+            }),
+          { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
+        );
+      }
+
+      // Handle response
+      if (typeof response !== "string" && response.toolCalls) {
+        // More tool calls - handle them recursively
+        await this.handleToolCalls(response);
+      } else {
+        // Regular text response
+        const text = typeof response === "string" ? response : response.content || "";
+        this.activeConversation.messages.push({
+          role: "assistant",
+          content: text,
+        });
+
+        // Mark as seen so we auto-scroll to bottom
+        this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
+
+        await this.saveState();
+        await this.refresh();
+      }
+    } catch (error) {
+      // Add error message to conversation
+      const errorMessage = `Error continuing conversation: ${error instanceof Error ? error.message : String(error)}`;
+      this.activeConversation.messages.push({
+        role: "assistant",
+        content: errorMessage,
+      });
+
+      // Mark as seen so we auto-scroll to bottom
+      this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
+
+      await this.saveState();
+      await this.refresh();
+    }
   }
 
   private async approveTool(block: ToolApprovalBlock): Promise<void> {
@@ -896,6 +1010,9 @@ export class FlowCoachView extends ItemView {
     // Update timestamp
     this.activeConversation.lastUpdatedAt = Date.now();
 
+    // Mark as seen so we auto-scroll to bottom when refreshing
+    this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
+
     // Save state and refresh to show user message
     await this.saveState();
     await this.refresh();
@@ -962,6 +1079,9 @@ export class FlowCoachView extends ItemView {
           content: text,
         });
 
+        // Mark as seen so we auto-scroll to bottom
+        this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
+
         await this.saveState();
         await this.refresh();
       }
@@ -972,6 +1092,9 @@ export class FlowCoachView extends ItemView {
         role: "assistant",
         content: errorMessage,
       });
+
+      // Mark as seen so we auto-scroll to bottom
+      this.activeConversation.lastSeenMessageCount = this.activeConversation.messages.length;
 
       await this.saveState();
       await this.refresh();

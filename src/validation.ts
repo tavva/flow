@@ -1,6 +1,7 @@
 /**
  * Validation utilities for Flow GTD Coach
  */
+import { VALID_PROJECT_STATUSES } from "./types";
 
 /**
  * Validates if a string is a valid API key format
@@ -40,16 +41,14 @@ export function validatePriority(priority: number): { valid: boolean; error?: st
  * Validates if a status value is acceptable
  */
 export function validateStatus(status: string): { valid: boolean; error?: string } {
-  const validStatuses = ["live", "active", "planning", "paused", "completed"];
-
   if (!status || status.trim().length === 0) {
     return { valid: false, error: "Status cannot be empty" };
   }
 
-  if (!validStatuses.includes(status.toLowerCase())) {
+  if (!VALID_PROJECT_STATUSES.includes(status.toLowerCase() as any)) {
     return {
       valid: false,
-      error: `Status must be one of: ${validStatuses.join(", ")}`,
+      error: `Status must be one of: ${VALID_PROJECT_STATUSES.join(", ")}`,
     };
   }
 

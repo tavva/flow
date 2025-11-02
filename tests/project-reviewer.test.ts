@@ -175,7 +175,7 @@ describe("ProjectReviewer", () => {
           {
             projectPath: "projects/old-project.md",
             currentStatus: "live",
-            suggestedStatus: "archived",
+            suggestedStatus: "completed",
             rationale: "No next actions defined, project appears to be dormant",
           },
         ],
@@ -189,7 +189,7 @@ describe("ProjectReviewer", () => {
       expect(result.statusChanges[0]).toMatchObject({
         projectPath: "projects/old-project.md",
         currentStatus: "live",
-        suggestedStatus: "archived",
+        suggestedStatus: "completed",
         rationale: expect.stringContaining("dormant"),
       });
     });
@@ -365,7 +365,7 @@ describe("ProjectReviewer", () => {
       mockClient.sendMessage.mockResolvedValue(mockResponse);
 
       await expect(reviewer.reviewProjects(mockProjects, "work")).rejects.toThrow(
-        "suggestedStatus must be one of complete/archived/paused"
+        "suggestedStatus must be one of completed/paused"
       );
     });
 

@@ -99,7 +99,7 @@ Your task is to review these projects and provide suggestions for improvements. 
 
 **Global Review:**
 - Spot duplicate or overlapping projects that should be merged
-- Identify projects that may be complete, paused, or archived
+- Identify projects that may be completed or paused
 - Consider if projects are well-organized
 
 Respond with a JSON object in this exact format (DO NOT include any other text or markdown):
@@ -133,7 +133,7 @@ Respond with a JSON object in this exact format (DO NOT include any other text o
     {
       "projectPath": "file path",
       "currentStatus": "current status",
-      "suggestedStatus": "complete/archived/paused",
+      "suggestedStatus": "completed/paused",
       "rationale": "explanation of suggested status change"
     }
   ]
@@ -317,11 +317,11 @@ IMPORTANT:
         );
       }
 
-      const validStatuses = new Set(["complete", "archived", "paused"]);
+      const validStatuses = new Set(["completed", "paused"]);
       if (!validStatuses.has(change.suggestedStatus)) {
         throw new GTDResponseValidationError(
           withResponse(
-            `Invalid review response: statusChanges[${idx}].suggestedStatus must be one of complete/archived/paused`
+            `Invalid review response: statusChanges[${idx}].suggestedStatus must be one of completed/paused`
           )
         );
       }

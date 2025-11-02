@@ -72,7 +72,7 @@ export const COACH_TOOLS: ToolDefinition[] = [
   },
   {
     name: "update_project_status",
-    description: "Change the status of a project (e.g., archive, hold, live)",
+    description: "Change the status of a project (e.g., completed, paused, live)",
     input_schema: {
       type: "object",
       properties: {
@@ -82,7 +82,7 @@ export const COACH_TOOLS: ToolDefinition[] = [
         },
         new_status: {
           type: "string",
-          description: "New status value (archived, hold, live, etc.)",
+          description: "New status value (live, active, planning, paused, completed)",
         },
       },
       required: ["project_path", "new_status"],
