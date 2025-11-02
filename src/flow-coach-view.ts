@@ -1,8 +1,8 @@
 // ABOUTME: Main view for Flow Coach chat interface with conversation management.
 // ABOUTME: Handles message rendering, protocol banners, tool approvals, and input.
 
-import { ItemView, WorkspaceLeaf } from "obsidian";
-import { PluginSettings, CoachState, CoachConversation, ReviewProtocol, FlowProject } from "./types";
+import { ItemView, WorkspaceLeaf, TFile } from "obsidian";
+import { PluginSettings, CoachState, CoachConversation, ReviewProtocol, FlowProject, ToolApprovalBlock, ProjectCardData, ActionCardData } from "./types";
 import { CoachStateManager } from "./coach-state";
 import { CoachMessageRenderer } from "./coach-message-renderer";
 import { CoachProtocolBanner } from "./coach-protocol-banner";
@@ -441,6 +441,36 @@ export class FlowCoachView extends ItemView {
     for (const message of this.activeConversation.messages) {
       this.messageRenderer.renderMessage(messagesEl, message);
     }
+
+    // Render display cards (if any)
+    if (this.activeConversation.displayCards) {
+      for (const card of this.activeConversation.displayCards) {
+        if (card.type === "project") {
+          const cardEl = this.messageRenderer.renderProjectCard(card.data, (file) => {
+            // Open project file
+            this.app.workspace.openLinkText(file, "", false);
+          });
+          messagesEl.appendChild(cardEl);
+        } else if (card.type === "action") {
+          const cardEl = this.messageRenderer.renderActionCard(card.data, (file, lineNumber) => {
+            // Open file at line number
+            this.app.workspace.openLinkText(file, "", false);
+          });
+          messagesEl.appendChild(cardEl);
+        }
+      }
+    }
+
+    // Render tool approval blocks (if any)
+    if (this.activeConversation.toolApprovalBlocks) {
+      for (const block of this.activeConversation.toolApprovalBlocks) {
+        const blockEl = this.messageRenderer.renderToolApprovalBlock(block, {
+          onApprove: () => this.approveTool(block),
+          onReject: () => this.rejectTool(block),
+        });
+        messagesEl.appendChild(blockEl);
+      }
+    }
   }
 
   private async startProtocol(protocol: ReviewProtocol): Promise<void> {
@@ -556,6 +586,14 @@ export class FlowCoachView extends ItemView {
       content: content || "",
     });
 
+    // Initialize arrays if needed
+    if (!this.activeConversation.toolApprovalBlocks) {
+      this.activeConversation.toolApprovalBlocks = [];
+    }
+    if (!this.activeConversation.displayCards) {
+      this.activeConversation.displayCards = [];
+    }
+
     // Separate display tools from action tools
     const displayTools = toolCalls.filter(
       (tc) => tc.name === "show_project_card" || tc.name === "show_action_card"
@@ -564,29 +602,165 @@ export class FlowCoachView extends ItemView {
       (tc) => tc.name !== "show_project_card" && tc.name !== "show_action_card"
     );
 
-    // Auto-execute display tools (render cards inline)
+    // Process display tools - extract card data and store
     for (const toolCall of displayTools) {
-      // Cards will be rendered when we refresh the view
-      // The message renderer will handle card rendering
-      // For now, just store them in a way we can retrieve them
-      // Actually, we need to render them immediately as part of the conversation
-      // Let me handle this differently - we'll render cards directly in the messages area
+      try {
+        if (toolCall.name === "show_project_card") {
+          const { project_file } = toolCall.input as { project_file: string };
+          const cardData = await this.extractProjectCardData(project_file);
+          if (cardData) {
+            this.activeConversation.displayCards.push({
+              type: "project",
+              data: cardData,
+            });
+          }
+        } else if (toolCall.name === "show_action_card") {
+          const { file, line_number } = toolCall.input as { file: string; line_number: number };
+          const cardData = await this.extractActionCardData(file, line_number);
+          if (cardData) {
+            this.activeConversation.displayCards.push({
+              type: "action",
+              data: cardData,
+            });
+          }
+        }
+      } catch (error) {
+        // Ignore display tool errors silently
+      }
     }
 
-    // Create approval blocks for action tools
-    if (actionTools.length > 0) {
-      // We need to render tool approval blocks in the UI
-      // For now, let's just acknowledge them in the conversation
-      // The user will need to approve them via UI
+    // Create approval blocks for action tools (require user approval)
+    for (const toolCall of actionTools) {
+      this.activeConversation.toolApprovalBlocks.push({
+        toolCall,
+        status: "pending",
+      });
+    }
 
-      // Save state to persist the tool calls
-      // We'll handle approvals through the UI when refresh happens
-      await this.saveState();
-      await this.refresh();
-    } else {
-      // No action tools, just display tools
-      await this.saveState();
-      await this.refresh();
+    await this.saveState();
+    await this.refresh();
+  }
+
+  private async approveTool(block: ToolApprovalBlock): Promise<void> {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Update block status
+    block.status = "approved";
+
+    // Execute the tool
+    const toolExecutor = new ToolExecutor(
+      this.app,
+      new FileWriter(this.app, this.settings),
+      this.settings
+    );
+
+    try {
+      const result = await toolExecutor.executeTool(block.toolCall);
+
+      if (result.is_error) {
+        block.status = "error";
+        block.error = result.content;
+      } else {
+        block.result = result.content;
+      }
+    } catch (error) {
+      block.status = "error";
+      block.error = error instanceof Error ? error.message : String(error);
+    }
+
+    await this.saveState();
+    await this.refresh();
+  }
+
+  private async rejectTool(block: ToolApprovalBlock): Promise<void> {
+    if (!this.activeConversation) {
+      return;
+    }
+
+    // Update block status
+    block.status = "rejected";
+
+    await this.saveState();
+    await this.refresh();
+  }
+
+  private async extractProjectCardData(projectPath: string): Promise<ProjectCardData | null> {
+    try {
+      const file = this.app.vault.getAbstractFileByPath(projectPath);
+      if (!(file instanceof TFile)) {
+        return null;
+      }
+
+      const content = await this.app.vault.read(file);
+      const cache = this.app.metadataCache.getFileCache(file);
+
+      // Extract project metadata
+      const frontmatter = cache?.frontmatter || {};
+      const title = frontmatter.title || file.basename;
+      const priority = frontmatter.priority || 3;
+      const status = frontmatter.status || "live";
+
+      // Extract description (first paragraph after frontmatter)
+      const descMatch = content.match(/---[\s\S]*?---\n\n(.+?)(?:\n\n|$)/);
+      const description = descMatch ? descMatch[1] : "";
+
+      // Count next actions
+      const actionMatches = content.match(/^- \[ \]/gm);
+      const nextActionsCount = actionMatches ? actionMatches.length : 0;
+
+      return {
+        title,
+        description,
+        priority,
+        status,
+        nextActionsCount,
+        file: projectPath,
+      };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async extractActionCardData(filePath: string, lineNumber: number): Promise<ActionCardData | null> {
+    try {
+      const file = this.app.vault.getAbstractFileByPath(filePath);
+      if (!(file instanceof TFile)) {
+        return null;
+      }
+
+      const content = await this.app.vault.read(file);
+      const lines = content.split(/\r?\n/);
+
+      if (lineNumber < 1 || lineNumber > lines.length) {
+        return null;
+      }
+
+      const line = lines[lineNumber - 1];
+      const checkboxMatch = line.match(/^- \[(?: |w|x)\] (.+)$/);
+
+      if (!checkboxMatch) {
+        return null;
+      }
+
+      const text = checkboxMatch[1];
+      let status: "incomplete" | "waiting" | "complete" = "incomplete";
+
+      if (line.includes("- [w]")) {
+        status = "waiting";
+      } else if (line.includes("- [x]")) {
+        status = "complete";
+      }
+
+      return {
+        text,
+        file: filePath,
+        lineNumber,
+        status,
+      };
+    } catch (error) {
+      return null;
     }
   }
 

@@ -185,6 +185,8 @@ export interface CoachConversation {
   systemPrompt: string; // Built once at conversation start
   createdAt: number;
   lastUpdatedAt: number;
+  toolApprovalBlocks?: ToolApprovalBlock[]; // Tool calls awaiting approval or completed
+  displayCards?: DisplayCard[]; // Cards to render inline with messages
 }
 
 export interface CoachState {
