@@ -1,3 +1,5 @@
+import { ChatMessage, ToolCall } from "./language-model";
+
 export interface FlowProject {
   file: string;
   title: string;
@@ -173,4 +175,46 @@ export interface ReviewProtocol {
   };
   spheres?: string[]; // e.g., ["work", "personal"]
   content: string; // Full markdown body (without frontmatter)
+}
+
+// Coach types
+export interface CoachConversation {
+  id: string; // UUID
+  title: string; // Auto-generated from first message
+  messages: ChatMessage[];
+  systemPrompt: string; // Built once at conversation start
+  createdAt: number;
+  lastUpdatedAt: number;
+}
+
+export interface CoachState {
+  conversations: CoachConversation[];
+  activeConversationId: string | null;
+}
+
+export interface ProjectCardData {
+  title: string;
+  description: string;
+  priority: number;
+  status: string;
+  nextActionsCount: number;
+  file: string;
+}
+
+export interface ActionCardData {
+  text: string;
+  file: string;
+  lineNumber: number;
+  status: "incomplete" | "waiting" | "complete";
+}
+
+export type DisplayCard =
+  | { type: "project"; data: ProjectCardData }
+  | { type: "action"; data: ActionCardData };
+
+export interface ToolApprovalBlock {
+  toolCall: ToolCall;
+  status: "pending" | "approved" | "rejected" | "error";
+  result?: string;
+  error?: string;
 }
