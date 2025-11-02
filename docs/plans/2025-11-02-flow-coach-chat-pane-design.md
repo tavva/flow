@@ -116,7 +116,7 @@ interface CoachState {
 }
 
 interface DisplayCard {
-  type: 'project' | 'action';
+  type: "project" | "action";
   data: ProjectCardData | ActionCardData;
 }
 
@@ -133,12 +133,12 @@ interface ActionCardData {
   text: string;
   file: string;
   lineNumber: number;
-  status: 'incomplete' | 'waiting' | 'complete';
+  status: "incomplete" | "waiting" | "complete";
 }
 
 interface ToolApprovalBlock {
   toolCall: ToolCall;
-  status: 'pending' | 'approved' | 'rejected' | 'error';
+  status: "pending" | "approved" | "rejected" | "error";
   result?: string;
   error?: string;
 }
@@ -214,6 +214,7 @@ interface ToolApprovalBlock {
 ### Testing Files
 
 **Remove:**
+
 - `tests/cli.test.ts`
 - `tests/cli-approval.test.ts`
 - `tests/cli-opening-message.test.ts`
@@ -222,10 +223,12 @@ interface ToolApprovalBlock {
 - `tests/cli-system-prompt.test.ts`
 
 **Update:**
+
 - `tests/cli-tools.test.ts` → Rename to `tests/coach-tools.test.ts`
 - `tests/cli-tools-execution.test.ts` → Update imports
 
 **Add:**
+
 - `tests/flow-coach-view.test.ts`
 - `tests/coach-state.test.ts`
 - `tests/coach-message-renderer.test.ts`
@@ -381,9 +384,9 @@ function buildCoachSystemPrompt(
 
   // Filter by protocol spheres if specified
   const projects = sphereFilter
-    ? allProjects.filter(p => p.tags.some(tag =>
-        sphereFilter.some(s => tag === `project/${s}`)
-      ))
+    ? allProjects.filter((p) =>
+        p.tags.some((tag) => sphereFilter.some((s) => tag === `project/${s}`))
+      )
     : allProjects;
 
   // Scan GTD context (always all spheres)

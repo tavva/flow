@@ -32,7 +32,8 @@ describe("CoachStateManager", () => {
 
     it("should truncate long titles to 50 characters", () => {
       const conversation = manager.createConversation("prompt");
-      const longMessage = "This is a very long message that should be truncated to fifty characters maximum";
+      const longMessage =
+        "This is a very long message that should be truncated to fifty characters maximum";
       const title = manager.updateConversationTitle(longMessage);
 
       expect(title.length).toBe(50);
@@ -60,17 +61,12 @@ describe("CoachStateManager", () => {
 
       expect(pruned.conversations.length).toBe(50);
       // Should keep most recent (highest timestamps)
-      expect(pruned.conversations[0].createdAt).toBeGreaterThan(
-        state.conversations[0].createdAt
-      );
+      expect(pruned.conversations[0].createdAt).toBeGreaterThan(state.conversations[0].createdAt);
     });
 
     it("should not prune if less than 50 conversations", () => {
       const state: CoachState = {
-        conversations: [
-          manager.createConversation("prompt"),
-          manager.createConversation("prompt"),
-        ],
+        conversations: [manager.createConversation("prompt"), manager.createConversation("prompt")],
         activeConversationId: null,
       };
 

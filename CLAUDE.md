@@ -113,6 +113,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - **CoachProtocolBanner** (`src/coach-protocol-banner.ts`) - Protocol suggestion UI
 
 **Features:**
+
 - Persistent conversation history across sessions
 - Multi-sphere access with protocol filtering
 - Inline tool approvals for suggested changes
@@ -121,6 +122,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - Markdown message rendering
 
 **Commands:**
+
 - `open-flow-coach` - Opens Flow Coach view in right sidebar
 
 ### Inbox Note Archiving and Source Links

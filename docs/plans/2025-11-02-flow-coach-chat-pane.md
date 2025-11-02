@@ -13,6 +13,7 @@
 ## Task 1: Add Core Types
 
 **Files:**
+
 - Modify: `src/types.ts`
 
 **Step 1: Write failing test**
@@ -144,6 +145,7 @@ git commit -m "feat: add coach conversation and card types"
 ## Task 2: Coach State Management
 
 **Files:**
+
 - Create: `src/coach-state.ts`
 - Create: `tests/coach-state.test.ts`
 
@@ -185,7 +187,8 @@ describe("CoachStateManager", () => {
 
     it("should truncate long titles to 50 characters", () => {
       const conversation = manager.createConversation("prompt");
-      const longMessage = "This is a very long message that should be truncated to fifty characters maximum";
+      const longMessage =
+        "This is a very long message that should be truncated to fifty characters maximum";
       const title = manager.updateConversationTitle(longMessage);
 
       expect(title.length).toBe(50);
@@ -209,17 +212,12 @@ describe("CoachStateManager", () => {
 
       expect(pruned.conversations.length).toBe(50);
       // Should keep most recent (highest timestamps)
-      expect(pruned.conversations[0].createdAt).toBeGreaterThan(
-        state.conversations[0].createdAt
-      );
+      expect(pruned.conversations[0].createdAt).toBeGreaterThan(state.conversations[0].createdAt);
     });
 
     it("should not prune if less than 50 conversations", () => {
       const state: CoachState = {
-        conversations: [
-          manager.createConversation("prompt"),
-          manager.createConversation("prompt"),
-        ],
+        conversations: [manager.createConversation("prompt"), manager.createConversation("prompt")],
         activeConversationId: null,
       };
 
@@ -285,9 +283,7 @@ export class CoachStateManager {
     }
 
     // Sort by creation date descending (newest first)
-    const sorted = [...state.conversations].sort(
-      (a, b) => b.createdAt - a.createdAt
-    );
+    const sorted = [...state.conversations].sort((a, b) => b.createdAt - a.createdAt);
 
     // Keep last 50
     const pruned = sorted.slice(0, maxConversations);
@@ -317,6 +313,7 @@ git commit -m "feat: add coach state management with conversation lifecycle"
 ## Task 3: Rename CLI Tools to Coach Tools
 
 **Files:**
+
 - Rename: `src/cli-tools.ts` → `src/coach-tools.ts`
 - Modify: `src/coach-tools.ts`
 - Rename: `tests/cli-tools.test.ts` → `tests/coach-tools.test.ts`
@@ -330,7 +327,7 @@ git commit -m "feat: add coach state management with conversation lifecycle"
 describe("Display tools", () => {
   describe("show_project_card", () => {
     it("should be defined in COACH_TOOLS", () => {
-      const tool = COACH_TOOLS.find(t => t.name === "show_project_card");
+      const tool = COACH_TOOLS.find((t) => t.name === "show_project_card");
       expect(tool).toBeDefined();
       expect(tool?.description).toContain("Display a project card");
     });
@@ -338,7 +335,7 @@ describe("Display tools", () => {
 
   describe("show_action_card", () => {
     it("should be defined in COACH_TOOLS", () => {
-      const tool = COACH_TOOLS.find(t => t.name === "show_action_card");
+      const tool = COACH_TOOLS.find((t) => t.name === "show_action_card");
       expect(tool).toBeDefined();
       expect(tool?.description).toContain("Display a next action card");
     });
@@ -442,6 +439,7 @@ git commit -m "refactor: rename CLI tools to coach tools and add display tools"
 ## Task 4: Coach Message Renderer
 
 **Files:**
+
 - Create: `src/coach-message-renderer.ts`
 - Create: `tests/coach-message-renderer.test.ts`
 
@@ -698,10 +696,7 @@ export class CoachMessageRenderer {
   /**
    * Render a project card with clickable link to file.
    */
-  renderProjectCard(
-    data: ProjectCardData,
-    onClick?: (file: string) => void
-  ): HTMLElement {
+  renderProjectCard(data: ProjectCardData, onClick?: (file: string) => void): HTMLElement {
     const cardEl = document.createElement("div");
     cardEl.className = "coach-card coach-card-project";
 
@@ -716,9 +711,7 @@ export class CoachMessageRenderer {
 
     // Meta (priority, status, actions count)
     const metaEl = cardEl.createDiv({ cls: "coach-card-meta" });
-    metaEl.setText(
-      `Priority: ${data.priority} • Status: ${data.status}`
-    );
+    metaEl.setText(`Priority: ${data.priority} • Status: ${data.status}`);
 
     const actionsEl = cardEl.createDiv({ cls: "coach-card-actions" });
     actionsEl.setText(`${data.nextActionsCount} next actions`);
@@ -874,6 +867,7 @@ git commit -m "feat: add coach message renderer with markdown, cards, and tool a
 ## Task 5: Coach Protocol Banner
 
 **Files:**
+
 - Create: `src/coach-protocol-banner.ts`
 - Create: `tests/coach-protocol-banner.test.ts`
 
@@ -980,9 +974,7 @@ describe("CoachProtocolBanner", () => {
         },
       });
 
-      const dismissBtn = container.querySelector(
-        ".coach-protocol-dismiss"
-      ) as HTMLButtonElement;
+      const dismissBtn = container.querySelector(".coach-protocol-dismiss") as HTMLButtonElement;
       dismissBtn?.click();
 
       expect(dismissed).toBe(true);
@@ -1118,6 +1110,7 @@ git commit -m "feat: add protocol suggestion banner component"
 ## Task 6: Flow Coach View (Part 1 - Basic Structure)
 
 **Files:**
+
 - Create: `src/flow-coach-view.ts`
 - Create: `tests/flow-coach-view.test.ts`
 
@@ -1232,11 +1225,7 @@ export class FlowCoachView extends ItemView {
   private state: CoachState;
   private activeConversation: CoachConversation | null = null;
 
-  constructor(
-    leaf: WorkspaceLeaf,
-    settings: PluginSettings,
-    saveSettings: () => Promise<void>
-  ) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
     this.saveSettings = saveSettings;
@@ -1554,6 +1543,7 @@ git commit -m "feat: add conversation management to flow coach view"
 ## Task 8: Integration with main.ts
 
 **Files:**
+
 - Modify: `main.ts`
 - Modify: `src/types.ts`
 
@@ -1765,6 +1755,7 @@ git commit -m "feat: integrate flow coach view with main plugin"
 ## Task 9: Remove CLI Files
 
 **Files:**
+
 - Delete: `src/cli.tsx`
 - Delete: `src/cli-entry.mts`
 - Delete: `src/obsidian-compat.ts`
@@ -1855,11 +1846,13 @@ git commit -m "refactor: remove CLI code, tests, docs, and dependencies"
 ## Task 10: Update CLAUDE.md
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 **Step 1: Remove CLI documentation**
 
 Remove these sections from CLAUDE.md:
+
 - "GTD Coach CLI" section under Common Commands
 - "CLI Tools" paragraph in Architecture section
 - Reference to `cli-tools.ts` (update to `coach-tools.ts`)
@@ -1881,6 +1874,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - **CoachProtocolBanner** (`src/coach-protocol-banner.ts`) - Protocol suggestion UI
 
 **Features:**
+
 - Persistent conversation history across sessions
 - Multi-sphere access with protocol filtering
 - Inline tool approvals for suggested changes
@@ -1889,12 +1883,14 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - Markdown message rendering
 
 **Commands:**
+
 - `open-flow-coach` - Opens Flow Coach view in right sidebar
 ```
 
 **Step 3: Update test files list**
 
 Update the test files section to reflect:
+
 - Removed: All CLI test files
 - Renamed: `cli-tools.test.ts` → `coach-tools.test.ts`
 - Added: `coach-state.test.ts`, `coach-message-renderer.test.ts`, `flow-coach-view.test.ts`
@@ -1911,6 +1907,7 @@ git commit -m "docs: update CLAUDE.md to reflect CLI removal and coach pane addi
 ## Task 11: Add CSS Styling
 
 **Files:**
+
 - Create: `styles/coach.css`
 - Modify: `styles.css` (import coach.css)
 
@@ -2196,7 +2193,7 @@ git commit -m "docs: update CLAUDE.md to reflect CLI removal and coach pane addi
 
 ```css
 /* styles.css */
-@import 'coach.css';
+@import "coach.css";
 ```
 
 **Step 3: Commit**

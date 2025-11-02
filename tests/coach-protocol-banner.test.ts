@@ -97,9 +97,7 @@ describe("CoachProtocolBanner", () => {
         },
       });
 
-      const dismissBtn = container.querySelector(
-        ".coach-protocol-dismiss"
-      ) as HTMLButtonElement;
+      const dismissBtn = container.querySelector(".coach-protocol-dismiss") as HTMLButtonElement;
       dismissBtn?.click();
 
       expect(dismissed).toBe(true);

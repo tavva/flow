@@ -47,13 +47,7 @@ describe("FlowCoachView", () => {
       mockCoachState = state;
     });
 
-    view = new FlowCoachView(
-      mockLeaf,
-      mockSettings,
-      mockSaveSettings,
-      mockGetState,
-      mockSetState
-    );
+    view = new FlowCoachView(mockLeaf, mockSettings, mockSaveSettings, mockGetState, mockSetState);
   });
 
   describe("View metadata", () => {

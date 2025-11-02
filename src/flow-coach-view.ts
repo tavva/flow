@@ -14,8 +14,8 @@ export const FLOW_COACH_VIEW_TYPE = "flow-coach-view";
 export class FlowCoachView extends ItemView {
   private settings: PluginSettings;
   private saveSettings: () => Promise<void>;
-  private getState: () => CoachState;
-  private setState: (state: CoachState) => void;
+  private getCoachState: () => CoachState;
+  private setCoachState: (state: CoachState) => void;
   private stateManager: CoachStateManager;
   private messageRenderer: CoachMessageRenderer;
   private protocolBanner: CoachProtocolBanner;
@@ -26,14 +26,14 @@ export class FlowCoachView extends ItemView {
     leaf: WorkspaceLeaf,
     settings: PluginSettings,
     saveSettings: () => Promise<void>,
-    getState: () => CoachState,
-    setState: (state: CoachState) => void
+    getCoachState: () => CoachState,
+    setCoachState: (state: CoachState) => void
   ) {
     super(leaf);
     this.settings = settings;
     this.saveSettings = saveSettings;
-    this.getState = getState;
-    this.setState = setState;
+    this.getCoachState = getCoachState;
+    this.setCoachState = setCoachState;
     this.stateManager = new CoachStateManager();
     this.messageRenderer = new CoachMessageRenderer();
     this.protocolBanner = new CoachProtocolBanner();
@@ -144,11 +144,11 @@ export class FlowCoachView extends ItemView {
   }
 
   private async loadState(): Promise<void> {
-    this.state = this.getState();
+    this.state = this.getCoachState();
   }
 
   private async saveState(): Promise<void> {
-    this.setState(this.state);
+    this.setCoachState(this.state);
     await this.saveSettings();
   }
 

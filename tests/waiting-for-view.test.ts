@@ -115,7 +115,9 @@ describe("WaitingForView", () => {
     const modifiedLines = modifiedContent.split("\n");
 
     // Check the task was marked complete
-    expect(modifiedLines[3]).toMatch(/^- \[x\] Wait for review #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/);
+    expect(modifiedLines[3]).toMatch(
+      /^- \[x\] Wait for review #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/
+    );
   });
 
   test("should add completion date when marking item complete", async () => {
@@ -141,7 +143,9 @@ describe("WaitingForView", () => {
     const modifiedContent = mockApp.vault.modify.mock.calls[0][1];
 
     // Verify completion date format YYYY-MM-DD
-    expect(modifiedContent).toMatch(/^- \[x\] Test waiting item #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/);
+    expect(modifiedContent).toMatch(
+      /^- \[x\] Test waiting item #sphere\/work ✅ \d{4}-\d{2}-\d{2}$/
+    );
 
     // Verify it's today's date
     const today = new Date().toISOString().split("T")[0];

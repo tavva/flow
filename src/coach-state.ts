@@ -44,9 +44,7 @@ export class CoachStateManager {
     }
 
     // Sort by creation date descending (newest first)
-    const sorted = [...state.conversations].sort(
-      (a, b) => b.createdAt - a.createdAt
-    );
+    const sorted = [...state.conversations].sort((a, b) => b.createdAt - a.createdAt);
 
     // Keep last 50
     const pruned = sorted.slice(0, maxConversations);

@@ -17,17 +17,20 @@ This document provides a handoff for completing the Flow Coach chat pane impleme
 ## What's Been Completed (Tasks 1-8)
 
 ### ✅ Task 1: Add Core Types
+
 - Added `CoachConversation`, `CoachState`, `DisplayCard`, `ToolApprovalBlock` types
 - Files: `src/types.ts`, `tests/types.test.ts`
 - Commit: `27d38f3`
 
 ### ✅ Task 2: Coach State Management
+
 - Implemented `CoachStateManager` with conversation lifecycle methods
 - Files: `src/coach-state.ts`, `tests/coach-state.test.ts`
 - Commit: `ef15d11`
 - Dependencies added: `uuid@13.0.0`, `@types/uuid@10.0.0`
 
 ### ✅ Task 3: Rename CLI Tools to Coach Tools
+
 - Renamed `cli-tools.ts` → `coach-tools.ts` (git history preserved)
 - Added display tools: `show_project_card`, `show_action_card`
 - Updated all imports
@@ -35,29 +38,34 @@ This document provides a handoff for completing the Flow Coach chat pane impleme
 - Commit: `c77cc23`
 
 ### ✅ Task 4: Coach Message Renderer
+
 - Implemented message, card, and tool approval rendering
 - Markdown support via `marked` library
 - Files: `src/coach-message-renderer.ts`, `tests/coach-message-renderer.test.ts`
 - Commit: `83549d6`
 
 ### ✅ Task 5: Coach Protocol Banner
+
 - Implemented protocol suggestion banner UI
 - Single/multiple protocol layouts
 - Files: `src/coach-protocol-banner.ts`, `tests/coach-protocol-banner.test.ts`
 - Commit: `87fa368`
 
 ### ✅ Task 6: FlowCoachView Part 1 (Basic Structure)
+
 - Implemented header, dropdown, input area
 - Placeholder methods for conversation management
 - Files: `src/flow-coach-view.ts`, `tests/flow-coach-view.test.ts`
 - Commit: `72bdd25`
 
 ### ✅ Task 7: FlowCoachView Part 2 (Conversation Management)
+
 - Implemented conversation creation, switching, protocol banner, message rendering
 - Files: `src/flow-coach-view.ts`, `tests/flow-coach-view.test.ts`
 - Commit: `51654a1`
 
 ### ✅ Task 8: Integration with main.ts
+
 - Registered FlowCoachView, added command, state persistence
 - Fixed Task 7 issues (async/await, UI refresh)
 - Files: `main.ts`, `src/flow-coach-view.ts`, `tests/main.test.ts`, `tests/__mocks__/obsidian.ts`
@@ -74,6 +82,7 @@ This document provides a handoff for completing the Flow Coach chat pane impleme
 **Description:** Delete all CLI-related code, tests, documentation, and dependencies.
 
 **Files to Delete:**
+
 ```bash
 # Source files
 src/cli.tsx
@@ -102,6 +111,7 @@ tests/components/InboxApp.test.tsx
 ```
 
 **Package.json Changes:**
+
 ```json
 // Remove from "scripts":
 "build:cli": "node esbuild.cli.mjs",
@@ -117,6 +127,7 @@ tests/components/InboxApp.test.tsx
 ```
 
 **Steps:**
+
 1. Use `git rm` for all files to preserve history
 2. Update `package.json` to remove CLI scripts and dependencies
 3. Run `npm install` to update lockfile
@@ -155,6 +166,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - **CoachProtocolBanner** (`src/coach-protocol-banner.ts`) - Protocol suggestion UI
 
 **Features:**
+
 - Persistent conversation history across sessions
 - Multi-sphere access with protocol filtering
 - Inline tool approvals for suggested changes
@@ -163,6 +175,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - Markdown message rendering
 
 **Commands:**
+
 - `open-flow-coach` - Opens Flow Coach view in right sidebar
 ```
 
@@ -175,6 +188,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
    - Add `open-flow-coach` to commands section
 
 **Steps:**
+
 1. Remove CLI-specific sections from CLAUDE.md
 2. Add Flow Coach architecture documentation
 3. Update test file listings
@@ -195,11 +209,13 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 1. **Create `styles/coach.css`** with all coach view styles (see full CSS in plan lines 1897-2183)
 
 2. **Modify `styles.css`** to import:
+
 ```css
-@import 'coach.css';
+@import "coach.css";
 ```
 
 **Key CSS Classes:**
+
 - `.flow-coach-view` - Main container
 - `.coach-header` - Header with title and dropdown
 - `.coach-protocol-banner` - Protocol suggestion banner
@@ -210,6 +226,7 @@ The plugin provides an in-Obsidian chat interface for GTD coaching conversations
 - `.coach-input-area` - Input section
 
 **Steps:**
+
 1. Create `styles/coach.css` with complete CSS (copy from plan)
 2. Add `@import 'coach.css';` to `styles.css`
 3. Test in Obsidian by opening the coach view
@@ -244,6 +261,7 @@ The settings storage format has changed from flat structure to nested:
 ```
 
 The backwards compatibility logic in `main.ts` (lines 190-199) handles reading old data:
+
 ```typescript
 this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || data);
 ```
@@ -291,14 +309,17 @@ Then use `superpowers:finishing-a-development-branch` to complete the work.
 ## Test Expectations
 
 After Task 9 (CLI removal):
+
 - Expected tests: ~620 (down from 651 after removing ~31 CLI tests)
 - All suites should still pass
 
 After Task 10 (CLAUDE.md update):
+
 - No test changes expected
 - Documentation should be updated
 
 After Task 11 (CSS):
+
 - No test changes expected
 - Manual testing in Obsidian required
 
@@ -309,6 +330,7 @@ After Task 11 (CSS):
 Once all tasks are complete:
 
 1. **Run final verification:**
+
    ```bash
    npm test          # All tests should pass
    npm run build     # Should build without errors
@@ -329,6 +351,7 @@ Once all tasks are complete:
 ## Key Files Reference
 
 **Implementation:**
+
 - `src/types.ts` - Core types
 - `src/coach-state.ts` - State management
 - `src/coach-tools.ts` - Coach tools (renamed from cli-tools)
@@ -338,6 +361,7 @@ Once all tasks are complete:
 - `main.ts` - Plugin integration
 
 **Tests:**
+
 - `tests/coach-state.test.ts`
 - `tests/coach-tools.test.ts`
 - `tests/coach-message-renderer.test.ts`
@@ -346,11 +370,13 @@ Once all tasks are complete:
 - `tests/main.test.ts`
 
 **Documentation:**
+
 - `docs/plans/2025-11-02-flow-coach-chat-pane-design.md` - Design doc
 - `docs/plans/2025-11-02-flow-coach-chat-pane.md` - Implementation plan
 - `CLAUDE.md` - To be updated in Task 10
 
 **Styling:**
+
 - `styles/coach.css` - To be created in Task 11
 - `styles.css` - To be updated in Task 11
 
@@ -364,6 +390,7 @@ Once all tasks are complete:
 **Working Directory:** Clean (all changes committed)
 
 **Recent Commits:**
+
 ```
 e1a41db feat: integrate flow coach view with main plugin
 51654a1 feat: add conversation management to flow coach view
@@ -381,16 +408,19 @@ ef15d11 feat: add coach state management with conversation lifecycle
 ## Dependencies
 
 **Added:**
+
 - `uuid@13.0.0` - For conversation IDs
 - `@types/uuid@10.0.0` - TypeScript types
 
 **To Remove (Task 9):**
+
 - `ink@5.2.1` - React for terminals (CLI only)
 - `react@18.3.1` - React (CLI only)
 - `wrap-ansi@9.0.0` - ANSI wrapping (CLI only)
 - `@types/react@18.3.11` - React types (CLI only)
 
 **Existing (Used):**
+
 - `marked` - Markdown rendering (already in project)
 - All other existing dependencies unchanged
 
@@ -410,6 +440,7 @@ ef15d11 feat: add coach state management with conversation lifecycle
 ## Success Criteria
 
 Implementation is complete when:
+
 - [ ] All CLI files removed (Task 9)
 - [ ] CLAUDE.md updated (Task 10)
 - [ ] CSS styling added (Task 11)

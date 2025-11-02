@@ -40,10 +40,7 @@ export class CoachMessageRenderer {
   /**
    * Render a project card with clickable link to file.
    */
-  renderProjectCard(
-    data: ProjectCardData,
-    onClick?: (file: string) => void
-  ): HTMLElement {
+  renderProjectCard(data: ProjectCardData, onClick?: (file: string) => void): HTMLElement {
     const cardEl = this.createDiv("coach-card coach-card-project");
 
     if (onClick) {
