@@ -16,7 +16,6 @@ export class InboxModalState {
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
-  public isBulkRefining = false;
 
   private uniqueIdCounter = 0;
 
@@ -84,121 +83,6 @@ export class InboxModalState {
     }
   }
 
-  async refineAllWithAI() {
-    if (!this.settings.aiEnabled) {
-      new Notice("AI features are disabled. Enable them in settings to use AI refinement.");
-      return;
-    }
-
-    const unprocessedIndexes = this.editableItems.reduce<number[]>((indexes, item, index) => {
-      if (!item.isAIProcessed) {
-        indexes.push(index);
-      }
-      return indexes;
-    }, []);
-
-    if (unprocessedIndexes.length === 0) {
-      new Notice("All items already refined with AI");
-      return;
-    }
-
-    this.isBulkRefining = true;
-    this.requestRender("editable");
-
-    let successCount = 0;
-
-    const processItem = async (index: number) => {
-      const item = this.editableItems[index];
-      if (!item) {
-        return;
-      }
-
-      this.editableItems[index] = {
-        ...item,
-        isProcessing: true,
-        hasAIRequest: true,
-      };
-      this.requestRender("editable");
-
-      try {
-        const updatedItem = await this.controller.refineItem(
-          item,
-          this.existingProjects,
-          this.existingPersons
-        );
-
-        this.editableItems[index] = {
-          ...updatedItem,
-          hasAIRequest: true,
-        };
-        successCount += 1;
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        this.editableItems[index] = {
-          ...this.editableItems[index],
-          isProcessing: false,
-          hasAIRequest: false,
-        };
-        new Notice(`Error processing "${item.original}": ${message}`);
-        console.error(error);
-      } finally {
-        const current = this.editableItems[index];
-        if (current) {
-          this.editableItems[index] = {
-            ...current,
-            isProcessing: false,
-          };
-        }
-        this.requestRender("editable");
-      }
-    };
-
-    await Promise.all(unprocessedIndexes.map((index) => processItem(index)));
-
-    this.isBulkRefining = false;
-    this.requestRender("editable");
-    new Notice(`✅ Processed ${successCount} of ${unprocessedIndexes.length} items`);
-  }
-
-  async refineIndividualItem(item: EditableItem) {
-    if (!this.settings.aiEnabled) {
-      new Notice("AI features are disabled. Enable them in settings to use AI refinement.");
-      return;
-    }
-
-    if (item.isProcessing || item.isAIProcessed) {
-      return;
-    }
-
-    item.hasAIRequest = true;
-    item.isProcessing = true;
-    this.requestRender("editable");
-
-    try {
-      const updatedItem = await this.controller.refineItem(
-        item,
-        this.existingProjects,
-        this.existingPersons
-      );
-      const index = this.editableItems.indexOf(item);
-
-      if (index !== -1) {
-        this.editableItems[index] = { ...updatedItem, hasAIRequest: true };
-      }
-
-      new Notice(`✅ Refined: "${item.original}"`);
-    } catch (error) {
-      item.isProcessing = false;
-      item.hasAIRequest = false;
-      const message = error instanceof Error ? error.message : String(error);
-      new Notice(`Error processing "${item.original}": ${message}`);
-      console.error(error);
-    } finally {
-      item.isProcessing = false;
-      this.requestRender("editable");
-    }
-  }
-
   async saveAndRemoveItem(item: EditableItem) {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
@@ -246,19 +130,6 @@ export class InboxModalState {
     const itemsToSave = [...this.editableItems];
     for (const item of itemsToSave) {
       await this.saveAndRemoveItem(item);
-    }
-  }
-
-  async suggestProjectName(originalItem: string): Promise<string> {
-    if (!this.settings.aiEnabled) {
-      throw new Error("AI features are disabled. Enable them in settings to use AI suggestions.");
-    }
-
-    try {
-      return await this.controller.suggestProjectName(originalItem);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to suggest project name: ${message}`);
     }
   }
 }

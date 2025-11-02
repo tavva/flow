@@ -128,28 +128,6 @@ describe("InboxProcessingController with AI disabled", () => {
     expect(() => createControllerWithAIDisabled()).not.toThrow();
   });
 
-  it("should throw error when trying to refine item with AI disabled", async () => {
-    const controller = createControllerWithAIDisabled();
-    const item: EditableItem = {
-      original: "Test item",
-      isAIProcessed: false,
-      selectedAction: "next-actions-file",
-      selectedSpheres: [],
-    };
-
-    await expect(controller.refineItem(item, [])).rejects.toThrow(
-      "AI features are disabled. Enable AI in settings to use refinement."
-    );
-  });
-
-  it("should throw error when trying to suggest project name with AI disabled", async () => {
-    const controller = createControllerWithAIDisabled();
-
-    await expect(controller.suggestProjectName("Test project")).rejects.toThrow(
-      "AI features are disabled. Enable AI in settings to use suggestions."
-    );
-  });
-
   it("should still allow loading projects when AI is disabled", async () => {
     const controller = createControllerWithAIDisabled();
     const projects = await controller.loadExistingProjects();

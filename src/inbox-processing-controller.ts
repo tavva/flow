@@ -9,8 +9,7 @@ import { LanguageModelClient } from "./language-model";
 import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 import { InboxItemPersistenceService } from "./inbox-item-persistence";
 import { DeletionOffsetManager } from "./deletion-offset-manager";
-import { buildProjectTitlePrompt as defaultProjectTitlePromptBuilder } from "./project-title-prompt";
-import { EditableItem, ProcessingOutcome } from "./inbox-types";
+import { EditableItem } from "./inbox-types";
 import { filterTemplates, filterLiveProjects } from "./project-filters";
 
 interface ControllerDependencies {
@@ -22,7 +21,6 @@ interface ControllerDependencies {
   inboxScanner?: Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem">;
   persistenceService?: InboxItemPersistenceService;
   deletionOffsetManagerFactory?: (offsets: Map<string, number>) => DeletionOffsetManager;
-  projectTitlePromptBuilder?: (originalItem: string) => string;
 }
 
 export class InboxProcessingController {
@@ -33,7 +31,6 @@ export class InboxProcessingController {
   private inboxScanner: InboxScanner;
   private persistence: InboxItemPersistenceService;
   private createDeletionManager: (offsets: Map<string, number>) => DeletionOffsetManager;
-  private projectTitlePromptBuilder: (originalItem: string) => string;
   private settings: PluginSettings;
 
   constructor(
@@ -71,8 +68,6 @@ export class InboxProcessingController {
     this.createDeletionManager =
       dependencies.deletionOffsetManagerFactory ??
       ((offsets) => new DeletionOffsetManager(offsets));
-    this.projectTitlePromptBuilder =
-      dependencies.projectTitlePromptBuilder ?? defaultProjectTitlePromptBuilder;
   }
 
   async loadExistingProjects(): Promise<FlowProject[]> {
@@ -102,63 +97,9 @@ export class InboxProcessingController {
     return inboxItems.map((item) => ({
       original: item.content,
       inboxItem: item,
-      isAIProcessed: false,
-      hasAIRequest: false,
       selectedAction: "next-actions-file",
       selectedSpheres: [],
     }));
-  }
-
-  async refineItem(
-    item: EditableItem,
-    existingProjects: FlowProject[],
-    existingPersons: PersonNote[] = []
-  ): Promise<EditableItem> {
-    if (!this.processor) {
-      throw new Error("AI features are disabled. Enable AI in settings to use refinement.");
-    }
-
-    const result = await this.processor.processInboxItem(
-      item.original,
-      existingProjects,
-      existingPersons
-    );
-
-    const editedNames =
-      result.nextActions && result.nextActions.length > 1 ? [...result.nextActions] : undefined;
-
-    return {
-      ...item,
-      result,
-      isAIProcessed: true,
-      isProcessing: false,
-      selectedProject:
-        result.suggestedProjects && result.suggestedProjects.length > 0
-          ? result.suggestedProjects[0].project
-          : undefined,
-      selectedAction: result.recommendedAction,
-      selectedSpheres: result.recommendedSpheres || [],
-      editedNames,
-    };
-  }
-
-  async refineItems(
-    items: EditableItem[],
-    existingProjects: FlowProject[],
-    existingPersons: PersonNote[] = []
-  ): Promise<ProcessingOutcome[]> {
-    const promises = items.map(async (item) => {
-      try {
-        const updatedItem = await this.refineItem(item, existingProjects, existingPersons);
-        return { item, updatedItem } as ProcessingOutcome;
-      } catch (error) {
-        return { item, error: error instanceof Error ? error : new Error(String(error)) };
-      }
-    });
-
-    const outcomes = await Promise.all(promises);
-    console.log(`Completed processing ${items.length} items.`);
-    return outcomes;
   }
 
   async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
@@ -179,16 +120,6 @@ export class InboxProcessingController {
     }
 
     await this.removeInboxItem(item.inboxItem, deletionOffsets);
-  }
-
-  async suggestProjectName(originalItem: string): Promise<string> {
-    if (!this.processor) {
-      throw new Error("AI features are disabled. Enable AI in settings to use suggestions.");
-    }
-
-    const prompt = this.projectTitlePromptBuilder(originalItem);
-    const response = await this.processor.callAI(prompt);
-    return response.trim();
   }
 
   private async removeInboxItem(

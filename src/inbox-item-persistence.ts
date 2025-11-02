@@ -56,12 +56,6 @@ export class InboxItemPersistenceService {
       finalNextActions = item.editedNames.filter((action) => action.trim().length > 0);
     } else if (item.editedName && item.editedName.trim().length > 0) {
       finalNextActions = [item.editedName.trim()];
-    } else if (item.isAIProcessed && item.result) {
-      if (item.result.nextActions && item.result.nextActions.length > 0) {
-        finalNextActions = item.result.nextActions.filter((action) => action.trim().length > 0);
-      } else if (item.result.nextAction && item.result.nextAction.trim().length > 0) {
-        finalNextActions = [item.result.nextAction.trim()];
-      }
     }
 
     if (finalNextActions.length === 0) {
@@ -104,7 +98,7 @@ export class InboxItemPersistenceService {
     finalNextActions: string[]
   ): GTDProcessingResult {
     const primaryNextAction = finalNextActions[0] || item.original;
-    const resultForSaving: GTDProcessingResult = item.result || {
+    const resultForSaving: GTDProcessingResult = {
       isActionable: true,
       category: "next-action",
       nextAction: primaryNextAction,
@@ -115,11 +109,9 @@ export class InboxItemPersistenceService {
       recommendedActionReasoning: "User selection",
       recommendedSpheres: item.selectedSpheres,
       recommendedSpheresReasoning: "",
+      projectOutcome: item.editedProjectTitle,
     };
 
-    resultForSaving.nextAction = primaryNextAction;
-    resultForSaving.nextActions = finalNextActions;
-    resultForSaving.projectOutcome = item.editedProjectTitle || resultForSaving.projectOutcome;
     if (item.projectPriority !== undefined) {
       resultForSaving.projectPriority = item.projectPriority;
     }
@@ -197,7 +189,7 @@ export class InboxItemPersistenceService {
 
       case "reference":
         if (item.selectedProject) {
-          const referenceContent = (item.result?.referenceContent || item.original).trim();
+          const referenceContent = item.original.trim();
           if (referenceContent) {
             await this.writer.addReferenceToProject(item.selectedProject, referenceContent);
           }

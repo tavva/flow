@@ -84,46 +84,15 @@ export function renderEditableItemsView(
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
 
-  // Header section with title, description, and refine all button
+  // Header section with title and description
   const headerSection = contentEl.createDiv("flow-gtd-header-section");
-  headerSection.style.display = "flex";
-  headerSection.style.justifyContent = "space-between";
-  headerSection.style.alignItems = "flex-start";
-  headerSection.style.gap = "24px";
   headerSection.style.marginBottom = "24px";
 
-  const headerLeft = headerSection.createDiv();
-  headerLeft.style.flex = "1";
-
-  headerLeft.createEl("h2", { text: "Flow inbox processing" });
-  headerLeft.createEl("p", {
-    text: state.settingsSnapshot.aiEnabled
-      ? "Review your inbox items. You can edit them manually or refine with AI, then save them to your vault."
-      : "Review your inbox items. Edit them manually, then save them to your vault.",
+  headerSection.createEl("h2", { text: "Flow inbox processing" });
+  headerSection.createEl("p", {
+    text: "Review your inbox items, edit them manually, then save them to your vault.",
     cls: "flow-gtd-description",
   });
-
-  // Refine all button (right-aligned) - only show if AI is enabled
-  if (state.settingsSnapshot.aiEnabled && state.editableItems.length > 0) {
-    const unprocessedCount = state.editableItems.filter((item) => !item.isAIProcessed).length;
-
-    if (unprocessedCount > 0) {
-      const headerRight = headerSection.createDiv();
-      headerRight.style.flexShrink = "0";
-
-      const refineAllBtn = headerRight.createEl("button", {
-        text: state.isBulkRefining
-          ? `⏳ Refining ${unprocessedCount} items...`
-          : `✨ Refine all (${unprocessedCount})`,
-        cls: "flow-gtd-refine-all-button",
-      });
-      refineAllBtn.setAttribute("type", "button");
-      refineAllBtn.disabled = state.isBulkRefining;
-      refineAllBtn.style.cursor = state.isBulkRefining ? "not-allowed" : "pointer";
-      refineAllBtn.style.opacity = state.isBulkRefining ? "0.6" : "1";
-      refineAllBtn.addEventListener("click", () => state.refineAllWithAI());
-    }
-  }
 
   renderIndividualEditableItems(contentEl, state);
 
@@ -144,96 +113,19 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   state.editableItems.forEach((item, index) => {
     const itemEl = listContainer.createDiv("flow-gtd-editable-item");
 
-    // Original Text - different display based on refined status
-    if (item.isAIProcessed) {
-      // Simple original text display for refined items with completion icon
-      const originalContainer = itemEl.createDiv();
-      originalContainer.style.display = "flex";
-      originalContainer.style.alignItems = "center";
-      originalContainer.style.gap = "8px";
+    // Original Text
+    const originalBox = itemEl.createDiv("flow-gtd-original-box");
 
-      const originalBox = originalContainer.createDiv("flow-gtd-original-box");
-      originalBox.style.flex = "1";
+    const label = originalBox.createDiv();
+    label.addClass("flow-gtd-section-label");
+    label.style.marginBottom = "8px";
+    label.setText("Original");
 
-      const label = originalBox.createDiv();
-      label.addClass("flow-gtd-section-label");
-      label.style.marginBottom = "8px";
-      label.setText("Original");
-
-      const textDiv = originalBox.createDiv();
-      textDiv.addClass("flow-gtd-original-text");
-      textDiv.style.userSelect = "text";
-      textDiv.style.cursor = "text";
-      textDiv.setText(item.original);
-
-      // Completion icon (same position as refine button would be)
-      if (state.settingsSnapshot.aiEnabled) {
-        const completionIcon = originalContainer.createDiv("flow-gtd-ai-completion-icon");
-        completionIcon.style.width = "24px";
-        completionIcon.style.height = "24px";
-        completionIcon.style.display = "flex";
-        completionIcon.style.alignItems = "center";
-        completionIcon.style.justifyContent = "center";
-        completionIcon.style.color = "var(--color-green)";
-        completionIcon.style.flexShrink = "0";
-        completionIcon.style.marginLeft = "8px";
-        setIcon(completionIcon, "check-circle");
-      }
-    } else {
-      // Prominent box for non-refined items with refine button on the right
-      const originalContainer = itemEl.createDiv();
-      originalContainer.style.display = "flex";
-      originalContainer.style.alignItems = "center";
-      originalContainer.style.gap = "8px";
-
-      const originalBox = originalContainer.createDiv("flow-gtd-original-unprocessed");
-      originalBox.style.flex = "1";
-      originalBox.style.padding = "16px";
-      originalBox.style.backgroundColor = "rgba(33, 150, 243, 0.05)";
-      originalBox.style.border = "2px solid rgba(33, 150, 243, 0.2)";
-      originalBox.style.borderRadius = "8px";
-
-      const textDiv = originalBox.createDiv();
-      textDiv.style.color = "var(--text-normal)";
-      textDiv.style.lineHeight = "1.6";
-      textDiv.style.userSelect = "text";
-      textDiv.style.cursor = "text";
-      textDiv.setText(item.original);
-
-      // AI Refine icon button or processing indicator (only if AI enabled)
-      if (state.settingsSnapshot.aiEnabled) {
-        const refineBtn = originalContainer.createEl("button", {
-          type: "button",
-          cls: "flow-gtd-ai-refine-icon-button",
-        });
-        refineBtn.style.width = "24px";
-        refineBtn.style.height = "24px";
-        refineBtn.style.display = "flex";
-        refineBtn.style.alignItems = "center";
-        refineBtn.style.justifyContent = "center";
-        refineBtn.style.padding = "0";
-        refineBtn.style.border = "none";
-        refineBtn.style.background = "transparent";
-        refineBtn.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
-        refineBtn.style.color = item.isProcessing
-          ? "var(--text-muted)"
-          : "var(--interactive-accent)";
-        refineBtn.style.flexShrink = "0";
-        refineBtn.style.marginLeft = "8px";
-        refineBtn.disabled = item.isProcessing === true;
-
-        if (item.isProcessing) {
-          refineBtn.setAttribute("aria-label", "Processing with AI");
-          setIcon(refineBtn, "loader-2");
-          // Add spinning animation
-          refineBtn.style.animation = "spin 1s linear infinite";
-        } else {
-          refineBtn.setAttribute("aria-label", "Refine with AI");
-          setIcon(refineBtn, "sparkles");
-          refineBtn.addEventListener("click", () => state.refineIndividualItem(item));
-        }
-      }
-    }
+    const textDiv = originalBox.createDiv();
+    textDiv.addClass("flow-gtd-original-text");
+    textDiv.style.userSelect = "text";
+    textDiv.style.cursor = "text";
+    textDiv.setText(item.original);
 
     renderEditableItemContent(itemEl, item, state);
 
@@ -281,7 +173,6 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
       cls: "flow-gtd-save-button",
     });
     primaryButton.setAttribute("type", "button");
-    primaryButton.disabled = item.isProcessing === true;
 
     if (item.selectedAction === "trash") {
       primaryButton.style.backgroundColor = "var(--color-red)";
@@ -294,32 +185,26 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
     primaryButton.style.border = "none";
     primaryButton.style.padding = "10px 32px";
     primaryButton.style.borderRadius = "8px";
-    primaryButton.style.cursor = item.isProcessing ? "not-allowed" : "pointer";
+    primaryButton.style.cursor = "pointer";
     primaryButton.style.fontSize = "14px";
     primaryButton.style.fontWeight = "500";
     primaryButton.style.transition = "background-color 0.2s ease";
     primaryButton.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
 
-    if (!item.isProcessing) {
-      primaryButton.addEventListener("mouseenter", () => {
-        if (item.selectedAction === "trash") {
-          primaryButton.style.backgroundColor = "var(--color-red)";
-          primaryButton.style.opacity = "0.9";
-        } else {
-          primaryButton.style.opacity = "0.9";
-        }
-      });
-      primaryButton.addEventListener("mouseleave", () => {
-        primaryButton.style.opacity = "1";
-      });
-    } else {
-      primaryButton.style.opacity = "0.6";
-    }
+    primaryButton.addEventListener("mouseenter", () => {
+      if (item.selectedAction === "trash") {
+        primaryButton.style.backgroundColor = "var(--color-red)";
+        primaryButton.style.opacity = "0.9";
+      } else {
+        primaryButton.style.opacity = "0.9";
+      }
+    });
+    primaryButton.addEventListener("mouseleave", () => {
+      primaryButton.style.opacity = "1";
+    });
 
     primaryButton.addEventListener("click", () => {
-      if (!item.isProcessing) {
-        state.saveAndRemoveItem(item);
-      }
+      state.saveAndRemoveItem(item);
     });
   });
 }
@@ -571,12 +456,6 @@ function renderNextActionsEditor(
     currentNextActions = [...item.editedNames];
   } else if (item.editedName) {
     currentNextActions = [item.editedName];
-  } else if (item.result) {
-    if (item.result.nextActions && item.result.nextActions.length > 0) {
-      currentNextActions = [...item.result.nextActions];
-    } else if (item.result.nextAction) {
-      currentNextActions = [item.result.nextAction];
-    }
   } else {
     currentNextActions = [item.original];
   }
@@ -603,10 +482,6 @@ function renderNextActionsEditor(
   // Initialize waitingFor array if needed
   if (!item.waitingFor) {
     item.waitingFor = new Array(currentNextActions.length).fill(false);
-    // Set initial waiting-for state from AI if available
-    if (item.result?.isWaitingFor && item.isAIProcessed) {
-      item.waitingFor = item.waitingFor.map(() => true);
-    }
   }
   // Ensure waitingFor array matches actions length
   while (item.waitingFor.length < currentNextActions.length) {
@@ -757,25 +632,10 @@ function renderProjectCreationSection(
     cls: "flow-gtd-project-input",
   });
   projectInput.placeholder = "Enter project name...";
-  projectInput.value = item.editedProjectTitle || item.result?.projectOutcome || "";
+  projectInput.value = item.editedProjectTitle || "";
   projectInput.addEventListener("input", (e) => {
     item.editedProjectTitle = (e.target as HTMLInputElement).value;
   });
-
-  // Sub-project toggle and parent selection
-  // Initialize from AI suggestion if available
-  if (item.isSubProject === undefined && item.isAIProcessed && item.result?.suggestedProjects) {
-    const suggestion = item.result.suggestedProjects[0];
-    if (suggestion?.asSubProject) {
-      item.isSubProject = true;
-      // Find parent project from the suggestion
-      if (suggestion.parentProject) {
-        item.parentProject = state.existingProjects.find(
-          (p) => p.file === suggestion.parentProject
-        );
-      }
-    }
-  }
 
   const subProjectToggleContainer = projectEl.createDiv("flow-gtd-subproject-toggle");
   subProjectToggleContainer.style.display = "flex";
@@ -913,73 +773,6 @@ function renderProjectCreationSection(
         parentListContainer.style.display = "none";
       }, 200);
     });
-
-    // Show AI suggestion for parent project if available
-    if (
-      item.isAIProcessed &&
-      item.result?.suggestedProjects?.[0]?.asSubProject &&
-      item.result.suggestedProjects[0].parentProject &&
-      item.parentProject
-    ) {
-      const aiSuggestionBox = parentSelectorEl.createDiv();
-      aiSuggestionBox.style.display = "flex";
-      aiSuggestionBox.style.alignItems = "flex-start";
-      aiSuggestionBox.style.gap = "8px";
-      aiSuggestionBox.style.padding = "12px";
-      aiSuggestionBox.style.backgroundColor = "rgba(76, 175, 80, 0.1)";
-      aiSuggestionBox.style.border = "1px solid rgba(76, 175, 80, 0.3)";
-      aiSuggestionBox.style.borderRadius = "8px";
-      aiSuggestionBox.style.marginTop = "12px";
-
-      const sparkleIcon = aiSuggestionBox.createSpan();
-      sparkleIcon.setText("✨");
-      sparkleIcon.style.flexShrink = "0";
-      sparkleIcon.style.marginTop = "2px";
-
-      const suggestionText = aiSuggestionBox.createDiv();
-      suggestionText.style.fontSize = "12px";
-      suggestionText.style.color = "var(--text-normal)";
-
-      const strongText = suggestionText.createEl("strong");
-      strongText.setText("AI Suggestion: ");
-      suggestionText.createSpan({
-        text: `Create as sub-project of "${item.parentProject.title}"`,
-      });
-    }
-  }
-
-  // AI Suggestions for existing projects (shown when NOT creating as sub-project)
-  if (
-    !item.isSubProject &&
-    item.isAIProcessed &&
-    item.result?.suggestedProjects &&
-    item.result.suggestedProjects.length > 0 &&
-    item.result.suggestedProjects[0].confidence === "high" &&
-    !item.result.suggestedProjects[0].asSubProject
-  ) {
-    const suggestion = item.result.suggestedProjects[0];
-    const aiSuggestionBox = projectEl.createDiv();
-    aiSuggestionBox.style.display = "flex";
-    aiSuggestionBox.style.alignItems = "flex-start";
-    aiSuggestionBox.style.gap = "8px";
-    aiSuggestionBox.style.padding = "12px";
-    aiSuggestionBox.style.backgroundColor = "rgba(255, 193, 7, 0.1)";
-    aiSuggestionBox.style.border = "1px solid rgba(255, 193, 7, 0.3)";
-    aiSuggestionBox.style.borderRadius = "8px";
-    aiSuggestionBox.style.marginTop = "12px";
-
-    const sparkleIcon = aiSuggestionBox.createSpan();
-    sparkleIcon.setText("✨");
-    sparkleIcon.style.flexShrink = "0";
-    sparkleIcon.style.marginTop = "2px";
-
-    const suggestionText = aiSuggestionBox.createDiv();
-    suggestionText.style.fontSize = "12px";
-    suggestionText.style.color = "var(--text-normal)";
-
-    const strongText = suggestionText.createEl("strong");
-    strongText.setText("AI Suggestion: ");
-    suggestionText.createSpan({ text: suggestion.relevance });
   }
 
   if (item.projectPriority === undefined) {
@@ -1132,39 +925,6 @@ function renderProjectSelectionSection(
       projectListContainer.style.display = "none";
     }, 200);
   });
-
-  if (
-    item.isAIProcessed &&
-    item.result?.suggestedProjects &&
-    item.result.suggestedProjects.length > 0 &&
-    item.result.suggestedProjects[0].confidence === "high"
-  ) {
-    const suggestion = item.result.suggestedProjects[0];
-    const aiSuggestionBox = projectSelectorEl.createDiv();
-    aiSuggestionBox.style.display = "flex";
-    aiSuggestionBox.style.alignItems = "flex-start";
-    aiSuggestionBox.style.gap = "8px";
-    aiSuggestionBox.style.padding = "12px";
-    aiSuggestionBox.style.backgroundColor = "rgba(255, 193, 7, 0.1)";
-    aiSuggestionBox.style.border = "1px solid rgba(255, 193, 7, 0.3)";
-    aiSuggestionBox.style.borderRadius = "8px";
-    aiSuggestionBox.style.marginTop = "12px";
-
-    const sparkleIcon = aiSuggestionBox.createSpan();
-    sparkleIcon.setText("✨");
-    sparkleIcon.style.flexShrink = "0";
-    sparkleIcon.style.marginTop = "2px";
-
-    const suggestionText = aiSuggestionBox.createDiv();
-    suggestionText.style.fontSize = "12px";
-    suggestionText.style.color = "var(--text-normal)";
-
-    const strongText = suggestionText.createEl("strong");
-    strongText.setText("AI Suggestion: ");
-    suggestionText.createSpan({
-      text: `${suggestion.relevance} (${suggestion.confidence} confidence)`,
-    });
-  }
 }
 
 function renderPersonSelectionSection(
@@ -1203,16 +963,7 @@ function renderPersonSelectionSection(
     personDropdown.addOption(person.file, person.title);
   });
 
-  let selectedValue = item.selectedPerson?.file || "";
-  if (!selectedValue && item.isAIProcessed && item.result?.suggestedPersons) {
-    const highConfidenceSuggestion = item.result.suggestedPersons.find(
-      (suggestion) => suggestion.confidence === "high"
-    );
-    if (highConfidenceSuggestion) {
-      selectedValue = highConfidenceSuggestion.person.file;
-      item.selectedPerson = highConfidenceSuggestion.person;
-    }
-  }
+  const selectedValue = item.selectedPerson?.file || "";
 
   if (selectedValue && !state.existingPersons.find((person) => person.file === selectedValue)) {
     personDropdown.addOption(selectedValue, item.selectedPerson?.title || selectedValue);
@@ -1222,9 +973,6 @@ function renderPersonSelectionSection(
   personDropdown.onChange((value) => {
     item.selectedPerson = state.existingPersons.find((p) => p.file === value) || undefined;
   });
-
-  // Only show AI suggestion box for high confidence suggestions
-  // (Person dropdown already pre-selects high confidence suggestions above)
 }
 
 function renderSphereSelector(container: HTMLElement, item: EditableItem, state: InboxModalState) {
@@ -1284,30 +1032,6 @@ function renderSphereSelector(container: HTMLElement, item: EditableItem, state:
       state.queueRender("editable");
     });
   });
-
-  // Show AI recommendation if available
-  if (
-    item.isAIProcessed &&
-    item.result?.recommendedSpheres &&
-    item.result.recommendedSpheres.length > 0
-  ) {
-    const recommendedSphere = item.result.recommendedSpheres[0];
-    if (item.selectedSpheres.includes(recommendedSphere)) {
-      const recommendationText = sphereSelectorEl.createDiv();
-      recommendationText.style.display = "flex";
-      recommendationText.style.alignItems = "center";
-      recommendationText.style.gap = "6px";
-      recommendationText.style.marginTop = "8px";
-      recommendationText.style.fontSize = "12px";
-      recommendationText.style.color = "var(--color-green)";
-
-      recommendationText.createSpan({ text: "✓" });
-      const recommendedText = recommendationText.createSpan();
-      const capitalizedRecommended =
-        recommendedSphere.charAt(0).toUpperCase() + recommendedSphere.slice(1);
-      recommendedText.setText(`${capitalizedRecommended} recommended based on context`);
-    }
-  }
 }
 
 function renderFocusCheckbox(container: HTMLElement, item: EditableItem, state: InboxModalState) {
