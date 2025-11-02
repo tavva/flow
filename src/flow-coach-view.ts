@@ -512,12 +512,21 @@ export class FlowCoachView extends ItemView {
 
       const model = getModelForSettings(this.settings);
 
+      // Build messages array with system prompt prepended
+      const messagesWithSystemPrompt: ChatMessage[] = [
+        {
+          role: "system",
+          content: this.activeConversation.systemPrompt,
+        },
+        ...this.activeConversation.messages,
+      ];
+
       const response = await withRetry(
         () =>
           languageModelClient.sendMessage({
             model,
             maxTokens: 4000,
-            messages: this.activeConversation!.messages,
+            messages: messagesWithSystemPrompt,
           }),
         { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
       );
@@ -810,6 +819,15 @@ export class FlowCoachView extends ItemView {
 
       const model = getModelForSettings(this.settings);
 
+      // Build messages array with system prompt prepended
+      const messagesWithSystemPrompt: ChatMessage[] = [
+        {
+          role: "system",
+          content: this.activeConversation.systemPrompt,
+        },
+        ...this.activeConversation.messages,
+      ];
+
       // Check if client supports tools
       const supportsTools = typeof languageModelClient.sendMessageWithTools === "function";
 
@@ -823,7 +841,7 @@ export class FlowCoachView extends ItemView {
               {
                 model,
                 maxTokens: 4000,
-                messages: this.activeConversation!.messages,
+                messages: messagesWithSystemPrompt,
               },
               COACH_TOOLS
             ),
@@ -836,7 +854,7 @@ export class FlowCoachView extends ItemView {
             languageModelClient.sendMessage({
               model,
               maxTokens: 4000,
-              messages: this.activeConversation!.messages,
+              messages: messagesWithSystemPrompt,
             }),
           { maxAttempts: 5, baseDelayMs: 1000, maxDelayMs: 10000 }
         );
