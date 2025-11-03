@@ -13,6 +13,7 @@
 ## Task 1: Remove Obsolete Evaluation Framework
 
 **Files:**
+
 - Delete: `evaluation/` directory (entire)
 - Modify: `package.json` (remove evaluate script)
 - Modify: `CLAUDE.md` (update evaluation references)
@@ -26,6 +27,7 @@ git rm -r evaluation/
 **Step 2: Update package.json**
 
 Remove this line from scripts section:
+
 ```json
 "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
 ```
@@ -33,6 +35,7 @@ Remove this line from scripts section:
 **Step 3: Update CLAUDE.md references**
 
 Find and remove/update references to the old evaluation framework:
+
 ```bash
 grep -n "evaluation" CLAUDE.md
 ```
@@ -52,6 +55,7 @@ git commit -m "chore: remove obsolete inbox processing evaluation framework"
 ## Task 2: Set Up Python Environment and deepeval
 
 **Files:**
+
 - Create: `requirements.txt`
 - Create: `.python-version`
 - Create: `pyproject.toml`
@@ -60,6 +64,7 @@ git commit -m "chore: remove obsolete inbox processing evaluation framework"
 **Step 1: Create Python version file**
 
 Create `.python-version`:
+
 ```
 3.11
 ```
@@ -67,6 +72,7 @@ Create `.python-version`:
 **Step 2: Create requirements.txt**
 
 Create `requirements.txt`:
+
 ```
 deepeval==1.0.0
 pytest==7.4.3
@@ -76,6 +82,7 @@ pytest-asyncio==0.21.1
 **Step 3: Create pyproject.toml**
 
 Create `pyproject.toml`:
+
 ```toml
 [build-system]
 requires = ["setuptools>=42", "wheel"]
@@ -97,6 +104,7 @@ python_functions = "test_*"
 **Step 4: Update .gitignore**
 
 Add to `.gitignore`:
+
 ```
 # Python
 __pycache__/
@@ -145,12 +153,14 @@ git commit -m "feat: add Python environment and deepeval dependencies"
 ## Task 3: Create deepeval Configuration
 
 **Files:**
+
 - Create: `deepeval.config.ts`
 - Create: `.env.example`
 
 **Step 1: Create deepeval config**
 
 Create `deepeval.config.ts`:
+
 ```typescript
 export default {
   testPath: "tests/coach-evaluation",
@@ -160,15 +170,16 @@ export default {
       evaluator: "openai",
       apiBase: "https://openrouter.ai/api/v1",
       model: "anthropic/claude-sonnet-4.5",
-      apiKey: process.env.OPENROUTER_API_KEY
-    }
-  }
+      apiKey: process.env.OPENROUTER_API_KEY,
+    },
+  },
 };
 ```
 
 **Step 2: Create .env.example**
 
 Create `.env.example`:
+
 ```
 # OpenRouter API key for deepeval G-Eval metrics
 OPENROUTER_API_KEY=your-key-here
@@ -177,6 +188,7 @@ OPENROUTER_API_KEY=your-key-here
 **Step 3: Update .gitignore for .env**
 
 Verify `.gitignore` contains:
+
 ```
 .env
 ```
@@ -195,11 +207,13 @@ git commit -m "feat: add deepeval configuration"
 ## Task 4: Create Test Infrastructure - Type Definitions
 
 **Files:**
+
 - Create: `tests/coach-evaluation/types.ts`
 
 **Step 1: Create types file**
 
 Create `tests/coach-evaluation/types.ts`:
+
 ```typescript
 // ABOUTME: Type definitions for deepeval coach evaluation test cases
 // ABOUTME: Defines test case structure, expectations, and vault context mocking
@@ -276,12 +290,14 @@ git commit -m "feat: add coach evaluation type definitions"
 ## Task 5: Create Mock Vault Infrastructure
 
 **Files:**
+
 - Create: `tests/coach-evaluation/mock-vault.ts`
 - Test: Create simple test to verify mock works
 
 **Step 1: Create mock vault**
 
 Create `tests/coach-evaluation/mock-vault.ts`:
+
 ```typescript
 // ABOUTME: Creates mock Obsidian vault for coach evaluation tests
 // ABOUTME: Provides mocked app, file system, and vault data for isolated testing
@@ -442,6 +458,7 @@ export class MockVault {
 **Step 2: Create simple test for mock vault**
 
 Create `tests/coach-evaluation/mock-vault.test.ts`:
+
 ```typescript
 import { MockVault } from "./mock-vault";
 import { VaultContext } from "./types";
@@ -499,11 +516,13 @@ git commit -m "feat: add mock vault infrastructure for coach evaluation"
 ## Task 6: Create Coach Test Runner
 
 **Files:**
+
 - Create: `tests/coach-evaluation/coach-test-runner.ts`
 
 **Step 1: Write failing test**
 
 Create `tests/coach-evaluation/coach-test-runner.test.ts`:
+
 ```typescript
 import { CoachTestRunner } from "./coach-test-runner";
 import { CoachTestCase, VaultContext } from "./types";
@@ -554,6 +573,7 @@ Expected: FAIL with "Cannot find module './coach-test-runner'"
 **Step 3: Implement CoachTestRunner**
 
 Create `tests/coach-evaluation/coach-test-runner.ts`:
+
 ```typescript
 // ABOUTME: Runs coach conversations for evaluation tests with auto-approved tools
 // ABOUTME: Executes test cases, captures messages and tool calls, mocks vault operations
@@ -606,10 +626,7 @@ export class CoachTestRunner {
         });
 
         // Get coach response
-        const response = await this.modelClient.sendMessage(
-          conversationHistory,
-          COACH_TOOLS
-        );
+        const response = await this.modelClient.sendMessage(conversationHistory, COACH_TOOLS);
 
         messages.push(response.content);
         conversationHistory.push({
@@ -655,11 +672,13 @@ git commit -m "feat: add coach test runner for evaluation"
 ## Task 7: Create DAG Tool Correctness Metric (Python)
 
 **Files:**
+
 - Create: `tests/coach-evaluation/metrics/tool_correctness.py`
 
 **Step 1: Create metric file**
 
 Create `tests/coach-evaluation/metrics/tool_correctness.py`:
+
 ```python
 """
 DAG-based tool correctness metric for coach evaluation.
@@ -760,6 +779,7 @@ class ToolCorrectnessMetric(BaseMetric):
 **Step 2: Create simple Python test**
 
 Create `tests/coach-evaluation/metrics/test_tool_correctness.py`:
+
 ```python
 """Test tool correctness metric."""
 
@@ -846,11 +866,13 @@ git commit -m "feat: add DAG tool correctness metric"
 ## Task 8: Create G-Eval Criteria Definitions (Python)
 
 **Files:**
+
 - Create: `tests/coach-evaluation/metrics/gtd_quality.py`
 
 **Step 1: Create GTD quality criteria**
 
 Create `tests/coach-evaluation/metrics/gtd_quality.py`:
+
 ```python
 """
 G-Eval criteria definitions for GTD coaching quality.
@@ -919,11 +941,13 @@ git commit -m "feat: add G-Eval GTD quality criteria definitions"
 ## Task 9: Create Initial Test Cases
 
 **Files:**
+
 - Create: `tests/coach-evaluation/test-cases.json`
 
 **Step 1: Create test cases file**
 
 Create `tests/coach-evaluation/test-cases.json`:
+
 ```json
 [
   {
@@ -1126,12 +1150,14 @@ git commit -m "feat: add initial coach evaluation test cases"
 ## Task 10: Create Python-TypeScript Bridge
 
 **Files:**
+
 - Create: `tests/coach-evaluation/bridge.py`
 - Create: `tests/coach-evaluation/run_test_case.ts`
 
 **Step 1: Create TypeScript test runner script**
 
 Create `tests/coach-evaluation/run_test_case.ts`:
+
 ```typescript
 #!/usr/bin/env ts-node
 // ABOUTME: CLI script to run single test case from Python bridge
@@ -1173,6 +1199,7 @@ chmod +x tests/coach-evaluation/run_test_case.ts
 **Step 3: Create Python bridge**
 
 Create `tests/coach-evaluation/bridge.py`:
+
 ```python
 """
 Python-TypeScript bridge for running coach evaluation tests.
@@ -1217,6 +1244,7 @@ class CoachTestBridge:
 **Step 4: Create Python test for bridge**
 
 Create `tests/coach-evaluation/test_bridge.py`:
+
 ```python
 """Test Python-TypeScript bridge."""
 
@@ -1268,11 +1296,13 @@ git commit -m "feat: add Python-TypeScript bridge for coach evaluation"
 ## Task 11: Create deepeval Test File
 
 **Files:**
+
 - Create: `tests/coach-evaluation/test_coach_evaluation.py`
 
 **Step 1: Create deepeval test file**
 
 Create `tests/coach-evaluation/test_coach_evaluation.py`:
+
 ```python
 """
 deepeval-based tests for Flow Coach evaluation.
@@ -1360,11 +1390,13 @@ git commit -m "feat: add deepeval test file for coach evaluation"
 ## Task 12: Update NPM Scripts
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Add coach evaluation scripts**
 
 Add to `package.json` scripts section:
+
 ```json
 "evaluate:coach": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py",
 "evaluate:coach:watch": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py --watch",
@@ -1391,13 +1423,15 @@ git commit -m "feat: add NPM scripts for coach evaluation"
 ## Task 13: Update Documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 - Modify: `README.md` (if exists)
 
 **Step 1: Update CLAUDE.md**
 
 Update the "Evaluation Framework" section in `CLAUDE.md`:
-```markdown
+
+````markdown
 ### Coach Evaluation with deepeval
 
 The plugin includes comprehensive evaluation for the Flow Coach conversational AI using deepeval.
@@ -1412,8 +1446,10 @@ npm run evaluate:coach:watch
 # Generate detailed report
 npm run evaluate:coach:report
 ```
+````
 
 The evaluation framework tests:
+
 - **Tool usage accuracy** - DAG metric validates correct tool calls
 - **GTD coaching quality** - G-Eval measures advice quality against GTD principles
 - **Conversation coherence** - Answer Relevancy ensures contextual responses
@@ -1423,20 +1459,22 @@ The evaluation framework tests:
 **Results** are saved to `tests/coach-evaluation/results/`.
 
 See `docs/plans/2025-11-02-deepeval-coach-evaluation-design.md` for architecture details.
-```
+
+````
 
 **Step 2: Commit**
 
 ```bash
 git add CLAUDE.md
 git commit -m "docs: update CLAUDE.md with coach evaluation info"
-```
+````
 
 ---
 
 ## Task 14: Create CI Integration (Optional)
 
 **Files:**
+
 - Modify: `.github/workflows/test.yml` (if exists)
 
 **Step 1: Check if CI exists**
@@ -1450,11 +1488,12 @@ If test workflow exists, proceed. Otherwise skip this task.
 **Step 2: Add coach evaluation to CI**
 
 Add to workflow (after existing tests):
+
 ```yaml
 - name: Set up Python
   uses: actions/setup-python@v4
   with:
-    python-version: '3.11'
+    python-version: "3.11"
 
 - name: Install Python dependencies
   run: |
@@ -1481,40 +1520,51 @@ git commit -m "ci: add coach evaluation to CI pipeline"
 After completing all tasks:
 
 1. **Verify Python environment:**
+
    ```bash
    source venv/bin/activate
    deepeval --version
    ```
 
 2. **Verify TypeScript tests:**
+
    ```bash
    npm test
    ```
+
    Expected: All existing tests pass
 
 3. **Verify mock vault:**
+
    ```bash
    npm test -- mock-vault.test.ts
    ```
+
    Expected: PASS
 
 4. **Verify Python metrics:**
+
    ```bash
    pytest tests/coach-evaluation/metrics/ -v
    ```
+
    Expected: All metric tests pass
 
 5. **Verify bridge:**
+
    ```bash
    pytest tests/coach-evaluation/test_bridge.py -v
    ```
+
    Expected: PASS (requires OPENROUTER_API_KEY)
 
 6. **Run full coach evaluation:**
+
    ```bash
    export OPENROUTER_API_KEY=<your-key>
    npm run evaluate:coach
    ```
+
    Expected: deepeval runs all test cases
 
 7. **Check git status:**
@@ -1545,23 +1595,27 @@ After completing all tasks:
 ## Notes for Implementation
 
 **Environment Variables:**
+
 - `OPENROUTER_API_KEY` required for test execution
 - Set in `.env` file locally
 - Set as GitHub secret for CI
 
 **Test Execution Order:**
+
 1. TypeScript unit tests (fast, no API calls)
 2. Python metric tests (fast, no API calls)
 3. Bridge test (requires API key, 1 call)
 4. Full evaluation (requires API key, N calls where N = test cases)
 
 **Cost Considerations:**
+
 - Full evaluation makes API calls for each test case
 - 5 test cases = ~10 API calls (depends on conversation length)
 - Estimate ~$0.01-0.05 per full evaluation run
 - Use evaluation sparingly; reserve for significant changes
 
 **Future Enhancements:**
+
 - Add more test cases (target: 20+ covering all coach capabilities)
 - Implement Faithfulness metric with GTD reference docs
 - Set up Confident AI dashboard for result visualization
