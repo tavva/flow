@@ -12,6 +12,7 @@ We will replace the obsolete inbox processing evaluation framework with a compre
 The current evaluation framework (`evaluation/`) tests the inbox processing workflow, which we have removed from the codebase. The Flow Coach chat interface now serves as the primary AI-powered feature and demands robust evaluation.
 
 Flow Coach operates conversationally and across multiple turns, unlike the old single-turn inbox processor. It needs evaluation that:
+
 - Validates correct tool usage (creating actions, modifying projects, displaying cards)
 - Measures GTD coaching quality and advice soundness
 - Ensures conversation coherence across multiple turns
@@ -21,16 +22,19 @@ deepeval provides standardized metrics, LLM-as-judge capabilities, and reporting
 ## Evaluation Dimensions
 
 ### 1. Tool Usage Accuracy
+
 Coach must call the right tools with correct parameters based on conversation context.
 
 **Approach:** DAG (Directed Acyclic Graph) metric with deterministic decision tree scoring.
 
 ### 2. GTD Coaching Quality
+
 Coach must provide sound GTD advice following established principles (clear next actions, defined project outcomes, etc.).
 
 **Approach:** G-Eval (LLM-as-judge) with GTD-specific criteria.
 
 ### 3. Conversation Coherence
+
 Coach must maintain context and provide relevant responses throughout multi-turn conversations.
 
 **Approach:** deepeval's built-in Answer Relevancy metric.
@@ -43,7 +47,7 @@ Coach must maintain context and provide relevant responses throughout multi-turn
 interface CoachTestCase {
   id: string;
   description: string;
-  type: 'single-turn' | 'multi-turn';
+  type: "single-turn" | "multi-turn";
 
   conversation: ConversationTurn[];
 
@@ -62,7 +66,7 @@ interface CoachTestCase {
 }
 
 interface ConversationTurn {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   expectedTools?: ExpectedToolCall[];
   actualTools?: ToolCall[];
@@ -168,9 +172,7 @@ interface ConversationTurn {
     "somedayItems": []
   },
   "expectations": {
-    "toolUsage": [
-      { "turn": 2, "shouldCallTool": true, "toolName": "display_projects_card" }
-    ],
+    "toolUsage": [{ "turn": 2, "shouldCallTool": true, "toolName": "display_projects_card" }],
     "coachingQuality": {
       "criteria": [
         "Follows standard weekly review workflow",
@@ -201,27 +203,21 @@ class ToolCorrectnessMetric extends BaseMetric {
     const decisions = [];
 
     for (const turn of testCase.conversation) {
-      if (turn.role === 'assistant' && turn.expectedTools) {
+      if (turn.role === "assistant" && turn.expectedTools) {
         const toolsCalled = actualOutput.toolCalls.length > 0;
         const shouldCallTools = turn.expectedTools.length > 0;
 
         if (toolsCalled !== shouldCallTools) {
-          decisions.push({ node: 'tool_decision', passed: false });
+          decisions.push({ node: "tool_decision", passed: false });
           continue;
         }
 
-        const correctTools = this.validateToolTypes(
-          turn.expectedTools,
-          actualOutput.toolCalls
-        );
-        decisions.push({ node: 'tool_types', passed: correctTools });
+        const correctTools = this.validateToolTypes(turn.expectedTools, actualOutput.toolCalls);
+        decisions.push({ node: "tool_types", passed: correctTools });
 
         if (correctTools) {
-          const correctParams = this.validateToolParams(
-            turn.expectedTools,
-            actualOutput.toolCalls
-          );
-          decisions.push({ node: 'tool_params', passed: correctParams });
+          const correctParams = this.validateToolParams(turn.expectedTools, actualOutput.toolCalls);
+          decisions.push({ node: "tool_params", passed: correctParams });
         }
       }
     }
@@ -242,19 +238,19 @@ const coachingQualityCriteria = {
     "Does the advice follow GTD principles (clear next actions, project outcomes)?",
     "Does the coaching provide specific, actionable guidance rather than vague suggestions?",
     "Does the advice help the user maintain their GTD system effectively?",
-    "Does the coach use a supportive, encouraging tone?"
+    "Does the coach use a supportive, encouraging tone?",
   ],
   evaluationSteps: [
     "Assess whether advice aligns with GTD methodology",
     "Check for specific, actionable guidance",
     "Evaluate helpfulness for system maintenance",
-    "Consider tone and communication style"
-  ]
+    "Consider tone and communication style",
+  ],
 };
 
 const metric = new GEval({
   criteria: coachingQualityCriteria,
-  threshold: 0.7
+  threshold: 0.7,
 });
 ```
 
@@ -340,9 +336,9 @@ export default {
       evaluator: "openai",
       apiBase: "https://openrouter.ai/api/v1",
       model: "anthropic/claude-sonnet-4.5",
-      apiKey: process.env.OPENROUTER_API_KEY
-    }
-  }
+      apiKey: process.env.OPENROUTER_API_KEY,
+    },
+  },
 };
 ```
 

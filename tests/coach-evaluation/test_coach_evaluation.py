@@ -3,15 +3,21 @@ deepeval-based tests for Flow Coach evaluation.
 Runs test cases through TypeScript bridge and evaluates with deepeval metrics.
 """
 
+import sys
+import os
+
+# Add parent directory to path to enable imports
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 import json
 import pytest
 from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
-from deepeval.metrics import AnswerRelevancy
+from deepeval.metrics import AnswerRelevancyMetric
 
-from .bridge import CoachTestBridge
-from .metrics.tool_correctness import ToolCorrectnessMetric
-from .metrics.gtd_quality import create_coaching_quality_metric
+from bridge import CoachTestBridge
+from metrics.tool_correctness import ToolCorrectnessMetric
+from metrics.gtd_quality import create_coaching_quality_metric
 
 
 # Load test cases
@@ -66,7 +72,7 @@ def test_coach_evaluation(test_case):
         )
 
     # Add answer relevancy
-    metrics.append(AnswerRelevancy(threshold=0.7))
+    metrics.append(AnswerRelevancyMetric(threshold=0.7))
 
     # Run deepeval assertion
     assert_test(deepeval_case, metrics)
