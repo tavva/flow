@@ -147,21 +147,47 @@ export class FileWriter {
   }
 
   /**
+   * Find a file by path with case-insensitive matching.
+   * Returns the file if found, or null if not found.
+   */
+  private findFileCaseInsensitive(filePath: string): TFile | null {
+    const normalizedPath = normalizePath(filePath);
+
+    // Try exact match first (fastest path)
+    const exactMatch = this.app.vault.getAbstractFileByPath(normalizedPath);
+    if (exactMatch instanceof TFile) {
+      return exactMatch;
+    }
+
+    // Fall back to case-insensitive search
+    const lowerPath = normalizedPath.toLowerCase();
+    const allFiles = this.app.vault.getMarkdownFiles();
+
+    for (const file of allFiles) {
+      if (file.path.toLowerCase() === lowerPath) {
+        return file;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Append content to a file, creating it if it doesn't exist
    */
   private async appendToFile(filePath: string, content: string): Promise<void> {
     const normalizedPath = normalizePath(filePath);
-    let file = this.app.vault.getAbstractFileByPath(normalizedPath);
+    let file = this.findFileCaseInsensitive(normalizedPath);
 
     if (!file) {
       // Create the file if it doesn't exist
       try {
         file = await this.app.vault.create(normalizedPath, content + "\n");
       } catch (error) {
-        // Handle race condition: file was created between getAbstractFileByPath and create
+        // Handle race condition: file was created between findFileCaseInsensitive and create
         if (error instanceof Error && error.message.includes("already exists")) {
           // Retry by fetching the file and modifying it
-          file = this.app.vault.getAbstractFileByPath(normalizedPath);
+          file = this.findFileCaseInsensitive(normalizedPath);
           if (file instanceof TFile) {
             const existingContent = await this.app.vault.read(file);
             const newContent = existingContent.trim() + "\n" + content + "\n";
