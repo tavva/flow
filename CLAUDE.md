@@ -578,6 +578,22 @@ The evaluation framework tests:
 
 See `docs/plans/2025-11-02-deepeval-coach-evaluation-design.md` for architecture details.
 
+#### CI Integration
+
+The coach evaluation runs automatically in GitHub Actions on all PRs and pushes to main branches:
+
+- **Optional Execution** - The evaluation step only runs if the `OPENROUTER_API_KEY` secret is configured
+- **Non-blocking** - Evaluation failures do not block CI (`continue-on-error: true`)
+- **Caching** - Python dependencies are cached for faster CI runs
+
+To enable evaluation in CI:
+
+1. Go to repository Settings → Secrets and variables → Actions
+2. Add a new repository secret named `OPENROUTER_API_KEY`
+3. Set the value to your OpenRouter API key (or other OpenAI-compatible API key)
+
+The evaluation will run on the next push/PR after the secret is configured.
+
 ## Build System
 
 Uses esbuild for fast compilation:
