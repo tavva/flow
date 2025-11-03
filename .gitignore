@@ -33,3 +33,19 @@ data.json
 
 # Worktrees
 .worktrees/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+.pytest_cache/
+
+# deepeval
+.deepeval/
+tests/coach-evaluation/results/
