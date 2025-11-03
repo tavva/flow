@@ -12,7 +12,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "evaluate": "ts-node -P evaluation/tsconfig.json evaluation/run-evaluation.ts",
+    "evaluate:coach": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py",
+    "evaluate:coach:watch": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py --watch",
+    "evaluate:coach:report": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py --create-report",
     "version": "node version-bump.mjs && git add manifest.json versions.json",
     "release:beta": "tsx scripts/release-beta.ts"
   },

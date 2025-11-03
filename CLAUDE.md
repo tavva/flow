@@ -56,16 +56,6 @@ npm run format
 npm run format:check
 ```
 
-### Evaluation Framework
-
-```bash
-# Run the GTD quality evaluation suite (requires ANTHROPIC_API_KEY)
-export ANTHROPIC_API_KEY=your-key
-npm run evaluate
-```
-
-The evaluation framework tests the AI processor against 15 curated test cases and generates detailed quality metrics. Results are saved to `evaluation/results/`. See `evaluation/README.md` for details.
-
 ## Architecture
 
 ### Core Processing Flow
@@ -561,6 +551,49 @@ npm test -- flow-scanner.test
 npm test -- --testNamePattern="should scan vault"
 ```
 
+### Coach Evaluation with deepeval
+
+The plugin includes comprehensive evaluation for the Flow Coach conversational AI using deepeval.
+
+```bash
+# Run coach evaluation (requires OPENROUTER_API_KEY)
+npm run evaluate:coach
+
+# Run with watch mode
+npm run evaluate:coach:watch
+
+# Generate detailed report
+npm run evaluate:coach:report
+```
+
+The evaluation framework tests:
+
+- **Tool usage accuracy** - DAG metric validates correct tool calls
+- **GTD coaching quality** - G-Eval measures advice quality against GTD principles
+- **Conversation coherence** - Answer Relevancy ensures contextual responses
+
+**Test cases** are in `tests/coach-evaluation/test-cases.json`.
+**Metrics** are in `tests/coach-evaluation/metrics/`.
+**Results** are saved to `tests/coach-evaluation/results/`.
+
+See `docs/plans/2025-11-02-deepeval-coach-evaluation-design.md` for architecture details.
+
+#### CI Integration
+
+The coach evaluation runs automatically in GitHub Actions on all PRs and pushes to main branches:
+
+- **Optional Execution** - The evaluation step only runs if the `OPENROUTER_API_KEY` secret is configured
+- **Non-blocking** - Evaluation failures do not block CI (`continue-on-error: true`)
+- **Caching** - Python dependencies are cached for faster CI runs
+
+To enable evaluation in CI:
+
+1. Go to repository Settings → Secrets and variables → Actions
+2. Add a new repository secret named `OPENROUTER_API_KEY`
+3. Set the value to your OpenRouter API key (or other OpenAI-compatible API key)
+
+The evaluation will run on the next push/PR after the secret is configured.
+
 ## Build System
 
 Uses esbuild for fast compilation:
@@ -587,7 +620,7 @@ The project uses Prettier for consistent code formatting:
 1. Update `GTDProcessingResult` type in `src/types.ts`
 2. Modify prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
 3. Update response parsing in `parseResponse()`
-4. Add test cases to `evaluation/test-cases.json`
+4. Add unit tests for the new category
 
 ### Modifying Project Frontmatter
 
@@ -599,9 +632,8 @@ The project uses Prettier for consistent code formatting:
 ### Changing AI Behavior
 
 1. Edit the prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
-2. Run evaluation suite to measure impact: `npm run evaluate`
-3. Compare results in `evaluation/results/` to ensure quality doesn't regress
-4. Update test cases in `evaluation/test-cases.json` if expectations change
+2. Test changes manually with various inbox processing scenarios
+3. Run unit tests to ensure no regressions: `npm test`
 
 ## Code Quality Standards
 
@@ -672,7 +704,7 @@ Examples:
 - `esbuild`: Fast bundler via `esbuild.config.mjs`
 - `typescript`: Type checking
 - `jest` + `ts-jest`: Testing framework with 80% coverage requirements
-- `ts-node`: For running evaluation scripts
+- `ts-node`: For running TypeScript scripts
 
 ## Prompt Engineering
 
@@ -685,7 +717,7 @@ The main AI prompt is in `src/gtd-processor.ts` `buildProcessingPrompt()`. It:
 - Passes existing project context for suggestions
 - Enforces GTD quality standards
 
-When modifying prompts, ALWAYS run the evaluation suite afterward to measure impact on quality metrics.
+When modifying prompts, test changes thoroughly with various inbox processing scenarios and ensure unit tests pass.
 
 ## Plugin Settings
 

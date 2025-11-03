@@ -1,0 +1,185 @@
+[
+  {
+    "id": "stalled-project-advice",
+    "description": "Coach identifies stalled project and suggests next action",
+    "type": "single-turn",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "I have a project 'Website Redesign' with no next actions. What should I do?"
+      }
+    ],
+    "vaultContext": {
+      "projects": [
+        {
+          "title": "Website Redesign",
+          "status": "live",
+          "sphere": "work",
+          "nextActions": [],
+          "priority": 2,
+          "creationDate": "2025-01-01"
+        }
+      ],
+      "nextActions": [],
+      "somedayItems": []
+    },
+    "expectations": {
+      "toolUsage": [
+        {
+          "shouldCallTool": false
+        }
+      ],
+      "coachingQuality": {
+        "criteria": [
+          "Identifies the project as stalled",
+          "Suggests specific, actionable next step",
+          "Follows GTD principles for next actions"
+        ],
+        "threshold": 0.8
+      }
+    }
+  },
+  {
+    "id": "general-coaching-question",
+    "description": "Coach provides GTD advice for general question",
+    "type": "single-turn",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "How should I organize my projects?"
+      }
+    ],
+    "vaultContext": {
+      "projects": [],
+      "nextActions": [],
+      "somedayItems": []
+    },
+    "expectations": {
+      "toolUsage": [
+        {
+          "shouldCallTool": false
+        }
+      ],
+      "coachingQuality": {
+        "criteria": [
+          "Provides GTD-aligned advice",
+          "Gives specific, actionable recommendations",
+          "Maintains supportive tone"
+        ],
+        "threshold": 0.7
+      }
+    }
+  },
+  {
+    "id": "weekly-review-start",
+    "description": "Coach helps user start weekly review",
+    "type": "single-turn",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "Help me do my weekly review"
+      }
+    ],
+    "vaultContext": {
+      "projects": [
+        {
+          "title": "Project A",
+          "status": "live",
+          "sphere": "work",
+          "nextActions": ["Call vendor"],
+          "priority": 2,
+          "creationDate": "2025-01-01"
+        }
+      ],
+      "nextActions": ["Buy groceries"],
+      "somedayItems": ["Learn Spanish"]
+    },
+    "expectations": {
+      "toolUsage": [
+        {
+          "shouldCallTool": false
+        }
+      ],
+      "coachingQuality": {
+        "criteria": [
+          "Suggests starting with inbox review",
+          "Provides clear next steps",
+          "Follows GTD weekly review workflow"
+        ],
+        "threshold": 0.75
+      }
+    }
+  },
+  {
+    "id": "project-status-question",
+    "description": "Coach advises on project with no clear outcome",
+    "type": "single-turn",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "I have a project called 'stuff' and I don't know what it's for"
+      }
+    ],
+    "vaultContext": {
+      "projects": [
+        {
+          "title": "stuff",
+          "status": "live",
+          "sphere": "personal",
+          "nextActions": [],
+          "priority": 2,
+          "creationDate": "2025-01-01"
+        }
+      ],
+      "nextActions": [],
+      "somedayItems": []
+    },
+    "expectations": {
+      "toolUsage": [
+        {
+          "shouldCallTool": false
+        }
+      ],
+      "coachingQuality": {
+        "criteria": [
+          "Suggests clarifying project outcome",
+          "Recommends either defining it or moving to someday/deleting",
+          "Follows GTD project definition principles"
+        ],
+        "threshold": 0.75
+      }
+    }
+  },
+  {
+    "id": "too-many-projects",
+    "description": "Coach helps user with project overload",
+    "type": "single-turn",
+    "conversation": [
+      {
+        "role": "user",
+        "content": "I have 50 active projects and feel overwhelmed"
+      }
+    ],
+    "vaultContext": {
+      "projects": [],
+      "nextActions": [],
+      "somedayItems": []
+    },
+    "expectations": {
+      "toolUsage": [
+        {
+          "shouldCallTool": false
+        }
+      ],
+      "coachingQuality": {
+        "criteria": [
+          "Acknowledges the overwhelm",
+          "Suggests reviewing and moving some to someday/maybe",
+          "Recommends focusing on fewer active projects",
+          "Maintains supportive, non-judgmental tone"
+        ],
+        "threshold": 0.75
+      }
+    }
+  }
+]

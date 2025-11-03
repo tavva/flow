@@ -380,17 +380,6 @@ npx tsx src/cli.ts --vault /path/to/vault --sphere work
 
 See `docs/gtd-coach-cli.md` for full CLI documentation.
 
-### Evaluation Framework
-
-Measure GTD processing quality:
-
-```bash
-export ANTHROPIC_API_KEY=your-key
-npm run evaluate
-```
-
-Tests 15 curated cases, generates quality metrics, and saves results to `evaluation/results/`. See `evaluation/README.md` for details.
-
 ### Project Structure
 
 ```

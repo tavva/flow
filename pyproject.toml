@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flow-coach-eval"
+version = "0.1.0"
+description = "Flow Coach evaluation using deepeval"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/coach-evaluation"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+pythonpath = "."
