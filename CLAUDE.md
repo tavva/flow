@@ -551,6 +551,33 @@ npm test -- flow-scanner.test
 npm test -- --testNamePattern="should scan vault"
 ```
 
+### Coach Evaluation with deepeval
+
+The plugin includes comprehensive evaluation for the Flow Coach conversational AI using deepeval.
+
+```bash
+# Run coach evaluation (requires OPENROUTER_API_KEY)
+npm run evaluate:coach
+
+# Run with watch mode
+npm run evaluate:coach:watch
+
+# Generate detailed report
+npm run evaluate:coach:report
+```
+
+The evaluation framework tests:
+
+- **Tool usage accuracy** - DAG metric validates correct tool calls
+- **GTD coaching quality** - G-Eval measures advice quality against GTD principles
+- **Conversation coherence** - Answer Relevancy ensures contextual responses
+
+**Test cases** are in `tests/coach-evaluation/test-cases.json`.
+**Metrics** are in `tests/coach-evaluation/metrics/`.
+**Results** are saved to `tests/coach-evaluation/results/`.
+
+See `docs/plans/2025-11-02-deepeval-coach-evaluation-design.md` for architecture details.
+
 ## Build System
 
 Uses esbuild for fast compilation:
