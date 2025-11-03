@@ -56,16 +56,6 @@ npm run format
 npm run format:check
 ```
 
-### Evaluation Framework
-
-```bash
-# Run the GTD quality evaluation suite (requires ANTHROPIC_API_KEY)
-export ANTHROPIC_API_KEY=your-key
-npm run evaluate
-```
-
-The evaluation framework tests the AI processor against 15 curated test cases and generates detailed quality metrics. Results are saved to `evaluation/results/`. See `evaluation/README.md` for details.
-
 ## Architecture
 
 ### Core Processing Flow
@@ -587,7 +577,7 @@ The project uses Prettier for consistent code formatting:
 1. Update `GTDProcessingResult` type in `src/types.ts`
 2. Modify prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
 3. Update response parsing in `parseResponse()`
-4. Add test cases to `evaluation/test-cases.json`
+4. Add unit tests for the new category
 
 ### Modifying Project Frontmatter
 
@@ -599,9 +589,8 @@ The project uses Prettier for consistent code formatting:
 ### Changing AI Behavior
 
 1. Edit the prompt in `src/gtd-processor.ts` `buildProcessingPrompt()`
-2. Run evaluation suite to measure impact: `npm run evaluate`
-3. Compare results in `evaluation/results/` to ensure quality doesn't regress
-4. Update test cases in `evaluation/test-cases.json` if expectations change
+2. Test changes manually with various inbox processing scenarios
+3. Run unit tests to ensure no regressions: `npm test`
 
 ## Code Quality Standards
 
@@ -672,7 +661,7 @@ Examples:
 - `esbuild`: Fast bundler via `esbuild.config.mjs`
 - `typescript`: Type checking
 - `jest` + `ts-jest`: Testing framework with 80% coverage requirements
-- `ts-node`: For running evaluation scripts
+- `ts-node`: For running TypeScript scripts
 
 ## Prompt Engineering
 
@@ -685,7 +674,7 @@ The main AI prompt is in `src/gtd-processor.ts` `buildProcessingPrompt()`. It:
 - Passes existing project context for suggestions
 - Enforces GTD quality standards
 
-When modifying prompts, ALWAYS run the evaluation suite afterward to measure impact on quality metrics.
+When modifying prompts, test changes thoroughly with various inbox processing scenarios and ensure unit tests pass.
 
 ## Plugin Settings
 
