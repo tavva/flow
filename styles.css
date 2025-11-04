@@ -1935,6 +1935,41 @@ select.flow-gtd-inline-select option,
 	pointer-events: auto;
 }
 
+/* Completed Today Section Styles */
+.flow-gtd-focus-collapsible {
+	cursor: pointer;
+	user-select: none;
+	display: flex;
+	align-items: center;
+	transition: color 0.2s ease;
+}
+
+.flow-gtd-focus-collapsible:hover {
+	color: var(--interactive-accent);
+}
+
+.flow-gtd-focus-collapse-icon {
+	display: inline-flex;
+	align-items: center;
+	transition: transform 0.2s ease;
+	margin-right: 4px;
+}
+
+.flow-gtd-focus-completed {
+	opacity: 0.8;
+}
+
+.flow-gtd-focus-completed:hover {
+	opacity: 1;
+	background: var(--background-secondary-alt);
+}
+
+.flow-gtd-focus-completed-indicator {
+	margin-right: 8px;
+	font-size: 14px;
+	flex-shrink: 0;
+}
+
 /* Spinning animation for AI processing icon */
 @keyframes spin {
 	from {
