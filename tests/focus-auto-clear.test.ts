@@ -353,4 +353,53 @@ describe("archiveClearedTasks", () => {
     // Should create wikilink even without .md extension
     expect(createdContent).toContain("- [[Projects/README]] Update documentation");
   });
+
+  it("excludes completed items from archive", async () => {
+    const now = Date.now();
+    const items: FocusItem[] = [
+      {
+        file: "Projects/Active.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Active task",
+        text: "Active task",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: now,
+      },
+      {
+        file: "Projects/Completed.md",
+        lineNumber: 15,
+        lineContent: "- [x] Completed task",
+        text: "Completed task",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: now,
+        completedAt: now + 1000, // Completed 1 second later
+      },
+      {
+        file: "Next actions.md",
+        lineNumber: 5,
+        lineContent: "- [ ] Another active",
+        text: "Another active",
+        sphere: "personal",
+        isGeneral: true,
+        addedAt: now,
+      },
+    ];
+
+    const archiveFilePath = "Focus Archive.md";
+    const clearTime = new Date("2025-10-27T03:00:00");
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, archiveFilePath, clearTime);
+
+    const createdContent = mockVault.create.mock.calls[0][1];
+
+    // Should archive active items
+    expect(createdContent).toContain("- [[Projects/Active]] Active task");
+    expect(createdContent).toContain("- [[Next actions|Another active]]");
+
+    // Should NOT archive completed item
+    expect(createdContent).not.toContain("Completed task");
+  });
 });

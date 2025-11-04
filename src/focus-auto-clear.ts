@@ -56,6 +56,7 @@ export function shouldClearFocus(
 
 /**
  * Archives cleared focus items to a file with a date/time heading
+ * Filters out completed items - only archives active items
  */
 export async function archiveClearedTasks(
   vault: Vault,
@@ -63,6 +64,9 @@ export async function archiveClearedTasks(
   archiveFilePath: string,
   clearTime: Date
 ): Promise<void> {
+  // Filter out completed items - only archive active items
+  const activeItems = items.filter((item) => !item.completedAt);
+
   // Format the date and time for the heading
   const dateStr = clearTime.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -78,11 +82,11 @@ export async function archiveClearedTasks(
   const heading = `## Cleared ${dateStr} at ${timeStr}\n\n`;
 
   let tasksContent = "";
-  if (items.length === 0) {
+  if (activeItems.length === 0) {
     tasksContent = "No items were in the focus.\n\n";
   } else {
     tasksContent =
-      items
+      activeItems
         .map((item) => {
           const wikilinkPath = item.file.replace(/\.md$/, "");
 
