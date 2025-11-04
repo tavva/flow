@@ -84,6 +84,18 @@ export class FocusView extends ItemView {
     // Load focus items from file
     await this.loadFocus();
 
+    // Clean up old completed items (before midnight)
+    const midnight = this.getMidnightTimestamp();
+    const originalLength = this.focusItems.length;
+    this.focusItems = this.focusItems.filter(
+      (item) => !item.completedAt || item.completedAt >= midnight
+    );
+
+    // Save if any items were removed
+    if (this.focusItems.length < originalLength) {
+      await this.saveFocus();
+    }
+
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
 
