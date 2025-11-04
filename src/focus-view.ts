@@ -289,9 +289,10 @@ export class FocusView extends ItemView {
   }
 
   private renderGroupedItems(container: HTMLElement, items: FocusItem[]) {
-    // Split items into pinned and unpinned
-    const pinnedItems = items.filter((item) => item.isPinned === true);
-    const unpinnedItems = items.filter((item) => item.isPinned !== true);
+    // Split items into pinned, unpinned active, and completed
+    const activeItems = items.filter((item) => !item.completedAt);
+    const pinnedItems = activeItems.filter((item) => item.isPinned === true);
+    const unpinnedItems = activeItems.filter((item) => item.isPinned !== true);
 
     // Render pinned section (if any pinned items exist)
     if (pinnedItems.length > 0) {
@@ -341,6 +342,9 @@ export class FocusView extends ItemView {
           this.renderSphereGroup(generalSection, sphere, grouped.generalActions[sphere]);
         });
     }
+
+    // Completed Today section (at the end)
+    this.renderCompletedTodaySection(container);
   }
 
   private renderCompletedTodaySection(container: HTMLElement): void {
