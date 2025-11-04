@@ -799,5 +799,88 @@ describe("FocusView", () => {
       const today = new Date().toISOString().split("T")[0];
       expect(modifiedContent).toContain(`✅ ${today}`);
     });
+
+    it("should set completedAt timestamp instead of removing from focus", async () => {
+      const mockItem: FocusItem = {
+        file: "test.md",
+        lineNumber: 5,
+        lineContent: "- [ ] Test action",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      const mockFile = {
+        path: "test.md",
+      };
+      const TFile = require("obsidian").TFile;
+      const mockTFile = Object.create(TFile.prototype);
+      mockTFile.path = mockFile.path;
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
+      mockApp.vault.read.mockResolvedValue(
+        "line1\nline2\nline3\nline4\n- [ ] Test action\nline6"
+      );
+
+      (view as any).focusItems = [mockItem];
+
+      // Mock validator
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).markItemComplete(mockItem);
+
+      const items = (view as any).focusItems;
+      expect(items.length).toBe(1);
+      expect(items[0].completedAt).toBeDefined();
+      expect(items[0].completedAt).toBeGreaterThan(Date.now() - 1000);
+    });
+  });
+
+  describe("getMidnightTimestamp", () => {
+    it("should return today's midnight timestamp", () => {
+      const midnight = (view as any).getMidnightTimestamp();
+
+      const expected = new Date();
+      expected.setHours(0, 0, 0, 0);
+
+      expect(midnight).toBe(expected.getTime());
+    });
+  });
+
+  describe("getCompletedTodayItems", () => {
+    const createMockFocusItem = (): FocusItem => ({
+      file: "test.md",
+      lineNumber: 1,
+      lineContent: "- [ ] test",
+      text: "test",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: Date.now(),
+    });
+
+    it("should return items completed since midnight", () => {
+      const now = Date.now();
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      const midnightTimestamp = midnight.getTime();
+
+      const items: FocusItem[] = [
+        { ...createMockFocusItem(), completedAt: now }, // Today
+        { ...createMockFocusItem(), completedAt: midnightTimestamp + 1000 }, // Today
+        { ...createMockFocusItem(), completedAt: midnightTimestamp - 1000 }, // Yesterday
+        { ...createMockFocusItem() }, // Not completed
+      ];
+
+      (view as any).focusItems = items;
+
+      const completed = (view as any).getCompletedTodayItems();
+
+      expect(completed.length).toBe(2);
+      expect(completed[0].completedAt).toBeGreaterThanOrEqual(midnightTimestamp);
+      expect(completed[1].completedAt).toBeGreaterThanOrEqual(midnightTimestamp);
+    });
   });
 });

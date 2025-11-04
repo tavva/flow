@@ -50,6 +50,17 @@ export class FocusView extends ItemView {
     return match ? match[1] : " ";
   }
 
+  private getMidnightTimestamp(): number {
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    return midnight.getTime();
+  }
+
+  private getCompletedTodayItems(): FocusItem[] {
+    const midnight = this.getMidnightTimestamp();
+    return this.focusItems.filter((item) => item.completedAt && item.completedAt >= midnight);
+  }
+
   getViewType(): string {
     return FOCUS_VIEW_TYPE;
   }
@@ -693,7 +704,19 @@ export class FocusView extends ItemView {
       lines[lineIndex] = lines[lineIndex].replace(/\[(?: |w)\]/i, "[x]") + ` ✅ ${dateStr}`;
 
       await this.app.vault.modify(file, lines.join("\n"));
-      await this.removeFromFocus(item);
+
+      // Set completedAt instead of removing from focus
+      const focusIndex = this.focusItems.findIndex(
+        (i) =>
+          i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
+      );
+
+      if (focusIndex !== -1) {
+        this.focusItems[focusIndex].completedAt = Date.now();
+        await this.saveFocus();
+        await this.refreshSphereViews();
+        await this.onOpen(); // Re-render
+      }
     }
   }
 

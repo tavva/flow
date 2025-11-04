@@ -6,6 +6,7 @@ import { INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-processing-view";
 import { WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
 import { FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { SPHERE_VIEW_TYPE } from "../src/sphere-view";
+import { DEFAULT_SETTINGS } from "../src/types";
 
 // Mock the view modules
 jest.mock("../src/inbox-processing-view", () => ({
@@ -305,6 +306,13 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
       expect(message).toContain("API key");
       expect(message).not.toContain("AI features are disabled");
+    });
+  });
+
+  describe("Default settings", () => {
+    it("should include completedTodaySectionCollapsed in default settings", () => {
+      const settings = DEFAULT_SETTINGS;
+      expect(settings.completedTodaySectionCollapsed).toBe(true);
     });
   });
 });

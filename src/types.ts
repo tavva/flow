@@ -114,6 +114,7 @@ export interface PluginSettings {
   lastFocusClearTimestamp: number; // Timestamp of last auto-clear
   lastFocusArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
   focusClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
+  completedTodaySectionCollapsed: boolean; // true = collapsed by default
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -139,6 +140,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastFocusClearTimestamp: 0,
   lastFocusArchiveSucceeded: false,
   focusClearedNotificationDismissed: false,
+  completedTodaySectionCollapsed: true,
 };
 
 // Project Review Types
