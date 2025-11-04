@@ -989,6 +989,17 @@ describe("FocusView", () => {
     });
   });
 
+  // Helper function for creating mock focus items
+  const createMockFocusItem = (): FocusItem => ({
+    file: "test.md",
+    lineNumber: 1,
+    lineContent: "- [ ] test",
+    text: "test",
+    sphere: "work",
+    isGeneral: false,
+    addedAt: Date.now(),
+  });
+
   describe("renderCompletedItem", () => {
     it("should render completed item with strikethrough and no actions", () => {
       const mockItem: FocusItem = {
@@ -1054,6 +1065,34 @@ describe("FocusView", () => {
       // Should NOT have action buttons
       const actions = itemEl?.querySelector(".flow-gtd-focus-item-actions");
       expect(actions).toBeFalsy();
+    });
+  });
+
+  describe("renderCompletedTodaySection", () => {
+    it("should call getCompletedTodayItems", () => {
+      (view as any).focusItems = [];
+
+      // Spy on getCompletedTodayItems
+      const spy = jest.spyOn(view as any, "getCompletedTodayItems");
+
+      const container = document.createElement("div");
+
+      (view as any).renderCompletedTodaySection(container);
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it("should not render when no completed items", () => {
+      (view as any).focusItems = [];
+
+      const container = document.createElement("div");
+      const createDivSpy = jest.fn();
+      (container as any).createDiv = createDivSpy;
+
+      (view as any).renderCompletedTodaySection(container);
+
+      // Should not create any divs if no completed items
+      expect(createDivSpy).not.toHaveBeenCalled();
     });
   });
 });
