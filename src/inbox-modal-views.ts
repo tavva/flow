@@ -306,7 +306,7 @@ export function renderEditableItemContent(
 
   if (item.selectedAction === "create-project") {
     renderProjectCreationSection(itemEl, item, state);
-  } else if (item.selectedAction === "add-to-project") {
+  } else if (item.selectedAction === "add-to-project" || item.selectedAction === "reference") {
     renderProjectSelectionSection(itemEl, item, state);
   } else if (item.selectedAction === "person") {
     renderPersonSelectionSection(itemEl, item, state);
@@ -324,8 +324,8 @@ export function renderEditableItemContent(
   }
 
   // Show sphere selector for actions that need sphere selection
-  // Exclude "add-to-project" since existing projects already have spheres
-  if (item.selectedAction !== "add-to-project" && item.selectedAction !== "trash") {
+  // Exclude "add-to-project" and "reference" since existing projects already have spheres
+  if (item.selectedAction !== "add-to-project" && item.selectedAction !== "reference" && item.selectedAction !== "trash") {
     renderSphereSelector(itemEl, item, state);
   }
 
