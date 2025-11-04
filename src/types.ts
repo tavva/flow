@@ -42,6 +42,7 @@ export interface FocusItem {
   isGeneral: boolean; // true if from Next Actions file
   addedAt: number; // Timestamp
   isPinned?: boolean; // true if item is in pinned section
+  completedAt?: number; // Timestamp when marked complete
 }
 
 export type ProcessingAction =
