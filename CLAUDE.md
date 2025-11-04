@@ -253,6 +253,18 @@ The plugin supports creating a curated "focus" of next actions to work on:
    - Work through focus, marking complete or converting to waiting-for
    - Unpin items when priorities change
 
+**Completed Items:**
+
+When items are marked complete in the focus view, they are not immediately removed. Instead:
+- A `completedAt` timestamp is added to the item
+- Item appears in a collapsible "Completed Today" section at the bottom of the focus panel
+- Completed items show with checkmark (✅), strikethrough, and reduced opacity
+- Section header shows count and can be collapsed/expanded (state persists in settings)
+- Items completed before midnight are automatically cleaned up when focus view opens
+- Focus auto-clear skips completed items (already marked complete in source files, no need to archive)
+
+This workflow provides visual feedback of daily progress while keeping the focus panel manageable.
+
 **Storage:**
 
 Focus items are stored in plugin settings as `FocusItem[]` with:
@@ -265,6 +277,7 @@ Focus items are stored in plugin settings as `FocusItem[]` with:
 - `isGeneral`: Whether from Next Actions file vs project file
 - `addedAt`: Timestamp for ordering
 - `isPinned`: Whether item is pinned to top section (optional, defaults to false)
+- `completedAt`: Timestamp when marked complete (optional, indicates completed item)
 
 **Pinned Item Ordering:**
 
