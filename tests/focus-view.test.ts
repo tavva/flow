@@ -988,4 +988,72 @@ describe("FocusView", () => {
       expect(remaining.find((i: FocusItem) => i.file === "yesterday.md")).toBeUndefined();
     });
   });
+
+  describe("renderCompletedItem", () => {
+    it("should render completed item with strikethrough and no actions", () => {
+      const mockItem: FocusItem = {
+        file: "test.md",
+        lineNumber: 5,
+        lineContent: "- [x] Test action ✅ 2025-11-04",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+        completedAt: Date.now(),
+      };
+
+      const container = document.createElement("ul");
+
+      // Mock createEl and createSpan methods
+      const mockLi = document.createElement("li");
+      mockLi.className = "flow-gtd-focus-item flow-gtd-focus-completed";
+      (container as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
+        if (opts?.cls) mockLi.className = opts.cls;
+        container.appendChild(mockLi);
+        return mockLi;
+      });
+
+      const mockIndicatorSpan = document.createElement("span");
+      mockIndicatorSpan.className = "flow-gtd-focus-completed-indicator";
+      mockIndicatorSpan.textContent = "✅ ";
+
+      const mockTextSpan = document.createElement("span");
+      mockTextSpan.className = "flow-gtd-focus-item-text";
+      (mockTextSpan as any).setText = jest.fn((text: string) => {
+        mockTextSpan.textContent = text;
+      });
+
+      let spanCallCount = 0;
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        spanCallCount++;
+        if (spanCallCount === 1) {
+          // First call: indicator span
+          if (opts?.text) mockIndicatorSpan.textContent = opts.text;
+          mockLi.appendChild(mockIndicatorSpan);
+          return mockIndicatorSpan;
+        } else {
+          // Second call: text span
+          mockLi.appendChild(mockTextSpan);
+          return mockTextSpan;
+        }
+      });
+
+      (view as any).renderCompletedItem(container, mockItem);
+
+      const itemEl = container.querySelector(".flow-gtd-focus-completed");
+      expect(itemEl).toBeTruthy();
+
+      const textEl = itemEl?.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textEl?.style.textDecoration).toBe("line-through");
+      expect(textEl?.style.opacity).toBe("0.6");
+
+      // Should have checkmark indicator
+      const indicator = itemEl?.querySelector(".flow-gtd-focus-completed-indicator");
+      expect(indicator?.textContent).toBe("✅ ");
+
+      // Should NOT have action buttons
+      const actions = itemEl?.querySelector(".flow-gtd-focus-item-actions");
+      expect(actions).toBeFalsy();
+    });
+  });
 });

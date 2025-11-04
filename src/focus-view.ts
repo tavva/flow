@@ -581,6 +581,30 @@ export class FocusView extends ItemView {
     });
   }
 
+  private renderCompletedItem(container: HTMLElement, item: FocusItem) {
+    const itemEl = container.createEl("li", {
+      cls: "flow-gtd-focus-item flow-gtd-focus-completed",
+    });
+
+    // Add checkmark indicator
+    itemEl.createSpan({
+      cls: "flow-gtd-focus-completed-indicator",
+      text: "✅ ",
+    });
+
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
+    textSpan.setText(item.text);
+    textSpan.style.cursor = "pointer";
+    textSpan.style.textDecoration = "line-through";
+    textSpan.style.opacity = "0.6";
+
+    textSpan.addEventListener("click", () => {
+      this.openFile(item.file, item.lineNumber);
+    });
+
+    // No action buttons for completed items
+  }
+
   private renderLoadingState(container: HTMLElement) {
     const loadingContainer = container.createDiv("flow-gtd-focus-loading");
     loadingContainer.style.textAlign = "center";
