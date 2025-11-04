@@ -561,15 +561,13 @@ export class SphereView extends ItemView {
       }
     }
 
-    // Handle change event - save to file and refresh view
+    // Handle change event - save to file
     select.addEventListener("change", async (e) => {
       const newPriority = parseInt((e.target as HTMLSelectElement).value, 10);
       try {
         await this.fileWriter.updateProjectPriority(project, newPriority);
         // Update the label text immediately for responsiveness
         label.setText(`Priority ${newPriority}`);
-        // Refresh the view to reflect the change in sorting if needed
-        await this.refresh();
       } catch (error) {
         console.error("Failed to update project priority", error);
       }

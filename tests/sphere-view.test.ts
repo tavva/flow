@@ -566,6 +566,122 @@ describe("SphereView", () => {
     });
   });
 
+  describe("priority editing", () => {
+    it("should update priority without refreshing the entire view", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Test action"],
+        mtime: Date.now(),
+      };
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Mock FileWriter
+      const fileWriter = (view as any).fileWriter;
+      fileWriter.updateProjectPriority = jest.fn().mockResolvedValue(undefined);
+
+      // Spy on refresh method
+      const refreshSpy = jest.spyOn(view as any, "refresh");
+
+      // Create a mock header element with Obsidian methods
+      const header = document.createElement("div");
+      let capturedChangeHandler: ((e: Event) => void) | null = null;
+
+      // Define all the mock functions first to avoid circular references
+      const createSpanFn = jest.fn((options?: any) => {
+        const span = document.createElement("span");
+        if (options?.cls) span.className = options.cls;
+        if (options?.text) span.textContent = options.text;
+        (span as any).setText = jest.fn(function (this: HTMLElement, text: string) {
+          this.textContent = text;
+        });
+        header.appendChild(span);
+        return span;
+      });
+
+      const createElFn = jest.fn((tag: string, options?: any) => {
+        const el = document.createElement(tag);
+        if (options?.cls) el.className = options.cls;
+        if (options?.value) (el as any).value = options.value;
+        if (options?.text) (el as any).text = options.text;
+
+        // Spy on addEventListener to capture the change handler
+        const originalAddEventListener = el.addEventListener.bind(el);
+        el.addEventListener = jest.fn((event: string, handler: any) => {
+          if (event === "change" && tag === "select") {
+            capturedChangeHandler = handler;
+          }
+          return originalAddEventListener(event, handler);
+        });
+
+        (el as any).createEl = (tag2: string, options2?: any) => {
+          const el2 = document.createElement(tag2);
+          if (options2?.value) (el2 as any).value = options2.value;
+          if (options2?.text) (el2 as any).text = options2.text;
+          el.appendChild(el2);
+          return el2;
+        };
+        header.appendChild(el);
+        return el;
+      });
+
+      const createDivFn = jest.fn((options?: any) => {
+        const div = document.createElement("div");
+        if (options?.cls) div.className = options.cls;
+        // Add Obsidian methods to the div as well
+        (div as any).createSpan = createSpanFn;
+        (div as any).createEl = createElFn;
+        (div as any).createDiv = createDivFn;
+        header.appendChild(div);
+        return div;
+      });
+
+      // Assign them to the header
+      (header as any).createDiv = createDivFn;
+      (header as any).createSpan = createSpanFn;
+      (header as any).createEl = createElFn;
+
+      // Call renderPriorityDropdown directly
+      (view as any).renderPriorityDropdown(header, project, 1);
+
+      // Find the dropdown and label that were created
+      const dropdown = header.querySelector("select") as HTMLSelectElement;
+      const label = header.querySelector(".flow-gtd-sphere-project-priority-label") as HTMLElement;
+
+      expect(dropdown).toBeTruthy();
+      expect(label).toBeTruthy();
+      expect(label.textContent).toBe("Priority 1");
+      expect(capturedChangeHandler).toBeTruthy();
+
+      // Change the dropdown value and call the actual change handler
+      dropdown.value = "3";
+      const event = { target: dropdown } as any;
+
+      // Call the captured change handler (this is the actual handler from the code)
+      await capturedChangeHandler!(event);
+
+      // Wait for async operations
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Should update file
+      expect(fileWriter.updateProjectPriority).toHaveBeenCalledWith(project, 3);
+
+      // Should update label
+      expect(label.textContent).toBe("Priority 3");
+
+      // Should NOT refresh the entire view
+      // NOTE: This will FAIL with current implementation because refresh() IS called
+      expect(refreshSpy).not.toHaveBeenCalled();
+
+      refreshSpy.mockRestore();
+    });
+  });
+
   describe("always-on focus toggle", () => {
     it("should not have planning mode property", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
