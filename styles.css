@@ -1232,6 +1232,29 @@ select.flow-gtd-inline-select option,
         background-color: var(--background-secondary);
 }
 
+.flow-gtd-sphere-priority-separator {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+        position: relative;
+}
+
+.flow-gtd-sphere-priority-separator::before {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--background-modifier-border);
+        margin-right: 12px;
+}
+
+.flow-gtd-sphere-priority-separator-label {
+        font-size: 13px;
+        font-weight: 500;
+        font-style: italic;
+        color: var(--text-faint);
+        opacity: 0.7;
+}
+
 .flow-gtd-sphere-project-header {
         display: flex;
         justify-content: space-between;

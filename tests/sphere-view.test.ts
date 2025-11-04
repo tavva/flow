@@ -1014,4 +1014,125 @@ describe("SphereView", () => {
       });
     });
   });
+
+  describe("priority separators", () => {
+    it("should render separators between different priority groups", async () => {
+      const priority1Project = {
+        file: "Projects/p1.md",
+        title: "Priority 1 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["P1 action"],
+        mtime: Date.now(),
+      };
+
+      const priority2Project = {
+        file: "Projects/p2.md",
+        title: "Priority 2 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["P2 action"],
+        mtime: Date.now(),
+      };
+
+      const priority3Project = {
+        file: "Projects/p3.md",
+        title: "Priority 3 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 3,
+        nextActions: ["P3 action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([
+        priority1Project,
+        priority2Project,
+        priority3Project,
+      ]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const separators = container.querySelectorAll(".flow-gtd-sphere-priority-separator");
+
+      // Should have 2 separators (between P1->P2 and P2->P3)
+      expect(separators.length).toBe(2);
+
+      // Check separator labels
+      const labels = Array.from(separators).map((sep) =>
+        sep.querySelector(".flow-gtd-sphere-priority-separator-label")?.textContent
+      );
+      expect(labels).toEqual(["P2", "P3"]);
+    });
+
+    it("should not render separator before the first project", async () => {
+      const priority1Project = {
+        file: "Projects/p1.md",
+        title: "Priority 1 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["P1 action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([priority1Project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const separators = container.querySelectorAll(".flow-gtd-sphere-priority-separator");
+
+      // Should have no separators for a single project
+      expect(separators.length).toBe(0);
+    });
+
+    it("should render separator when transitioning from priority to no priority", async () => {
+      const priority1Project = {
+        file: "Projects/p1.md",
+        title: "Priority 1 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["P1 action"],
+        mtime: Date.now(),
+      };
+
+      const noPriorityProject = {
+        file: "Projects/no-priority.md",
+        title: "No Priority Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: null,
+        nextActions: ["Action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([priority1Project, noPriorityProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const separators = container.querySelectorAll(".flow-gtd-sphere-priority-separator");
+
+      // Should have 1 separator between priority and no-priority
+      expect(separators.length).toBe(1);
+      const label = separators[0].querySelector(
+        ".flow-gtd-sphere-priority-separator-label"
+      )?.textContent;
+      expect(label).toBe("No Priority");
+    });
+  });
 });

@@ -401,7 +401,23 @@ export class SphereView extends ItemView {
       return;
     }
 
-    projects.forEach(({ project, priority, depth }) => {
+    let lastPriority: number | null = null;
+
+    projects.forEach(({ project, priority, depth }, index) => {
+      // Insert separator when priority changes (but not before the first project)
+      if (index > 0 && priority !== lastPriority) {
+        const separator = section.createDiv({ cls: "flow-gtd-sphere-priority-separator" });
+        const separatorLabel = separator.createSpan({ cls: "flow-gtd-sphere-priority-separator-label" });
+
+        if (priority !== null) {
+          separatorLabel.setText(`P${priority}`);
+        } else {
+          separatorLabel.setText("No Priority");
+        }
+      }
+
+      lastPriority = priority;
+
       const wrapper = section.createDiv({ cls: "flow-gtd-sphere-project" });
 
       // Apply indentation based on hierarchy depth
