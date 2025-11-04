@@ -28,7 +28,7 @@ export interface FocusItem {
   isGeneral: boolean;
   addedAt: number;
   isPinned?: boolean;
-  completedAt?: number;  // NEW: Timestamp when marked complete
+  completedAt?: number; // NEW: Timestamp when marked complete
 }
 ```
 
@@ -41,6 +41,7 @@ export interface FocusItem {
 ### Cleanup Strategy
 
 Clean old completions at two points:
+
 1. **On view open/refresh**: Filter out items where `completedAt < midnight`
 2. **During auto-clear**: Remove all items with `completedAt` (don't archive them)
 
@@ -77,11 +78,13 @@ No background timer needed - cleanup happens naturally during regular operations
 ### markItemComplete() Modification
 
 **Current behaviour:**
+
 1. Mark as `[x]` in source file
 2. Remove item from focus array
 3. Save and re-render
 
 **New behaviour:**
+
 1. Mark as `[x]` in source file
 2. Set `item.completedAt = Date.now()` (keep in array)
 3. Save and re-render (item moves to "Completed Today" section)
@@ -98,11 +101,11 @@ const midnightTimestamp = midnight.getTime();
 
 // Remove old completions
 this.focusItems = this.focusItems.filter(
-  item => !item.completedAt || item.completedAt >= midnightTimestamp
+  (item) => !item.completedAt || item.completedAt >= midnightTimestamp
 );
 
 // Continue with existing validation for active items
-for (const item of this.focusItems.filter(item => !item.completedAt)) {
+for (const item of this.focusItems.filter((item) => !item.completedAt)) {
   // ... existing validation logic
 }
 ```
@@ -115,8 +118,8 @@ for (const item of this.focusItems.filter(item => !item.completedAt)) {
 
 ```typescript
 // Separate active and completed items
-const activeItems = focusItems.filter(item => !item.completedAt);
-const completedItems = focusItems.filter(item => item.completedAt);
+const activeItems = focusItems.filter((item) => !item.completedAt);
+const completedItems = focusItems.filter((item) => item.completedAt);
 
 // Archive only active items (existing behaviour)
 await archiveActiveItems(activeItems);
@@ -127,12 +130,12 @@ await saveFocusItems(vault, activeItems);
 
 ### Edge Cases
 
-| Scenario | Behaviour |
-|----------|-----------|
-| User unchecks completed item in source | Validation detects checkbox change, item removed from focus |
-| Completed item deleted from source | Item stays in "Completed Today" until midnight cleanup (harmless) |
-| User marks item complete outside focus view | Item remains in focus as active (not tracked by focus) |
-| Midnight rolls over while view is open | Next refresh/open cleans old completions |
+| Scenario                                    | Behaviour                                                         |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| User unchecks completed item in source      | Validation detects checkbox change, item removed from focus       |
+| Completed item deleted from source          | Item stays in "Completed Today" until midnight cleanup (harmless) |
+| User marks item complete outside focus view | Item remains in focus as active (not tracked by focus)            |
+| Midnight rolls over while view is open      | Next refresh/open cleans old completions                          |
 
 ## Implementation Files
 
@@ -253,6 +256,7 @@ private renderCompletedItem(container: HTMLElement, item: FocusItem): void {
 ### Unit Tests
 
 **tests/focus-view.test.ts:**
+
 - Test completed items appear in "Completed Today" section
 - Test section is collapsible and state persists
 - Test section hidden when no completed items
@@ -262,11 +266,13 @@ private renderCompletedItem(container: HTMLElement, item: FocusItem): void {
 - Test `getCompletedTodayItems()` filters correctly by midnight
 
 **tests/focus-integration.test.ts:**
+
 - Test marking item complete moves it to completed section
 - Test completed items persist across view refresh
 - Test old completed items removed on next day (mock Date)
 
 **tests/focus-auto-clear.test.ts:**
+
 - Test auto-clear archives active items but removes completed items
 - Test completed items don't appear in archive file
 
@@ -277,7 +283,7 @@ private renderCompletedItem(container: HTMLElement, item: FocusItem): void {
 function createCompletedItem(hoursAgo: number): FocusItem {
   return {
     ...createMockFocusItem(),
-    completedAt: Date.now() - (hoursAgo * 60 * 60 * 1000)
+    completedAt: Date.now() - hoursAgo * 60 * 60 * 1000,
   };
 }
 

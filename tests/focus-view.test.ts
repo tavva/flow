@@ -819,9 +819,7 @@ describe("FocusView", () => {
       mockTFile.path = mockFile.path;
 
       mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
-      mockApp.vault.read.mockResolvedValue(
-        "line1\nline2\nline3\nline4\n- [ ] Test action\nline6"
-      );
+      mockApp.vault.read.mockResolvedValue("line1\nline2\nline3\nline4\n- [ ] Test action\nline6");
 
       (view as any).focusItems = [mockItem];
 

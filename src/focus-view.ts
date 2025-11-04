@@ -194,9 +194,7 @@ export class FocusView extends ItemView {
 
       // Validate all remaining active items (skip completed items)
       const activeItems = this.focusItems.filter((item) => !item.completedAt);
-      const validatedItems: FocusItem[] = [
-        ...this.focusItems.filter((item) => item.completedAt),
-      ];
+      const validatedItems: FocusItem[] = [...this.focusItems.filter((item) => item.completedAt)];
       let needsSave = false;
 
       for (const item of activeItems) {

@@ -13,6 +13,7 @@
 ## Task 1: Extend FocusItem interface with completedAt field
 
 **Files:**
+
 - Modify: `src/types.ts:36-45`
 
 **Step 1: Write the failing test**
@@ -75,6 +76,7 @@ git commit -m "feat: add completedAt field to FocusItem interface"
 ## Task 2: Add completedTodaySectionCollapsed setting
 
 **Files:**
+
 - Modify: `src/types.ts` (PluginSettings interface)
 - Modify: `src/settings-tab.ts` (default settings)
 
@@ -126,6 +128,7 @@ git commit -m "feat: add completedTodaySectionCollapsed setting"
 ## Task 3: Modify markItemComplete to set completedAt instead of removing
 
 **Files:**
+
 - Modify: `src/focus-view.ts:671-698`
 - Modify: `tests/focus-view.test.ts`
 
@@ -228,6 +231,7 @@ git commit -m "feat: mark items complete with timestamp instead of removing"
 ## Task 4: Add midnight timestamp calculation utility
 
 **Files:**
+
 - Modify: `src/focus-view.ts` (add private method)
 - Modify: `tests/focus-view.test.ts`
 
@@ -282,6 +286,7 @@ git commit -m "feat: add getMidnightTimestamp utility method"
 ## Task 5: Add method to filter completed today items
 
 **Files:**
+
 - Modify: `src/focus-view.ts`
 - Modify: `tests/focus-view.test.ts`
 
@@ -350,6 +355,7 @@ git commit -m "feat: add getCompletedTodayItems filter method"
 ## Task 6: Add cleanup of old completed items in refresh
 
 **Files:**
+
 - Modify: `src/focus-view.ts:148-230`
 - Modify: `tests/focus-view.test.ts`
 
@@ -502,6 +508,7 @@ git commit -m "feat: clean up completed items older than midnight on refresh"
 ## Task 7: Add cleanup of old completed items in onOpen
 
 **Files:**
+
 - Modify: `src/focus-view.ts:65-110`
 - Modify: `tests/focus-view.test.ts`
 
@@ -522,8 +529,7 @@ describe("onOpen with old completed items", () => {
     ];
 
     // Mock loadFocusItems to return test items
-    jest.spyOn(require("../src/focus-persistence"), "loadFocusItems")
-      .mockResolvedValue(items);
+    jest.spyOn(require("../src/focus-persistence"), "loadFocusItems").mockResolvedValue(items);
 
     const view = new FocusView(mockLeaf, mockSettings, mockSaveSettings);
     await view.onOpen();
@@ -622,6 +628,7 @@ git commit -m "feat: clean up old completed items on view open"
 ## Task 8: Create renderCompletedItem method
 
 **Files:**
+
 - Modify: `src/focus-view.ts`
 - Modify: `tests/focus-view.test.ts`
 
@@ -715,6 +722,7 @@ git commit -m "feat: add renderCompletedItem method for completed item display"
 ## Task 9: Create renderCompletedTodaySection method
 
 **Files:**
+
 - Modify: `src/focus-view.ts`
 - Modify: `tests/focus-view.test.ts`
 
@@ -768,9 +776,7 @@ describe("renderCompletedTodaySection", () => {
   });
 
   it("should hide items when section is collapsed", () => {
-    const completedItems: FocusItem[] = [
-      { ...createMockFocusItem(), completedAt: Date.now() },
-    ];
+    const completedItems: FocusItem[] = [{ ...createMockFocusItem(), completedAt: Date.now() }];
 
     const container = document.createElement("div");
     const view = new FocusView(mockLeaf, mockSettings, mockSaveSettings);
@@ -928,6 +934,7 @@ git commit -m "feat: add renderCompletedTodaySection with collapsible UI"
 ## Task 10: Integrate completed section into renderGroupedItems
 
 **Files:**
+
 - Modify: `src/focus-view.ts:253-306`
 - Modify: `tests/focus-view.test.ts`
 
@@ -1047,6 +1054,7 @@ git commit -m "feat: integrate completed today section into view rendering"
 ## Task 11: Modify focus auto-clear to skip completed items
 
 **Files:**
+
 - Modify: `src/focus-auto-clear.ts`
 - Modify: `tests/focus-auto-clear.test.ts`
 
@@ -1110,10 +1118,7 @@ Expected: FAIL - completed items being archived
 Find the `clearFocusAndArchive` function in `src/focus-auto-clear.ts` and modify it to filter out completed items before archiving:
 
 ```typescript
-export async function clearFocusAndArchive(
-  vault: Vault,
-  settings: PluginSettings
-): Promise<void> {
+export async function clearFocusAndArchive(vault: Vault, settings: PluginSettings): Promise<void> {
   // Load current focus items
   const focusItems = await loadFocusItems(vault);
 
@@ -1123,7 +1128,7 @@ export async function clearFocusAndArchive(
   }
 
   // Separate active and completed items
-  const activeItems = focusItems.filter(item => !item.completedAt);
+  const activeItems = focusItems.filter((item) => !item.completedAt);
   const hasActiveItems = activeItems.length > 0;
 
   // Only archive active items (completed items are already done, no need to archive)
@@ -1183,6 +1188,7 @@ git commit -m "feat: exclude completed items from focus auto-clear archiving"
 ## Task 12: Add CSS styles for completed section
 
 **Files:**
+
 - Modify: `styles.css`
 
 **Step 1: Add CSS for collapsible section**
@@ -1229,6 +1235,7 @@ Add to `styles.css`:
 **Step 2: Test styles manually**
 
 Build and test in Obsidian:
+
 1. Run `npm run build`
 2. Reload Obsidian
 3. Mark some items complete
@@ -1247,6 +1254,7 @@ git commit -m "style: add CSS for completed today section and collapsible UI"
 ## Task 13: Add integration test for complete workflow
 
 **Files:**
+
 - Modify: `tests/focus-integration.test.ts`
 
 **Step 1: Write comprehensive integration test**
@@ -1336,8 +1344,9 @@ describe("completed focus actions workflow", () => {
     (view as any).renderGroupedItems(container, items);
 
     // Should have both active and completed sections
-    const completedSection = Array.from(container.querySelectorAll(".flow-gtd-focus-section-title"))
-      .find(el => el.textContent?.includes("Completed Today"));
+    const completedSection = Array.from(
+      container.querySelectorAll(".flow-gtd-focus-section-title")
+    ).find((el) => el.textContent?.includes("Completed Today"));
 
     expect(completedSection).toBeTruthy();
     expect(completedSection?.textContent).toContain("(1)");
@@ -1362,6 +1371,7 @@ git commit -m "test: add integration tests for completed actions workflow"
 ## Task 14: Update documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 **Step 1: Document new feature in CLAUDE.md**
@@ -1376,9 +1386,10 @@ The plugin supports creating a curated "focus" of next actions to work on:
 - **Manual Reordering** - Pin items to a "Pinned" section at the top and reorder via drag-and-drop
 - **Completed Today Section** - Shows actions marked complete since midnight in a collapsible section at the bottom
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions in files by searching for checkbox patterns
-...
+  ...
 
 **Completed Actions Display:**
+
 - Items marked complete remain in focus until midnight
 - Displayed in collapsible "Completed Today" section at bottom
 - Strikethrough styling with checkmark indicator
@@ -1399,6 +1410,7 @@ git commit -m "docs: document completed today section in CLAUDE.md"
 ## Task 15: Run full test suite and build
 
 **Files:**
+
 - None (verification step)
 
 **Step 1: Run all tests**
@@ -1522,6 +1534,7 @@ git tag completed-focus-actions-tested
 ### Testing Strategy
 
 Follow @superpowers:test-driven-development:
+
 1. Write failing test
 2. Run to verify failure
 3. Implement minimal code

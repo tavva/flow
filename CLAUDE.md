@@ -256,6 +256,7 @@ The plugin supports creating a curated "focus" of next actions to work on:
 **Completed Items:**
 
 When items are marked complete in the focus view, they are not immediately removed. Instead:
+
 - A `completedAt` timestamp is added to the item
 - Item appears in a collapsible "Completed Today" section at the bottom of the focus panel
 - Completed items show with checkmark (✅), strikethrough, and reduced opacity

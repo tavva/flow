@@ -407,7 +407,9 @@ export class SphereView extends ItemView {
       // Insert separator when priority changes (but not before the first project)
       if (index > 0 && priority !== lastPriority) {
         const separator = section.createDiv({ cls: "flow-gtd-sphere-priority-separator" });
-        const separatorLabel = separator.createSpan({ cls: "flow-gtd-sphere-priority-separator-label" });
+        const separatorLabel = separator.createSpan({
+          cls: "flow-gtd-sphere-priority-separator-label",
+        });
 
         if (priority !== null) {
           separatorLabel.setText(`P${priority}`);
