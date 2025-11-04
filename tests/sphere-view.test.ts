@@ -1065,8 +1065,8 @@ describe("SphereView", () => {
       expect(separators.length).toBe(2);
 
       // Check separator labels
-      const labels = Array.from(separators).map((sep) =>
-        sep.querySelector(".flow-gtd-sphere-priority-separator-label")?.textContent
+      const labels = Array.from(separators).map(
+        (sep) => sep.querySelector(".flow-gtd-sphere-priority-separator-label")?.textContent
       );
       expect(labels).toEqual(["P2", "P3"]);
     });

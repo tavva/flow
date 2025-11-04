@@ -325,7 +325,11 @@ export function renderEditableItemContent(
 
   // Show sphere selector for actions that need sphere selection
   // Exclude "add-to-project" and "reference" since existing projects already have spheres
-  if (item.selectedAction !== "add-to-project" && item.selectedAction !== "reference" && item.selectedAction !== "trash") {
+  if (
+    item.selectedAction !== "add-to-project" &&
+    item.selectedAction !== "reference" &&
+    item.selectedAction !== "trash"
+  ) {
     renderSphereSelector(itemEl, item, state);
   }
 
