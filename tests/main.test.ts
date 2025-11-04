@@ -312,7 +312,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
   describe("Default settings", () => {
     it("should include completedTodaySectionCollapsed in default settings", () => {
       const settings = DEFAULT_SETTINGS;
-      expect(settings.completedTodaySectionCollapsed).toBe(true);
+      expect(settings.completedTodaySectionCollapsed).toBe(false);
     });
   });
 });
