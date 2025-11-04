@@ -50,6 +50,17 @@ export class FocusView extends ItemView {
     return match ? match[1] : " ";
   }
 
+  private getMidnightTimestamp(): number {
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+    return midnight.getTime();
+  }
+
+  private getCompletedTodayItems(): FocusItem[] {
+    const midnight = this.getMidnightTimestamp();
+    return this.focusItems.filter((item) => item.completedAt && item.completedAt >= midnight);
+  }
+
   getViewType(): string {
     return FOCUS_VIEW_TYPE;
   }
@@ -72,6 +83,18 @@ export class FocusView extends ItemView {
 
     // Load focus items from file
     await this.loadFocus();
+
+    // Clean up old completed items (before midnight)
+    const midnight = this.getMidnightTimestamp();
+    const originalLength = this.focusItems.length;
+    this.focusItems = this.focusItems.filter(
+      (item) => !item.completedAt || item.completedAt >= midnight
+    );
+
+    // Save if any items were removed
+    if (this.focusItems.length < originalLength) {
+      await this.saveFocus();
+    }
 
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
@@ -157,11 +180,24 @@ export class FocusView extends ItemView {
       // Reload focus items from file to pick up changes from other views
       await this.loadFocus();
 
-      // Validate all focus items and remove completed ones
-      const validatedItems: FocusItem[] = [];
+      // Clean up old completed items (before midnight)
+      const midnight = this.getMidnightTimestamp();
+      const originalLength = this.focusItems.length;
+      this.focusItems = this.focusItems.filter(
+        (item) => !item.completedAt || item.completedAt >= midnight
+      );
+
+      // Save if any items were removed during cleanup
+      if (this.focusItems.length < originalLength) {
+        await this.saveFocus();
+      }
+
+      // Validate all remaining active items (skip completed items)
+      const activeItems = this.focusItems.filter((item) => !item.completedAt);
+      const validatedItems: FocusItem[] = [...this.focusItems.filter((item) => item.completedAt)];
       let needsSave = false;
 
-      for (const item of this.focusItems) {
+      for (const item of activeItems) {
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {
@@ -251,9 +287,10 @@ export class FocusView extends ItemView {
   }
 
   private renderGroupedItems(container: HTMLElement, items: FocusItem[]) {
-    // Split items into pinned and unpinned
-    const pinnedItems = items.filter((item) => item.isPinned === true);
-    const unpinnedItems = items.filter((item) => item.isPinned !== true);
+    // Split items into pinned, unpinned active, and completed
+    const activeItems = items.filter((item) => !item.completedAt);
+    const pinnedItems = activeItems.filter((item) => item.isPinned === true);
+    const unpinnedItems = activeItems.filter((item) => item.isPinned !== true);
 
     // Render pinned section (if any pinned items exist)
     if (pinnedItems.length > 0) {
@@ -303,6 +340,107 @@ export class FocusView extends ItemView {
           this.renderSphereGroup(generalSection, sphere, grouped.generalActions[sphere]);
         });
     }
+
+    // Completed Today section (at the end)
+    this.renderCompletedTodaySection(container);
+  }
+
+  private renderCompletedTodaySection(container: HTMLElement): void {
+    const completedItems = this.getCompletedTodayItems();
+    if (completedItems.length === 0) return;
+
+    const section = container.createDiv({ cls: "flow-gtd-focus-section" });
+
+    // Collapsible header
+    const header = section.createEl("h3", {
+      cls: "flow-gtd-focus-section-title flow-gtd-focus-collapsible",
+    });
+
+    const toggleIcon = header.createSpan({ cls: "flow-gtd-focus-collapse-icon" });
+    setIcon(
+      toggleIcon,
+      this.settings.completedTodaySectionCollapsed ? "chevron-right" : "chevron-down"
+    );
+
+    header.createSpan({ text: ` Completed Today (${completedItems.length})` });
+
+    header.addEventListener("click", async () => {
+      this.settings.completedTodaySectionCollapsed = !this.settings.completedTodaySectionCollapsed;
+      await this.saveSettings();
+      await this.onOpen(); // Re-render
+    });
+
+    // Content (hidden if collapsed)
+    if (!this.settings.completedTodaySectionCollapsed) {
+      const grouped = this.groupItems(completedItems);
+
+      // Render project actions
+      if (Object.keys(grouped.projectActions).length > 0) {
+        Object.keys(grouped.projectActions)
+          .sort()
+          .forEach((filePath) => {
+            this.renderCompletedFileGroup(section, filePath, grouped.projectActions[filePath]);
+          });
+      }
+
+      // Render general actions
+      if (Object.keys(grouped.generalActions).length > 0) {
+        Object.keys(grouped.generalActions)
+          .sort()
+          .forEach((sphere) => {
+            this.renderCompletedSphereGroup(section, sphere, grouped.generalActions[sphere]);
+          });
+      }
+    }
+  }
+
+  private renderCompletedFileGroup(container: HTMLElement, filePath: string, items: FocusItem[]) {
+    const fileSection = container.createDiv({ cls: "flow-gtd-focus-file-section" });
+
+    const fileHeader = fileSection.createEl("h4", { cls: "flow-gtd-focus-file-header" });
+
+    // Get project display name with parent context
+    const displayName = getProjectDisplayName(filePath, this.allProjects);
+
+    const fileLink = fileHeader.createEl("a", {
+      text: displayName.primary,
+      cls: "flow-gtd-focus-file-link",
+    });
+    fileLink.style.cursor = "pointer";
+    fileLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openFile(filePath);
+    });
+
+    // Add parent project context if it exists
+    if (displayName.parent) {
+      const parentSpan = fileHeader.createSpan({
+        text: ` (${displayName.parent})`,
+        cls: "flow-gtd-focus-parent-context",
+      });
+      parentSpan.style.fontSize = "0.85em";
+      parentSpan.style.opacity = "0.7";
+      parentSpan.style.fontWeight = "normal";
+    }
+
+    const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
+    items.forEach((item) => {
+      this.renderCompletedItem(itemsList, item);
+    });
+  }
+
+  private renderCompletedSphereGroup(container: HTMLElement, sphere: string, items: FocusItem[]) {
+    const sphereSection = container.createDiv({ cls: "flow-gtd-focus-sphere-section" });
+
+    sphereSection.createEl("h4", {
+      text: `(${sphere} sphere)`,
+      cls: "flow-gtd-focus-sphere-header",
+    });
+
+    const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
+    items.forEach((item) => {
+      this.renderCompletedItem(itemsList, item);
+    });
   }
 
   private renderFileGroup(container: HTMLElement, filePath: string, items: FocusItem[]) {
@@ -543,6 +681,30 @@ export class FocusView extends ItemView {
     });
   }
 
+  private renderCompletedItem(container: HTMLElement, item: FocusItem) {
+    const itemEl = container.createEl("li", {
+      cls: "flow-gtd-focus-item flow-gtd-focus-completed",
+    });
+
+    // Add checkmark indicator
+    itemEl.createSpan({
+      cls: "flow-gtd-focus-completed-indicator",
+      text: "✅ ",
+    });
+
+    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
+    textSpan.setText(item.text);
+    textSpan.style.cursor = "pointer";
+    textSpan.style.textDecoration = "line-through";
+    textSpan.style.opacity = "0.6";
+
+    textSpan.addEventListener("click", () => {
+      this.openFile(item.file, item.lineNumber);
+    });
+
+    // No action buttons for completed items
+  }
+
   private renderLoadingState(container: HTMLElement) {
     const loadingContainer = container.createDiv("flow-gtd-focus-loading");
     loadingContainer.style.textAlign = "center";
@@ -693,7 +855,19 @@ export class FocusView extends ItemView {
       lines[lineIndex] = lines[lineIndex].replace(/\[(?: |w)\]/i, "[x]") + ` ✅ ${dateStr}`;
 
       await this.app.vault.modify(file, lines.join("\n"));
-      await this.removeFromFocus(item);
+
+      // Set completedAt instead of removing from focus
+      const focusIndex = this.focusItems.findIndex(
+        (i) =>
+          i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
+      );
+
+      if (focusIndex !== -1) {
+        this.focusItems[focusIndex].completedAt = Date.now();
+        await this.saveFocus();
+        await this.refreshSphereViews();
+        await this.onOpen(); // Re-render
+      }
     }
   }
 

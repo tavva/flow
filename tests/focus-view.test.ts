@@ -799,5 +799,298 @@ describe("FocusView", () => {
       const today = new Date().toISOString().split("T")[0];
       expect(modifiedContent).toContain(`✅ ${today}`);
     });
+
+    it("should set completedAt timestamp instead of removing from focus", async () => {
+      const mockItem: FocusItem = {
+        file: "test.md",
+        lineNumber: 5,
+        lineContent: "- [ ] Test action",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      const mockFile = {
+        path: "test.md",
+      };
+      const TFile = require("obsidian").TFile;
+      const mockTFile = Object.create(TFile.prototype);
+      mockTFile.path = mockFile.path;
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
+      mockApp.vault.read.mockResolvedValue("line1\nline2\nline3\nline4\n- [ ] Test action\nline6");
+
+      (view as any).focusItems = [mockItem];
+
+      // Mock validator
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).markItemComplete(mockItem);
+
+      const items = (view as any).focusItems;
+      expect(items.length).toBe(1);
+      expect(items[0].completedAt).toBeDefined();
+      expect(items[0].completedAt).toBeGreaterThan(Date.now() - 1000);
+    });
+  });
+
+  describe("getMidnightTimestamp", () => {
+    it("should return today's midnight timestamp", () => {
+      const midnight = (view as any).getMidnightTimestamp();
+
+      const expected = new Date();
+      expected.setHours(0, 0, 0, 0);
+
+      expect(midnight).toBe(expected.getTime());
+    });
+  });
+
+  describe("getCompletedTodayItems", () => {
+    const createMockFocusItem = (): FocusItem => ({
+      file: "test.md",
+      lineNumber: 1,
+      lineContent: "- [ ] test",
+      text: "test",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: Date.now(),
+    });
+
+    it("should return items completed since midnight", () => {
+      const now = Date.now();
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      const midnightTimestamp = midnight.getTime();
+
+      const items: FocusItem[] = [
+        { ...createMockFocusItem(), completedAt: now }, // Today
+        { ...createMockFocusItem(), completedAt: midnightTimestamp + 1000 }, // Today
+        { ...createMockFocusItem(), completedAt: midnightTimestamp - 1000 }, // Yesterday
+        { ...createMockFocusItem() }, // Not completed
+      ];
+
+      (view as any).focusItems = items;
+
+      const completed = (view as any).getCompletedTodayItems();
+
+      expect(completed.length).toBe(2);
+      expect(completed[0].completedAt).toBeGreaterThanOrEqual(midnightTimestamp);
+      expect(completed[1].completedAt).toBeGreaterThanOrEqual(midnightTimestamp);
+    });
+  });
+
+  describe("refresh with old completed items", () => {
+    it("should remove items completed before midnight", async () => {
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      const midnightTimestamp = midnight.getTime();
+
+      const items: FocusItem[] = [
+        {
+          file: "active.md",
+          lineNumber: 1,
+          lineContent: "- [ ] active",
+          text: "active",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+        {
+          file: "today.md",
+          lineNumber: 1,
+          lineContent: "- [x] today ✅ 2025-11-04",
+          text: "today",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp + 1000,
+        },
+        {
+          file: "yesterday.md",
+          lineNumber: 1,
+          lineContent: "- [x] yesterday ✅ 2025-11-03",
+          text: "yesterday",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp - 1000,
+        },
+      ];
+
+      mockApp.vault.read.mockResolvedValue("- [ ] active");
+
+      // Set up mock focus items in the mocked storage
+      mockFocusItems = items;
+
+      // Mock validator to return found for active item
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).refresh();
+
+      const remaining = (view as any).focusItems;
+      expect(remaining.length).toBe(2);
+      expect(remaining.find((i: FocusItem) => i.file === "yesterday.md")).toBeUndefined();
+    });
+  });
+
+  describe("onOpen with old completed items", () => {
+    it("should remove items completed before midnight on view open", async () => {
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      const midnightTimestamp = midnight.getTime();
+
+      const items: FocusItem[] = [
+        {
+          file: "active.md",
+          lineNumber: 1,
+          lineContent: "- [ ] active",
+          text: "active",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+        {
+          file: "today.md",
+          lineNumber: 1,
+          lineContent: "- [x] today ✅ 2025-11-04",
+          text: "today",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp + 1000,
+        },
+        {
+          file: "yesterday.md",
+          lineNumber: 1,
+          lineContent: "- [x] yesterday ✅ 2025-11-03",
+          text: "yesterday",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp - 1000,
+        },
+      ];
+
+      // Set up mock focus items in the mocked storage
+      mockFocusItems = items;
+
+      await view.onOpen();
+
+      const remaining = (view as any).focusItems;
+      expect(remaining.length).toBe(2);
+      expect(remaining.find((i: FocusItem) => i.file === "yesterday.md")).toBeUndefined();
+    });
+  });
+
+  // Helper function for creating mock focus items
+  const createMockFocusItem = (): FocusItem => ({
+    file: "test.md",
+    lineNumber: 1,
+    lineContent: "- [ ] test",
+    text: "test",
+    sphere: "work",
+    isGeneral: false,
+    addedAt: Date.now(),
+  });
+
+  describe("renderCompletedItem", () => {
+    it("should render completed item with strikethrough and no actions", () => {
+      const mockItem: FocusItem = {
+        file: "test.md",
+        lineNumber: 5,
+        lineContent: "- [x] Test action ✅ 2025-11-04",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+        completedAt: Date.now(),
+      };
+
+      const container = document.createElement("ul");
+
+      // Mock createEl and createSpan methods
+      const mockLi = document.createElement("li");
+      mockLi.className = "flow-gtd-focus-item flow-gtd-focus-completed";
+      (container as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
+        if (opts?.cls) mockLi.className = opts.cls;
+        container.appendChild(mockLi);
+        return mockLi;
+      });
+
+      const mockIndicatorSpan = document.createElement("span");
+      mockIndicatorSpan.className = "flow-gtd-focus-completed-indicator";
+      mockIndicatorSpan.textContent = "✅ ";
+
+      const mockTextSpan = document.createElement("span");
+      mockTextSpan.className = "flow-gtd-focus-item-text";
+      (mockTextSpan as any).setText = jest.fn((text: string) => {
+        mockTextSpan.textContent = text;
+      });
+
+      let spanCallCount = 0;
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        spanCallCount++;
+        if (spanCallCount === 1) {
+          // First call: indicator span
+          if (opts?.text) mockIndicatorSpan.textContent = opts.text;
+          mockLi.appendChild(mockIndicatorSpan);
+          return mockIndicatorSpan;
+        } else {
+          // Second call: text span
+          mockLi.appendChild(mockTextSpan);
+          return mockTextSpan;
+        }
+      });
+
+      (view as any).renderCompletedItem(container, mockItem);
+
+      const itemEl = container.querySelector(".flow-gtd-focus-completed");
+      expect(itemEl).toBeTruthy();
+
+      const textEl = itemEl?.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textEl?.style.textDecoration).toBe("line-through");
+      expect(textEl?.style.opacity).toBe("0.6");
+
+      // Should have checkmark indicator
+      const indicator = itemEl?.querySelector(".flow-gtd-focus-completed-indicator");
+      expect(indicator?.textContent).toBe("✅ ");
+
+      // Should NOT have action buttons
+      const actions = itemEl?.querySelector(".flow-gtd-focus-item-actions");
+      expect(actions).toBeFalsy();
+    });
+  });
+
+  describe("renderCompletedTodaySection", () => {
+    it("should call getCompletedTodayItems", () => {
+      (view as any).focusItems = [];
+
+      // Spy on getCompletedTodayItems
+      const spy = jest.spyOn(view as any, "getCompletedTodayItems");
+
+      const container = document.createElement("div");
+
+      (view as any).renderCompletedTodaySection(container);
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it("should not render when no completed items", () => {
+      (view as any).focusItems = [];
+
+      const container = document.createElement("div");
+      const createDivSpy = jest.fn();
+      (container as any).createDiv = createDivSpy;
+
+      (view as any).renderCompletedTodaySection(container);
+
+      // Should not create any divs if no completed items
+      expect(createDivSpy).not.toHaveBeenCalled();
+    });
   });
 });

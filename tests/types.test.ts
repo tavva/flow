@@ -27,6 +27,20 @@ describe("FocusItem type", () => {
     expect(item.isGeneral).toBe(false);
     expect(typeof item.addedAt).toBe("number");
   });
+
+  it("should support optional completedAt timestamp", () => {
+    const item: FocusItem = {
+      file: "test.md",
+      lineNumber: 1,
+      lineContent: "- [ ] test",
+      text: "test",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: Date.now(),
+      completedAt: Date.now(), // NEW field
+    };
+    expect(item.completedAt).toBeDefined();
+  });
 });
 
 describe("Coach types", () => {

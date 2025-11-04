@@ -42,6 +42,7 @@ export interface FocusItem {
   isGeneral: boolean; // true if from Next Actions file
   addedAt: number; // Timestamp
   isPinned?: boolean; // true if item is in pinned section
+  completedAt?: number; // Timestamp when marked complete
 }
 
 export type ProcessingAction =
@@ -113,6 +114,7 @@ export interface PluginSettings {
   lastFocusClearTimestamp: number; // Timestamp of last auto-clear
   lastFocusArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
   focusClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
+  completedTodaySectionCollapsed: boolean; // true = collapsed by default
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -138,6 +140,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastFocusClearTimestamp: 0,
   lastFocusArchiveSucceeded: false,
   focusClearedNotificationDismissed: false,
+  completedTodaySectionCollapsed: true,
 };
 
 // Project Review Types

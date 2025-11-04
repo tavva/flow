@@ -401,4 +401,110 @@ describe("Focus Manual Reordering Integration", () => {
     expect(pinnedItems.length).toBe(1);
     expect(pinnedItems[0].text).toBe("Action A");
   });
+
+  it("should complete item, persist with timestamp, and cleanup after midnight", async () => {
+    // Setup mock file
+    const mockFile = new TFile();
+    mockFile.path = "Projects/Test.md";
+    mockApp.vault.getAbstractFileByPath.mockReturnValue(mockFile);
+
+    // Initial content with checkbox
+    const fileContent =
+      "---\ntags: project/work\n---\n\n# Test Project\n\n## Next actions\n\n- [ ] Important task\n";
+    mockApp.vault.read.mockResolvedValue(fileContent);
+
+    // Add active item to focus
+    const now = Date.now();
+    const activeItem: FocusItem = {
+      file: "Projects/Test.md",
+      lineNumber: 9,
+      lineContent: "- [ ] Important task",
+      text: "Important task",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: now,
+    };
+    mockFocusItems.push(activeItem);
+
+    // Create view instance
+    const view = new FocusView(mockLeaf, mockSettings, saveSettingsMock);
+    (view as any).app = mockApp;
+    (view as any).plugin = {
+      refreshSphereViews: jest.fn(),
+    };
+    // Mock the scanner to avoid calling getMarkdownFiles
+    (view as any).scanner = {
+      scanProjects: jest.fn().mockResolvedValue([]),
+    };
+
+    // Mock the validator to return successful validation
+    (view as any).validator = {
+      validateItem: jest.fn().mockResolvedValue({
+        found: true,
+        updatedLineNumber: 9,
+        updatedLineContent: "- [ ] Important task",
+      }),
+    };
+
+    await view.onOpen();
+
+    // Step 1: Mark item complete (directly modify focusItems to simulate behavior)
+    await (view as any).markItemComplete(mockFocusItems[0]);
+
+    // Verify item now has completedAt timestamp
+    expect(mockFocusItems[0].completedAt).toBeDefined();
+    expect(typeof mockFocusItems[0].completedAt).toBe("number");
+    expect(mockFocusItems[0].completedAt!).toBeGreaterThanOrEqual(now);
+
+    // Verify file was modified with [x] checkbox
+    expect(mockApp.vault.modify).toHaveBeenCalledWith(
+      mockFile,
+      expect.stringContaining("- [x] Important task")
+    );
+
+    // Step 2: Test getMidnightTimestamp calculation
+    const midnight = (view as any).getMidnightTimestamp();
+    const midnightDate = new Date(midnight);
+    expect(midnightDate.getHours()).toBe(0);
+    expect(midnightDate.getMinutes()).toBe(0);
+    expect(midnightDate.getSeconds()).toBe(0);
+    expect(midnightDate.getMilliseconds()).toBe(0);
+
+    // Step 3: Verify completed item appears in getCompletedTodayItems
+    const completedToday = (view as any).getCompletedTodayItems();
+    expect(completedToday.length).toBe(1);
+    expect(completedToday[0].text).toBe("Important task");
+    expect(completedToday[0].completedAt).toBeDefined();
+
+    // Step 4: Test cleanup of old completed items (simulate tomorrow)
+    const tomorrow = now + 24 * 60 * 60 * 1000; // Add 24 hours
+    const yesterdayMidnight = midnight - 24 * 60 * 60 * 1000;
+
+    // Add an old completed item from yesterday
+    const oldCompletedItem: FocusItem = {
+      file: "Projects/Old.md",
+      lineNumber: 5,
+      lineContent: "- [x] Old task",
+      text: "Old task",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: yesterdayMidnight - 1000,
+      completedAt: yesterdayMidnight - 500, // Completed yesterday
+    };
+    mockFocusItems.push(oldCompletedItem);
+
+    // Simulate view opening tomorrow (triggers cleanup)
+    jest.spyOn(Date, "now").mockReturnValue(tomorrow);
+    await (view as any).onOpen();
+
+    // Old completed item should be removed, today's should remain
+    expect(mockFocusItems.length).toBe(1);
+    expect(mockFocusItems[0].text).toBe("Important task");
+
+    // Verify saveFocusItems was called (cleanup saves)
+    expect(mockSaveFocusItems).toHaveBeenCalled();
+
+    // Clean up Date.now mock
+    jest.restoreAllMocks();
+  });
 });
