@@ -168,11 +168,26 @@ export class FocusView extends ItemView {
       // Reload focus items from file to pick up changes from other views
       await this.loadFocus();
 
-      // Validate all focus items and remove completed ones
-      const validatedItems: FocusItem[] = [];
+      // Clean up old completed items (before midnight)
+      const midnight = this.getMidnightTimestamp();
+      const originalLength = this.focusItems.length;
+      this.focusItems = this.focusItems.filter(
+        (item) => !item.completedAt || item.completedAt >= midnight
+      );
+
+      // Save if any items were removed during cleanup
+      if (this.focusItems.length < originalLength) {
+        await this.saveFocus();
+      }
+
+      // Validate all remaining active items (skip completed items)
+      const activeItems = this.focusItems.filter((item) => !item.completedAt);
+      const validatedItems: FocusItem[] = [
+        ...this.focusItems.filter((item) => item.completedAt),
+      ];
       let needsSave = false;
 
-      for (const item of this.focusItems) {
+      for (const item of activeItems) {
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {

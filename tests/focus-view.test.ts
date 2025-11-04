@@ -883,4 +883,60 @@ describe("FocusView", () => {
       expect(completed[1].completedAt).toBeGreaterThanOrEqual(midnightTimestamp);
     });
   });
+
+  describe("refresh with old completed items", () => {
+    it("should remove items completed before midnight", async () => {
+      const midnight = new Date();
+      midnight.setHours(0, 0, 0, 0);
+      const midnightTimestamp = midnight.getTime();
+
+      const items: FocusItem[] = [
+        {
+          file: "active.md",
+          lineNumber: 1,
+          lineContent: "- [ ] active",
+          text: "active",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+        {
+          file: "today.md",
+          lineNumber: 1,
+          lineContent: "- [x] today ✅ 2025-11-04",
+          text: "today",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp + 1000,
+        },
+        {
+          file: "yesterday.md",
+          lineNumber: 1,
+          lineContent: "- [x] yesterday ✅ 2025-11-03",
+          text: "yesterday",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: midnightTimestamp - 1000,
+        },
+      ];
+
+      mockApp.vault.read.mockResolvedValue("- [ ] active");
+
+      // Set up mock focus items in the mocked storage
+      mockFocusItems = items;
+
+      // Mock validator to return found for active item
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).refresh();
+
+      const remaining = (view as any).focusItems;
+      expect(remaining.length).toBe(2);
+      expect(remaining.find((i: FocusItem) => i.file === "yesterday.md")).toBeUndefined();
+    });
+  });
 });
