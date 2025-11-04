@@ -37,6 +37,7 @@ export class SphereView extends ItemView {
   private saveSettings: () => Promise<void>;
   private searchQuery: string = "";
   private refreshInProgress: boolean = false;
+  private showNextActions: boolean = true;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -201,8 +202,11 @@ export class SphereView extends ItemView {
     const titleEl = header.createEl("h2", { cls: "flow-gtd-sphere-title" });
     titleEl.setText(this.getDisplaySphereName());
 
+    // Search and toggle container (flex row)
+    const controlsRow = header.createDiv({ cls: "flow-gtd-sphere-controls-row" });
+
     // Search container
-    const searchContainer = header.createDiv({ cls: "flow-gtd-sphere-search-container" });
+    const searchContainer = controlsRow.createDiv({ cls: "flow-gtd-sphere-search-container" });
 
     // Search input
     const searchInput = searchContainer.createEl("input", {
@@ -218,6 +222,12 @@ export class SphereView extends ItemView {
       text: "✕",
     });
     clearButton.style.display = this.searchQuery ? "" : "none";
+
+    // Toggle button
+    const toggleButton = controlsRow.createEl("button", {
+      cls: "flow-gtd-sphere-actions-toggle",
+      text: this.showNextActions ? "Hide Actions" : "Show Actions",
+    });
 
     // Input event handler
     searchInput.addEventListener("input", (e) => {
@@ -235,7 +245,27 @@ export class SphereView extends ItemView {
       this.refresh();
     });
 
+    // Toggle button handler
+    toggleButton.addEventListener("click", () => {
+      this.showNextActions = !this.showNextActions;
+      toggleButton.setText(this.showNextActions ? "Hide Actions" : "Show Actions");
+      this.toggleNextActionsVisibility();
+    });
+
     return searchInput;
+  }
+
+  private toggleNextActionsVisibility(): void {
+    const container = this.containerEl.children[1] as HTMLElement;
+    const allActionLists = container.querySelectorAll(".flow-gtd-sphere-next-actions");
+
+    allActionLists.forEach((list) => {
+      if (this.showNextActions) {
+        list.classList.remove("flow-gtd-sphere-actions-hidden");
+      } else {
+        list.classList.add("flow-gtd-sphere-actions-hidden");
+      }
+    });
   }
 
   private setupKeyboardShortcuts(container: HTMLElement, searchInput: HTMLInputElement): void {
@@ -398,6 +428,9 @@ export class SphereView extends ItemView {
 
       if (project.nextActions && project.nextActions.length > 0) {
         const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+        if (!this.showNextActions) {
+          list.classList.add("flow-gtd-sphere-actions-hidden");
+        }
         // Render all action items (async operations will complete in background)
         project.nextActions.forEach((action, index) => {
           void this.renderActionItem(list, action, project.file, this.sphere, false);
@@ -426,6 +459,9 @@ export class SphereView extends ItemView {
     }
 
     const list = section.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+    if (!this.showNextActions) {
+      list.classList.add("flow-gtd-sphere-actions-hidden");
+    }
     const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
 
     // Render all action items (async operations will complete in background)

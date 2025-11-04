@@ -762,4 +762,140 @@ describe("SphereView", () => {
       expect(mockFocusItems[0].text).toBe(action);
     });
   });
+
+  describe("next actions visibility toggle", () => {
+    it("should have a toggle button in the header", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const toggleButton = container.querySelector(".flow-gtd-sphere-actions-toggle");
+
+      expect(toggleButton).toBeTruthy();
+      expect(toggleButton?.textContent).toContain("Hide");
+    });
+
+    it("should show next actions by default", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["First action", "Second action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const actionsList = container.querySelector(".flow-gtd-sphere-next-actions");
+
+      expect(actionsList).toBeTruthy();
+      expect(actionsList?.classList.contains("flow-gtd-sphere-actions-hidden")).toBe(false);
+    });
+
+    it("should hide next actions when toggle is clicked", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["First action", "Second action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const toggleButton = container.querySelector(
+        ".flow-gtd-sphere-actions-toggle"
+      ) as HTMLElement;
+
+      // Click the toggle button
+      toggleButton?.click();
+
+      const actionsList = container.querySelector(".flow-gtd-sphere-next-actions");
+      expect(actionsList?.classList.contains("flow-gtd-sphere-actions-hidden")).toBe(true);
+      expect(toggleButton?.textContent).toContain("Show");
+    });
+
+    it("should show next actions again when toggle is clicked twice", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["First action", "Second action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const toggleButton = container.querySelector(
+        ".flow-gtd-sphere-actions-toggle"
+      ) as HTMLElement;
+
+      // Click twice
+      toggleButton?.click();
+      toggleButton?.click();
+
+      const actionsList = container.querySelector(".flow-gtd-sphere-next-actions");
+      expect(actionsList?.classList.contains("flow-gtd-sphere-actions-hidden")).toBe(false);
+      expect(toggleButton?.textContent).toContain("Hide");
+    });
+
+    it("should hide general next actions when toggle is clicked", async () => {
+      mockScanner.scanProjects.mockResolvedValue([]);
+
+      const nextActionsContent = `
+# Next Actions
+
+- [ ] Call dentist #sphere/work
+- [ ] Schedule meeting #sphere/work
+`;
+
+      const mockFile = new TFile("Next actions.md");
+      app.vault.getAbstractFileByPath = jest.fn().mockReturnValue(mockFile);
+      app.vault.read = jest.fn().mockResolvedValue(nextActionsContent);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const toggleButton = container.querySelector(
+        ".flow-gtd-sphere-actions-toggle"
+      ) as HTMLElement;
+
+      // Click the toggle button
+      toggleButton?.click();
+
+      const generalActionsList = container.querySelectorAll(".flow-gtd-sphere-next-actions");
+      generalActionsList.forEach((list) => {
+        expect(list.classList.contains("flow-gtd-sphere-actions-hidden")).toBe(true);
+      });
+    });
+  });
 });

@@ -205,12 +205,28 @@ describe("SphereView filtering", () => {
               capturedClearButton = clearButton;
               return clearButton;
             }
+            if (tag === "button" && opts?.cls === "flow-gtd-sphere-actions-toggle") {
+              const toggleBtn = createMockElement();
+              toggleBtn.setText = jest.fn();
+              return toggleBtn;
+            }
             return createMockElement();
           });
-          header.createDiv = jest.fn(() => {
-            const searchContainer = createMockElement();
-            searchContainer.createEl = header.createEl;
-            return searchContainer;
+          header.createDiv = jest.fn((divOpts: any) => {
+            if (divOpts?.cls === "flow-gtd-sphere-controls-row") {
+              const controlsRow = createMockElement();
+              controlsRow.createEl = header.createEl;
+              controlsRow.createDiv = jest.fn((containerOpts: any) => {
+                if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
+                  const searchContainer = createMockElement();
+                  searchContainer.createEl = header.createEl;
+                  return searchContainer;
+                }
+                return createMockElement();
+              });
+              return controlsRow;
+            }
+            return createMockElement();
           });
           return header;
         }
@@ -249,12 +265,28 @@ describe("SphereView filtering", () => {
             if (tag === "input") {
               return createMockInputElement();
             }
+            if (tag === "button" && opts?.cls === "flow-gtd-sphere-actions-toggle") {
+              const toggleBtn = createMockElement();
+              toggleBtn.setText = jest.fn();
+              return toggleBtn;
+            }
             return createMockElement();
           });
-          header.createDiv = jest.fn(() => {
-            const searchContainer = createMockElement();
-            searchContainer.createEl = header.createEl;
-            return searchContainer;
+          header.createDiv = jest.fn((divOpts: any) => {
+            if (divOpts?.cls === "flow-gtd-sphere-controls-row") {
+              const controlsRow = createMockElement();
+              controlsRow.createEl = header.createEl;
+              controlsRow.createDiv = jest.fn((containerOpts: any) => {
+                if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
+                  const searchContainer = createMockElement();
+                  searchContainer.createEl = header.createEl;
+                  return searchContainer;
+                }
+                return createMockElement();
+              });
+              return controlsRow;
+            }
+            return createMockElement();
           });
           return header;
         }
@@ -291,12 +323,28 @@ describe("SphereView filtering", () => {
               input.value = "test";
               return input;
             }
+            if (tag === "button" && opts?.cls === "flow-gtd-sphere-actions-toggle") {
+              const toggleBtn = createMockElement();
+              toggleBtn.setText = jest.fn();
+              return toggleBtn;
+            }
             return createMockElement();
           });
-          header.createDiv = jest.fn(() => {
-            const searchContainer = createMockElement();
-            searchContainer.createEl = header.createEl;
-            return searchContainer;
+          header.createDiv = jest.fn((divOpts: any) => {
+            if (divOpts?.cls === "flow-gtd-sphere-controls-row") {
+              const controlsRow = createMockElement();
+              controlsRow.createEl = header.createEl;
+              controlsRow.createDiv = jest.fn((containerOpts: any) => {
+                if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
+                  const searchContainer = createMockElement();
+                  searchContainer.createEl = header.createEl;
+                  return searchContainer;
+                }
+                return createMockElement();
+              });
+              return controlsRow;
+            }
+            return createMockElement();
           });
           return header;
         }
@@ -344,12 +392,28 @@ describe("SphereView filtering", () => {
             if (tag === "span" && opts?.cls === "flow-gtd-sphere-search-clear") {
               return clearButton;
             }
+            if (tag === "button" && opts?.cls === "flow-gtd-sphere-actions-toggle") {
+              const toggleBtn = createMockElement();
+              toggleBtn.setText = jest.fn();
+              return toggleBtn;
+            }
             return createMockElement();
           });
-          header.createDiv = jest.fn(() => {
-            const searchContainer = createMockElement();
-            searchContainer.createEl = header.createEl;
-            return searchContainer;
+          header.createDiv = jest.fn((divOpts: any) => {
+            if (divOpts?.cls === "flow-gtd-sphere-controls-row") {
+              const controlsRow = createMockElement();
+              controlsRow.createEl = header.createEl;
+              controlsRow.createDiv = jest.fn((containerOpts: any) => {
+                if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
+                  const searchContainer = createMockElement();
+                  searchContainer.createEl = header.createEl;
+                  return searchContainer;
+                }
+                return createMockElement();
+              });
+              return controlsRow;
+            }
+            return createMockElement();
           });
           return header;
         }

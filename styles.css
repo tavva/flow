@@ -1698,10 +1698,40 @@ select.flow-gtd-inline-select option,
 	font-weight: 600;
 }
 
+.flow-gtd-sphere-controls-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
 .flow-gtd-sphere-search-container {
 	display: flex;
 	align-items: center;
 	gap: 8px;
+	flex: 1;
+}
+
+.flow-gtd-sphere-actions-toggle {
+	flex-shrink: 0;
+	padding: 6px 12px;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background: var(--interactive-normal);
+	color: var(--text-normal);
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	transition: all 0.2s ease;
+}
+
+.flow-gtd-sphere-actions-toggle:hover {
+	background: var(--interactive-hover);
+	border-color: var(--interactive-accent);
+}
+
+.flow-gtd-sphere-actions-hidden {
+	display: none;
 }
 
 .flow-gtd-sphere-search-input {
