@@ -1135,4 +1135,120 @@ describe("SphereView", () => {
       expect(label).toBe("No Priority");
     });
   });
+
+  describe("P1 project highlighting", () => {
+    it("should add P1 CSS class to priority 1 projects", async () => {
+      const priority1Project = {
+        file: "Projects/p1.md",
+        title: "Priority 1 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["P1 action"],
+        mtime: Date.now(),
+      };
+
+      const priority2Project = {
+        file: "Projects/p2.md",
+        title: "Priority 2 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["P2 action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([priority1Project, priority2Project]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const projects = container.querySelectorAll(".flow-gtd-sphere-project");
+
+      // First project (P1) should have the P1 class
+      expect(projects[0].classList.contains("flow-gtd-sphere-project-p1")).toBe(true);
+
+      // Second project (P2) should NOT have the P1 class
+      expect(projects[1].classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
+    });
+
+    it("should not add P1 CSS class to projects with other priorities", async () => {
+      const priority2Project = {
+        file: "Projects/p2.md",
+        title: "Priority 2 Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["P2 action"],
+        mtime: Date.now(),
+      };
+
+      const noPriorityProject = {
+        file: "Projects/no-priority.md",
+        title: "No Priority Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: null,
+        nextActions: ["Action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([priority2Project, noPriorityProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const projects = container.querySelectorAll(".flow-gtd-sphere-project");
+
+      // Neither project should have the P1 class
+      projects.forEach((project) => {
+        expect(project.classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
+      });
+    });
+
+    it("should apply P1 highlighting to sub-projects with priority 1", async () => {
+      const parentProject = {
+        file: "Parent.md",
+        title: "Parent Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["Parent action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        parentProject: "[[Parent]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([parentProject, childProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const projects = container.querySelectorAll(".flow-gtd-sphere-project");
+
+      // Parent (P2) should NOT have P1 class
+      expect(projects[0].classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
+
+      // Child (P1) should have P1 class
+      expect(projects[1].classList.contains("flow-gtd-sphere-project-p1")).toBe(true);
+    });
+  });
 });

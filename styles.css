@@ -1227,6 +1227,17 @@ select.flow-gtd-inline-select option,
         margin-bottom: 12px;
 }
 
+.flow-gtd-sphere-project-p1 {
+        background-color: var(--background-secondary);
+        border: 2px solid var(--interactive-accent);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-sphere-project-p1 .flow-gtd-sphere-project-title {
+        font-weight: 700;
+        font-size: 16px;
+}
+
 .flow-gtd-sphere-subproject {
         border-left: 3px solid var(--interactive-accent);
         background-color: var(--background-secondary);

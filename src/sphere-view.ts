@@ -429,6 +429,11 @@ export class SphereView extends ItemView {
         wrapper.addClass("flow-gtd-sphere-subproject");
       }
 
+      // Highlight P1 projects
+      if (priority === 1) {
+        wrapper.addClass("flow-gtd-sphere-project-p1");
+      }
+
       const header = wrapper.createDiv({ cls: "flow-gtd-sphere-project-header" });
 
       const titleLink = header.createEl("a", {
