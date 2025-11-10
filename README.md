@@ -90,6 +90,36 @@ Two articles covering Quick Capture methods:
 - https://forum.obsidian.md/t/android-quick-input-for-obsidian/16336
 - https://play.google.com/store/apps/details?id=com.xectrone.quickmark
 
+### Flow CLI
+
+Quick capture from the terminal:
+
+```bash
+# Install
+npm install -g @flow/cli
+
+# First run - configure vault
+flow "buy milk"
+# Enter vault path: ~/Obsidian/MyVault
+# Captured: "buy milk"
+
+# Subsequent captures
+flow "call dentist"
+# Captured: "call dentist"
+
+# Override vault
+flow --vault ~/Obsidian/Work "meeting notes"
+```
+
+**Configuration:**
+
+1. Install Flow plugin in Obsidian
+2. Configure CLI Inbox File in Settings → Flow GTD Coach
+3. Install CLI globally: `npm install -g @flow/cli`
+4. Run `flow "text"` - first run will prompt for vault path
+
+See [flow-cli/README.md](flow-cli/README.md) for details.
+
 ### Process: AI-Powered GTD Workflow
 
 AI processes your inbox according to GTD principles:
