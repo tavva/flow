@@ -107,6 +107,7 @@ export interface PluginSettings {
   somedayFilePath: string;
   projectsFolderPath: string;
   projectTemplateFilePath: string;
+  cliInboxFile: string; // Path to file for CLI quick captures (relative to vault root)
   spheres: string[];
   focus?: FocusItem[]; // DEPRECATED: Migrated to file storage (flow/focus.json)
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
@@ -134,6 +135,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   somedayFilePath: "Someday.md",
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
+  cliInboxFile: "Flow CLI Inbox.md",
   spheres: ["personal", "work"],
   focusAutoClearTime: "03:00",
   focusArchiveFile: "Focus Archive.md",

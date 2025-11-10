@@ -299,6 +299,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // CLI Inbox File
+    new Setting(containerEl)
+      .setName("CLI Inbox File")
+      .setDesc("Path to file for CLI quick captures (relative to vault root)")
+      .addText((text) =>
+        text
+          .setPlaceholder("Flow CLI Inbox.md")
+          .setValue(this.plugin.settings.cliInboxFile)
+          .onChange(async (value) => {
+            this.plugin.settings.cliInboxFile = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Spheres
     new Setting(containerEl).setHeading().setName("Spheres");
     containerEl.createDiv("setting-item-description").innerHTML = `
