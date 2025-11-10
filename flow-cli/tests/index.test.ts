@@ -142,5 +142,67 @@ describe("CLI Entry Point", () => {
       );
       expect(mockProcessExit).toHaveBeenCalledWith(1);
     });
+
+    it("should show usage if no text provided", async () => {
+      process.argv = ["node", "flow"];
+
+      await main();
+
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringContaining("Please provide text to capture")
+      );
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should handle invalid vault error", async () => {
+      // Clean up the valid vault that beforeEach created
+      if (fs.existsSync(testVaultDir)) {
+        fs.rmSync(testVaultDir, { recursive: true });
+      }
+      // Create vault dir but not .obsidian dir
+      fs.mkdirSync(testVaultDir, { recursive: true });
+      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+
+      await main();
+
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        "Error: Not a valid Obsidian vault (missing .obsidian folder): " + testVaultDir
+      );
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should handle plugin not installed error", async () => {
+      // Clean up the valid vault that beforeEach created
+      if (fs.existsSync(testVaultDir)) {
+        fs.rmSync(testVaultDir, { recursive: true });
+      }
+      // Create .obsidian dir but not plugin dir
+      fs.mkdirSync(obsidianDir, { recursive: true });
+      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+
+      await main();
+
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        "Error: Flow plugin not installed at " + pluginDir
+      );
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
+
+    it("should handle missing cliInboxFile setting", async () => {
+      // Clean up and recreate vault with empty settings
+      if (fs.existsSync(testVaultDir)) {
+        fs.rmSync(testVaultDir, { recursive: true });
+      }
+      fs.mkdirSync(pluginDir, { recursive: true });
+      fs.writeFileSync(settingsFile, JSON.stringify({}));
+      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+
+      await main();
+
+      expect(mockConsoleError).toHaveBeenCalledWith(
+        expect.stringContaining("cliInboxFile not configured")
+      );
+      expect(mockProcessExit).toHaveBeenCalledWith(1);
+    });
   });
 });
