@@ -1,7 +1,7 @@
 // ABOUTME: CLI entry point for Flow quick capture
 // ABOUTME: Orchestrates config reading, plugin settings, and file capture
 
-import { readConfig, writeConfig, getConfigPath } from "./config";
+import { readConfig, writeConfig, getConfigPath, promptForVaultPath } from "./config";
 import { readPluginSettings } from "./plugin-settings";
 import { capture } from "./capture";
 
@@ -35,5 +35,53 @@ export function parseArgs(args: string[]): ParsedArgs {
 }
 
 export async function main(): Promise<void> {
-  // Implementation in next task
+  try {
+    const args = parseArgs(process.argv.slice(2));
+
+    // Handle --config flag
+    if (args.config) {
+      const vaultPath = await promptForVaultPath();
+      writeConfig({ defaultVault: vaultPath });
+      console.log(`Saved default vault to ${getConfigPath()}`);
+      if (!args.text) {
+        return;
+      }
+    }
+
+    // Determine vault path
+    let vaultPath = args.vault;
+    if (!vaultPath) {
+      const config = readConfig();
+      if (!config) {
+        console.error("No default vault configured.");
+        const newVaultPath = await promptForVaultPath();
+        console.error(`Saving default vault to ${getConfigPath()}`);
+        writeConfig({ defaultVault: newVaultPath });
+        vaultPath = newVaultPath;
+      } else {
+        vaultPath = config.defaultVault;
+      }
+    }
+
+    // Read plugin settings
+    const settings = readPluginSettings(vaultPath);
+
+    // Capture text
+    if (args.text) {
+      capture(vaultPath, settings.cliInboxFile, args.text);
+      console.log(`Captured: "${args.text}"`);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+    } else {
+      console.error("An unknown error occurred");
+    }
+    process.exit(1);
+  }
+}
+
+// Run if executed directly
+if (require.main === module) {
+  main();
 }

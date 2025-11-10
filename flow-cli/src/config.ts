@@ -4,6 +4,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as readline from "readline";
 import { Config } from "./types";
 
 export function getConfigPath(): string {
@@ -34,4 +35,18 @@ export function writeConfig(config: Config, configPath?: string): void {
   }
 
   fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+}
+
+export async function promptForVaultPath(): Promise<string> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question("Enter vault path: ", (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
 }
