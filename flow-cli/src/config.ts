@@ -26,5 +26,12 @@ export function readConfig(configPath?: string): Config | null {
 }
 
 export function writeConfig(config: Config, configPath?: string): void {
-  // Stub for Task 6
+  const filePath = configPath || getConfigPath();
+  const dir = path.dirname(filePath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
 }

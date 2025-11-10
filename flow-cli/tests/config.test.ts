@@ -57,4 +57,38 @@ describe("Config", () => {
       expect(config).toBeNull();
     });
   });
+
+  describe("writeConfig", () => {
+    it("should write config to file", () => {
+      const config = { defaultVault: "/test/vault" };
+      writeConfig(config, testConfigPath);
+
+      const written = fs.readFileSync(testConfigPath, "utf-8");
+      expect(JSON.parse(written)).toEqual(config);
+    });
+
+    it("should create config directory if missing", () => {
+      expect(fs.existsSync(testConfigDir)).toBe(false);
+
+      const config = { defaultVault: "/test/vault" };
+      writeConfig(config, testConfigPath);
+
+      expect(fs.existsSync(testConfigDir)).toBe(true);
+      expect(fs.existsSync(testConfigPath)).toBe(true);
+    });
+
+    it("should overwrite existing config", () => {
+      fs.mkdirSync(testConfigDir, { recursive: true });
+      fs.writeFileSync(
+        testConfigPath,
+        JSON.stringify({ defaultVault: "/old/vault" })
+      );
+
+      const config = { defaultVault: "/new/vault" };
+      writeConfig(config, testConfigPath);
+
+      const written = JSON.parse(fs.readFileSync(testConfigPath, "utf-8"));
+      expect(written.defaultVault).toBe("/new/vault");
+    });
+  });
 });
