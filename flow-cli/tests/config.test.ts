@@ -40,10 +40,7 @@ describe("Config", () => {
     it("should read existing config file", () => {
       // Create test config
       fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: "/test/vault" })
-      );
+      fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: "/test/vault" }));
 
       const config = readConfig(testConfigPath);
       expect(config).toEqual({ defaultVault: "/test/vault" });
@@ -79,10 +76,7 @@ describe("Config", () => {
 
     it("should overwrite existing config", () => {
       fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: "/old/vault" })
-      );
+      fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: "/old/vault" }));
 
       const config = { defaultVault: "/new/vault" };
       writeConfig(config, testConfigPath);

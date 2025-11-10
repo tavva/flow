@@ -15,9 +15,7 @@ export function readPluginSettings(vaultPath: string): PluginSettings {
 
   const obsidianDir = path.join(expandedPath, ".obsidian");
   if (!fs.existsSync(obsidianDir)) {
-    throw new Error(
-      `Not a valid Obsidian vault (missing .obsidian folder): ${expandedPath}`
-    );
+    throw new Error(`Not a valid Obsidian vault (missing .obsidian folder): ${expandedPath}`);
   }
 
   const pluginDir = path.join(obsidianDir, "plugins", "flow");

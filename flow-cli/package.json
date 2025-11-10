@@ -15,7 +15,12 @@
     "format": "prettier --write \"**/*.{ts,js,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,js,json,md}\""
   },
-  "keywords": ["flow", "gtd", "cli", "quick-capture"],
+  "keywords": [
+    "flow",
+    "gtd",
+    "cli",
+    "quick-capture"
+  ],
   "author": "Ben",
   "license": "MIT",
   "devDependencies": {
