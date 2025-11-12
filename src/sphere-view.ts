@@ -439,7 +439,17 @@ export class SphereView extends ItemView {
         wrapper.addClass("flow-gtd-sphere-project-with-cover");
       }
 
-      // Content container (left side when there's a cover image)
+      // Cover image (floated to right, must come before content for proper text flow)
+      if (project.coverImage) {
+        const coverContainer = wrapper.createDiv({ cls: "flow-gtd-sphere-project-cover" });
+        const coverImg = coverContainer.createEl("img", {
+          cls: "flow-gtd-sphere-project-cover-image",
+        });
+        coverImg.src = this.app.vault.adapter.getResourcePath(project.coverImage);
+        coverImg.alt = `Cover image for ${project.title}`;
+      }
+
+      // Content container (flows around floated cover image)
       const content = wrapper.createDiv({ cls: "flow-gtd-sphere-project-content" });
 
       const header = content.createDiv({ cls: "flow-gtd-sphere-project-header" });
@@ -468,16 +478,6 @@ export class SphereView extends ItemView {
         });
       } else {
         this.renderEmptyMessage(content, "No next actions captured yet.");
-      }
-
-      // Cover image (right side of wrapper)
-      if (project.coverImage) {
-        const coverContainer = wrapper.createDiv({ cls: "flow-gtd-sphere-project-cover" });
-        const coverImg = coverContainer.createEl("img", {
-          cls: "flow-gtd-sphere-project-cover-image",
-        });
-        coverImg.src = this.app.vault.adapter.getResourcePath(project.coverImage);
-        coverImg.alt = `Cover image for ${project.title}`;
       }
     });
   }

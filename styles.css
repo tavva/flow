@@ -1225,21 +1225,21 @@ select.flow-gtd-inline-select option,
         background-color: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
         margin-bottom: 12px;
+        overflow: hidden; /* Clearfix for floated cover images */
 }
 
 .flow-gtd-sphere-project-with-cover {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
+        /* No special layout - let cover image float */
 }
 
 .flow-gtd-sphere-project-content {
-        flex: 1 1 auto;
-        min-width: 0;
+        /* Content flows normally around floated image */
 }
 
 .flow-gtd-sphere-project-cover {
-        flex: 0 0 auto;
+        float: right;
+        margin-left: 12px;
+        margin-bottom: 8px;
 }
 
 .flow-gtd-sphere-project-p1 {
@@ -1381,6 +1381,15 @@ select.flow-gtd-inline-select option,
 .flow-gtd-sphere-next-actions li p {
         margin: 0;
         display: inline;
+        word-break: break-word;
+        overflow-wrap: break-word;
+}
+
+/* Ensure URLs in sphere view actions wrap properly */
+.flow-gtd-sphere-next-actions li a {
+        word-break: break-all;
+        overflow-wrap: break-word;
+        max-width: 100%;
 }
 
 .flow-gtd-sphere-empty {
