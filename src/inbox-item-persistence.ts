@@ -1,4 +1,4 @@
-import { App } from "obsidian";
+import { App, TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
 import { GTDResponseValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
@@ -6,6 +6,7 @@ import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { validateReminderDate } from "./validation";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { generateCoverImage } from "./cover-image-generator";
 
 const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "create-project",
@@ -151,6 +152,10 @@ export class InboxItemPersistenceService {
           item.dueDate,
           item.sourceNoteLink
         );
+
+        // Auto-create cover image if enabled
+        await this.maybeGenerateCoverImage(file);
+
         return file.path;
       }
 
@@ -250,5 +255,19 @@ export class InboxItemPersistenceService {
 
     // Save focus items
     await saveFocusItems(this.app.vault, focusItems);
+  }
+
+  private async maybeGenerateCoverImage(projectFile: TFile): Promise<void> {
+    // Only generate if auto-create is enabled, app and settings are available
+    if (!this.app || !this.settings || !this.settings.autoCreateCoverImage) {
+      return;
+    }
+
+    try {
+      await generateCoverImage(this.app.vault, projectFile, this.settings);
+    } catch (error) {
+      // Log error but don't block project creation
+      console.error("Failed to generate cover image for project:", error);
+    }
   }
 }

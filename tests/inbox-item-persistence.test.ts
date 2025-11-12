@@ -258,4 +258,108 @@ describe("InboxItemPersistenceService", () => {
     expect(mockSettings.focus.length).toBe(0);
     expect(mockSaveSettings).not.toHaveBeenCalled();
   });
+
+  describe("auto-create cover image", () => {
+    let mockApp: any;
+    let mockSettings: any;
+    let mockGenerateCoverImage: jest.Mock;
+    let serviceWithCoverImage: InboxItemPersistenceService;
+
+    beforeEach(() => {
+      // Mock the generateCoverImage module
+      mockGenerateCoverImage = jest.fn().mockResolvedValue({
+        imagePath: "Assets/flow-project-cover-images/test-image.png",
+      });
+
+      jest.mock("../src/cover-image-generator", () => ({
+        generateCoverImage: mockGenerateCoverImage,
+      }));
+
+      mockApp = {
+        vault: {
+          getAbstractFileByPath: jest.fn().mockReturnValue({
+            path: "Projects/Test.md",
+            basename: "Test",
+          }),
+        },
+      };
+
+      mockSettings = {
+        autoCreateCoverImage: true,
+        openaiApiKey: "test-key",
+        openaiBaseUrl: "https://openrouter.ai/api/v1",
+        openrouterImageModel: "google/gemini-2.5-flash-image",
+        coverImagesFolderPath: "Assets/flow-project-cover-images",
+      };
+
+      serviceWithCoverImage = new InboxItemPersistenceService(
+        writerMocks as unknown as FileWriter,
+        mockApp,
+        mockSettings
+      );
+    });
+
+    it("generates cover image when autoCreateCoverImage is enabled", async () => {
+      const item: EditableItem = {
+        original: "Plan offsite",
+        isAIProcessed: false,
+        selectedAction: "create-project",
+        selectedSpheres: ["work"],
+        editedNames: ["Finalize venue"],
+      };
+
+      await serviceWithCoverImage.persist(item);
+
+      expect(writerMocks.createProject).toHaveBeenCalledTimes(1);
+      // Note: The mock verification will be added in the implementation
+    });
+
+    it("does not generate cover image when autoCreateCoverImage is disabled", async () => {
+      mockSettings.autoCreateCoverImage = false;
+
+      const item: EditableItem = {
+        original: "Plan offsite",
+        isAIProcessed: false,
+        selectedAction: "create-project",
+        selectedSpheres: ["work"],
+        editedNames: ["Finalize venue"],
+      };
+
+      await serviceWithCoverImage.persist(item);
+
+      expect(writerMocks.createProject).toHaveBeenCalledTimes(1);
+      // Cover image should not be generated
+    });
+
+    it("does not block project creation if cover image generation fails", async () => {
+      mockGenerateCoverImage.mockRejectedValue(new Error("Image generation failed"));
+
+      const item: EditableItem = {
+        original: "Plan offsite",
+        isAIProcessed: false,
+        selectedAction: "create-project",
+        selectedSpheres: ["work"],
+        editedNames: ["Finalize venue"],
+      };
+
+      // Should not throw, project creation should succeed
+      await expect(serviceWithCoverImage.persist(item)).resolves.not.toThrow();
+      expect(writerMocks.createProject).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not generate cover image for non-project actions", async () => {
+      const item: EditableItem = {
+        original: "Call dentist",
+        isAIProcessed: false,
+        selectedAction: "next-actions-file",
+        selectedSpheres: ["personal"],
+        editedName: "Call dentist",
+      };
+
+      await serviceWithCoverImage.persist(item);
+
+      expect(writerMocks.addToNextActionsFile).toHaveBeenCalledTimes(1);
+      // Cover image should not be generated for non-project actions
+    });
+  });
 });

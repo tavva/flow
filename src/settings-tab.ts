@@ -201,6 +201,17 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Auto-create cover image
+    new Setting(containerEl)
+      .setName("Auto-create cover image")
+      .setDesc("Automatically generate a cover image when creating new projects during inbox processing")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange(async (value) => {
+          this.plugin.settings.autoCreateCoverImage = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
     // Inbox Settings
     new Setting(containerEl).setHeading().setName("Inbox Settings");
     containerEl.createDiv("setting-item-description").innerHTML = `
