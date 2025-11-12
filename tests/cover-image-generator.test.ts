@@ -48,9 +48,9 @@ Project description`;
 
     mockVault.read.mockResolvedValue(projectContentWithImage);
 
-    await expect(
-      generateCoverImage(mockVault, mockProjectFile, mockSettings)
-    ).rejects.toThrow("Project already has a cover image");
+    await expect(generateCoverImage(mockVault, mockProjectFile, mockSettings)).rejects.toThrow(
+      "Project already has a cover image"
+    );
   });
 
   it("should generate and save a cover image for a project without one", async () => {
@@ -67,7 +67,8 @@ Project description`;
     (mockVault.adapter.exists as jest.Mock).mockResolvedValue(false);
 
     // Mock successful image generation using chat completions format
-    const mockBase64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; // 1x1 transparent PNG
+    const mockBase64Image =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="; // 1x1 transparent PNG
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -121,7 +122,8 @@ Project description`;
     mockVault.read.mockResolvedValue(projectContent);
     (mockVault.adapter.exists as jest.Mock).mockResolvedValue(true);
 
-    const mockBase64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const mockBase64Image =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -178,8 +180,6 @@ Project description`;
       }),
     });
 
-    await expect(
-      generateCoverImage(mockVault, mockProjectFile, mockSettings)
-    ).rejects.toThrow();
+    await expect(generateCoverImage(mockVault, mockProjectFile, mockSettings)).rejects.toThrow();
   });
 });

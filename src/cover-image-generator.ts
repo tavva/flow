@@ -196,10 +196,7 @@ ${content}`;
 
   const frontmatter = frontmatterMatch[1];
   const updatedFrontmatter = `${frontmatter}\ncover-image: ${imagePath}`;
-  const newContent = content.replace(
-    /^---\n[\s\S]*?\n---/,
-    `---\n${updatedFrontmatter}\n---`
-  );
+  const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${updatedFrontmatter}\n---`);
 
   await vault.modify(projectFile, newContent);
 }

@@ -162,7 +162,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
       callback: async () => {
         // Check if AI is enabled (cover image generation requires AI)
         if (!this.settings.aiEnabled) {
-          new Notice("AI features are disabled. Please enable AI in the plugin settings to use this feature.");
+          new Notice(
+            "AI features are disabled. Please enable AI in the plugin settings to use this feature."
+          );
           return;
         }
 
@@ -181,9 +183,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
         // Check if file is in projects folder
         if (!activeFile.path.startsWith(this.settings.projectsFolderPath)) {
-          new Notice(
-            `File is not in the projects folder (${this.settings.projectsFolderPath})`
-          );
+          new Notice(`File is not in the projects folder (${this.settings.projectsFolderPath})`);
           return;
         }
 

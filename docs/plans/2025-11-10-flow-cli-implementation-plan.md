@@ -15,6 +15,7 @@
 ### Task 1: Create CLI Package Structure
 
 **Files:**
+
 - Create: `flow-cli/package.json`
 - Create: `flow-cli/tsconfig.json`
 - Create: `flow-cli/.prettierrc.json`
@@ -116,7 +117,7 @@ coverage/
 
 **Step 6: Write README.md**
 
-```markdown
+````markdown
 # Flow CLI
 
 Quick capture CLI for Flow GTD.
@@ -126,6 +127,7 @@ Quick capture CLI for Flow GTD.
 ```bash
 npm install -g @flow/cli
 ```
+````
 
 ## Usage
 
@@ -140,20 +142,22 @@ First run will prompt for vault path. Configure manually with:
 ```bash
 flow --config
 ```
-```
+
+````
 
 **Step 7: Commit**
 
 ```bash
 git add .
 git commit -m "chore: initialize flow-cli package structure"
-```
+````
 
 ---
 
 ### Task 2: Set Up Build Configuration
 
 **Files:**
+
 - Create: `flow-cli/esbuild.config.mjs`
 
 **Step 1: Write esbuild config**
@@ -199,6 +203,7 @@ git commit -m "chore: add esbuild configuration"
 ### Task 3: Set Up Jest Configuration
 
 **Files:**
+
 - Create: `flow-cli/jest.config.js`
 
 **Step 1: Write Jest config**
@@ -209,10 +214,7 @@ module.exports = {
   testEnvironment: "node",
   roots: ["<rootDir>/tests"],
   testMatch: ["**/*.test.ts"],
-  collectCoverageFrom: [
-    "src/**/*.ts",
-    "!src/**/*.d.ts",
-  ],
+  collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
   coverageThreshold: {
     global: {
       branches: 80,
@@ -244,6 +246,7 @@ git commit -m "chore: add Jest configuration and install dependencies"
 ### Task 4: Define TypeScript Types
 
 **Files:**
+
 - Create: `flow-cli/src/types.ts`
 - Create: `flow-cli/tests/types.test.ts`
 
@@ -328,6 +331,7 @@ git commit -m "feat: add core type definitions"
 ### Task 5: Implement readConfig Function
 
 **Files:**
+
 - Create: `flow-cli/src/config.ts`
 - Create: `flow-cli/tests/config.test.ts`
 
@@ -377,10 +381,7 @@ describe("Config", () => {
     it("should read existing config file", () => {
       // Create test config
       fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: "/test/vault" })
-      );
+      fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: "/test/vault" }));
 
       const config = readConfig(testConfigPath);
       expect(config).toEqual({ defaultVault: "/test/vault" });
@@ -453,6 +454,7 @@ git commit -m "feat: add readConfig function"
 ### Task 6: Implement writeConfig Function
 
 **Files:**
+
 - Modify: `flow-cli/src/config.ts`
 - Modify: `flow-cli/tests/config.test.ts`
 
@@ -461,39 +463,36 @@ git commit -m "feat: add readConfig function"
 ```typescript
 // tests/config.test.ts - add to existing describe("Config") block
 
-  describe("writeConfig", () => {
-    it("should write config to file", () => {
-      const config = { defaultVault: "/test/vault" };
-      writeConfig(config, testConfigPath);
+describe("writeConfig", () => {
+  it("should write config to file", () => {
+    const config = { defaultVault: "/test/vault" };
+    writeConfig(config, testConfigPath);
 
-      const written = fs.readFileSync(testConfigPath, "utf-8");
-      expect(JSON.parse(written)).toEqual(config);
-    });
-
-    it("should create config directory if missing", () => {
-      expect(fs.existsSync(testConfigDir)).toBe(false);
-
-      const config = { defaultVault: "/test/vault" };
-      writeConfig(config, testConfigPath);
-
-      expect(fs.existsSync(testConfigDir)).toBe(true);
-      expect(fs.existsSync(testConfigPath)).toBe(true);
-    });
-
-    it("should overwrite existing config", () => {
-      fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: "/old/vault" })
-      );
-
-      const config = { defaultVault: "/new/vault" };
-      writeConfig(config, testConfigPath);
-
-      const written = JSON.parse(fs.readFileSync(testConfigPath, "utf-8"));
-      expect(written.defaultVault).toBe("/new/vault");
-    });
+    const written = fs.readFileSync(testConfigPath, "utf-8");
+    expect(JSON.parse(written)).toEqual(config);
   });
+
+  it("should create config directory if missing", () => {
+    expect(fs.existsSync(testConfigDir)).toBe(false);
+
+    const config = { defaultVault: "/test/vault" };
+    writeConfig(config, testConfigPath);
+
+    expect(fs.existsSync(testConfigDir)).toBe(true);
+    expect(fs.existsSync(testConfigPath)).toBe(true);
+  });
+
+  it("should overwrite existing config", () => {
+    fs.mkdirSync(testConfigDir, { recursive: true });
+    fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: "/old/vault" }));
+
+    const config = { defaultVault: "/new/vault" };
+    writeConfig(config, testConfigPath);
+
+    const written = JSON.parse(fs.readFileSync(testConfigPath, "utf-8"));
+    expect(written.defaultVault).toBe("/new/vault");
+  });
+});
 ```
 
 **Step 2: Run test to verify it fails**
@@ -539,6 +538,7 @@ git commit -m "feat: add writeConfig function"
 ### Task 7: Implement readPluginSettings Function
 
 **Files:**
+
 - Create: `flow-cli/src/plugin-settings.ts`
 - Create: `flow-cli/tests/plugin-settings.test.ts`
 
@@ -574,53 +574,40 @@ describe("Plugin Settings", () => {
   describe("readPluginSettings", () => {
     it("should read plugin settings successfully", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(
-        settingsFile,
-        JSON.stringify({ cliInboxFile: "inbox.md" })
-      );
+      fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
 
       const settings = readPluginSettings(testVaultDir);
       expect(settings.cliInboxFile).toBe("inbox.md");
     });
 
     it("should throw error if vault does not exist", () => {
-      expect(() => readPluginSettings("/nonexistent/vault")).toThrow(
-        "Vault not found"
-      );
+      expect(() => readPluginSettings("/nonexistent/vault")).toThrow("Vault not found");
     });
 
     it("should throw error if .obsidian folder missing", () => {
       fs.mkdirSync(testVaultDir, { recursive: true });
 
-      expect(() => readPluginSettings(testVaultDir)).toThrow(
-        "Not a valid Obsidian vault"
-      );
+      expect(() => readPluginSettings(testVaultDir)).toThrow("Not a valid Obsidian vault");
     });
 
     it("should throw error if Flow plugin not installed", () => {
       fs.mkdirSync(obsidianDir, { recursive: true });
 
-      expect(() => readPluginSettings(testVaultDir)).toThrow(
-        "Flow plugin not installed"
-      );
+      expect(() => readPluginSettings(testVaultDir)).toThrow("Flow plugin not installed");
     });
 
     it("should throw error if settings file unreadable", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
       fs.writeFileSync(settingsFile, "invalid json");
 
-      expect(() => readPluginSettings(testVaultDir)).toThrow(
-        "Could not read Flow plugin settings"
-      );
+      expect(() => readPluginSettings(testVaultDir)).toThrow("Could not read Flow plugin settings");
     });
 
     it("should throw error if cliInboxFile not configured", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
       fs.writeFileSync(settingsFile, JSON.stringify({ otherSetting: "value" }));
 
-      expect(() => readPluginSettings(testVaultDir)).toThrow(
-        "cliInboxFile not configured"
-      );
+      expect(() => readPluginSettings(testVaultDir)).toThrow("cliInboxFile not configured");
     });
   });
 });
@@ -653,9 +640,7 @@ export function readPluginSettings(vaultPath: string): PluginSettings {
 
   const obsidianDir = path.join(expandedPath, ".obsidian");
   if (!fs.existsSync(obsidianDir)) {
-    throw new Error(
-      `Not a valid Obsidian vault (missing .obsidian folder): ${expandedPath}`
-    );
+    throw new Error(`Not a valid Obsidian vault (missing .obsidian folder): ${expandedPath}`);
   }
 
   const pluginDir = path.join(obsidianDir, "plugins", "flow");
@@ -671,7 +656,7 @@ export function readPluginSettings(vaultPath: string): PluginSettings {
     if (!settings.cliInboxFile) {
       throw new Error(
         "cliInboxFile not configured in Flow plugin settings\n" +
-        "Please open Obsidian and configure: Settings → Flow GTD Coach → CLI Inbox File"
+          "Please open Obsidian and configure: Settings → Flow GTD Coach → CLI Inbox File"
       );
     }
 
@@ -705,6 +690,7 @@ git commit -m "feat: add plugin settings reader"
 ### Task 8: Implement Capture Function
 
 **Files:**
+
 - Create: `flow-cli/src/capture.ts`
 - Create: `flow-cli/tests/capture.test.ts`
 
@@ -834,6 +820,7 @@ git commit -m "feat: add capture function"
 ### Task 9: Implement Argument Parsing
 
 **Files:**
+
 - Create: `flow-cli/src/index.ts`
 - Create: `flow-cli/tests/index.test.ts`
 
@@ -969,6 +956,7 @@ git commit -m "feat: add argument parsing"
 ### Task 10: Implement Main Orchestration
 
 **Files:**
+
 - Modify: `flow-cli/src/index.ts`
 - Modify: `flow-cli/src/config.ts`
 - Modify: `flow-cli/tests/index.test.ts`
@@ -1000,80 +988,74 @@ export async function promptForVaultPath(): Promise<string> {
 ```typescript
 // tests/index.test.ts - add to existing describe block
 
-  describe("main", () => {
-    const testConfigDir = path.join(__dirname, ".test-config");
-    const testConfigPath = path.join(testConfigDir, "config.json");
-    const testVaultDir = path.join(__dirname, ".test-vault");
-    const obsidianDir = path.join(testVaultDir, ".obsidian");
-    const pluginDir = path.join(obsidianDir, "plugins", "flow");
-    const settingsFile = path.join(pluginDir, "data.json");
-    const inboxFile = path.join(testVaultDir, "inbox.md");
+describe("main", () => {
+  const testConfigDir = path.join(__dirname, ".test-config");
+  const testConfigPath = path.join(testConfigDir, "config.json");
+  const testVaultDir = path.join(__dirname, ".test-vault");
+  const obsidianDir = path.join(testVaultDir, ".obsidian");
+  const pluginDir = path.join(obsidianDir, "plugins", "flow");
+  const settingsFile = path.join(pluginDir, "data.json");
+  const inboxFile = path.join(testVaultDir, "inbox.md");
 
-    beforeEach(() => {
-      // Clean up
-      if (fs.existsSync(testConfigDir)) {
-        fs.rmSync(testConfigDir, { recursive: true });
-      }
-      if (fs.existsSync(testVaultDir)) {
-        fs.rmSync(testVaultDir, { recursive: true });
-      }
+  beforeEach(() => {
+    // Clean up
+    if (fs.existsSync(testConfigDir)) {
+      fs.rmSync(testConfigDir, { recursive: true });
+    }
+    if (fs.existsSync(testVaultDir)) {
+      fs.rmSync(testVaultDir, { recursive: true });
+    }
 
-      // Set up vault
-      fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(
-        settingsFile,
-        JSON.stringify({ cliInboxFile: "inbox.md" })
-      );
-    });
-
-    afterEach(() => {
-      if (fs.existsSync(testConfigDir)) {
-        fs.rmSync(testConfigDir, { recursive: true });
-      }
-      if (fs.existsSync(testVaultDir)) {
-        fs.rmSync(testVaultDir, { recursive: true });
-      }
-    });
-
-    it("should capture text with existing config", async () => {
-      // Set up config
-      fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: testVaultDir })
-      );
-
-      // Mock process.argv
-      process.argv = ["node", "flow", "buy milk"];
-
-      await main();
-
-      expect(mockConsoleLog).toHaveBeenCalledWith('Captured: "buy milk"');
-      const content = fs.readFileSync(inboxFile, "utf-8");
-      expect(content).toBe("buy milk\n");
-    });
-
-    it("should handle --vault override", async () => {
-      process.argv = ["node", "flow", "--vault", testVaultDir, "buy milk"];
-
-      await main();
-
-      expect(mockConsoleLog).toHaveBeenCalledWith('Captured: "buy milk"');
-      const content = fs.readFileSync(inboxFile, "utf-8");
-      expect(content).toBe("buy milk\n");
-    });
-
-    it("should exit with error if no vault configured", async () => {
-      process.argv = ["node", "flow", "buy milk"];
-
-      await main();
-
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("No default vault configured")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+    // Set up vault
+    fs.mkdirSync(pluginDir, { recursive: true });
+    fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
   });
+
+  afterEach(() => {
+    if (fs.existsSync(testConfigDir)) {
+      fs.rmSync(testConfigDir, { recursive: true });
+    }
+    if (fs.existsSync(testVaultDir)) {
+      fs.rmSync(testVaultDir, { recursive: true });
+    }
+  });
+
+  it("should capture text with existing config", async () => {
+    // Set up config
+    fs.mkdirSync(testConfigDir, { recursive: true });
+    fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: testVaultDir }));
+
+    // Mock process.argv
+    process.argv = ["node", "flow", "buy milk"];
+
+    await main();
+
+    expect(mockConsoleLog).toHaveBeenCalledWith('Captured: "buy milk"');
+    const content = fs.readFileSync(inboxFile, "utf-8");
+    expect(content).toBe("buy milk\n");
+  });
+
+  it("should handle --vault override", async () => {
+    process.argv = ["node", "flow", "--vault", testVaultDir, "buy milk"];
+
+    await main();
+
+    expect(mockConsoleLog).toHaveBeenCalledWith('Captured: "buy milk"');
+    const content = fs.readFileSync(inboxFile, "utf-8");
+    expect(content).toBe("buy milk\n");
+  });
+
+  it("should exit with error if no vault configured", async () => {
+    process.argv = ["node", "flow", "buy milk"];
+
+    await main();
+
+    expect(mockConsoleError).toHaveBeenCalledWith(
+      expect.stringContaining("No default vault configured")
+    );
+    expect(mockProcessExit).toHaveBeenCalledWith(1);
+  });
+});
 ```
 
 **Step 3: Run test to verify it fails**
@@ -1158,6 +1140,7 @@ git commit -m "feat: implement main CLI orchestration"
 ### Task 11: Add Error Message Tests
 
 **Files:**
+
 - Modify: `flow-cli/tests/index.test.ts`
 
 **Step 1: Write error message tests**
@@ -1165,64 +1148,62 @@ git commit -m "feat: implement main CLI orchestration"
 ```typescript
 // tests/index.test.ts - add to main describe block
 
-    it("should show usage if no text provided", async () => {
-      process.argv = ["node", "flow"];
+it("should show usage if no text provided", async () => {
+  process.argv = ["node", "flow"];
 
-      await main();
+  await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("Please provide text to capture")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+  expect(mockConsoleError).toHaveBeenCalledWith(
+    expect.stringContaining("Please provide text to capture")
+  );
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
 
-    it("should handle vault not found error", async () => {
-      process.argv = ["node", "flow", "--vault", "/nonexistent", "test"];
+it("should handle vault not found error", async () => {
+  process.argv = ["node", "flow", "--vault", "/nonexistent", "test"];
 
-      await main();
+  await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("Vault not found")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+  expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining("Vault not found"));
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
 
-    it("should handle invalid vault error", async () => {
-      fs.mkdirSync(testVaultDir, { recursive: true });
-      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+it("should handle invalid vault error", async () => {
+  fs.mkdirSync(testVaultDir, { recursive: true });
+  process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
 
-      await main();
+  await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("Not a valid Obsidian vault")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+  expect(mockConsoleError).toHaveBeenCalledWith(
+    expect.stringContaining("Not a valid Obsidian vault")
+  );
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
 
-    it("should handle plugin not installed error", async () => {
-      fs.mkdirSync(obsidianDir, { recursive: true });
-      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+it("should handle plugin not installed error", async () => {
+  fs.mkdirSync(obsidianDir, { recursive: true });
+  process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
 
-      await main();
+  await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("Flow plugin not installed")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+  expect(mockConsoleError).toHaveBeenCalledWith(
+    expect.stringContaining("Flow plugin not installed")
+  );
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
 
-    it("should handle missing cliInboxFile setting", async () => {
-      fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(settingsFile, JSON.stringify({}));
-      process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
+it("should handle missing cliInboxFile setting", async () => {
+  fs.mkdirSync(pluginDir, { recursive: true });
+  fs.writeFileSync(settingsFile, JSON.stringify({}));
+  process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
 
-      await main();
+  await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("cliInboxFile not configured")
-      );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
-    });
+  expect(mockConsoleError).toHaveBeenCalledWith(
+    expect.stringContaining("cliInboxFile not configured")
+  );
+  expect(mockProcessExit).toHaveBeenCalledWith(1);
+});
 ```
 
 **Step 2: Run tests**
@@ -1245,6 +1226,7 @@ git commit -m "test: add comprehensive error message tests"
 ### Task 12: Build CLI and Test Manually
 
 **Files:**
+
 - None (manual testing)
 
 **Step 1: Build the CLI**
@@ -1283,6 +1265,7 @@ echo '{"cliInboxFile": "inbox.md"}' > /tmp/test-vault/.obsidian/plugins/flow/dat
 Run: `./dist/index.js --vault /tmp/test-vault "buy milk"`
 
 Expected:
+
 - Output: `Captured: "buy milk"`
 - File `/tmp/test-vault/inbox.md` contains `buy milk\n`
 
@@ -1291,6 +1274,7 @@ Expected:
 Run: `./dist/index.js --vault /tmp/test-vault "call dentist"`
 
 Expected:
+
 - Output: `Captured: "call dentist"`
 - File `/tmp/test-vault/inbox.md` contains both lines
 
@@ -1313,6 +1297,7 @@ git commit -m "build: compile CLI for manual testing"
 ### Task 13: Add cliInboxFile Setting to Plugin
 
 **Files:**
+
 - Modify: `src/settings-tab.ts`
 - Modify: `src/types.ts`
 
@@ -1321,12 +1306,12 @@ git commit -m "build: compile CLI for manual testing"
 ```typescript
 // tests/settings-tab.test.ts - add to existing tests
 
-  it("should display CLI inbox file setting", () => {
-    settingsTab.display();
+it("should display CLI inbox file setting", () => {
+  settingsTab.display();
 
-    const container = containerEl.querySelector(".setting-item");
-    expect(container?.textContent).toContain("CLI Inbox File");
-  });
+  const container = containerEl.querySelector(".setting-item");
+  expect(container?.textContent).toContain("CLI Inbox File");
+});
 ```
 
 **Step 2: Run test**
@@ -1396,12 +1381,13 @@ git commit -m "feat: add CLI inbox file setting to plugin"
 ### Task 14: Update Documentation
 
 **Files:**
+
 - Create: `flow-cli/PUBLISHING.md`
 - Modify: `README.md` (main plugin README)
 
 **Step 1: Write CLI publishing guide**
 
-```markdown
+````markdown
 # Publishing Flow CLI
 
 ## Preparation
@@ -1417,6 +1403,7 @@ git commit -m "feat: add CLI inbox file setting to plugin"
 cd flow-cli
 npm publish --access public
 ```
+````
 
 ## Installation
 
@@ -1432,7 +1419,8 @@ npm install -g @flow/cli
 flow --version
 flow --help
 ```
-```
+
+````
 
 **Step 2: Update main README**
 
@@ -1458,7 +1446,7 @@ flow "call dentist"
 
 # Override vault
 flow --vault ~/Obsidian/Work "meeting notes"
-```
+````
 
 ### Configuration
 
@@ -1468,14 +1456,15 @@ flow --vault ~/Obsidian/Work "meeting notes"
 4. Run `flow "text"` - first run will prompt for vault path
 
 See [flow-cli/README.md](flow-cli/README.md) for details.
-```
+
+````
 
 **Step 3: Commit**
 
 ```bash
 git add flow-cli/PUBLISHING.md README.md
 git commit -m "docs: add CLI documentation and publishing guide"
-```
+````
 
 ---
 
@@ -1484,6 +1473,7 @@ git commit -m "docs: add CLI documentation and publishing guide"
 ### Final Checks
 
 **Run all tests:**
+
 ```bash
 cd flow-cli
 npm test
@@ -1493,6 +1483,7 @@ npm run test:coverage
 Expected: 80%+ coverage, all tests passing
 
 **Build and format:**
+
 ```bash
 npm run build
 npm run format
@@ -1501,6 +1492,7 @@ npm run format
 Expected: Clean build, code formatted
 
 **Manual test:**
+
 ```bash
 mkdir -p /tmp/test-vault/.obsidian/plugins/flow
 echo '{"cliInboxFile": "inbox.md"}' > /tmp/test-vault/.obsidian/plugins/flow/data.json
@@ -1511,6 +1503,7 @@ cat /tmp/test-vault/inbox.md
 Expected: File contains "test capture"
 
 **Clean up:**
+
 ```bash
 rm -rf /tmp/test-vault
 ```

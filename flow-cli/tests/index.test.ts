@@ -89,10 +89,7 @@ describe("CLI Entry Point", () => {
 
       // Set up vault
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(
-        settingsFile,
-        JSON.stringify({ cliInboxFile: "inbox.md" })
-      );
+      fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
     });
 
     afterEach(() => {
@@ -107,10 +104,7 @@ describe("CLI Entry Point", () => {
     it("should capture text with existing config", async () => {
       // Set up config
       fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(
-        testConfigPath,
-        JSON.stringify({ defaultVault: testVaultDir })
-      );
+      fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: testVaultDir }));
 
       // Mock process.argv
       process.argv = ["node", "flow", "buy milk"];
@@ -137,9 +131,7 @@ describe("CLI Entry Point", () => {
 
       await main();
 
-      expect(mockConsoleError).toHaveBeenCalledWith(
-        expect.stringContaining("Vault not found")
-      );
+      expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining("Vault not found"));
       expect(mockProcessExit).toHaveBeenCalledWith(1);
     });
 

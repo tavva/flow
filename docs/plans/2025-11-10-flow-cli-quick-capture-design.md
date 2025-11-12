@@ -21,11 +21,13 @@ A standalone CLI tool for capturing quick thoughts to a Flow inbox file. Users r
 The CLI ships as a standalone npm package (`@flow/cli` or `flow-cli`), installed globally. It reads the Flow plugin's settings but runs independently of Obsidian.
 
 **Why standalone?**
+
 - Works from any terminal location
 - Installs easily with npm global install
 - Doesn't require Obsidian to be running
 
 **Package structure:**
+
 ```
 flow-cli/
 ├── package.json
@@ -45,6 +47,7 @@ flow-cli/
 ### Configuration
 
 **CLI config** (`~/.config/flow-cli/config.json`):
+
 ```json
 {
   "defaultVault": "/Users/ben/Obsidian/MyVault"
@@ -54,6 +57,7 @@ flow-cli/
 The CLI reads this file to find the vault. Users set this value during first run or via `--config` flag.
 
 **Plugin settings** (`<vault>/.obsidian/plugins/flow/data.json`):
+
 ```json
 {
   "cliInboxFile": "Flow CLI Inbox.md",
@@ -126,38 +130,45 @@ All errors write to stderr and exit with code 1.
 ### User Errors
 
 **No text provided:**
+
 ```
 Error: Please provide text to capture
 Usage: flow "your text here"
 ```
 
 **Vault doesn't exist:**
+
 ```
 Error: Vault not found at /Users/ben/Obsidian/MyVault
 ```
 
 **Not a valid vault:**
+
 ```
 Error: Not a valid Obsidian vault (missing .obsidian folder): /Users/ben/Obsidian/MyVault
 ```
 
 **Plugin not installed:**
+
 ```
 Error: Flow plugin not installed at /Users/ben/Obsidian/MyVault/.obsidian/plugins/flow
 ```
 
 **Settings unreadable:**
+
 ```
 Error: Could not read Flow plugin settings
 ```
 
 **CLI inbox file not configured:**
+
 ```
 Error: cliInboxFile not configured in Flow plugin settings
 Please open Obsidian and configure: Settings → Flow GTD Coach → CLI Inbox File
 ```
 
 **Write failed:**
+
 ```
 Error: Could not write to inbox file: [system error message]
 ```
@@ -175,11 +186,13 @@ Output goes to stdout for visibility. Future features could pipe text to other c
 ### Dependencies
 
 **Runtime:** None - use Node.js built-ins only
+
 - `fs` - File system operations
 - `path` - Path manipulation
 - `readline` - Interactive prompts
 
 **Dev dependencies:**
+
 - TypeScript
 - esbuild
 - Jest
@@ -190,11 +203,13 @@ This matches the Flow plugin's tooling for consistency.
 ### Build Process
 
 esbuild bundles `src/index.ts` to `dist/index.js` with:
+
 - Shebang: `#!/usr/bin/env node`
 - Target: Node.js 16+ (Obsidian's Electron version)
 - Single bundle (no external dependencies)
 
 `package.json` configuration:
+
 ```json
 {
   "name": "@flow/cli",
@@ -209,6 +224,7 @@ Users install globally: `npm install -g @flow/cli`
 ### Module Breakdown
 
 **`index.ts`** - Entry point
+
 - Parse command-line arguments
 - Read or create config file
 - Call plugin settings reader
@@ -216,18 +232,21 @@ Users install globally: `npm install -g @flow/cli`
 - Handle errors and print messages
 
 **`config.ts`** - Config management
+
 - `readConfig(): Config | null` - Read `~/.config/flow-cli/config.json`
 - `writeConfig(config: Config): void` - Write config file
 - `promptForVaultPath(): Promise<string>` - Interactive prompt
 - Creates `~/.config/flow-cli/` directory if missing
 
 **`plugin-settings.ts`** - Plugin settings reader
+
 - `readPluginSettings(vaultPath: string): PluginSettings` - Read and parse data.json
 - Validates vault has `.obsidian/plugins/flow/data.json`
 - Throws specific errors for missing files or invalid JSON
 - Extracts `cliInboxFile` setting
 
 **`capture.ts`** - File operations
+
 - `capture(vaultPath: string, inboxFile: string, text: string): void`
 - Resolves inbox file path relative to vault
 - Creates parent directories if needed
@@ -235,6 +254,7 @@ Users install globally: `npm install -g @flow/cli`
 - Creates file if doesn't exist
 
 **`types.ts`** - Type definitions
+
 ```typescript
 interface Config {
   defaultVault: string;
@@ -253,6 +273,7 @@ Jest tests with 80% coverage target (matching Flow plugin standards).
 ### Unit Tests
 
 **`config.test.ts`**
+
 - Read existing config file
 - Write new config file
 - Create config directory if missing
@@ -260,6 +281,7 @@ Jest tests with 80% coverage target (matching Flow plugin standards).
 - Interactive prompt flow
 
 **`plugin-settings.test.ts`**
+
 - Read plugin data.json successfully
 - Handle missing `.obsidian` folder
 - Handle missing plugin folder
@@ -268,6 +290,7 @@ Jest tests with 80% coverage target (matching Flow plugin standards).
 - Throw appropriate errors for each case
 
 **`capture.test.ts`**
+
 - Append text to existing file
 - Create new file if missing
 - Create parent directories if needed
@@ -276,6 +299,7 @@ Jest tests with 80% coverage target (matching Flow plugin standards).
 - Handle disk full errors
 
 **`index.test.ts`** (integration-style)
+
 - Full capture flow with mocked filesystem
 - Argument parsing for all flags
 - Config setup on first run
@@ -285,6 +309,7 @@ Jest tests with 80% coverage target (matching Flow plugin standards).
 ### Manual Testing
 
 After building:
+
 1. Install globally: `npm install -g .`
 2. Run first-time setup: `flow "test capture"`
 3. Verify config file created in `~/.config/flow-cli/`
@@ -298,6 +323,7 @@ After building:
 Add new setting to Flow plugin:
 
 **Settings UI:**
+
 ```
 CLI Inbox File
 Path to file for CLI quick captures (relative to vault root)
