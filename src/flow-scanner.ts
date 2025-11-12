@@ -55,6 +55,7 @@ export class FlowProjectScanner {
       nextActions: this.extractSection(content, "## Next actions"),
       parentProject: frontmatter["parent-project"],
       milestones: this.extractSectionText(content, "## Milestones"),
+      coverImage: frontmatter["cover-image"],
     };
   }
 

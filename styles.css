@@ -1227,6 +1227,21 @@ select.flow-gtd-inline-select option,
         margin-bottom: 12px;
 }
 
+.flow-gtd-sphere-project-with-cover {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+}
+
+.flow-gtd-sphere-project-content {
+        flex: 1 1 auto;
+        min-width: 0;
+}
+
+.flow-gtd-sphere-project-cover {
+        flex: 0 0 auto;
+}
+
 .flow-gtd-sphere-project-p1 {
         background-color: var(--background-secondary);
         border: 2px solid var(--interactive-accent);
@@ -1268,10 +1283,18 @@ select.flow-gtd-inline-select option,
 
 .flow-gtd-sphere-project-header {
         display: flex;
-        justify-content: space-between;
         align-items: baseline;
         gap: 12px;
         margin-bottom: 8px;
+}
+
+.flow-gtd-sphere-project-cover-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--background-modifier-border);
+        display: block;
 }
 
 .flow-gtd-sphere-project-title {
@@ -1294,11 +1317,19 @@ select.flow-gtd-inline-select option,
         font-weight: 500;
         color: var(--text-muted);
         text-transform: uppercase;
+        flex-shrink: 0;
+        white-space: nowrap;
+        min-width: 90px;
+        height: 1.5em;
 }
 
 /* Priority label (shown by default) */
 .flow-gtd-sphere-project-priority-label {
-        display: inline;
+        display: inline-block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        line-height: 1.5em;
 }
 
 /* Priority dropdown (hidden by default) */
@@ -1306,16 +1337,19 @@ select.flow-gtd-inline-select option,
         display: none;
         position: absolute;
         top: 0;
-        right: 0;
+        left: 0;
         font-size: 13px;
         font-weight: 500;
         color: var(--text-normal);
         background-color: var(--background-primary);
         border: 1px solid var(--background-modifier-border);
         border-radius: 4px;
-        padding: 2px 4px;
+        padding: 0 4px;
         cursor: pointer;
-        min-width: 100px;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        box-sizing: border-box;
 }
 
 /* Show dropdown on hover over project box, hide label */

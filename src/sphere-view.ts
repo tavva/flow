@@ -434,7 +434,15 @@ export class SphereView extends ItemView {
         wrapper.addClass("flow-gtd-sphere-project-p1");
       }
 
-      const header = wrapper.createDiv({ cls: "flow-gtd-sphere-project-header" });
+      // Add cover image class if present
+      if (project.coverImage) {
+        wrapper.addClass("flow-gtd-sphere-project-with-cover");
+      }
+
+      // Content container (left side when there's a cover image)
+      const content = wrapper.createDiv({ cls: "flow-gtd-sphere-project-content" });
+
+      const header = content.createDiv({ cls: "flow-gtd-sphere-project-header" });
 
       const titleLink = header.createEl("a", {
         text: project.title,
@@ -450,7 +458,7 @@ export class SphereView extends ItemView {
       }
 
       if (project.nextActions && project.nextActions.length > 0) {
-        const list = wrapper.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
+        const list = content.createEl("ul", { cls: "flow-gtd-sphere-next-actions" });
         if (!this.showNextActions) {
           list.classList.add("flow-gtd-sphere-actions-hidden");
         }
@@ -459,7 +467,17 @@ export class SphereView extends ItemView {
           void this.renderActionItem(list, action, project.file, this.sphere, false);
         });
       } else {
-        this.renderEmptyMessage(wrapper, "No next actions captured yet.");
+        this.renderEmptyMessage(content, "No next actions captured yet.");
+      }
+
+      // Cover image (right side of wrapper)
+      if (project.coverImage) {
+        const coverContainer = wrapper.createDiv({ cls: "flow-gtd-sphere-project-cover" });
+        const coverImg = coverContainer.createEl("img", {
+          cls: "flow-gtd-sphere-project-cover-image",
+        });
+        coverImg.src = this.app.vault.adapter.getResourcePath(project.coverImage);
+        coverImg.alt = `Cover image for ${project.title}`;
       }
     });
   }
