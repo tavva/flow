@@ -109,7 +109,7 @@ Project description`;
     expect(result.imagePath).toMatch(/^Assets\/flow-project-cover-images\/[\w-]+\.png$/);
   });
 
-  it("should use project name in the generation prompt", async () => {
+  it("should use filename (not H1 heading) in the generation prompt", async () => {
     const projectContent = `---
 creation-date: 2025-11-12
 tags: project/work
@@ -148,11 +148,17 @@ Project description`;
 
     await generateCoverImage(mockVault, mockProjectFile, mockSettings);
 
-    // Verify the prompt contains the project name
+    // Verify the prompt contains the filename (Test Project), not the H1 heading (My Cool Project)
     expect(global.fetch).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
-        body: expect.stringContaining("My Cool Project"),
+        body: expect.stringContaining("Test Project"),
+      })
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.not.stringContaining("My Cool Project"),
       })
     );
   });

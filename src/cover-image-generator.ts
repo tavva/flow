@@ -49,9 +49,6 @@ export async function generateCoverImage(
     throw new Error("Project already has a cover image");
   }
 
-  // Extract project name from content
-  const projectName = extractProjectName(content);
-
   // Generate unique filename
   const filename = `${uuidv4()}.png`;
   const imagePath = `${settings.coverImagesFolderPath}/${filename}`;
@@ -61,7 +58,7 @@ export async function generateCoverImage(
 
   // Generate image via OpenRouter
   const imageData = await callOpenRouterImageAPI(
-    projectName,
+    projectFile.basename,
     settings.openaiApiKey,
     settings.openaiBaseUrl,
     settings.openrouterImageModel
@@ -74,15 +71,6 @@ export async function generateCoverImage(
   await updateProjectFrontmatter(vault, projectFile, content, imagePath);
 
   return { imagePath };
-}
-
-/**
- * Extracts the project name from the markdown content.
- * Looks for the first H1 heading (# Project Name).
- */
-function extractProjectName(content: string): string {
-  const match = content.match(/^#\s+(.+)$/m);
-  return match ? match[1].trim() : "Untitled Project";
 }
 
 /**
