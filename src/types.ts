@@ -99,6 +99,7 @@ export interface PluginSettings {
   openaiApiKey: string;
   openaiBaseUrl: string;
   openaiModel: string;
+  openrouterImageModel: string;
   defaultPriority: number;
   defaultStatus: string;
   inboxFilesFolderPath: string;
@@ -109,6 +110,7 @@ export interface PluginSettings {
   projectsFolderPath: string;
   projectTemplateFilePath: string;
   cliInboxFile: string; // Path to file for CLI quick captures (relative to vault root)
+  coverImagesFolderPath: string; // Folder path for generated project cover images
   spheres: string[];
   focus?: FocusItem[]; // DEPRECATED: Migrated to file storage (flow/focus.json)
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
@@ -125,6 +127,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   openaiApiKey: "",
   openaiBaseUrl: "https://openrouter.ai/api/v1",
   openaiModel: "google/gemini-2.5-flash",
+  openrouterImageModel: "google/gemini-2.5-flash-image",
   anthropicApiKey: "",
   anthropicModel: "claude-haiku-4-5",
   defaultPriority: 2,
@@ -137,6 +140,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
   cliInboxFile: "Flow CLI Inbox.md",
+  coverImagesFolderPath: "Assets/flow-project-cover-images",
   spheres: ["personal", "work"],
   focusAutoClearTime: "03:00",
   focusArchiveFile: "Focus Archive.md",

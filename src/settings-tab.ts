@@ -130,6 +130,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(openAIContainer)
+      .setName("OpenRouter Image Model")
+      .setDesc("Specify the OpenRouter model ID to use for image generation.")
+      .addText((text) =>
+        text
+          .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
+          .setValue(this.plugin.settings.openrouterImageModel)
+          .onChange(async (value) => {
+            this.plugin.settings.openrouterImageModel =
+              value.trim() || DEFAULT_SETTINGS.openrouterImageModel;
+            await this.plugin.saveSettings();
+          })
+      );
+
     openAIContainer.createDiv("setting-item-description").innerHTML = `
                         <p>OpenRouter requires the <code>HTTP-Referer</code> and <code>X-Title</code> headers. This plugin sends them automatically when the base URL contains <code>openrouter.ai</code>.</p>
                         <p><strong>Note:</strong> API keys are stored locally on your device.</p>
@@ -309,6 +323,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.cliInboxFile)
           .onChange(async (value) => {
             this.plugin.settings.cliInboxFile = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // Cover Images Folder
+    new Setting(containerEl)
+      .setName("Cover Images Folder")
+      .setDesc("Folder where generated project cover images will be saved")
+      .addText((text) =>
+        text
+          .setPlaceholder("Assets/flow-project-cover-images")
+          .setValue(this.plugin.settings.coverImagesFolderPath)
+          .onChange(async (value) => {
+            this.plugin.settings.coverImagesFolderPath = value;
             await this.plugin.saveSettings();
           })
       );

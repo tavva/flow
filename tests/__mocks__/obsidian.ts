@@ -57,6 +57,7 @@ export class Workspace {
   setActiveLeaf = jest.fn();
   getRightLeaf = jest.fn();
   detachLeavesOfType = jest.fn();
+  getActiveFile = jest.fn();
   on = jest.fn(() => ({ unload: jest.fn() }));
   viewRegistry: Record<string, any> = {};
 }
@@ -84,6 +85,14 @@ export class Modal {
   close() {}
   onOpen() {}
   onClose() {}
+}
+
+export class Notice {
+  constructor(message: string) {
+    Notice.mockConstructor(message);
+  }
+
+  static mockConstructor = jest.fn();
 }
 
 export class Setting {
@@ -180,10 +189,6 @@ export class PluginSettingTab {
 
   display() {}
   hide() {}
-}
-
-export class Notice {
-  constructor(message: string, timeout?: number) {}
 }
 
 export function normalizePath(path: string): string {

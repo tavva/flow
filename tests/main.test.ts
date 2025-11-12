@@ -1,6 +1,6 @@
 // ABOUTME: Tests for the main plugin class focusing on command registration and view management
 // ABOUTME: Verifies that views are properly focused when already open
-import { App, WorkspaceLeaf } from "obsidian";
+import { App, WorkspaceLeaf, Notice } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-processing-view";
 import { WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
@@ -313,6 +313,66 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     it("should include completedTodaySectionCollapsed in default settings", () => {
       const settings = DEFAULT_SETTINGS;
       expect(settings.completedTodaySectionCollapsed).toBe(false);
+    });
+  });
+
+  describe("Generate cover image command", () => {
+    beforeEach(() => {
+      Notice.mockConstructor.mockClear();
+    });
+
+    it("should register generate-cover-image command", () => {
+      const commands = mockApp.commands.commands;
+      expect(commands["flow:generate-cover-image"]).toBeDefined();
+    });
+
+    it("should show error notice if AI is disabled", async () => {
+      plugin.settings.aiEnabled = false;
+
+      // Execute command
+      const command = mockApp.commands.commands["flow:generate-cover-image"];
+      await command.callback();
+
+      expect(Notice.mockConstructor).toHaveBeenCalledWith(
+        expect.stringContaining("AI features are disabled")
+      );
+    });
+
+    it("should show error notice if no active file", async () => {
+      // Enable AI for this test
+      plugin.settings.aiEnabled = true;
+      plugin.settings.openaiApiKey = "test-key";
+
+      // No active file
+      (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(null);
+
+      // Execute command
+      const command = mockApp.commands.commands["flow:generate-cover-image"];
+      await command.callback();
+
+      expect(Notice.mockConstructor).toHaveBeenCalledWith(
+        expect.stringContaining("No active file")
+      );
+    });
+
+    it("should show error notice if active file is not a project", async () => {
+      // Enable AI for this test
+      plugin.settings.aiEnabled = true;
+      plugin.settings.openaiApiKey = "test-key";
+
+      const mockFile = {
+        path: "Notes/Not a project.md",
+        basename: "Not a project",
+      };
+      (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(mockFile);
+
+      // Execute command
+      const command = mockApp.commands.commands["flow:generate-cover-image"];
+      await command.callback();
+
+      expect(Notice.mockConstructor).toHaveBeenCalledWith(
+        expect.stringContaining("not in the projects folder")
+      );
     });
   });
 });

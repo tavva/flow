@@ -12,6 +12,7 @@ import { FlowCoachView, FLOW_COACH_VIEW_TYPE } from "./src/flow-coach-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
+import { generateCoverImage } from "./src/cover-image-generator";
 
 type InboxCommandConfig = {
   id: string;
@@ -151,6 +152,49 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Open Flow Coach",
       callback: () => {
         this.activateFlowCoachView();
+      },
+    });
+
+    // Add generate cover image command
+    this.addCommand({
+      id: "generate-cover-image",
+      name: "Generate cover image for current project",
+      callback: async () => {
+        // Check if AI is enabled (cover image generation requires AI)
+        if (!this.settings.aiEnabled) {
+          new Notice("AI features are disabled. Please enable AI in the plugin settings to use this feature.");
+          return;
+        }
+
+        // Check if API key is configured
+        if (!this.hasRequiredApiKey()) {
+          new Notice(this.getMissingApiKeyMessage());
+          return;
+        }
+
+        const activeFile = this.app.workspace.getActiveFile();
+
+        if (!activeFile) {
+          new Notice("No active file. Please open a project file.");
+          return;
+        }
+
+        // Check if file is in projects folder
+        if (!activeFile.path.startsWith(this.settings.projectsFolderPath)) {
+          new Notice(
+            `File is not in the projects folder (${this.settings.projectsFolderPath})`
+          );
+          return;
+        }
+
+        try {
+          new Notice("Generating cover image...");
+          const result = await generateCoverImage(this.app.vault, activeFile, this.settings);
+          new Notice(`Cover image generated successfully: ${result.imagePath}`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          new Notice(`Failed to generate cover image: ${errorMessage}`);
+        }
       },
     });
 

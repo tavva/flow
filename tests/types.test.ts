@@ -43,6 +43,13 @@ describe("FocusItem type", () => {
   });
 });
 
+describe("DEFAULT_SETTINGS", () => {
+  it("should include openrouterImageModel with default value", () => {
+    const { DEFAULT_SETTINGS } = require("../src/types");
+    expect(DEFAULT_SETTINGS.openrouterImageModel).toBe("google/gemini-2.5-flash-image");
+  });
+});
+
 describe("Coach types", () => {
   it("should define CoachConversation interface", () => {
     const conversation: CoachConversation = {
