@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Flow GTD Coach is an Obsidian plugin written in TypeScript. Core services live in `src/` (e.g., `flow-scanner.ts`, `inbox-scanner.ts`, `gtd-processor.ts`) with shared contracts in `src/types.ts`. UI wiring stays in `src/main.ts`, and modal styles belong in `styles.css`. Jest specs mirror source files under `tests/` with Obsidian shims in `tests/__mocks__/obsidian.ts`.
+Flow is an Obsidian plugin written in TypeScript. Core services live in `src/` (e.g., `flow-scanner.ts`, `inbox-scanner.ts`, `gtd-processor.ts`) with shared contracts in `src/types.ts`. UI wiring stays in `src/main.ts`, and modal styles belong in `styles.css`. Jest specs mirror source files under `tests/` with Obsidian shims in `tests/__mocks__/obsidian.ts`.
 
 ## Build, Test, and Development Commands
 

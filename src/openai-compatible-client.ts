@@ -49,8 +49,8 @@ export class OpenAICompatibleClient implements LanguageModelClient {
 
     if (this.baseUrl.includes("openrouter.ai")) {
       this.defaultHeaders = {
-        "HTTP-Referer": "https://github.com/FlowApp/flow-coach",
-        "X-Title": "Flow GTD Coach",
+        "HTTP-Referer": "https://github.com/tavva/flow",
+        "X-Title": "Flow",
         ...this.defaultHeaders,
       };
     }

@@ -114,7 +114,7 @@ flow --vault ~/Obsidian/Work "meeting notes"
 **Configuration:**
 
 1. Install Flow plugin in Obsidian
-2. Configure CLI Inbox File in Settings → Flow GTD Coach
+2. Configure CLI Inbox File in Settings → Flow
 3. Install CLI globally: `npm install -g @flow/cli`
 4. Run `flow "text"` - first run will prompt for vault path
 

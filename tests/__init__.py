@@ -1,1 +1,1 @@
-"""Test suite for Flow GTD Coach plugin."""
+"""Test suite for Flow plugin."""

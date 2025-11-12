@@ -1,5 +1,5 @@
 /**
- * Validation utilities for Flow GTD Coach
+ * Validation utilities for Flow
  */
 import { VALID_PROJECT_STATUSES } from "./types";
 

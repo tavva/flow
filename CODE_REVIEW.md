@@ -1,4 +1,4 @@
-# Comprehensive Code Review: Flow GTD Coach Obsidian Plugin
+# Comprehensive Code Review: Flow Obsidian Plugin
 
 **Date:** 2025-10-21
 **Reviewer:** Claude Code

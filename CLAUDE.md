@@ -735,7 +735,7 @@ When modifying prompts, test changes thoroughly with various inbox processing sc
 
 ## Plugin Settings
 
-The plugin supports several configurable settings accessible via Settings → Flow GTD Coach:
+The plugin supports several configurable settings accessible via Settings → Flow:
 
 ### Core Settings
 

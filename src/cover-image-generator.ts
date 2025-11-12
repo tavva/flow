@@ -101,8 +101,8 @@ async function callOpenRouterImageAPI(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
-      "HTTP-Referer": "https://github.com/FlowApp/flow-coach",
-      "X-Title": "Flow GTD Coach",
+      "HTTP-Referer": "https://github.com/tavva/flow",
+      "X-Title": "Flow: cover generator",
     },
     body: JSON.stringify({
       model,
