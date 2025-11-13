@@ -3,6 +3,16 @@ import { EditableItem } from "../src/inbox-types";
 import { FileWriter } from "../src/file-writer";
 import { GTDResponseValidationError } from "../src/errors";
 
+// Mock the cover image generator module before importing anything that uses it
+jest.mock("../src/cover-image-generator", () => ({
+  generateCoverImage: jest.fn(),
+}));
+
+import { generateCoverImage } from "../src/cover-image-generator";
+const mockGenerateCoverImage = generateCoverImage as jest.MockedFunction<
+  typeof generateCoverImage
+>;
+
 describe("InboxItemPersistenceService", () => {
   let writerMocks: {
     createProject: jest.Mock;
@@ -262,25 +272,28 @@ describe("InboxItemPersistenceService", () => {
   describe("auto-create cover image", () => {
     let mockApp: any;
     let mockSettings: any;
-    let mockGenerateCoverImage: jest.Mock;
     let serviceWithCoverImage: InboxItemPersistenceService;
 
     beforeEach(() => {
-      // Mock the generateCoverImage module
-      mockGenerateCoverImage = jest.fn().mockResolvedValue({
+      // Set up the mock to return a successful result
+      mockGenerateCoverImage.mockResolvedValue({
         imagePath: "Assets/flow-project-cover-images/test-image.png",
       });
 
-      jest.mock("../src/cover-image-generator", () => ({
-        generateCoverImage: mockGenerateCoverImage,
-      }));
-
       mockApp = {
         vault: {
+          read: jest.fn().mockResolvedValue("# Project Title\n\nProject content"),
           getAbstractFileByPath: jest.fn().mockReturnValue({
             path: "Projects/Test.md",
             basename: "Test",
           }),
+          adapter: {
+            mkdir: jest.fn().mockResolvedValue(undefined),
+            write: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        fileManager: {
+          processFrontMatter: jest.fn(),
         },
       };
 
@@ -342,9 +355,20 @@ describe("InboxItemPersistenceService", () => {
         editedNames: ["Finalize venue"],
       };
 
+      // Suppress expected console.error from the error handler
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
       // Should not throw, project creation should succeed
       await expect(serviceWithCoverImage.persist(item)).resolves.not.toThrow();
       expect(writerMocks.createProject).toHaveBeenCalledTimes(1);
+
+      // Verify error was logged
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to generate cover image for project:",
+        expect.any(Error)
+      );
+
+      consoleErrorSpy.mockRestore();
     });
 
     it("does not generate cover image for non-project actions", async () => {

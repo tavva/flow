@@ -53,6 +53,9 @@ export class WaitingForView extends ItemView {
   }
 
   async onOpen() {
+    // Reset filter to show all spheres
+    this.selectedSpheres = [...this.settings.spheres];
+
     // Register event listener for metadata cache changes (fires after file is indexed)
     this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
       // Check if file has list items (tasks) that might be waiting-for items
@@ -190,8 +193,11 @@ export class WaitingForView extends ItemView {
   }
 
   private filterItemsBySphere(items: WaitingForItem[]): WaitingForItem[] {
-    // If no spheres selected, show all items
-    if (this.selectedSpheres.length === 0) {
+    // If all spheres selected, show all items (including those without sphere)
+    if (
+      this.selectedSpheres.length === 0 ||
+      this.selectedSpheres.length === this.settings.spheres.length
+    ) {
       return items;
     }
 

@@ -163,7 +163,7 @@ describe("WaitingForView", () => {
   });
 
   describe("sphere filtering", () => {
-    test("should show all items when no spheres are selected", () => {
+    test("should show all items when all spheres are selected", () => {
       const items: WaitingForItem[] = [
         {
           file: "Projects/Work.md",
@@ -181,12 +181,20 @@ describe("WaitingForView", () => {
           text: "Wait for delivery",
           sphere: "personal",
         },
+        {
+          file: "Notes.md",
+          fileName: "Notes",
+          lineNumber: 2,
+          lineContent: "- [w] Wait for something",
+          text: "Wait for something",
+          sphere: undefined,
+        },
       ];
 
-      (view as any).selectedSpheres = [];
+      (view as any).selectedSpheres = ["personal", "work"];
       const filtered = (view as any).filterItemsBySphere(items);
 
-      expect(filtered).toHaveLength(2);
+      expect(filtered).toHaveLength(3); // Shows all including items without sphere
     });
 
     test("should filter items by selected sphere", () => {
@@ -216,7 +224,7 @@ describe("WaitingForView", () => {
       expect(filtered[0].sphere).toBe("work");
     });
 
-    test("should filter items by multiple selected spheres", () => {
+    test("should filter items by single sphere when not all selected", () => {
       const items: WaitingForItem[] = [
         {
           file: "Projects/Work.md",
@@ -234,21 +242,14 @@ describe("WaitingForView", () => {
           text: "Wait for delivery",
           sphere: "personal",
         },
-        {
-          file: "Projects/Other.md",
-          fileName: "Other",
-          lineNumber: 2,
-          lineContent: "- [w] Wait for something",
-          text: "Wait for something",
-          sphere: "other",
-        },
       ];
 
-      (view as any).selectedSpheres = ["work", "personal"];
+      // Select only work (not all spheres)
+      (view as any).selectedSpheres = ["work"];
       const filtered = (view as any).filterItemsBySphere(items);
 
-      expect(filtered).toHaveLength(2);
-      expect(filtered.map((i) => i.sphere)).toEqual(["work", "personal"]);
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].sphere).toBe("work");
     });
 
     test("should exclude items without sphere when filtering", () => {
