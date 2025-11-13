@@ -9,9 +9,7 @@ jest.mock("../src/cover-image-generator", () => ({
 }));
 
 import { generateCoverImage } from "../src/cover-image-generator";
-const mockGenerateCoverImage = generateCoverImage as jest.MockedFunction<
-  typeof generateCoverImage
->;
+const mockGenerateCoverImage = generateCoverImage as jest.MockedFunction<typeof generateCoverImage>;
 
 describe("InboxItemPersistenceService", () => {
   let writerMocks: {
