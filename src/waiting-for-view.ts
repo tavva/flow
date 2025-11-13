@@ -1,10 +1,11 @@
 // ABOUTME: Leaf view displaying all waiting-for items aggregated from across the vault.
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
-import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, EventRef, setIcon } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 import { WaitingForValidator } from "./waiting-for-validator";
+import { PluginSettings } from "./types";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -13,6 +14,7 @@ interface GroupedItems {
 }
 
 export class WaitingForView extends ItemView {
+  private settings: PluginSettings;
   private scanner: WaitingForScanner;
   private validator: WaitingForValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
@@ -20,11 +22,14 @@ export class WaitingForView extends ItemView {
   private refreshTimeout: NodeJS.Timeout | null = null;
   private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
+  private saveSettings: () => Promise<void>;
 
-  constructor(leaf: WorkspaceLeaf) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
+    this.settings = settings;
     this.scanner = new WaitingForScanner(this.app);
     this.validator = new WaitingForValidator(this.app);
+    this.saveSettings = saveSettings;
 
     // Check if Dataview is available for fast refreshes
     try {
@@ -141,16 +146,74 @@ export class WaitingForView extends ItemView {
     }
   }
 
+  private renderSphereFilter(container: HTMLElement) {
+    if (this.settings.spheres.length === 0) {
+      return;
+    }
+
+    const filterContainer = container.createDiv({ cls: "flow-gtd-waiting-for-sphere-filter" });
+
+    this.settings.spheres.forEach((sphere) => {
+      const isSelected = this.settings.waitingForFilterSpheres.includes(sphere);
+      const button = filterContainer.createEl("button", {
+        cls: isSelected
+          ? "flow-gtd-sphere-filter-btn flow-gtd-sphere-filter-btn-selected"
+          : "flow-gtd-sphere-filter-btn",
+        text: sphere,
+      });
+
+      button.addEventListener("click", async () => {
+        await this.toggleSphereFilter(sphere);
+        // Re-render the entire view
+        const items = await this.scanner.scanWaitingForItems();
+        const viewContainer = this.containerEl.children[1];
+        viewContainer.empty();
+        this.renderContent(viewContainer as HTMLElement, items);
+      });
+    });
+  }
+
+  private async toggleSphereFilter(sphere: string) {
+    const index = this.settings.waitingForFilterSpheres.indexOf(sphere);
+    if (index === -1) {
+      this.settings.waitingForFilterSpheres.push(sphere);
+    } else {
+      this.settings.waitingForFilterSpheres.splice(index, 1);
+    }
+    await this.saveSettings();
+  }
+
+  private filterItemsBySphere(items: WaitingForItem[]): WaitingForItem[] {
+    // If no spheres selected, show all items
+    if (this.settings.waitingForFilterSpheres.length === 0) {
+      return items;
+    }
+
+    // Filter to items matching selected spheres
+    return items.filter((item) => {
+      if (!item.sphere) {
+        return false;
+      }
+      return this.settings.waitingForFilterSpheres.includes(item.sphere);
+    });
+  }
+
   private renderContent(container: HTMLElement, items: WaitingForItem[]) {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-waiting-for-title" });
     titleEl.setText("Waiting For");
 
-    if (items.length === 0) {
+    // Render sphere filter buttons
+    this.renderSphereFilter(container);
+
+    // Apply filter
+    const filteredItems = this.filterItemsBySphere(items);
+
+    if (filteredItems.length === 0) {
       this.renderEmptyMessage(container);
       return;
     }
 
-    const grouped = this.groupItemsByFile(items);
+    const grouped = this.groupItemsByFile(filteredItems);
     this.renderGroupedItems(container, grouped);
   }
 

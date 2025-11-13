@@ -10,6 +10,7 @@ export interface WaitingForItem {
   lineNumber: number;
   lineContent: string; // Full line content for validation
   text: string;
+  sphere?: string; // Sphere extracted from inline tag or project tag
 }
 
 export class WaitingForScanner {
@@ -17,6 +18,34 @@ export class WaitingForScanner {
 
   constructor(app: App) {
     this.app = app;
+  }
+
+  private extractSphere(lineContent: string, filePath: string): string | undefined {
+    // First check for inline #sphere/X tag
+    const sphereTagMatch = lineContent.match(/#sphere\/([^\s]+)/i);
+    if (sphereTagMatch) {
+      return sphereTagMatch[1];
+    }
+
+    // Fall back to checking project tags from frontmatter
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (file instanceof TFile) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache?.frontmatter?.tags) {
+        const tags = Array.isArray(cache.frontmatter.tags)
+          ? cache.frontmatter.tags
+          : [cache.frontmatter.tags];
+
+        for (const tag of tags) {
+          const match = tag.match(/^project\/(.+)$/);
+          if (match) {
+            return match[1];
+          }
+        }
+      }
+    }
+
+    return undefined;
   }
 
   async scanWaitingForItems(): Promise<WaitingForItem[]> {
@@ -74,6 +103,7 @@ export class WaitingForScanner {
         lineNumber: actualLineNumber,
         lineContent,
         text: task.text,
+        sphere: this.extractSphere(lineContent, task.path),
       });
     }
 
@@ -117,6 +147,7 @@ export class WaitingForScanner {
           lineNumber: index + 1,
           lineContent: line,
           text,
+          sphere: this.extractSphere(line, file.path),
         });
       }
     });

@@ -2,6 +2,7 @@ import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
 import { WorkspaceLeaf, TFile } from "obsidian";
 import { WaitingForScanner, WaitingForItem } from "../src/waiting-for-scanner";
 import { WaitingForValidator } from "../src/waiting-for-validator";
+import { PluginSettings, DEFAULT_SETTINGS } from "../src/types";
 
 jest.mock("../src/waiting-for-scanner");
 
@@ -10,6 +11,8 @@ describe("WaitingForView", () => {
   let mockLeaf: jest.Mocked<WorkspaceLeaf>;
   let mockScanner: jest.Mocked<WaitingForScanner>;
   let mockApp: any;
+  let mockSettings: PluginSettings;
+  let mockSaveSettings: jest.Mock;
 
   beforeEach(() => {
     mockLeaf = {
@@ -27,7 +30,15 @@ describe("WaitingForView", () => {
       },
     };
 
-    view = new WaitingForView(mockLeaf as WorkspaceLeaf);
+    mockSettings = {
+      ...DEFAULT_SETTINGS,
+      spheres: ["personal", "work"],
+      waitingForFilterSpheres: [],
+    };
+
+    mockSaveSettings = jest.fn();
+
+    view = new WaitingForView(mockLeaf as WorkspaceLeaf, mockSettings, mockSaveSettings);
     (view as any).app = mockApp;
 
     mockScanner = new WaitingForScanner(mockApp as any) as jest.Mocked<WaitingForScanner>;
@@ -150,5 +161,154 @@ describe("WaitingForView", () => {
     // Verify it's today's date
     const today = new Date().toISOString().split("T")[0];
     expect(modifiedContent).toContain(`✅ ${today}`);
+  });
+
+  describe("sphere filtering", () => {
+    test("should show all items when no spheres are selected", () => {
+      const items: WaitingForItem[] = [
+        {
+          file: "Projects/Work.md",
+          fileName: "Work",
+          lineNumber: 5,
+          lineContent: "- [w] Wait for approval",
+          text: "Wait for approval",
+          sphere: "work",
+        },
+        {
+          file: "Projects/Personal.md",
+          fileName: "Personal",
+          lineNumber: 3,
+          lineContent: "- [w] Wait for delivery",
+          text: "Wait for delivery",
+          sphere: "personal",
+        },
+      ];
+
+      mockSettings.waitingForFilterSpheres = [];
+      const filtered = (view as any).filterItemsBySphere(items);
+
+      expect(filtered).toHaveLength(2);
+    });
+
+    test("should filter items by selected sphere", () => {
+      const items: WaitingForItem[] = [
+        {
+          file: "Projects/Work.md",
+          fileName: "Work",
+          lineNumber: 5,
+          lineContent: "- [w] Wait for approval",
+          text: "Wait for approval",
+          sphere: "work",
+        },
+        {
+          file: "Projects/Personal.md",
+          fileName: "Personal",
+          lineNumber: 3,
+          lineContent: "- [w] Wait for delivery",
+          text: "Wait for delivery",
+          sphere: "personal",
+        },
+      ];
+
+      mockSettings.waitingForFilterSpheres = ["work"];
+      const filtered = (view as any).filterItemsBySphere(items);
+
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].sphere).toBe("work");
+    });
+
+    test("should filter items by multiple selected spheres", () => {
+      const items: WaitingForItem[] = [
+        {
+          file: "Projects/Work.md",
+          fileName: "Work",
+          lineNumber: 5,
+          lineContent: "- [w] Wait for approval",
+          text: "Wait for approval",
+          sphere: "work",
+        },
+        {
+          file: "Projects/Personal.md",
+          fileName: "Personal",
+          lineNumber: 3,
+          lineContent: "- [w] Wait for delivery",
+          text: "Wait for delivery",
+          sphere: "personal",
+        },
+        {
+          file: "Projects/Other.md",
+          fileName: "Other",
+          lineNumber: 2,
+          lineContent: "- [w] Wait for something",
+          text: "Wait for something",
+          sphere: "other",
+        },
+      ];
+
+      mockSettings.waitingForFilterSpheres = ["work", "personal"];
+      const filtered = (view as any).filterItemsBySphere(items);
+
+      expect(filtered).toHaveLength(2);
+      expect(filtered.map((i) => i.sphere)).toEqual(["work", "personal"]);
+    });
+
+    test("should exclude items without sphere when filtering", () => {
+      const items: WaitingForItem[] = [
+        {
+          file: "Projects/Work.md",
+          fileName: "Work",
+          lineNumber: 5,
+          lineContent: "- [w] Wait for approval",
+          text: "Wait for approval",
+          sphere: "work",
+        },
+        {
+          file: "Notes.md",
+          fileName: "Notes",
+          lineNumber: 3,
+          lineContent: "- [w] Wait for something",
+          text: "Wait for something",
+          sphere: undefined,
+        },
+      ];
+
+      mockSettings.waitingForFilterSpheres = ["work"];
+      const filtered = (view as any).filterItemsBySphere(items);
+
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].sphere).toBe("work");
+    });
+
+    test("should toggle sphere filter selection", async () => {
+      mockSettings.waitingForFilterSpheres = [];
+
+      // Toggle work sphere on
+      await (view as any).toggleSphereFilter("work");
+      expect(mockSettings.waitingForFilterSpheres).toEqual(["work"]);
+      expect(mockSaveSettings).toHaveBeenCalled();
+
+      mockSaveSettings.mockClear();
+
+      // Toggle work sphere off
+      await (view as any).toggleSphereFilter("work");
+      expect(mockSettings.waitingForFilterSpheres).toEqual([]);
+      expect(mockSaveSettings).toHaveBeenCalled();
+    });
+
+    test("should toggle multiple sphere filters independently", async () => {
+      mockSettings.waitingForFilterSpheres = [];
+
+      // Toggle work on
+      await (view as any).toggleSphereFilter("work");
+      expect(mockSettings.waitingForFilterSpheres).toEqual(["work"]);
+
+      // Toggle personal on
+      await (view as any).toggleSphereFilter("personal");
+      expect(mockSettings.waitingForFilterSpheres).toEqual(["work", "personal"]);
+
+      // Toggle work off
+      await (view as any).toggleSphereFilter("work");
+      expect(mockSettings.waitingForFilterSpheres).toEqual(["personal"]);
+    });
   });
 });

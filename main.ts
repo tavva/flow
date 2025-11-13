@@ -59,7 +59,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
     });
 
     // Register the waiting for view
-    this.registerView(WAITING_FOR_VIEW_TYPE, (leaf) => new WaitingForView(leaf));
+    this.registerView(
+      WAITING_FOR_VIEW_TYPE,
+      (leaf) => new WaitingForView(leaf, this.settings, this.saveSettings.bind(this))
+    );
 
     // Register the focus view
     this.registerView(

@@ -120,6 +120,7 @@ export interface PluginSettings {
   lastFocusArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
   focusClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
   completedTodaySectionCollapsed: boolean; // false = expanded by default
+  waitingForFilterSpheres: string[]; // Selected spheres for filtering waiting-for view (empty = show all)
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -150,6 +151,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastFocusArchiveSucceeded: false,
   focusClearedNotificationDismissed: false,
   completedTodaySectionCollapsed: false,
+  waitingForFilterSpheres: [],
 };
 
 // Project Review Types

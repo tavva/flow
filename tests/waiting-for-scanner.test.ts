@@ -1,31 +1,50 @@
 import { WaitingForScanner } from "../src/waiting-for-scanner";
-import { App, TFile, Vault } from "obsidian";
+import { App, TFile, Vault, MetadataCache, CachedMetadata } from "obsidian";
 
 describe("WaitingForScanner", () => {
   let mockApp: jest.Mocked<App>;
   let mockVault: jest.Mocked<Vault>;
+  let mockMetadataCache: jest.Mocked<MetadataCache>;
   let scanner: WaitingForScanner;
 
   beforeEach(() => {
     mockVault = {
       getMarkdownFiles: jest.fn(),
       read: jest.fn(),
+      getAbstractFileByPath: jest.fn(),
     } as unknown as jest.Mocked<Vault>;
+
+    mockMetadataCache = {
+      getFileCache: jest.fn(),
+    } as unknown as jest.Mocked<MetadataCache>;
 
     mockApp = {
       vault: mockVault,
+      metadataCache: mockMetadataCache,
     } as unknown as jest.Mocked<App>;
 
     scanner = new WaitingForScanner(mockApp);
   });
 
   test("should scan vault and find waiting-for items", async () => {
-    const mockFile = {
-      path: "Projects/Project A.md",
-      basename: "Project A",
-    } as TFile;
+    const mockFile = Object.create(TFile.prototype);
+    mockFile.path = "Projects/Project A.md";
+    mockFile.basename = "Project A";
+
+    const mockCache = {
+      frontmatter: {
+        tags: ["project/work"],
+      },
+      listItems: [{ position: { start: { line: 9 } } }],
+    } as CachedMetadata;
 
     mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockImplementation((path) => {
+      if (path === "Projects/Project A.md") {
+        return mockFile;
+      }
+      return null;
+    });
     mockVault.read.mockResolvedValue(`---
 tags: project/work
 ---
@@ -39,6 +58,13 @@ tags: project/work
 - [x] Completed task
 `);
 
+    mockMetadataCache.getFileCache.mockImplementation((file) => {
+      if (file === mockFile) {
+        return mockCache;
+      }
+      return null;
+    });
+
     const items = await scanner.scanWaitingForItems();
 
     expect(items).toHaveLength(1);
@@ -48,6 +74,7 @@ tags: project/work
       lineNumber: 10,
       lineContent: "- [w] Call John after he returns from holiday",
       text: "Call John after he returns from holiday",
+      sphere: "work",
     });
   });
 
@@ -121,5 +148,106 @@ Just regular content here.
     const items = await scanner.scanWaitingForItems();
 
     expect(items[0].text).toBe("Extra spaces everywhere");
+  });
+
+  test("should extract sphere from inline tag", async () => {
+    const mockFile = {
+      path: "Next actions.md",
+      basename: "Next actions",
+    } as TFile;
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+    mockVault.read.mockResolvedValue(`- [w] Wait for client feedback #sphere/work`);
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].sphere).toBe("work");
+  });
+
+  test("should extract sphere from project frontmatter tags", async () => {
+    const mockFile = Object.create(TFile.prototype);
+    mockFile.path = "Projects/My Project.md";
+    mockFile.basename = "My Project";
+
+    const mockCache = {
+      frontmatter: {
+        tags: ["project/personal"],
+      },
+      listItems: [{ position: { start: { line: 5 } } }],
+    } as CachedMetadata;
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockImplementation((path) => {
+      if (path === "Projects/My Project.md") {
+        return mockFile;
+      }
+      return null;
+    });
+    mockVault.read.mockResolvedValue(`---
+tags:
+  - project/personal
+---
+
+- [w] Wait for parts delivery`);
+
+    mockMetadataCache.getFileCache.mockImplementation((file) => {
+      if (file === mockFile) {
+        return mockCache;
+      }
+      return null;
+    });
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].sphere).toBe("personal");
+  });
+
+  test("should prefer inline sphere tag over project tag", async () => {
+    const mockFile = {
+      path: "Projects/My Project.md",
+      basename: "My Project",
+    } as TFile;
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+    mockVault.read.mockResolvedValue(`---
+tags:
+  - project/work
+---
+
+- [w] Wait for approval #sphere/personal`);
+
+    mockMetadataCache.getFileCache.mockReturnValue({
+      frontmatter: {
+        tags: ["project/work"],
+      },
+      listItems: [{ position: { start: { line: 5 } } }],
+    } as CachedMetadata);
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].sphere).toBe("personal");
+  });
+
+  test("should handle items without sphere", async () => {
+    const mockFile = {
+      path: "Notes.md",
+      basename: "Notes",
+    } as TFile;
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+    mockVault.read.mockResolvedValue(`- [w] Wait for something`);
+
+    mockMetadataCache.getFileCache.mockReturnValue(null);
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].sphere).toBeUndefined();
   });
 });
