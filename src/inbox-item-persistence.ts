@@ -153,8 +153,8 @@ export class InboxItemPersistenceService {
           item.sourceNoteLink
         );
 
-        // Auto-create cover image if enabled
-        await this.maybeGenerateCoverImage(file);
+        // Auto-create cover image if enabled (fire and forget - don't block processing)
+        this.maybeGenerateCoverImage(file);
 
         return file.path;
       }
