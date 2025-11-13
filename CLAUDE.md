@@ -268,7 +268,7 @@ This workflow provides visual feedback of daily progress while keeping the focus
 
 **Storage:**
 
-Focus items are stored in plugin settings as `FocusItem[]` with:
+Focus items are stored in `flow-focus-data/focus.md` in the vault (for reliable cross-device sync) as `FocusItem[]` with:
 
 - `file`: Source file path
 - `lineNumber`: Last known line number

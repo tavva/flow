@@ -1,10 +1,10 @@
-// ABOUTME: Handles persistence of focus items to a JSON file in the vault
-// ABOUTME: Stores focus items in flow/focus.json for reliable cross-device sync
+// ABOUTME: Handles persistence of focus items to a file in the vault
+// ABOUTME: Stores focus items in flow-focus-data/focus.md for reliable cross-device sync
 
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 
-const FOCUS_FILE_PATH = "flow/focus.json";
+const FOCUS_FILE_PATH = "flow-focus-data/focus.md";
 const FOCUS_FILE_VERSION = 1;
 
 interface FocusFileFormat {
@@ -60,8 +60,8 @@ export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
  */
 export async function saveFocusItems(vault: Vault, items: FocusItem[]): Promise<void> {
   try {
-    // Ensure .flow directory exists
-    await ensureFlowDirectory(vault);
+    // Ensure flow-focus-data directory exists
+    await ensureFocusDataDirectory(vault);
 
     const data: FocusFileFormat = {
       version: FOCUS_FILE_VERSION,
@@ -92,14 +92,14 @@ export async function saveFocusItems(vault: Vault, items: FocusItem[]): Promise<
 }
 
 /**
- * Ensure the flow directory exists
+ * Ensure the flow-focus-data directory exists
  */
-async function ensureFlowDirectory(vault: Vault): Promise<void> {
+async function ensureFocusDataDirectory(vault: Vault): Promise<void> {
   // Check if folder exists on disk first (adapter is more reliable than cache)
   try {
-    const exists = await vault.adapter.exists("flow");
+    const exists = await vault.adapter.exists("flow-focus-data");
     if (exists) {
-      const stat = await vault.adapter.stat("flow");
+      const stat = await vault.adapter.stat("flow-focus-data");
       if (stat?.type === "folder") {
         return;
       }
@@ -109,22 +109,22 @@ async function ensureFlowDirectory(vault: Vault): Promise<void> {
   }
 
   // Try to get from cache
-  const flowDir = vault.getAbstractFileByPath("flow");
+  const focusDataDir = vault.getAbstractFileByPath("flow-focus-data");
 
-  if (flowDir instanceof TFolder) {
+  if (focusDataDir instanceof TFolder) {
     return;
   }
 
-  if (flowDir) {
-    throw new Error("flow exists but is not a folder");
+  if (focusDataDir) {
+    throw new Error("flow-focus-data exists but is not a folder");
   }
 
   // Create the folder
   try {
-    await vault.createFolder("flow");
+    await vault.createFolder("flow-focus-data");
   } catch (error) {
     // Might have been created in race condition, check if it exists now
-    const exists = await vault.adapter.exists("flow");
+    const exists = await vault.adapter.exists("flow-focus-data");
     if (exists) {
       return;
     }
