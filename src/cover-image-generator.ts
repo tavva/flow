@@ -153,7 +153,7 @@ function buildImagePrompt(projectName: string): string {
   return `Create an image to be used as a cover image for a project folder in a productivity system. It needs to be distinct and represent the project.
 
 Guidelines:
-Style: Simple, bold lines, high contrast, colourful.
+Style: Simple, bold lines, high contrast, colourful, no transparent background.
 Format: Full square, no border, full bleed.
 Clarity: Must be clear and recognisable at a very small size.
 Content: Absolutely no text or letters.
