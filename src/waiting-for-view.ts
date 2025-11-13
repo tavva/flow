@@ -23,6 +23,7 @@ export class WaitingForView extends ItemView {
   private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
   private saveSettings: () => Promise<void>;
+  private selectedSpheres: string[] = []; // Local state, not persisted
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -151,19 +152,25 @@ export class WaitingForView extends ItemView {
       return;
     }
 
-    const filterContainer = container.createDiv({ cls: "flow-gtd-waiting-for-sphere-filter" });
+    const filterContainer = container.createDiv({ cls: "flow-gtd-sphere-buttons" });
 
     this.settings.spheres.forEach((sphere) => {
-      const isSelected = this.settings.waitingForFilterSpheres.includes(sphere);
+      const isSelected = this.selectedSpheres.includes(sphere);
       const button = filterContainer.createEl("button", {
-        cls: isSelected
-          ? "flow-gtd-sphere-filter-btn flow-gtd-sphere-filter-btn-selected"
-          : "flow-gtd-sphere-filter-btn",
-        text: sphere,
+        cls: "flow-gtd-sphere-button",
       });
+      button.setAttribute("type", "button");
+
+      // Capitalize first letter
+      const displayText = sphere.charAt(0).toUpperCase() + sphere.slice(1);
+      button.setText(displayText);
+
+      if (isSelected) {
+        button.addClass("selected");
+      }
 
       button.addEventListener("click", async () => {
-        await this.toggleSphereFilter(sphere);
+        this.toggleSphereFilter(sphere);
         // Re-render the entire view
         const items = await this.scanner.scanWaitingForItems();
         const viewContainer = this.containerEl.children[1];
@@ -173,19 +180,18 @@ export class WaitingForView extends ItemView {
     });
   }
 
-  private async toggleSphereFilter(sphere: string) {
-    const index = this.settings.waitingForFilterSpheres.indexOf(sphere);
+  private toggleSphereFilter(sphere: string) {
+    const index = this.selectedSpheres.indexOf(sphere);
     if (index === -1) {
-      this.settings.waitingForFilterSpheres.push(sphere);
+      this.selectedSpheres.push(sphere);
     } else {
-      this.settings.waitingForFilterSpheres.splice(index, 1);
+      this.selectedSpheres.splice(index, 1);
     }
-    await this.saveSettings();
   }
 
   private filterItemsBySphere(items: WaitingForItem[]): WaitingForItem[] {
     // If no spheres selected, show all items
-    if (this.settings.waitingForFilterSpheres.length === 0) {
+    if (this.selectedSpheres.length === 0) {
       return items;
     }
 
@@ -194,7 +200,7 @@ export class WaitingForView extends ItemView {
       if (!item.sphere) {
         return false;
       }
-      return this.settings.waitingForFilterSpheres.includes(item.sphere);
+      return this.selectedSpheres.includes(item.sphere);
     });
   }
 

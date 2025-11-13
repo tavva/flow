@@ -33,7 +33,6 @@ describe("WaitingForView", () => {
     mockSettings = {
       ...DEFAULT_SETTINGS,
       spheres: ["personal", "work"],
-      waitingForFilterSpheres: [],
     };
 
     mockSaveSettings = jest.fn();
@@ -184,7 +183,7 @@ describe("WaitingForView", () => {
         },
       ];
 
-      mockSettings.waitingForFilterSpheres = [];
+      (view as any).selectedSpheres = [];
       const filtered = (view as any).filterItemsBySphere(items);
 
       expect(filtered).toHaveLength(2);
@@ -210,7 +209,7 @@ describe("WaitingForView", () => {
         },
       ];
 
-      mockSettings.waitingForFilterSpheres = ["work"];
+      (view as any).selectedSpheres = ["work"];
       const filtered = (view as any).filterItemsBySphere(items);
 
       expect(filtered).toHaveLength(1);
@@ -245,7 +244,7 @@ describe("WaitingForView", () => {
         },
       ];
 
-      mockSettings.waitingForFilterSpheres = ["work", "personal"];
+      (view as any).selectedSpheres = ["work", "personal"];
       const filtered = (view as any).filterItemsBySphere(items);
 
       expect(filtered).toHaveLength(2);
@@ -272,43 +271,39 @@ describe("WaitingForView", () => {
         },
       ];
 
-      mockSettings.waitingForFilterSpheres = ["work"];
+      (view as any).selectedSpheres = ["work"];
       const filtered = (view as any).filterItemsBySphere(items);
 
       expect(filtered).toHaveLength(1);
       expect(filtered[0].sphere).toBe("work");
     });
 
-    test("should toggle sphere filter selection", async () => {
-      mockSettings.waitingForFilterSpheres = [];
+    test("should toggle sphere filter selection", () => {
+      (view as any).selectedSpheres = [];
 
       // Toggle work sphere on
-      await (view as any).toggleSphereFilter("work");
-      expect(mockSettings.waitingForFilterSpheres).toEqual(["work"]);
-      expect(mockSaveSettings).toHaveBeenCalled();
-
-      mockSaveSettings.mockClear();
+      (view as any).toggleSphereFilter("work");
+      expect((view as any).selectedSpheres).toEqual(["work"]);
 
       // Toggle work sphere off
-      await (view as any).toggleSphereFilter("work");
-      expect(mockSettings.waitingForFilterSpheres).toEqual([]);
-      expect(mockSaveSettings).toHaveBeenCalled();
+      (view as any).toggleSphereFilter("work");
+      expect((view as any).selectedSpheres).toEqual([]);
     });
 
-    test("should toggle multiple sphere filters independently", async () => {
-      mockSettings.waitingForFilterSpheres = [];
+    test("should toggle multiple sphere filters independently", () => {
+      (view as any).selectedSpheres = [];
 
       // Toggle work on
-      await (view as any).toggleSphereFilter("work");
-      expect(mockSettings.waitingForFilterSpheres).toEqual(["work"]);
+      (view as any).toggleSphereFilter("work");
+      expect((view as any).selectedSpheres).toEqual(["work"]);
 
       // Toggle personal on
-      await (view as any).toggleSphereFilter("personal");
-      expect(mockSettings.waitingForFilterSpheres).toEqual(["work", "personal"]);
+      (view as any).toggleSphereFilter("personal");
+      expect((view as any).selectedSpheres).toEqual(["work", "personal"]);
 
       // Toggle work off
-      await (view as any).toggleSphereFilter("work");
-      expect(mockSettings.waitingForFilterSpheres).toEqual(["personal"]);
+      (view as any).toggleSphereFilter("work");
+      expect((view as any).selectedSpheres).toEqual(["personal"]);
     });
   });
 });
