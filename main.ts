@@ -184,12 +184,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
           return;
         }
 
-        // Check if file is in projects folder
-        if (!activeFile.path.startsWith(this.settings.projectsFolderPath)) {
-          new Notice(`File is not in the projects folder (${this.settings.projectsFolderPath})`);
-          return;
-        }
-
         try {
           new Notice("Generating cover image...");
           const result = await generateCoverImage(this.app.vault, activeFile, this.settings);

@@ -354,25 +354,5 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
         expect.stringContaining("No active file")
       );
     });
-
-    it("should show error notice if active file is not a project", async () => {
-      // Enable AI for this test
-      plugin.settings.aiEnabled = true;
-      plugin.settings.openaiApiKey = "test-key";
-
-      const mockFile = {
-        path: "Notes/Not a project.md",
-        basename: "Not a project",
-      };
-      (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(mockFile);
-
-      // Execute command
-      const command = mockApp.commands.commands["flow:generate-cover-image"];
-      await command.callback();
-
-      expect(Notice.mockConstructor).toHaveBeenCalledWith(
-        expect.stringContaining("not in the projects folder")
-      );
-    });
   });
 });
