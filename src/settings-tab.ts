@@ -215,8 +215,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Display cover images")
-      .setDesc("Show cover images on project notes (top-right corner, semi-transparent overlay)")
+      .setName("Display cover images on project notes")
+      .setDesc("Show cover images on project notes")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.displayCoverImages).onChange(async (value) => {
           this.plugin.settings.displayCoverImages = value;
