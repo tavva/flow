@@ -1,4 +1,4 @@
-import { App, Plugin, Notice, WorkspaceLeaf } from "obsidian";
+import { App, Plugin, Notice, WorkspaceLeaf, MarkdownView } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS, CoachState } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
@@ -13,6 +13,7 @@ import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
 import { generateCoverImage } from "./src/cover-image-generator";
+import { ProjectCoverDisplay } from "./src/project-cover-display";
 
 type InboxCommandConfig = {
   id: string;
@@ -26,6 +27,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     activeConversationId: null,
   };
   private autoClearInterval: number | null = null;
+  private projectCoverDisplay: ProjectCoverDisplay | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -205,6 +207,33 @@ export default class FlowGTDCoachPlugin extends Plugin {
       )
     );
 
+    // Initialize project cover display
+    this.projectCoverDisplay = new ProjectCoverDisplay(this.app);
+
+    // Register event handlers for cover image display
+    this.registerEvent(
+      this.app.workspace.on("file-open", (file) => {
+        if (file && this.projectCoverDisplay) {
+          const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+          this.projectCoverDisplay.processFile(file, view || undefined);
+        }
+      })
+    );
+
+    this.registerEvent(
+      this.app.metadataCache.on("changed", (file) => {
+        if (file && this.projectCoverDisplay) {
+          // Find views showing this file
+          this.app.workspace.iterateRootLeaves((leaf) => {
+            const view = leaf.view;
+            if (view instanceof MarkdownView && view.file === file) {
+              this.projectCoverDisplay?.processFile(file, view);
+            }
+          });
+        }
+      })
+    );
+
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
   }
@@ -214,6 +243,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     if (this.autoClearInterval !== null) {
       window.clearInterval(this.autoClearInterval);
       this.autoClearInterval = null;
+    }
+
+    // Clean up project cover display
+    if (this.projectCoverDisplay) {
+      this.projectCoverDisplay.destroy();
+      this.projectCoverDisplay = null;
     }
 
     // Detach all sphere views

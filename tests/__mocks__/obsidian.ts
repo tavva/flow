@@ -36,6 +36,7 @@ export class Vault {
 
 export class MetadataCache {
   getFileCache = jest.fn();
+  on = jest.fn(() => ({ unload: jest.fn() }));
 }
 
 export class FileManager {
@@ -59,6 +60,7 @@ export class Workspace {
   detachLeavesOfType = jest.fn();
   getActiveFile = jest.fn();
   on = jest.fn(() => ({ unload: jest.fn() }));
+  iterateRootLeaves = jest.fn();
   viewRegistry: Record<string, any> = {};
 }
 

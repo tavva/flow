@@ -1306,6 +1306,53 @@ select.flow-gtd-inline-select option,
   display: block;
 }
 
+/* Make the content container position relative for absolute positioning */
+.markdown-preview-view,
+.cm-scroller {
+  position: relative;
+}
+
+/* Floating cover image for project files in editor */
+.flow-project-cover-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 250px;
+  height: 250px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.flow-project-cover-image-float {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  opacity: 0.4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  mask-image: linear-gradient(
+    to top right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.4) 20%,
+    rgba(0, 0, 0, 0.8) 40%,
+    black 60%
+  );
+  -webkit-mask-image: linear-gradient(
+    to top right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.4) 20%,
+    rgba(0, 0, 0, 0.8) 40%,
+    black 60%
+  );
+}
+
+/* Ensure content appears above the cover image */
+.markdown-preview-view > *:not(.flow-project-cover-container),
+.cm-scroller > *:not(.flow-project-cover-container) {
+  position: relative;
+  z-index: 1;
+}
+
 .flow-gtd-sphere-project-title {
   font-size: 15px;
   font-weight: 600;
