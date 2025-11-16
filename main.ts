@@ -208,7 +208,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     );
 
     // Initialize project cover display
-    this.projectCoverDisplay = new ProjectCoverDisplay(this.app);
+    this.projectCoverDisplay = new ProjectCoverDisplay(this.app, () => this.settings);
 
     // Register event handlers for cover image display
     this.registerEvent(

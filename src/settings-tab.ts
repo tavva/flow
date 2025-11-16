@@ -214,6 +214,16 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         })
       );
 
+    new Setting(containerEl)
+      .setName("Display cover images")
+      .setDesc("Show cover images on project notes (top-right corner, semi-transparent overlay)")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.displayCoverImages).onChange(async (value) => {
+          this.plugin.settings.displayCoverImages = value;
+          await this.plugin.saveSettings();
+        })
+      );
+
     // Inbox Settings
     new Setting(containerEl).setHeading().setName("Inbox Settings");
     containerEl.createDiv("setting-item-description").innerHTML = `
