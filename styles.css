@@ -1348,7 +1348,7 @@ select.flow-gtd-inline-select option,
 
 /* Ensure content appears above the cover image */
 .markdown-preview-view > *:not(.flow-project-cover-container),
-.cm-scroller > *:not(.flow-project-cover-container) {
+.cm-scroller > .cm-content {
   position: relative;
   z-index: 1;
 }
