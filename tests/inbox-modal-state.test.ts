@@ -74,3 +74,109 @@ describe("InboxModalState discardItem", () => {
     expect(render).toHaveBeenCalledWith("editable");
   });
 });
+
+describe("InboxModalState saveAndRemoveItem with project creation", () => {
+  it("refreshes project list after creating a new project", async () => {
+    const initialProjects = [
+      {
+        title: "Existing Project",
+        file: "Projects/Existing.md",
+        priority: 1,
+        status: "live",
+        tags: ["project/personal"],
+      },
+    ];
+
+    const updatedProjects = [
+      ...initialProjects,
+      {
+        title: "New Project",
+        file: "Projects/New.md",
+        priority: 2,
+        status: "live",
+        tags: ["project/work"],
+      },
+    ];
+
+    const loadExistingProjects = jest
+      .fn()
+      .mockResolvedValueOnce(initialProjects)
+      .mockResolvedValueOnce(updatedProjects);
+
+    const loadExistingPersons = jest.fn().mockResolvedValue([]);
+    const saveItem = jest.fn().mockResolvedValue(undefined);
+
+    const controller = {
+      loadExistingProjects,
+      loadExistingPersons,
+      saveItem,
+    } as unknown as InboxProcessingController;
+
+    const render = jest.fn();
+    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+
+    // Load initial reference data
+    await state.loadReferenceData();
+    expect(state.existingProjects).toEqual(initialProjects);
+    expect(loadExistingProjects).toHaveBeenCalledTimes(1);
+
+    // Create an item that will create a new project
+    const item: EditableItem = {
+      original: "Build new feature",
+      selectedAction: "create-project",
+      selectedSpheres: ["work"],
+      editedProjectTitle: "New Project",
+      editedName: "Define requirements",
+    };
+
+    // Save the item (which creates a new project)
+    await state.saveAndRemoveItem(item);
+
+    // Verify that projects were reloaded
+    expect(loadExistingProjects).toHaveBeenCalledTimes(2);
+    expect(state.existingProjects).toEqual(updatedProjects);
+  });
+
+  it("does not refresh project list when action is not create-project", async () => {
+    const initialProjects = [
+      {
+        title: "Existing Project",
+        file: "Projects/Existing.md",
+        priority: 1,
+        status: "live",
+        tags: ["project/personal"],
+      },
+    ];
+
+    const loadExistingProjects = jest.fn().mockResolvedValue(initialProjects);
+    const loadExistingPersons = jest.fn().mockResolvedValue([]);
+    const saveItem = jest.fn().mockResolvedValue(undefined);
+
+    const controller = {
+      loadExistingProjects,
+      loadExistingPersons,
+      saveItem,
+    } as unknown as InboxProcessingController;
+
+    const render = jest.fn();
+    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+
+    // Load initial reference data
+    await state.loadReferenceData();
+    expect(loadExistingProjects).toHaveBeenCalledTimes(1);
+
+    // Create an item that adds to next actions (not create-project)
+    const item: EditableItem = {
+      original: "Call dentist",
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["personal"],
+      editedName: "Call dentist to schedule appointment",
+    };
+
+    // Save the item
+    await state.saveAndRemoveItem(item);
+
+    // Verify that projects were NOT reloaded (still only 1 call from loadReferenceData)
+    expect(loadExistingProjects).toHaveBeenCalledTimes(1);
+  });
+});

@@ -87,6 +87,12 @@ export class InboxModalState {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
       this.editableItems = this.editableItems.filter((current) => current !== item);
+
+      // If we created a new project, refresh the project list so subsequent items can see it
+      if (item.selectedAction === "create-project") {
+        await this.loadReferenceData();
+      }
+
       const actionLabel = getActionLabel(item.selectedAction);
       new Notice(`✅ Saved: ${actionLabel}`);
       this.requestRender("editable");
