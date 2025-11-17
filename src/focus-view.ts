@@ -597,6 +597,19 @@ export class FocusView extends ItemView {
     itemEl.addEventListener("drop", (e) => this.onDrop(e, item));
     itemEl.addEventListener("dragend", (e) => this.onDragEnd(e));
 
+    // Show project name for project actions (not general actions)
+    if (!item.isGeneral) {
+      const displayName = getProjectDisplayName(item.file, this.allProjects);
+      const projectNameSpan = itemEl.createSpan({
+        cls: "flow-gtd-focus-project-name",
+        text: displayName.primary,
+      });
+      projectNameSpan.style.fontSize = "0.85em";
+      projectNameSpan.style.opacity = "0.7";
+      projectNameSpan.style.flexBasis = "100%";
+      projectNameSpan.style.marginBottom = "4px";
+    }
+
     // Check if this is a waiting-for item
     const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";

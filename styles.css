@@ -1676,6 +1676,7 @@ select.flow-gtd-inline-select option,
 
 .flow-gtd-focus-item {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 12px;
@@ -1706,6 +1707,13 @@ select.flow-gtd-inline-select option,
 
 .flow-gtd-focus-item-text:hover {
   color: var(--text-accent);
+}
+
+.flow-gtd-focus-project-name {
+  flex-basis: 100%;
+  font-size: 0.85em;
+  opacity: 0.7;
+  margin-bottom: 4px;
 }
 
 .flow-gtd-focus-item-actions {

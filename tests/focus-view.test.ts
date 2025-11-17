@@ -395,6 +395,138 @@ describe("FocusView", () => {
   });
 
   describe("FocusView - Pinned Items", () => {
+    it("should show project name above pinned project actions", () => {
+      const mockItem: FocusItem = {
+        file: "Projects/Important Project.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Critical task",
+        text: "Critical task",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+        isPinned: true,
+      };
+
+      // Mock allProjects to include our project
+      const mockProjects = [
+        {
+          file: "Projects/Important Project.md",
+          title: "Important Project",
+          priority: 1,
+          status: "live",
+          sphere: "work",
+          actions: [],
+        },
+      ];
+      (view as any).allProjects = mockProjects;
+
+      const container = document.createElement("ul");
+
+      // Track all created spans to verify project name was created
+      const allSpans: any[] = [];
+
+      // Create comprehensive mocks for DOM elements
+      const mockLi = document.createElement("li");
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        const span: any = {
+          className: opts?.cls || "",
+          textContent: opts?.text || "",
+          style: {},
+          setAttribute: jest.fn(),
+          setText: jest.fn(function (this: any, text: string) {
+            this.textContent = text;
+          }),
+          addEventListener: jest.fn(),
+          createEl: jest.fn().mockReturnValue({
+            addEventListener: jest.fn(),
+          }),
+          createSpan: jest.fn().mockReturnValue({
+            createEl: jest.fn().mockReturnValue({
+              addEventListener: jest.fn(),
+            }),
+          }),
+        };
+        allSpans.push(span);
+        return span;
+      });
+
+      (mockLi as any).addEventListener = jest.fn();
+      (container as any).createEl = jest.fn().mockReturnValue(mockLi);
+
+      (view as any).renderPinnedItem(container, mockItem);
+
+      // Find the project name span by class
+      const projectNameSpan = allSpans.find((span) =>
+        span.className.includes("flow-gtd-focus-project-name")
+      );
+
+      // Check that project name span exists
+      expect(projectNameSpan).toBeDefined();
+
+      // Check that project name contains the project title
+      expect(projectNameSpan.textContent).toBe("Important Project");
+
+      // Check that project name has correct styling (smaller font, dimmed, takes full width)
+      expect(projectNameSpan.style.fontSize).toBe("0.85em");
+      expect(projectNameSpan.style.opacity).toBe("0.7");
+      expect(projectNameSpan.style.flexBasis).toBe("100%");
+      expect(projectNameSpan.style.marginBottom).toBe("4px");
+    });
+
+    it("should not show project name for pinned general actions", () => {
+      const mockItem: FocusItem = {
+        file: "Next actions.md",
+        lineNumber: 5,
+        lineContent: "- [ ] General task #sphere/work",
+        text: "General task",
+        sphere: "work",
+        isGeneral: true,
+        addedAt: Date.now(),
+        isPinned: true,
+      };
+
+      const container = document.createElement("ul");
+
+      // Track all created spans to verify no project name was created
+      const allSpans: any[] = [];
+
+      // Create mocks for DOM elements
+      const mockLi = document.createElement("li");
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        const span: any = {
+          className: opts?.cls || "",
+          textContent: opts?.text || "",
+          style: {},
+          setAttribute: jest.fn(),
+          setText: jest.fn(function (this: any, text: string) {
+            this.textContent = text;
+          }),
+          addEventListener: jest.fn(),
+          createEl: jest.fn().mockReturnValue({
+            addEventListener: jest.fn(),
+          }),
+          createSpan: jest.fn().mockReturnValue({
+            createEl: jest.fn().mockReturnValue({
+              addEventListener: jest.fn(),
+            }),
+          }),
+        };
+        allSpans.push(span);
+        return span;
+      });
+
+      (mockLi as any).addEventListener = jest.fn();
+      (container as any).createEl = jest.fn().mockReturnValue(mockLi);
+
+      (view as any).renderPinnedItem(container, mockItem);
+
+      // Check that no project name span was created for general actions
+      const projectNameSpan = allSpans.find((span) =>
+        span.className.includes("flow-gtd-focus-project-name")
+      );
+      expect(projectNameSpan).toBeUndefined();
+    });
+
     it("should filter pinned items from unpinned items", async () => {
       mockFocusItems = [
         {
