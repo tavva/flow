@@ -73,6 +73,7 @@ export class InboxModalState {
       }
 
       this.editableItems = inboxEditableItems;
+      this.initializeExpandedState();
       new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
       this.requestRender("editable");
     } catch (error) {
@@ -83,10 +84,31 @@ export class InboxModalState {
     }
   }
 
+  initializeExpandedState() {
+    if (this.editableItems.length > 0) {
+      this.editableItems[0].isExpanded = true;
+      for (let i = 1; i < this.editableItems.length; i++) {
+        this.editableItems[i].isExpanded = false;
+      }
+    }
+  }
+
+  expandItem(item: EditableItem) {
+    for (const editableItem of this.editableItems) {
+      editableItem.isExpanded = editableItem === item;
+    }
+    this.queueRender("editable");
+  }
+
   async saveAndRemoveItem(item: EditableItem) {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
       this.editableItems = this.editableItems.filter((current) => current !== item);
+
+      // Auto-expand the first remaining item
+      if (this.editableItems.length > 0) {
+        this.editableItems[0].isExpanded = true;
+      }
 
       // If we created a new project, refresh the project list so subsequent items can see it
       if (item.selectedAction === "create-project") {
@@ -120,6 +142,12 @@ export class InboxModalState {
     }
 
     this.editableItems = this.editableItems.filter((current) => current !== item);
+
+    // Auto-expand the first remaining item
+    if (this.editableItems.length > 0) {
+      this.editableItems[0].isExpanded = true;
+    }
+
     new Notice(`🗑️ Discarded item`);
     this.requestRender("editable");
   }

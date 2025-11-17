@@ -113,8 +113,42 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
   state.editableItems.forEach((item, index) => {
     const itemEl = listContainer.createDiv("flow-gtd-editable-item");
 
-    // Original Text
-    const originalBox = itemEl.createDiv("flow-gtd-original-box");
+    // Header (always visible, clickable to expand/collapse)
+    const headerEl = itemEl.createDiv("flow-gtd-item-header");
+    headerEl.style.padding = "12px 16px";
+    headerEl.style.cursor = "pointer";
+    headerEl.style.borderBottom = "1px solid var(--background-modifier-border)";
+    headerEl.style.display = "flex";
+    headerEl.style.alignItems = "center";
+    headerEl.style.gap = "12px";
+
+    // Chevron icon
+    const chevron = headerEl.createSpan();
+    chevron.style.fontSize = "12px";
+    chevron.style.transition = "transform 0.2s ease";
+    chevron.setText(item.isExpanded ? "▼" : "▶");
+
+    // Original text preview
+    const headerText = headerEl.createSpan();
+    headerText.style.flex = "1";
+    headerText.style.fontWeight = "500";
+    headerText.setText(item.original);
+
+    // Click handler to toggle expansion
+    headerEl.addEventListener("click", () => {
+      state.expandItem(item);
+    });
+
+    // Content wrapper (collapsible)
+    const contentWrapper = itemEl.createDiv("flow-gtd-editable-item-content");
+    contentWrapper.style.padding = "16px";
+
+    if (!item.isExpanded) {
+      contentWrapper.style.display = "none";
+    }
+
+    // Original Text section (inside collapsible content)
+    const originalBox = contentWrapper.createDiv("flow-gtd-original-box");
 
     const label = originalBox.createDiv();
     label.addClass("flow-gtd-section-label");
@@ -127,9 +161,9 @@ function renderIndividualEditableItems(container: HTMLElement, state: InboxModal
     textDiv.style.cursor = "text";
     textDiv.setText(item.original);
 
-    renderEditableItemContent(itemEl, item, state);
+    renderEditableItemContent(contentWrapper, item, state);
 
-    const actionButtons = itemEl.createDiv("flow-gtd-item-actions");
+    const actionButtons = contentWrapper.createDiv("flow-gtd-item-actions");
     actionButtons.style.marginTop = "16px";
     actionButtons.style.paddingTop = "16px";
     actionButtons.style.borderTop = "1px solid var(--background-modifier-border)";
