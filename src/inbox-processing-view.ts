@@ -13,6 +13,7 @@ export class InboxProcessingView extends ItemView {
   private state: InboxModalState;
   private renderTimeout?: NodeJS.Timeout;
   private pendingTarget: RenderTarget = "inbox";
+  private pendingFocus: string | null = null;
   private saveSettings: () => Promise<void>;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
@@ -84,6 +85,18 @@ export class InboxProcessingView extends ItemView {
 
     if (target === "editable") {
       renderEditableItemsView(container, this.state, { onClose: () => this.handleClose() });
+
+      if (this.pendingFocus) {
+        const selector = this.pendingFocus;
+        // Small timeout to ensure DOM is ready and layout is settled
+        setTimeout(() => {
+          const element = container.querySelector(selector) as HTMLElement;
+          if (element) {
+            element.focus();
+          }
+        }, 0);
+        this.pendingFocus = null;
+      }
       return;
     }
 
@@ -108,20 +121,43 @@ export class InboxProcessingView extends ItemView {
     }
 
     const target = event.target as HTMLElement;
+    const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
+
+    // Ctrl+Q (or Cmd+Q on Mac) blurs the input without closing the view
+    if (event.key === "q" && (event.ctrlKey || event.metaKey)) {
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        target.blur();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
+    // Ctrl+S (or Cmd+S on Mac) saves the current item
+    if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
+      if (expandedItem) {
+        this.state.saveAndRemoveItem(expandedItem);
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
       return;
     }
 
-    const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
     if (!expandedItem) return;
 
     let action: string | undefined;
     switch (event.key.toLowerCase()) {
       case "c":
         action = "create-project";
+        this.pendingFocus = ".flow-gtd-project-input";
         break;
       case "a":
         action = "add-to-project";
+        this.pendingFocus = ".flow-gtd-project-search";
         break;
       case "r":
         action = "reference";

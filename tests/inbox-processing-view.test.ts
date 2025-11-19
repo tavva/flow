@@ -382,6 +382,7 @@ describe("InboxProcessingView", () => {
           createEl: jest.fn(),
           style: {},
         }),
+        querySelector: jest.fn(),
       };
       (view as any).containerEl = {
         children: [null, mockContainer],
@@ -537,6 +538,143 @@ describe("InboxProcessingView", () => {
 
       expect(item.selectedAction).toBe("next-actions-file");
       expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("Ctrl+Q blurs input focus", () => {
+      const blurSpy = jest.fn();
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+      const inputEl = {
+        tagName: "INPUT",
+        blur: blurSpy,
+      };
+
+      handleKeyDown({
+        key: "q",
+        ctrlKey: true,
+        target: inputEl,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(blurSpy).toHaveBeenCalled();
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+Q blurs input focus (Mac)", () => {
+      const blurSpy = jest.fn();
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+      const inputEl = {
+        tagName: "INPUT",
+        blur: blurSpy,
+      };
+
+      handleKeyDown({
+        key: "q",
+        metaKey: true,
+        target: inputEl,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(blurSpy).toHaveBeenCalled();
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Ctrl+S saves the current item", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "s",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(saveAndRemoveItemSpy).toHaveBeenCalledWith(item);
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+S saves the current item (Mac)", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "s",
+        metaKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(saveAndRemoveItemSpy).toHaveBeenCalledWith(item);
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("sets pending focus for Create Project action", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "c",
+        target: document.body,
+        preventDefault: jest.fn(),
+      } as any);
+
+      expect(item.selectedAction).toBe("create-project");
+      expect((view as any).pendingFocus).toBe(".flow-gtd-project-input");
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("sets pending focus for Add to Project action", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "a",
+        target: document.body,
+        preventDefault: jest.fn(),
+      } as any);
+
+      expect(item.selectedAction).toBe("add-to-project");
+      expect((view as any).pendingFocus).toBe(".flow-gtd-project-search");
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("applies focus after render", () => {
+      jest.useFakeTimers();
+      (view as any).pendingFocus = ".test-input";
+
+      const mockInput = { focus: jest.fn() };
+      const mockContainer = (view as any).containerEl.children[1];
+      mockContainer.querySelector = jest.fn().mockReturnValue(mockInput);
+
+      // Trigger render
+      (view as any).renderCurrentView("editable");
+
+      // Advance timers for setTimeout
+      jest.runAllTimers();
+
+      expect(mockContainer.querySelector).toHaveBeenCalledWith(".test-input");
+      expect(mockInput.focus).toHaveBeenCalled();
+      expect((view as any).pendingFocus).toBeNull();
+
+      jest.useRealTimers();
     });
   });
 });
