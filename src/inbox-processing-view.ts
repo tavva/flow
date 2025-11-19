@@ -170,6 +170,73 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
+    // Ctrl+F to toggle "Add to focus" checkbox
+    if (event.key === "f" && (event.ctrlKey || event.metaKey)) {
+      if (expandedItem) {
+        // Check if this action type shows focus checkbox
+        const showsFocusCheckbox =
+          expandedItem.selectedAction === "create-project" ||
+          expandedItem.selectedAction === "add-to-project" ||
+          expandedItem.selectedAction === "next-actions-file";
+
+        if (showsFocusCheckbox) {
+          expandedItem.addToFocus = !expandedItem.addToFocus;
+          // Mutual exclusion with markAsDone
+          if (expandedItem.addToFocus && expandedItem.markAsDone && expandedItem.markAsDone[0]) {
+            expandedItem.markAsDone[0] = false;
+          }
+          this.state.queueRender("editable");
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+      return;
+    }
+
+    // Ctrl+D to toggle "Mark as done" checkbox
+    if (event.key === "d" && (event.ctrlKey || event.metaKey)) {
+      if (expandedItem) {
+        // Check if this action type shows focus checkbox (same as above)
+        const showsFocusCheckbox =
+          expandedItem.selectedAction === "create-project" ||
+          expandedItem.selectedAction === "add-to-project" ||
+          expandedItem.selectedAction === "next-actions-file";
+
+        if (showsFocusCheckbox) {
+          // Initialize markAsDone array if not exists
+          if (!expandedItem.markAsDone) {
+            expandedItem.markAsDone = [];
+          }
+          expandedItem.markAsDone[0] = !expandedItem.markAsDone[0];
+          // Mutual exclusion with addToFocus
+          if (expandedItem.markAsDone[0] && expandedItem.addToFocus) {
+            expandedItem.addToFocus = false;
+          }
+          this.state.queueRender("editable");
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+      return;
+    }
+
+    // Ctrl+T to toggle date section
+    if (event.key === "t" && (event.ctrlKey || event.metaKey)) {
+      if (expandedItem) {
+        // Check if this action type shows date section (all except reference and trash)
+        const showsDateSection =
+          expandedItem.selectedAction !== "reference" && expandedItem.selectedAction !== "trash";
+
+        if (showsDateSection) {
+          expandedItem.isDateSectionExpanded = !expandedItem.isDateSectionExpanded;
+          this.state.queueRender("editable");
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+      return;
+    }
+
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
       return;
     }

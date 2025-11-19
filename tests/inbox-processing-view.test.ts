@@ -873,5 +873,299 @@ describe("InboxProcessingView", () => {
       expect(item.selectedSpheres).toEqual([]);
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
+
+    test("Ctrl+F toggles Add to focus checkbox", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        addToFocus: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "f",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.addToFocus).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+F toggles Add to focus checkbox (Mac)", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "create-project",
+        addToFocus: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "f",
+        metaKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.addToFocus).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+F unchecks Mark as done when toggling Add to focus on", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        addToFocus: false,
+        markAsDone: [true],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "f",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.addToFocus).toBe(true);
+      expect(item.markAsDone[0]).toBe(false);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+D toggles Mark as done checkbox", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        markAsDone: [false],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "d",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.markAsDone[0]).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+D toggles Mark as done checkbox (Mac)", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "create-project",
+        markAsDone: [false],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "d",
+        metaKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.markAsDone[0]).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+D initializes markAsDone array if not exists", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "d",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.markAsDone).toEqual([true]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+D unchecks Add to focus when toggling Mark as done on", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        addToFocus: true,
+        markAsDone: [false],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "d",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.markAsDone[0]).toBe(true);
+      expect(item.addToFocus).toBe(false);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+T toggles date section expansion", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        isDateSectionExpanded: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "t",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.isDateSectionExpanded).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+T toggles date section expansion (Mac)", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "someday-file",
+        isDateSectionExpanded: true,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "t",
+        metaKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.isDateSectionExpanded).toBe(false);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+F/D/T ignored for reference action", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "reference",
+        addToFocus: false,
+        markAsDone: [false],
+        isDateSectionExpanded: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      // Try Ctrl+F
+      handleKeyDown({
+        key: "f",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.addToFocus).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+
+      // Try Ctrl+D
+      handleKeyDown({
+        key: "d",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.markAsDone[0]).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+
+      // Try Ctrl+T
+      handleKeyDown({
+        key: "t",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.isDateSectionExpanded).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("Ctrl+F/D/T ignored for trash action", () => {
+      const item = {
+        isExpanded: true,
+        selectedAction: "trash",
+        addToFocus: false,
+        markAsDone: [false],
+        isDateSectionExpanded: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      // Try Ctrl+F
+      handleKeyDown({
+        key: "f",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.addToFocus).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+
+      // Try Ctrl+D
+      handleKeyDown({
+        key: "d",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.markAsDone[0]).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+
+      // Try Ctrl+T
+      handleKeyDown({
+        key: "t",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+      expect(item.isDateSectionExpanded).toBe(false);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
   });
 });
