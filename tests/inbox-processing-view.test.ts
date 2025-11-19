@@ -676,5 +676,202 @@ describe("InboxProcessingView", () => {
 
       jest.useRealTimers();
     });
+
+    test("Ctrl+1 toggles first sphere selection", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.selectedSpheres).toEqual(["work"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Ctrl+2 toggles second sphere selection", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "create-project",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "2",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual(["personal"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Cmd+1 toggles first sphere selection (Mac)", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        metaKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual(["work"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("Ctrl+1 deselects already selected sphere", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: ["work"],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("sphere shortcuts ignored for add-to-project action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "add-to-project",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("sphere shortcuts ignored for reference action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "reference",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("sphere shortcuts ignored for trash action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "trash",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("sphere shortcuts ignored for out of range indices", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      // Try Ctrl+3 when only 2 spheres exist
+      handleKeyDown({
+        key: "3",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
   });
 });

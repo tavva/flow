@@ -143,6 +143,33 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
+    // Ctrl+1, Ctrl+2, etc. to toggle sphere selection
+    if ((event.ctrlKey || event.metaKey) && /^[1-9]$/.test(event.key)) {
+      if (expandedItem) {
+        const spheres = this.settings.spheres;
+        const sphereIndex = parseInt(event.key) - 1;
+
+        // Check if this action type shows sphere selector
+        const showsSphereSelector =
+          expandedItem.selectedAction !== "add-to-project" &&
+          expandedItem.selectedAction !== "reference" &&
+          expandedItem.selectedAction !== "trash";
+
+        if (showsSphereSelector && sphereIndex >= 0 && sphereIndex < spheres.length) {
+          const sphere = spheres[sphereIndex];
+          if (expandedItem.selectedSpheres.includes(sphere)) {
+            expandedItem.selectedSpheres = expandedItem.selectedSpheres.filter((s) => s !== sphere);
+          } else {
+            expandedItem.selectedSpheres.push(sphere);
+          }
+          this.state.queueRender("editable");
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+      return;
+    }
+
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
       return;
     }
