@@ -3,6 +3,8 @@ import { FlowProject } from "./types";
 import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
 
 export class FlowProjectScanner {
+  private cache: Map<string, { mtime: number; project: FlowProject }> = new Map();
+
   constructor(private app: App) {}
 
   /**
@@ -34,6 +36,12 @@ export class FlowProjectScanner {
    * Parses a single file to extract Flow project information
    */
   async parseProjectFile(file: TFile): Promise<FlowProject | null> {
+    // Check cache first
+    const cached = this.cache.get(file.path);
+    if (cached && cached.mtime === file.stat.mtime) {
+      return cached.project;
+    }
+
     const metadata = this.app.metadataCache.getFileCache(file);
 
     if (!metadata || !this.isFlowProject(metadata)) {
@@ -43,7 +51,7 @@ export class FlowProjectScanner {
     const content = await this.app.vault.read(file);
     const frontmatter = metadata.frontmatter || {};
 
-    return {
+    const project: FlowProject = {
       file: file.path,
       title: file.basename,
       description: this.extractDescription(content),
@@ -57,6 +65,14 @@ export class FlowProjectScanner {
       milestones: this.extractSectionText(content, "## Milestones"),
       coverImage: frontmatter["cover-image"],
     };
+
+    // Update cache
+    this.cache.set(file.path, {
+      mtime: file.stat.mtime,
+      project,
+    });
+
+    return project;
   }
 
   /**
