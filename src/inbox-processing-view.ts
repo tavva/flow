@@ -46,9 +46,12 @@ export class InboxProcessingView extends ItemView {
 
     await this.state.loadReferenceData();
     await this.state.loadInboxItems();
+
+    window.addEventListener("keydown", this.handleKeyDown);
   }
 
   async onClose() {
+    window.removeEventListener("keydown", this.handleKeyDown);
     if (this.renderTimeout) {
       clearTimeout(this.renderTimeout);
       this.renderTimeout = undefined;
@@ -98,4 +101,49 @@ export class InboxProcessingView extends ItemView {
   async refresh() {
     await this.onOpen();
   }
+
+  private handleKeyDown = (event: KeyboardEvent) => {
+    if (this.app.workspace.getActiveViewOfType(InboxProcessingView) !== this) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+      return;
+    }
+
+    const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
+    if (!expandedItem) return;
+
+    let action: string | undefined;
+    switch (event.key.toLowerCase()) {
+      case "c":
+        action = "create-project";
+        break;
+      case "a":
+        action = "add-to-project";
+        break;
+      case "r":
+        action = "reference";
+        break;
+      case "n":
+        action = "next-actions-file";
+        break;
+      case "s":
+        action = "someday-file";
+        break;
+      case "p":
+        action = "person";
+        break;
+      case "t":
+        action = "trash";
+        break;
+    }
+
+    if (action) {
+      expandedItem.selectedAction = action as any;
+      this.state.queueRender("editable");
+      event.preventDefault();
+    }
+  };
 }

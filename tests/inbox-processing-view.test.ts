@@ -20,30 +20,33 @@ describe("InboxProcessingView", () => {
     openaiApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
   };
 
+  let mockSaveSettings: jest.Mock;
+
   beforeEach(() => {
     mockApp = {} as App;
     mockLeaf = {
       view: null,
-    } as WorkspaceLeaf;
+    } as unknown as WorkspaceLeaf;
+    mockSaveSettings = jest.fn().mockResolvedValue(undefined);
   });
 
   test("returns correct view type", () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     expect(view.getViewType()).toBe(INBOX_PROCESSING_VIEW_TYPE);
   });
 
   test("returns correct display text", () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     expect(view.getDisplayText()).toBe("Flow Inbox Processing");
   });
 
   test("returns correct icon", () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     expect(view.getIcon()).toBe("inbox");
   });
 
   test("initializes state on open", async () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
 
     // Mock containerEl with necessary structure
     const mockContainer = {
@@ -89,7 +92,7 @@ describe("InboxProcessingView", () => {
   test("handles render requests with debouncing", async () => {
     jest.useFakeTimers();
 
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -132,7 +135,7 @@ describe("InboxProcessingView", () => {
   });
 
   test("handles immediate render requests", async () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -167,7 +170,7 @@ describe("InboxProcessingView", () => {
   });
 
   test("renders inbox target view", async () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -204,7 +207,7 @@ describe("InboxProcessingView", () => {
   });
 
   test("handles missing container gracefully", async () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
 
     // Set up containerEl with no children
     (view as any).containerEl = {
@@ -226,7 +229,7 @@ describe("InboxProcessingView", () => {
   test("cancels previous timeout on multiple rapid renders", async () => {
     jest.useFakeTimers();
 
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -274,7 +277,7 @@ describe("InboxProcessingView", () => {
   });
 
   test("handles handleClose by detaching leaves", async () => {
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -316,7 +319,7 @@ describe("InboxProcessingView", () => {
   test("renders empty state when no inbox items exist", async () => {
     jest.useFakeTimers();
 
-    const view = new InboxProcessingView(mockLeaf, testSettings);
+    const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -356,5 +359,184 @@ describe("InboxProcessingView", () => {
     expect(lastCall[2]).toEqual(expect.objectContaining({ isLoading: false }));
 
     jest.useRealTimers();
+  });
+
+  describe("keyboard shortcuts", () => {
+    let view: InboxProcessingView;
+    let mockContainer: any;
+    let addEventListenerSpy: jest.SpyInstance;
+    let removeEventListenerSpy: jest.SpyInstance;
+    let handleKeyDown: (event: KeyboardEvent) => void;
+
+    beforeEach(async () => {
+      view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
+      mockContainer = {
+        empty: jest.fn(),
+        addClass: jest.fn(),
+        createEl: jest.fn().mockReturnValue({
+          addEventListener: jest.fn(),
+          createEl: jest.fn(),
+          style: {},
+        }),
+        createDiv: jest.fn().mockReturnValue({
+          createEl: jest.fn(),
+          style: {},
+        }),
+      };
+      (view as any).containerEl = {
+        children: [null, mockContainer],
+      };
+
+      // Mock state methods
+      jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
+      jest.spyOn((view as any).state, "loadInboxItems").mockResolvedValue(undefined);
+
+      // Mock window.addEventListener
+      addEventListenerSpy = jest.spyOn(window, "addEventListener");
+      removeEventListenerSpy = jest.spyOn(window, "removeEventListener");
+
+      // Mock app.workspace.getActiveViewOfType
+      (view as any).app = {
+        workspace: {
+          getActiveViewOfType: jest.fn().mockReturnValue(view),
+        },
+      };
+
+      await view.onOpen();
+
+      // Capture the event handler
+      const calls = addEventListenerSpy.mock.calls;
+      const keydownCall = calls.find((call) => call[0] === "keydown");
+      if (keydownCall) {
+        handleKeyDown = keydownCall[1];
+      }
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    test("registers keydown listener on open", () => {
+      expect(addEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
+    });
+
+    test("removes keydown listener on close", async () => {
+      await view.onClose();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
+    });
+
+    test("ignores keydown when view is not active", () => {
+      // Mock view as not active
+      ((view as any).app.workspace.getActiveViewOfType as jest.Mock).mockReturnValue(null);
+
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "c",
+        target: document.body,
+        preventDefault: jest.fn(),
+      } as any);
+
+      expect(item.selectedAction).toBe("next-actions-file");
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("ignores keydown when typing in input", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      const inputEl = document.createElement("input");
+      handleKeyDown({
+        key: "c",
+        target: inputEl,
+        preventDefault: jest.fn(),
+      } as any);
+
+      expect(item.selectedAction).toBe("next-actions-file");
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("updates selected action for expanded item", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+
+      // Test 'c' -> create-project
+      handleKeyDown({
+        key: "c",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("create-project");
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+
+      // Test 'a' -> add-to-project
+      handleKeyDown({
+        key: "a",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("add-to-project");
+
+      // Test 'r' -> reference
+      handleKeyDown({
+        key: "r",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("reference");
+
+      // Test 'n' -> next-actions-file
+      handleKeyDown({
+        key: "n",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("next-actions-file");
+
+      // Test 's' -> someday-file
+      handleKeyDown({
+        key: "s",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("someday-file");
+
+      // Test 'p' -> person
+      handleKeyDown({
+        key: "p",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("person");
+
+      // Test 't' -> trash
+      handleKeyDown({
+        key: "t",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(item.selectedAction).toBe("trash");
+    });
+
+    test("ignores unknown keys", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "z",
+        target: document.body,
+        preventDefault: jest.fn(),
+      } as any);
+
+      expect(item.selectedAction).toBe("next-actions-file");
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
   });
 });
