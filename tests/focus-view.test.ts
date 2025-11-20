@@ -818,9 +818,14 @@ describe("FocusView", () => {
         .mockReturnValueOnce(mockFile1)
         .mockReturnValueOnce(mockFile2);
 
+      // Create a mock root split for the workspace
+      const mockRootSplit = { type: "split" };
+      mockApp.workspace.rootSplit = mockRootSplit;
+
       // Create a mock leaf that will be returned by getLeaf
       const mockOpenedLeaf = {
         openFile: jest.fn().mockResolvedValue(undefined),
+        getRoot: jest.fn().mockReturnValue(mockRootSplit), // Same root = attached
         view: {
           editor: {
             setCursor: jest.fn(),
@@ -850,6 +855,69 @@ describe("FocusView", () => {
       // Verify getLeaf was NOT called again (leaf was reused)
       expect(mockApp.workspace.getLeaf).not.toHaveBeenCalled();
       expect(mockOpenedLeaf.openFile).toHaveBeenCalledWith(mockFile2);
+    });
+
+    it("should create new leaf when cached leaf is detached from workspace", async () => {
+      // Create mock files
+      const { TFile } = require("obsidian");
+      const mockFile1 = new TFile();
+      mockFile1.path = "Projects/Project A.md";
+      const mockFile2 = new TFile();
+      mockFile2.path = "Projects/Project B.md";
+
+      mockApp.vault.getAbstractFileByPath
+        .mockReturnValueOnce(mockFile1)
+        .mockReturnValueOnce(mockFile2);
+
+      // Create a mock root split for the workspace
+      const mockRootSplit = { type: "split" };
+      mockApp.workspace.rootSplit = mockRootSplit;
+
+      // Create first mock leaf (will become detached)
+      const mockDetachedLeaf = {
+        openFile: jest.fn().mockResolvedValue(undefined),
+        getRoot: jest.fn().mockReturnValue({ type: "split" }), // Different root = detached
+        view: {
+          editor: {
+            setCursor: jest.fn(),
+            scrollIntoView: jest.fn(),
+          },
+        },
+      };
+
+      // Create second mock leaf (fresh, attached)
+      const mockFreshLeaf = {
+        openFile: jest.fn().mockResolvedValue(undefined),
+        getRoot: jest.fn().mockReturnValue(mockRootSplit), // Same root = attached
+        view: {
+          editor: {
+            setCursor: jest.fn(),
+            scrollIntoView: jest.fn(),
+          },
+        },
+      };
+
+      // First call returns detached leaf, second call returns fresh leaf
+      mockApp.workspace.getLeaf.mockReturnValueOnce(mockDetachedLeaf).mockReturnValueOnce(mockFreshLeaf);
+
+      // Open first file
+      await (view as any).openFile("Projects/Project A.md", 5);
+
+      // Verify first leaf was used
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(mockDetachedLeaf.openFile).toHaveBeenCalledWith(mockFile1);
+
+      // Reset call counts
+      mockApp.workspace.getLeaf.mockClear();
+      mockDetachedLeaf.openFile.mockClear();
+
+      // Open second file - should detect detached leaf and create new one
+      await (view as any).openFile("Projects/Project B.md", 10);
+
+      // Verify getLeaf was called again to create fresh leaf (because cached one was detached)
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
+      expect(mockFreshLeaf.openFile).toHaveBeenCalledWith(mockFile2);
     });
   });
 
