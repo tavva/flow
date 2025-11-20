@@ -43,7 +43,7 @@ export function renderInboxView(
   }
 
   if (!isLoading) {
-    contentEl.createEl("h2", { text: "📥 Inbox Files Processing" });
+    contentEl.createEl("h2", { text: "📥 Flow inbox processing" });
   }
 
   if (!isLoading && contentEl.children.length === 1) {
