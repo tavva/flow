@@ -807,6 +807,15 @@ export class FocusView extends ItemView {
     });
   }
 
+  private isLeafAttached(leaf: WorkspaceLeaf): boolean {
+    try {
+      return leaf.getRoot() === this.app.workspace.rootSplit;
+    } catch {
+      // If getRoot() throws, treat leaf as detached
+      return false;
+    }
+  }
+
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(filePath);
 
@@ -820,7 +829,7 @@ export class FocusView extends ItemView {
       let leaf = this.rightPaneLeaf;
 
       // Check if cached leaf is still valid and attached to workspace
-      if (!leaf || leaf.getRoot() !== this.app.workspace.rootSplit) {
+      if (!leaf || !this.isLeafAttached(leaf)) {
         leaf = this.app.workspace.getLeaf("split", "vertical");
         this.rightPaneLeaf = leaf;
       }

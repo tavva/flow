@@ -919,6 +919,71 @@ describe("FocusView", () => {
       expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
       expect(mockFreshLeaf.openFile).toHaveBeenCalledWith(mockFile2);
     });
+
+    it("should create new leaf when getRoot() throws an exception", async () => {
+      // Create mock files
+      const { TFile } = require("obsidian");
+      const mockFile1 = new TFile();
+      mockFile1.path = "Projects/Project A.md";
+      const mockFile2 = new TFile();
+      mockFile2.path = "Projects/Project B.md";
+
+      mockApp.vault.getAbstractFileByPath
+        .mockReturnValueOnce(mockFile1)
+        .mockReturnValueOnce(mockFile2);
+
+      // Create a mock root split for the workspace
+      const mockRootSplit = { type: "split" };
+      mockApp.workspace.rootSplit = mockRootSplit;
+
+      // Create first mock leaf with getRoot() that throws
+      const mockBrokenLeaf = {
+        openFile: jest.fn().mockResolvedValue(undefined),
+        getRoot: jest.fn().mockImplementation(() => {
+          throw new Error("Leaf is in invalid state");
+        }),
+        view: {
+          editor: {
+            setCursor: jest.fn(),
+            scrollIntoView: jest.fn(),
+          },
+        },
+      };
+
+      // Create second mock leaf (fresh, attached)
+      const mockFreshLeaf = {
+        openFile: jest.fn().mockResolvedValue(undefined),
+        getRoot: jest.fn().mockReturnValue(mockRootSplit),
+        view: {
+          editor: {
+            setCursor: jest.fn(),
+            scrollIntoView: jest.fn(),
+          },
+        },
+      };
+
+      // First call returns broken leaf, second call returns fresh leaf
+      mockApp.workspace.getLeaf.mockReturnValueOnce(mockBrokenLeaf).mockReturnValueOnce(mockFreshLeaf);
+
+      // Open first file
+      await (view as any).openFile("Projects/Project A.md", 5);
+
+      // Verify first leaf was used
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(mockBrokenLeaf.openFile).toHaveBeenCalledWith(mockFile1);
+
+      // Reset call counts
+      mockApp.workspace.getLeaf.mockClear();
+      mockBrokenLeaf.openFile.mockClear();
+
+      // Open second file - should catch the exception from getRoot() and create new leaf
+      await (view as any).openFile("Projects/Project B.md", 10);
+
+      // Verify getLeaf was called again to create fresh leaf (because getRoot() threw)
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(mockApp.workspace.getLeaf).toHaveBeenCalledWith("split", "vertical");
+      expect(mockFreshLeaf.openFile).toHaveBeenCalledWith(mockFile2);
+    });
   });
 
   describe("markItemComplete", () => {

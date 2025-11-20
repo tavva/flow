@@ -152,6 +152,44 @@ describe("SphereView", () => {
       expect(app.workspace.getLeaf).toHaveBeenCalledTimes(2);
       expect(secondLeaf.openFile).toHaveBeenCalledWith(secondProject);
     });
+
+    it("should create new leaf when getRoot() throws an exception", async () => {
+      const firstProject = new TFile("Projects/first-project.md");
+      const secondProject = new TFile("Projects/second-project.md");
+
+      const firstLeaf = new WorkspaceLeaf();
+      firstLeaf.getRoot = jest.fn().mockImplementation(() => {
+        throw new Error("Leaf is in invalid state");
+      });
+
+      const secondLeaf = new WorkspaceLeaf();
+      secondLeaf.getRoot = jest.fn().mockReturnValue(app.workspace.rootSplit);
+
+      app.workspace.getLeaf = jest
+        .fn()
+        .mockReturnValueOnce(firstLeaf)
+        .mockReturnValueOnce(secondLeaf);
+
+      app.vault.getAbstractFileByPath = jest
+        .fn()
+        .mockReturnValueOnce(firstProject)
+        .mockReturnValueOnce(secondProject);
+
+      const view = new SphereView(leaf, "personal", settings, mockSaveSettings);
+      view.app = app;
+
+      // Open first project
+      await (view as any).openProjectFile(firstProject.path);
+      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(1);
+      expect(firstLeaf.openFile).toHaveBeenCalledWith(firstProject);
+
+      // Open second project - should catch exception from getRoot() and create new leaf
+      await (view as any).openProjectFile(secondProject.path);
+
+      // Should create a new leaf since getRoot() threw an exception
+      expect(app.workspace.getLeaf).toHaveBeenCalledTimes(2);
+      expect(secondLeaf.openFile).toHaveBeenCalledWith(secondProject);
+    });
   });
 
   describe("filtering projects", () => {
