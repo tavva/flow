@@ -584,7 +584,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Ctrl+S saves the current item", () => {
+    test("Ctrl+Enter saves the current item", () => {
       const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
       (view as any).state.editableItems = [item];
       const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
@@ -592,7 +592,7 @@ describe("InboxProcessingView", () => {
       const stopPropagationSpy = jest.fn();
 
       handleKeyDown({
-        key: "s",
+        key: "Enter",
         ctrlKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
@@ -604,7 +604,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+S saves the current item (Mac)", () => {
+    test("Cmd+Enter saves the current item (Mac)", () => {
       const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
       (view as any).state.editableItems = [item];
       const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
@@ -612,7 +612,7 @@ describe("InboxProcessingView", () => {
       const stopPropagationSpy = jest.fn();
 
       handleKeyDown({
-        key: "s",
+        key: "Enter",
         metaKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
@@ -874,7 +874,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+F toggles Add to focus checkbox", () => {
+    test("Ctrl+L toggles Add to focus checkbox", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -886,7 +886,7 @@ describe("InboxProcessingView", () => {
       const stopPropagationSpy = jest.fn();
 
       handleKeyDown({
-        key: "f",
+        key: "l",
         ctrlKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
@@ -899,7 +899,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+F toggles Add to focus checkbox (Mac)", () => {
+    test("Cmd+L toggles Add to focus checkbox (Mac)", () => {
       const item = {
         isExpanded: true,
         selectedAction: "create-project",
@@ -909,7 +909,7 @@ describe("InboxProcessingView", () => {
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
-        key: "f",
+        key: "l",
         metaKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -920,7 +920,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Ctrl+F unchecks Mark as done when toggling Add to focus on", () => {
+    test("Ctrl+L unchecks Mark as done when toggling Add to focus on", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -931,7 +931,7 @@ describe("InboxProcessingView", () => {
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
-        key: "f",
+        key: "l",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -1078,7 +1078,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Ctrl+F/D/T ignored for reference action", () => {
+    test("Ctrl+L/D/T ignored for reference action", () => {
       const item = {
         isExpanded: true,
         selectedAction: "reference",
@@ -1089,9 +1089,9 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+F
+      // Try Ctrl+L
       handleKeyDown({
-        key: "f",
+        key: "l",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -1123,7 +1123,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+F/D/T ignored for trash action", () => {
+    test("Ctrl+L/D/T ignored for trash action", () => {
       const item = {
         isExpanded: true,
         selectedAction: "trash",
@@ -1134,9 +1134,9 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+F
+      // Try Ctrl+L
       handleKeyDown({
-        key: "f",
+        key: "l",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),

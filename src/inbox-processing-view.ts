@@ -133,8 +133,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+S (or Cmd+S on Mac) saves the current item
-    if (event.key === "s" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+Enter (or Cmd+Enter on Mac) saves the current item
+    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       if (expandedItem) {
         this.state.saveAndRemoveItem(expandedItem);
         event.preventDefault();
@@ -170,8 +170,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+F to toggle "Add to focus" checkbox
-    if (event.key === "f" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+L to toggle "Add to focus" checkbox
+    if (event.key === "l" && (event.ctrlKey || event.metaKey)) {
       if (expandedItem) {
         // Check if this action type shows focus checkbox
         const showsFocusCheckbox =
