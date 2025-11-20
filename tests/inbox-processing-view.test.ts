@@ -874,7 +874,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+L toggles Add to focus checkbox", () => {
+    test("Ctrl+J toggles Add to focus checkbox", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -886,7 +886,7 @@ describe("InboxProcessingView", () => {
       const stopPropagationSpy = jest.fn();
 
       handleKeyDown({
-        key: "l",
+        key: "j",
         ctrlKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
@@ -899,7 +899,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+L toggles Add to focus checkbox (Mac)", () => {
+    test("Cmd+J toggles Add to focus checkbox (Mac)", () => {
       const item = {
         isExpanded: true,
         selectedAction: "create-project",
@@ -909,7 +909,7 @@ describe("InboxProcessingView", () => {
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
-        key: "l",
+        key: "j",
         metaKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -920,7 +920,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Ctrl+L unchecks Mark as done when toggling Add to focus on", () => {
+    test("Ctrl+J unchecks Mark as done when toggling Add to focus on", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -931,7 +931,7 @@ describe("InboxProcessingView", () => {
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
-        key: "l",
+        key: "j",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -1078,7 +1078,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Ctrl+L/D/T ignored for reference action", () => {
+    test("Ctrl+J/D/T ignored for reference action", () => {
       const item = {
         isExpanded: true,
         selectedAction: "reference",
@@ -1089,9 +1089,9 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+L
+      // Try Ctrl+J
       handleKeyDown({
-        key: "l",
+        key: "j",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),
@@ -1123,7 +1123,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+L/D/T ignored for trash action", () => {
+    test("Ctrl+J/D/T ignored for trash action", () => {
       const item = {
         isExpanded: true,
         selectedAction: "trash",
@@ -1134,9 +1134,9 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+L
+      // Try Ctrl+J
       handleKeyDown({
-        key: "l",
+        key: "j",
         ctrlKey: true,
         target: document.body,
         preventDefault: jest.fn(),

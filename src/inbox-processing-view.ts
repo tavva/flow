@@ -170,8 +170,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+L to toggle "Add to focus" checkbox
-    if (event.key === "l" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+J to toggle "Add to focus" checkbox
+    if (event.key === "j" && (event.ctrlKey || event.metaKey)) {
       if (expandedItem) {
         // Check if this action type shows focus checkbox
         const showsFocusCheckbox =
