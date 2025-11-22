@@ -585,9 +585,16 @@ describe("InboxProcessingView", () => {
     });
 
     test("Ctrl+Enter saves the current item", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: ["personal"],
+        original: "test item",
+      } as any;
       (view as any).state.editableItems = [item];
-      const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
+      const saveAndRemoveItemSpy = jest
+        .spyOn((view as any).state, "saveAndRemoveItem")
+        .mockResolvedValue(undefined);
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
 
@@ -605,9 +612,16 @@ describe("InboxProcessingView", () => {
     });
 
     test("Cmd+Enter saves the current item (Mac)", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: ["personal"],
+        original: "test item",
+      } as any;
       (view as any).state.editableItems = [item];
-      const saveAndRemoveItemSpy = jest.spyOn((view as any).state, "saveAndRemoveItem");
+      const saveAndRemoveItemSpy = jest
+        .spyOn((view as any).state, "saveAndRemoveItem")
+        .mockResolvedValue(undefined);
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
 

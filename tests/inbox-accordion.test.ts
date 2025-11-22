@@ -19,11 +19,7 @@ describe("Inbox Accordion State Logic", () => {
   });
 
   test("first item is marked as expanded on initialization", () => {
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      jest.fn()
-    );
+    const state = new InboxModalState(mockController, mockSettings, jest.fn());
 
     state.editableItems = [
       {
@@ -46,11 +42,7 @@ describe("Inbox Accordion State Logic", () => {
 
   test("expanding an item collapses all others", () => {
     const renderCallback = jest.fn();
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      renderCallback
-    );
+    const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
     state.editableItems = [
       {
@@ -82,11 +74,7 @@ describe("Inbox Accordion State Logic", () => {
   });
 
   test("only one item is expanded at a time after expandItem", () => {
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      jest.fn()
-    );
+    const state = new InboxModalState(mockController, mockSettings, jest.fn());
 
     state.editableItems = [
       {
@@ -105,19 +93,13 @@ describe("Inbox Accordion State Logic", () => {
 
     state.expandItem(state.editableItems[1]);
 
-    const expandedCount = state.editableItems.filter(
-      (item) => item.isExpanded
-    ).length;
+    const expandedCount = state.editableItems.filter((item) => item.isExpanded).length;
     expect(expandedCount).toBe(1);
   });
 
   test("after saving an item, next item expands automatically", async () => {
     const renderCallback = jest.fn();
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      renderCallback
-    );
+    const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
     const firstItem: EditableItem = {
       original: "First item",
@@ -145,11 +127,7 @@ describe("Inbox Accordion State Logic", () => {
 
   test("after discarding an item, next item expands automatically", async () => {
     const renderCallback = jest.fn();
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      renderCallback
-    );
+    const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
     const firstItem: EditableItem = {
       original: "First item",
@@ -182,11 +160,7 @@ describe("Inbox Accordion State Logic", () => {
   });
 
   test("when last item is removed, no items remain to expand", async () => {
-    const state = new InboxModalState(
-      mockController,
-      mockSettings,
-      jest.fn()
-    );
+    const state = new InboxModalState(mockController, mockSettings, jest.fn());
 
     const lastItem: EditableItem = {
       original: "Last item",
