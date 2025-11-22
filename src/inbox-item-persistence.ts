@@ -54,7 +54,9 @@ export class InboxItemPersistenceService {
     let finalNextActions: string[] = [];
 
     if (item.editedNames && item.editedNames.length > 0) {
-      finalNextActions = item.editedNames.filter((action) => action.trim().length > 0);
+      finalNextActions = item.editedNames.filter(
+        (action) => action != null && action.trim().length > 0
+      );
     } else if (item.editedName && item.editedName.trim().length > 0) {
       finalNextActions = [item.editedName.trim()];
     }
@@ -69,7 +71,7 @@ export class InboxItemPersistenceService {
   private validateFinalNextActions(item: EditableItem, finalNextActions: string[]): void {
     if (
       ACTIONS_REQUIRING_NEXT_STEP.includes(item.selectedAction) &&
-      finalNextActions.every((action) => action.trim().length === 0)
+      finalNextActions.every((action) => action != null && action.trim().length === 0)
     ) {
       throw new GTDResponseValidationError("Next action cannot be empty when saving this item.");
     }
