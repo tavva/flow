@@ -761,6 +761,14 @@ The plugin supports several configurable settings accessible via Settings → Fl
 
 - **Available Spheres**: Life areas for categorizing projects (default: ["personal", "work"])
 
+### CLI Integration
+
+The plugin includes a `cliInboxFile` setting for integration with the standalone Flow CLI tool (maintained in a separate repository: https://github.com/yourusername/flow-cli). The CLI reads this setting to determine where to write quick captures.
+
+- **CLI Inbox File**: Filename for CLI quick captures (default: "Flow CLI Inbox.md")
+- This file is created in the "Inbox Files Folder" specified above
+- The CLI tool is optional and maintained separately from this plugin
+
 ## Error Handling
 
 The plugin includes comprehensive error handling:
