@@ -91,7 +91,9 @@ describe("CLI Entry Point", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
       fs.writeFileSync(
         settingsFile,
-        JSON.stringify({ cliInboxFile: "inbox.md", inboxFilesFolderPath: "Flow Inbox Files" })
+        JSON.stringify({
+          settings: { cliInboxFile: "inbox.md", inboxFilesFolderPath: "Flow Inbox Files" },
+        })
       );
     });
 
@@ -105,12 +107,8 @@ describe("CLI Entry Point", () => {
     });
 
     it("should capture text with existing config", async () => {
-      // Set up config
-      fs.mkdirSync(testConfigDir, { recursive: true });
-      fs.writeFileSync(testConfigPath, JSON.stringify({ defaultVault: testVaultDir }));
-
-      // Mock process.argv
-      process.argv = ["node", "flow", "buy milk"];
+      // Mock process.argv with explicit vault path to avoid using real config
+      process.argv = ["node", "flow", "--vault", testVaultDir, "buy milk"];
 
       await main();
 
@@ -189,7 +187,7 @@ describe("CLI Entry Point", () => {
         fs.rmSync(testVaultDir, { recursive: true });
       }
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(settingsFile, JSON.stringify({}));
+      fs.writeFileSync(settingsFile, JSON.stringify({ settings: {} }));
       process.argv = ["node", "flow", "--vault", testVaultDir, "test"];
 
       await main();

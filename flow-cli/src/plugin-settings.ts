@@ -26,7 +26,9 @@ export function readPluginSettings(vaultPath: string): PluginSettings {
   const settingsFile = path.join(pluginDir, "data.json");
   try {
     const content = fs.readFileSync(settingsFile, "utf-8");
-    const settings = JSON.parse(content) as PluginSettings;
+    const data = JSON.parse(content);
+    // Handle nested settings structure (data.json has {settings: {...}, coachState: {...}})
+    const settings = (data.settings || data) as PluginSettings;
 
     if (!settings.cliInboxFile) {
       throw new Error(

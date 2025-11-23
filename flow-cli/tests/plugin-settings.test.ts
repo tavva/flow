@@ -26,7 +26,7 @@ describe("Plugin Settings", () => {
   describe("readPluginSettings", () => {
     it("should read plugin settings successfully", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
+      fs.writeFileSync(settingsFile, JSON.stringify({ settings: { cliInboxFile: "inbox.md" } }));
 
       const settings = readPluginSettings(testVaultDir);
       expect(settings.cliInboxFile).toBe("Flow Inbox Files/inbox.md");
@@ -57,7 +57,7 @@ describe("Plugin Settings", () => {
 
     it("should throw error if cliInboxFile not configured", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(settingsFile, JSON.stringify({ otherSetting: "value" }));
+      fs.writeFileSync(settingsFile, JSON.stringify({ settings: { otherSetting: "value" } }));
 
       expect(() => readPluginSettings(testVaultDir)).toThrow("cliInboxFile not configured");
     });
@@ -72,7 +72,7 @@ describe("Plugin Settings", () => {
       fs.mkdirSync(pluginDir, { recursive: true });
       fs.writeFileSync(
         path.join(pluginDir, "data.json"),
-        JSON.stringify({ cliInboxFile: "inbox.md" })
+        JSON.stringify({ settings: { cliInboxFile: "inbox.md" } })
       );
 
       try {
