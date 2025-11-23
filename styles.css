@@ -1613,6 +1613,151 @@ select.flow-gtd-inline-select option,
   color: var(--text-on-accent);
 }
 
+/* Someday View */
+.flow-gtd-someday-view {
+  padding: 20px;
+}
+
+.flow-gtd-someday-title {
+  margin-bottom: 20px;
+  color: var(--text-normal);
+}
+
+.flow-gtd-someday-loading {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.flow-gtd-someday-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 20px 0;
+}
+
+.flow-gtd-someday-projects-section,
+.flow-gtd-someday-items-section {
+  margin-bottom: 30px;
+}
+
+.flow-gtd-someday-section-header {
+  margin-bottom: 15px;
+  font-size: 1.2em;
+  color: var(--text-accent);
+}
+
+.flow-gtd-someday-projects {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 20px;
+}
+
+.flow-gtd-someday-project {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.flow-gtd-someday-project:hover {
+  background: var(--background-secondary-alt);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-someday-project-title {
+  flex: 1;
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.flow-gtd-someday-project-title:hover {
+  color: var(--text-accent);
+}
+
+.flow-gtd-someday-project-status {
+  padding: 2px 8px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.flow-gtd-someday-project-sphere {
+  padding: 2px 8px;
+  background: var(--interactive-normal);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-normal);
+}
+
+.flow-gtd-someday-file-section {
+  margin-bottom: 20px;
+}
+
+.flow-gtd-someday-file-header {
+  margin-bottom: 10px;
+  font-size: 1em;
+  color: var(--text-normal);
+}
+
+.flow-gtd-someday-file-link {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+
+.flow-gtd-someday-file-link:hover {
+  text-decoration: underline;
+}
+
+.flow-gtd-someday-items {
+  list-style: none;
+  padding-left: 0;
+  margin-left: 20px;
+}
+
+.flow-gtd-someday-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.flow-gtd-someday-item:hover {
+  background: var(--background-secondary-alt);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flow-gtd-someday-item-text {
+  flex: 1;
+  cursor: pointer;
+  color: var(--text-normal);
+  font-size: 13px;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.flow-gtd-someday-item-text:hover {
+  color: var(--text-accent);
+}
+
 /* Focus View Styles */
 .flow-gtd-focus-view {
   padding: 20px;

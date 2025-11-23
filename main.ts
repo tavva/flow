@@ -7,6 +7,7 @@ import { ReviewModal } from "./src/review-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
+import { SomedayView, SOMEDAY_VIEW_TYPE } from "./src/someday-view";
 import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
 import { FlowCoachView, FLOW_COACH_VIEW_TYPE } from "./src/flow-coach-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
@@ -66,6 +67,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
       (leaf) => new WaitingForView(leaf, this.settings, this.saveSettings.bind(this))
     );
 
+    // Register the someday view
+    this.registerView(
+      SOMEDAY_VIEW_TYPE,
+      (leaf) => new SomedayView(leaf, this.settings, this.saveSettings.bind(this))
+    );
+
     // Register the focus view
     this.registerView(
       FOCUS_VIEW_TYPE,
@@ -95,6 +102,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Add waiting for ribbon icon
     this.addRibbonIcon("clock", "Open Waiting For view", () => {
       this.activateWaitingForView();
+    });
+
+    // Add someday ribbon icon
+    this.addRibbonIcon("calendar-clock", "Open Someday view", () => {
+      this.activateSomedayView();
     });
 
     // Add focus ribbon icon
@@ -139,6 +151,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Open waiting for view",
       callback: () => {
         this.activateWaitingForView();
+      },
+    });
+
+    // Add someday view command
+    this.addCommand({
+      id: "open-someday-view",
+      name: "Open someday view",
+      callback: () => {
+        this.activateSomedayView();
       },
     });
 
@@ -257,6 +278,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
     // Detach all waiting for views
     this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
+    // Detach all someday views
+    this.app.workspace.detachLeavesOfType(SOMEDAY_VIEW_TYPE);
     // Detach all focus views
     this.app.workspace.detachLeavesOfType(FOCUS_VIEW_TYPE);
     // Detach all Flow Coach views
@@ -440,6 +463,25 @@ export default class FlowGTDCoachPlugin extends Plugin {
       leaf = workspace.getLeaf("tab");
       await leaf.setViewState({
         type: WAITING_FOR_VIEW_TYPE,
+        active: true,
+      });
+    }
+
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+      workspace.setActiveLeaf(leaf, { focus: true });
+    }
+  }
+
+  async activateSomedayView() {
+    const { workspace } = this.app;
+
+    let leaf = workspace.getLeavesOfType(SOMEDAY_VIEW_TYPE)[0];
+
+    if (!leaf) {
+      leaf = workspace.getLeaf("tab");
+      await leaf.setViewState({
+        type: SOMEDAY_VIEW_TYPE,
         active: true,
       });
     }
