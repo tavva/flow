@@ -29,7 +29,7 @@ describe("Plugin Settings", () => {
       fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
 
       const settings = readPluginSettings(testVaultDir);
-      expect(settings.cliInboxFile).toBe("inbox.md");
+      expect(settings.cliInboxFile).toBe("Flow Inbox Files/inbox.md");
     });
 
     it("should throw error if vault does not exist", () => {
@@ -78,7 +78,7 @@ describe("Plugin Settings", () => {
       try {
         // Test with ~ prefix
         const settings = readPluginSettings(`~/${testVaultName}`);
-        expect(settings.cliInboxFile).toBe("inbox.md");
+        expect(settings.cliInboxFile).toBe("Flow Inbox Files/inbox.md");
       } finally {
         // Cleanup
         fs.rmSync(vaultPath, { recursive: true });

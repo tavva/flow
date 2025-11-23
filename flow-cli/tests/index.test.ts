@@ -73,7 +73,7 @@ describe("CLI Entry Point", () => {
     const obsidianDir = path.join(testVaultDir, ".obsidian");
     const pluginDir = path.join(obsidianDir, "plugins", "flow");
     const settingsFile = path.join(pluginDir, "data.json");
-    const inboxFile = path.join(testVaultDir, "inbox.md");
+    const inboxFile = path.join(testVaultDir, "Flow Inbox Files", "inbox.md");
 
     beforeEach(() => {
       // Clear mock call history
@@ -89,7 +89,10 @@ describe("CLI Entry Point", () => {
 
       // Set up vault
       fs.mkdirSync(pluginDir, { recursive: true });
-      fs.writeFileSync(settingsFile, JSON.stringify({ cliInboxFile: "inbox.md" }));
+      fs.writeFileSync(
+        settingsFile,
+        JSON.stringify({ cliInboxFile: "inbox.md", inboxFilesFolderPath: "Flow Inbox Files" })
+      );
     });
 
     afterEach(() => {

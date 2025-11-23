@@ -339,7 +339,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     // CLI Inbox File
     new Setting(containerEl)
       .setName("CLI Inbox File")
-      .setDesc("Path to file for CLI quick captures (relative to vault root)")
+      .setDesc("Filename for CLI quick captures (will be created in Flow Inbox Files folder)")
       .addText((text) =>
         text
           .setPlaceholder("Flow CLI Inbox.md")

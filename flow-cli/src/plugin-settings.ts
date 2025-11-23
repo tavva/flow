@@ -31,9 +31,13 @@ export function readPluginSettings(vaultPath: string): PluginSettings {
     if (!settings.cliInboxFile) {
       throw new Error(
         "cliInboxFile not configured in Flow plugin settings\n" +
-          "Please open Obsidian and configure: Settings → Flow GTD Coach → CLI Inbox File"
+          "Please open Obsidian and configure: Settings → Flow → CLI Inbox File"
       );
     }
+
+    // Prepend inbox files folder to create full path
+    const inboxFilesFolder = settings.inboxFilesFolderPath || "Flow Inbox Files";
+    settings.cliInboxFile = `${inboxFilesFolder}/${settings.cliInboxFile}`;
 
     return settings;
   } catch (error) {

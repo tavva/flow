@@ -109,7 +109,7 @@ export interface PluginSettings {
   somedayFilePath: string;
   projectsFolderPath: string;
   projectTemplateFilePath: string;
-  cliInboxFile: string; // Path to file for CLI quick captures (relative to vault root)
+  cliInboxFile: string; // Filename for CLI quick captures (will be created in Flow Inbox Files folder)
   coverImagesFolderPath: string; // Folder path for generated project cover images
   autoCreateCoverImage: boolean; // Automatically create cover images for new projects
   displayCoverImages: boolean; // Display cover images on project notes
