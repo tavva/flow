@@ -763,7 +763,7 @@ The plugin supports several configurable settings accessible via Settings → Fl
 
 ### CLI Integration
 
-The plugin includes a `cliInboxFile` setting for integration with the standalone Flow CLI tool (maintained in a separate repository: https://github.com/yourusername/flow-cli). The CLI reads this setting to determine where to write quick captures.
+The plugin includes a `cliInboxFile` setting for integration with the standalone Flow CLI tool (maintained in a separate repository: https://github.com/tavva/flow-cli). The CLI reads this setting to determine where to write quick captures.
 
 - **CLI Inbox File**: Filename for CLI quick captures (default: "Flow CLI Inbox.md")
 - This file is created in the "Inbox Files Folder" specified above
