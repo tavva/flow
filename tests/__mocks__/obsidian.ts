@@ -74,13 +74,70 @@ export class App {
   };
 }
 
+// Extends HTMLElement with Obsidian's custom methods
+function createObsidianElement(tagName: string = "div"): HTMLElement {
+  const el = document.createElement(tagName) as HTMLElement & {
+    empty: () => void;
+    createDiv: (options?: { cls?: string; text?: string }) => HTMLElement;
+    createEl: (
+      tag: string,
+      options?: { cls?: string; text?: string; type?: string; placeholder?: string }
+    ) => HTMLElement;
+    createSpan: (options?: { cls?: string; text?: string }) => HTMLSpanElement;
+    addClass: (cls: string) => void;
+    setText: (text: string) => void;
+  };
+
+  el.empty = function () {
+    while (this.firstChild) {
+      this.removeChild(this.firstChild);
+    }
+  };
+
+  el.createDiv = function (options?: { cls?: string; text?: string }) {
+    const div = createObsidianElement("div");
+    if (options?.cls) div.className = options.cls;
+    if (options?.text) div.textContent = options.text;
+    this.appendChild(div);
+    return div;
+  };
+
+  el.createEl = function (
+    tag: string,
+    options?: { cls?: string; text?: string; type?: string; placeholder?: string }
+  ) {
+    const elem = createObsidianElement(tag);
+    if (options?.cls) elem.className = options.cls;
+    if (options?.text) elem.textContent = options.text;
+    if (options?.type && elem instanceof HTMLInputElement) elem.type = options.type;
+    if (options?.placeholder && elem instanceof HTMLInputElement)
+      elem.placeholder = options.placeholder;
+    this.appendChild(elem);
+    return elem;
+  };
+
+  el.createSpan = function (options?: { cls?: string; text?: string }) {
+    return this.createEl("span", options) as HTMLSpanElement;
+  };
+
+  el.addClass = function (cls: string) {
+    this.classList.add(cls);
+  };
+
+  el.setText = function (text: string) {
+    this.textContent = text;
+  };
+
+  return el;
+}
+
 export class Modal {
   app: App;
   contentEl: HTMLElement;
 
   constructor(app: App) {
     this.app = app;
-    this.contentEl = document.createElement("div");
+    this.contentEl = createObsidianElement("div");
   }
 
   open() {}
@@ -106,12 +163,43 @@ export class Setting {
     return this;
   }
   addText(cb: (text: any) => void) {
-    cb({
-      setValue: jest.fn(),
-      onChange: jest.fn(),
-      setPlaceholder: jest.fn(),
+    const textComponent = {
+      setValue: jest.fn().mockReturnThis(),
+      onChange: jest.fn().mockReturnThis(),
+      setPlaceholder: jest.fn().mockReturnThis(),
       inputEl: document.createElement("input"),
-    });
+    };
+    cb(textComponent);
+    return this;
+  }
+  addTextArea(cb: (textarea: any) => void) {
+    const textareaComponent = {
+      setValue: jest.fn().mockReturnThis(),
+      onChange: jest.fn().mockReturnThis(),
+      setPlaceholder: jest.fn().mockReturnThis(),
+      inputEl: Object.assign(document.createElement("textarea"), { rows: 0 }),
+    };
+    cb(textareaComponent);
+    return this;
+  }
+  addToggle(cb: (toggle: any) => void) {
+    const parentEl = document.createElement("div");
+    parentEl.createSpan = (options?: { text?: string }) => {
+      const span = document.createElement("span");
+      if (options?.text) span.textContent = options.text;
+      parentEl.appendChild(span);
+      return span;
+    };
+    const toggleEl = document.createElement("div");
+    parentEl.appendChild(toggleEl);
+
+    const toggleComponent = {
+      setValue: jest.fn().mockReturnThis(),
+      onChange: jest.fn().mockReturnThis(),
+      setTooltip: jest.fn().mockReturnThis(),
+      toggleEl: toggleEl,
+    };
+    cb(toggleComponent);
     return this;
   }
   addButton(cb: (button: any) => void) {

@@ -4,6 +4,7 @@ import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { ReviewModal } from "./src/review-modal";
+import { NewProjectModal } from "./src/new-project-modal";
 import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
@@ -127,6 +128,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Review projects",
       callback: () => {
         this.openReviewModal();
+      },
+    });
+
+    // Add create project command
+    this.addCommand({
+      id: "create-project",
+      name: "Create new project",
+      callback: () => {
+        this.openNewProjectModal();
       },
     });
 
@@ -451,6 +461,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     const modal = new ReviewModal(this.app, this.settings);
+    modal.open();
+  }
+
+  private openNewProjectModal() {
+    const modal = new NewProjectModal(this.app, this.settings, () => this.saveSettings());
     modal.open();
   }
 
