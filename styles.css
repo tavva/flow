@@ -1862,10 +1862,23 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-gtd-focus-project-name {
-  flex-basis: 100%;
+  display: block;
   font-size: 0.85em;
   opacity: 0.7;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+/* Pinned item content wrapper */
+.flow-gtd-focus-pinned-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-gtd-focus-pinned-action-row {
+  display: flex;
+  align-items: center;
 }
 
 .flow-gtd-focus-item-actions {
@@ -2132,14 +2145,22 @@ select.flow-gtd-inline-select option,
   margin-bottom: 8px;
 }
 
+/* Pinned items - override flex-wrap */
+.flow-gtd-focus-pinned-item {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
 /* Drag handle - hidden by default, visible on hover */
 .flow-gtd-focus-drag-handle {
   opacity: 0.3;
   cursor: grab;
   margin-right: 8px;
   transition: opacity 0.2s;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .flow-gtd-focus-pinned-item:hover .flow-gtd-focus-drag-handle {

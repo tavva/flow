@@ -597,33 +597,34 @@ export class FocusView extends ItemView {
     itemEl.addEventListener("drop", (e) => this.onDrop(e, item));
     itemEl.addEventListener("dragend", (e) => this.onDragEnd(e));
 
+    // Content wrapper for project name + action text
+    const contentWrapper = itemEl.createDiv({ cls: "flow-gtd-focus-pinned-content" });
+
     // Show project name for project actions (not general actions)
     if (!item.isGeneral) {
       const displayName = getProjectDisplayName(item.file, this.allProjects);
-      const projectNameSpan = itemEl.createSpan({
+      contentWrapper.createSpan({
         cls: "flow-gtd-focus-project-name",
         text: displayName.primary,
       });
-      projectNameSpan.style.fontSize = "0.85em";
-      projectNameSpan.style.opacity = "0.7";
-      projectNameSpan.style.flexBasis = "100%";
-      projectNameSpan.style.marginBottom = "4px";
     }
 
     // Check if this is a waiting-for item
     const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";
 
-    // Add handshake emoji for waiting-for items (outside the item box)
+    // Action text row (with waiting indicator if needed)
+    const actionRow = contentWrapper.createDiv({ cls: "flow-gtd-focus-pinned-action-row" });
+
+    // Add handshake emoji for waiting-for items
     if (isWaitingFor) {
-      const handshakeSpan = itemEl.createSpan({
+      actionRow.createSpan({
         cls: "flow-gtd-focus-waiting-indicator",
         text: "🤝 ",
       });
-      handshakeSpan.style.marginRight = "8px";
     }
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
+    const textSpan = actionRow.createSpan({ cls: "flow-gtd-focus-item-text" });
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
 

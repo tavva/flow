@@ -425,10 +425,9 @@ describe("FocusView", () => {
       // Track all created spans to verify project name was created
       const allSpans: any[] = [];
 
-      // Create comprehensive mocks for DOM elements
-      const mockLi = document.createElement("li");
-      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
-        const span: any = {
+      // Helper to create a mock element with all needed methods
+      const createMockElement = (opts?: any): any => {
+        const el: any = {
           className: opts?.cls || "",
           textContent: opts?.text || "",
           style: {},
@@ -440,15 +439,24 @@ describe("FocusView", () => {
           createEl: jest.fn().mockReturnValue({
             addEventListener: jest.fn(),
           }),
-          createSpan: jest.fn().mockReturnValue({
-            createEl: jest.fn().mockReturnValue({
-              addEventListener: jest.fn(),
-            }),
+          createDiv: jest.fn().mockImplementation(createMockElement),
+          createSpan: jest.fn().mockImplementation((spanOpts?: any) => {
+            const span = createMockElement(spanOpts);
+            allSpans.push(span);
+            return span;
           }),
         };
+        return el;
+      };
+
+      // Create comprehensive mocks for DOM elements
+      const mockLi = document.createElement("li");
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        const span = createMockElement(opts);
         allSpans.push(span);
         return span;
       });
+      (mockLi as any).createDiv = jest.fn().mockImplementation(createMockElement);
 
       (mockLi as any).addEventListener = jest.fn();
       (container as any).createEl = jest.fn().mockReturnValue(mockLi);
@@ -460,17 +468,9 @@ describe("FocusView", () => {
         span.className.includes("flow-gtd-focus-project-name")
       );
 
-      // Check that project name span exists
+      // Check that project name span exists with correct text
       expect(projectNameSpan).toBeDefined();
-
-      // Check that project name contains the project title
       expect(projectNameSpan.textContent).toBe("Important Project");
-
-      // Check that project name has correct styling (smaller font, dimmed, takes full width)
-      expect(projectNameSpan.style.fontSize).toBe("0.85em");
-      expect(projectNameSpan.style.opacity).toBe("0.7");
-      expect(projectNameSpan.style.flexBasis).toBe("100%");
-      expect(projectNameSpan.style.marginBottom).toBe("4px");
     });
 
     it("should not show project name for pinned general actions", () => {
@@ -490,10 +490,9 @@ describe("FocusView", () => {
       // Track all created spans to verify no project name was created
       const allSpans: any[] = [];
 
-      // Create mocks for DOM elements
-      const mockLi = document.createElement("li");
-      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
-        const span: any = {
+      // Helper to create a mock element with all needed methods
+      const createMockElement = (opts?: any): any => {
+        const el: any = {
           className: opts?.cls || "",
           textContent: opts?.text || "",
           style: {},
@@ -505,15 +504,24 @@ describe("FocusView", () => {
           createEl: jest.fn().mockReturnValue({
             addEventListener: jest.fn(),
           }),
-          createSpan: jest.fn().mockReturnValue({
-            createEl: jest.fn().mockReturnValue({
-              addEventListener: jest.fn(),
-            }),
+          createDiv: jest.fn().mockImplementation(createMockElement),
+          createSpan: jest.fn().mockImplementation((spanOpts?: any) => {
+            const span = createMockElement(spanOpts);
+            allSpans.push(span);
+            return span;
           }),
         };
+        return el;
+      };
+
+      // Create mocks for DOM elements
+      const mockLi = document.createElement("li");
+      (mockLi as any).createSpan = jest.fn().mockImplementation((opts?: any) => {
+        const span = createMockElement(opts);
         allSpans.push(span);
         return span;
       });
+      (mockLi as any).createDiv = jest.fn().mockImplementation(createMockElement);
 
       (mockLi as any).addEventListener = jest.fn();
       (container as any).createEl = jest.fn().mockReturnValue(mockLi);
