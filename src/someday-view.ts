@@ -64,9 +64,7 @@ export class SomedayView extends ItemView {
         this.renderContent(container as HTMLElement, data);
       } catch (error) {
         console.error("Failed to load someday view", error);
-        loadingEl.setText(
-          "Unable to load someday items. Check the console for more information."
-        );
+        loadingEl.setText("Unable to load someday items. Check the console for more information.");
       }
     }, 0);
   }
@@ -242,9 +240,7 @@ export class SomedayView extends ItemView {
     const projectsList = sectionEl.createEl("ul", { cls: "flow-gtd-someday-projects" });
 
     // Sort projects by title
-    const sortedProjects = projects.sort((a, b) =>
-      a.project.title.localeCompare(b.project.title)
-    );
+    const sortedProjects = projects.sort((a, b) => a.project.title.localeCompare(b.project.title));
 
     sortedProjects.forEach((somedayProject) => {
       this.renderProject(projectsList, somedayProject);

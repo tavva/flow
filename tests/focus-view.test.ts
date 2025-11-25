@@ -965,7 +965,9 @@ describe("FocusView", () => {
       };
 
       // First call returns broken leaf, second call returns fresh leaf
-      mockApp.workspace.getLeaf.mockReturnValueOnce(mockBrokenLeaf).mockReturnValueOnce(mockFreshLeaf);
+      mockApp.workspace.getLeaf
+        .mockReturnValueOnce(mockBrokenLeaf)
+        .mockReturnValueOnce(mockFreshLeaf);
 
       // Open first file
       await (view as any).openFile("Projects/Project A.md", 5);
