@@ -18,6 +18,7 @@ interface SphereProjectSummary {
   project: FlowProject;
   priority: number | null;
   depth: number; // Hierarchy depth: 0 for root, 1+ for sub-projects
+  parentName?: string; // For subprojects shown outside their parent's priority section
 }
 
 interface SphereViewData {
@@ -119,13 +120,25 @@ export class SphereView extends ItemView {
     // Build hierarchy from ALL projects first (so parent relationships are preserved)
     const hierarchy = buildProjectHierarchy(allProjects);
 
+    // Build parent lookup for priority comparison
+    const parentLookup = new Map<string, FlowProject>();
+    const buildParentLookup = (nodes: ProjectNode[], parent?: FlowProject) => {
+      for (const node of nodes) {
+        if (parent) {
+          parentLookup.set(node.project.file, parent);
+        }
+        buildParentLookup(node.children, node.project);
+      }
+    };
+    buildParentLookup(hierarchy);
+
     // Sort hierarchy at each level (siblings within same parent)
     const sortedHierarchy = sortHierarchy(hierarchy, (a, b) => this.compareProjectNodes(a, b));
 
     // Flatten the sorted hierarchy (preserves parent-child grouping)
     const flattenedHierarchy = flattenHierarchy(sortedHierarchy);
 
-    // Then filter to only sphere projects with live status
+    // Filter to sphere projects with live status and map to summaries
     const projectSummaries = flattenedHierarchy
       .filter(
         (node) =>
@@ -134,20 +147,58 @@ export class SphereView extends ItemView {
           !node.project.file.startsWith("Templates/") &&
           node.project.file !== this.settings.projectTemplateFilePath
       )
-      .map((node) => ({
-        project: node.project,
-        priority: this.normalizePriority(node.project.priority),
-        depth: node.depth,
-      }));
+      .map((node) => {
+        const priority = this.normalizePriority(node.project.priority);
+        const parent = parentLookup.get(node.project.file);
 
-    const projectsNeedingNextActions = projectSummaries.filter(
+        let depth = node.depth;
+        let parentName: string | undefined;
+
+        // If this is a subproject with different priority than its parent,
+        // promote it to root level but show parent indicator
+        if (depth > 0 && parent) {
+          const parentPriority = this.normalizePriority(parent.priority);
+          if (priority !== parentPriority) {
+            depth = 0;
+            parentName = parent.title;
+          }
+        }
+
+        return {
+          project: node.project,
+          priority,
+          depth,
+          parentName,
+        };
+      });
+
+    // Re-sort by priority so promoted subprojects appear in correct section
+    // Use stable sort (preserve original order within same priority)
+    const indexedSummaries = projectSummaries.map((s, i) => ({ summary: s, originalIndex: i }));
+    indexedSummaries.sort((a, b) => {
+      const aPriority = a.summary.priority;
+      const bPriority = b.summary.priority;
+
+      // Primary sort by priority
+      if (aPriority !== null && bPriority !== null && aPriority !== bPriority) {
+        return aPriority - bPriority;
+      }
+      if (aPriority !== null && bPriority === null) return -1;
+      if (aPriority === null && bPriority !== null) return 1;
+
+      // Same priority - preserve original order
+      return a.originalIndex - b.originalIndex;
+    });
+    const sortedSummaries = indexedSummaries.map((is) => is.summary);
+
+    const projectsNeedingNextActions = sortedSummaries.filter(
       ({ project }) => !project.nextActions || project.nextActions.length === 0
     );
 
     const { generalNextActions, generalNextActionsNotice } = await this.readGeneralNextActions();
 
     return {
-      projects: projectSummaries,
+      projects: sortedSummaries,
       projectsNeedingNextActions,
       generalNextActions,
       generalNextActionsNotice,
@@ -403,7 +454,7 @@ export class SphereView extends ItemView {
 
     let lastPriority: number | null = null;
 
-    projects.forEach(({ project, priority, depth }, index) => {
+    projects.forEach(({ project, priority, depth, parentName }, index) => {
       // Insert separator when priority changes (but not before the first project)
       if (index > 0 && priority !== lastPriority) {
         const separator = section.createDiv({ cls: "flow-gtd-sphere-priority-separator" });
@@ -463,6 +514,15 @@ export class SphereView extends ItemView {
         e.preventDefault();
         this.openProjectFile(project.file);
       });
+
+      // Show parent indicator for subprojects displayed outside parent's priority section
+      if (parentName) {
+        header.createSpan({
+          cls: "flow-gtd-sphere-project-parent-indicator",
+          text: `↳ ${parentName}`,
+        });
+      }
+
       if (priority !== null) {
         this.renderPriorityDropdown(header, project, priority);
       }

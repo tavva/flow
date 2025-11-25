@@ -1359,6 +1359,13 @@ select.flow-gtd-inline-select option,
   color: var(--text-normal);
 }
 
+.flow-gtd-sphere-project-parent-indicator {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
 .flow-gtd-sphere-project-priority {
   font-size: 13px;
   font-weight: 500;

@@ -269,8 +269,9 @@ describe("SphereView", () => {
   });
 
   describe("project hierarchy", () => {
-    it("should preserve hierarchy depth when filtering projects by sphere", async () => {
-      // Create a hierarchy: Root (work) -> Child (work) -> Grandchild (personal)
+    it("should preserve hierarchy depth when filtering projects by sphere with same priority", async () => {
+      // Create a hierarchy: Root (work, P1) -> Child (work, P1) -> Grandchild (personal, P1)
+      // Same priority means child stays nested under parent
       const rootProject = {
         file: "Root.md",
         title: "Root Project",
@@ -286,7 +287,7 @@ describe("SphereView", () => {
         title: "Child Project",
         tags: ["project/work"],
         status: "live" as const,
-        priority: 2,
+        priority: 1, // Same priority as parent
         parentProject: "[[Root]]",
         nextActions: ["Child action"],
         mtime: Date.now(),
@@ -297,7 +298,7 @@ describe("SphereView", () => {
         title: "Grandchild Project",
         tags: ["project/personal"],
         status: "live" as const,
-        priority: 3,
+        priority: 1,
         parentProject: "[[Child]]",
         nextActions: ["Grandchild action"],
         mtime: Date.now(),
@@ -317,13 +318,59 @@ describe("SphereView", () => {
       const root = data.projects.find((p: any) => p.project.file === "Root.md");
       expect(root?.depth).toBe(0);
 
-      // Child should have depth 1
+      // Child should have depth 1 (same priority as parent, so stays nested)
       const child = data.projects.find((p: any) => p.project.file === "Child.md");
       expect(child?.depth).toBe(1);
+      expect(child?.parentName).toBeUndefined();
     });
 
-    it("should handle sub-projects where parent is filtered out", async () => {
-      // Create: Root (personal) -> Child (work)
+    it("should promote subprojects with different priority to root level", async () => {
+      // Create: Root (work, P1) -> Child (work, P2)
+      // Different priorities means child is promoted to root level with parent indicator
+      const rootProject = {
+        file: "Root.md",
+        title: "Root Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Root action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2, // Different priority from parent
+        parentProject: "[[Root]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([rootProject, childProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(2);
+
+      // Root should have depth 0
+      const root = data.projects.find((p: any) => p.project.file === "Root.md");
+      expect(root?.depth).toBe(0);
+      expect(root?.parentName).toBeUndefined();
+
+      // Child should be promoted to depth 0 with parentName set
+      const child = data.projects.find((p: any) => p.project.file === "Child.md");
+      expect(child?.depth).toBe(0);
+      expect(child?.parentName).toBe("Root Project");
+    });
+
+    it("should handle sub-projects where parent is filtered out with different priority", async () => {
+      // Create: Root (personal, P1) -> Child (work, P2)
+      // Different sphere AND different priority - child promoted with parent indicator
       const rootProject = {
         file: "Root.md",
         title: "Root Project",
@@ -339,7 +386,7 @@ describe("SphereView", () => {
         title: "Child Project",
         tags: ["project/work"],
         status: "live" as const,
-        priority: 2,
+        priority: 2, // Different priority from parent
         parentProject: "[[Root]]",
         nextActions: ["Child action"],
         mtime: Date.now(),
@@ -356,8 +403,49 @@ describe("SphereView", () => {
       expect(data.projects).toHaveLength(1);
       expect(data.projects[0].project.file).toBe("Child.md");
 
-      // Child should still have depth 1 because hierarchy was built from ALL projects first
+      // Child promoted to depth 0 with parent name set
+      expect(data.projects[0].depth).toBe(0);
+      expect(data.projects[0].parentName).toBe("Root Project");
+    });
+
+    it("should preserve depth for sub-projects where parent is filtered out but same priority", async () => {
+      // Create: Root (personal, P1) -> Child (work, P1)
+      // Different sphere but same priority - child stays at depth 1 without parent indicator
+      const rootProject = {
+        file: "Root.md",
+        title: "Root Project",
+        tags: ["project/personal"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Root action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1, // Same priority as parent
+        parentProject: "[[Root]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([rootProject, childProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      // Should only include child (tagged work)
+      expect(data.projects).toHaveLength(1);
+      expect(data.projects[0].project.file).toBe("Child.md");
+
+      // Child stays at depth 1 (same priority as parent), no parent indicator
       expect(data.projects[0].depth).toBe(1);
+      expect(data.projects[0].parentName).toBeUndefined();
     });
   });
 
@@ -429,9 +517,9 @@ describe("SphereView", () => {
       expect(data.projects[4].project.title).toBe("Zulu Project");
     });
 
-    it("should preserve hierarchy when sorting by priority", async () => {
+    it("should sort subprojects into correct priority section when different from parent", async () => {
       // Parent has priority 2, child has priority 1
-      // After sorting, child should still appear AFTER parent (grouped with parent)
+      // Child should appear BEFORE parent in P1 section, with parent indicator
       const parentProject = {
         file: "Parent.md",
         title: "Parent Project",
@@ -447,7 +535,7 @@ describe("SphereView", () => {
         title: "Child Project",
         tags: ["project/work"],
         status: "live" as const,
-        priority: 1,
+        priority: 1, // Higher priority than parent
         parentProject: "[[Parent]]",
         nextActions: ["Child action"],
         mtime: Date.now(),
@@ -472,12 +560,57 @@ describe("SphereView", () => {
 
       expect(data.projects).toHaveLength(3);
 
-      // Parent should appear before its child despite lower priority
+      // Child (P1) should appear before parent (P2)
+      const parentIndex = data.projects.findIndex((p: any) => p.project.file === "Parent.md");
+      const childIndex = data.projects.findIndex((p: any) => p.project.file === "Child.md");
+
+      expect(childIndex).toBeLessThan(parentIndex);
+      // Child is promoted to depth 0 with parent indicator
+      expect(data.projects[childIndex].depth).toBe(0);
+      expect(data.projects[childIndex].parentName).toBe("Parent Project");
+    });
+
+    it("should preserve hierarchy when child has same priority as parent", async () => {
+      // Parent and child both have priority 2
+      // Child should appear after parent (nested)
+      const parentProject = {
+        file: "Parent.md",
+        title: "Parent Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        nextActions: ["Parent action"],
+        mtime: Date.now(),
+      };
+
+      const childProject = {
+        file: "Child.md",
+        title: "Child Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2, // Same priority as parent
+        parentProject: "[[Parent]]",
+        nextActions: ["Child action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([parentProject, childProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const data = await (view as any).loadSphereData();
+
+      expect(data.projects).toHaveLength(2);
+
+      // Parent should appear before its child
       const parentIndex = data.projects.findIndex((p: any) => p.project.file === "Parent.md");
       const childIndex = data.projects.findIndex((p: any) => p.project.file === "Child.md");
 
       expect(parentIndex).toBeLessThan(childIndex);
+      // Child stays nested (depth 1, no parent indicator)
       expect(data.projects[childIndex].depth).toBe(1);
+      expect(data.projects[childIndex].parentName).toBeUndefined();
     });
   });
 
@@ -1251,6 +1384,7 @@ describe("SphereView", () => {
     });
 
     it("should apply P1 highlighting to sub-projects with priority 1", async () => {
+      // When child has P1 and parent has P2, child appears first (in P1 section)
       const parentProject = {
         file: "Parent.md",
         title: "Parent Project",
@@ -1282,11 +1416,11 @@ describe("SphereView", () => {
       const container = view.containerEl.children[1] as HTMLElement;
       const projects = container.querySelectorAll(".flow-gtd-sphere-project");
 
-      // Parent (P2) should NOT have P1 class
-      expect(projects[0].classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
+      // Child (P1) appears first and has P1 class
+      expect(projects[0].classList.contains("flow-gtd-sphere-project-p1")).toBe(true);
 
-      // Child (P1) should have P1 class
-      expect(projects[1].classList.contains("flow-gtd-sphere-project-p1")).toBe(true);
+      // Parent (P2) appears second and should NOT have P1 class
+      expect(projects[1].classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
     });
   });
 });
