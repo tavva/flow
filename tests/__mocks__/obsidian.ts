@@ -37,6 +37,7 @@ export class Vault {
 export class MetadataCache {
   getFileCache = jest.fn();
   on = jest.fn(() => ({ unload: jest.fn() }));
+  offref = jest.fn();
 }
 
 export class FileManager {

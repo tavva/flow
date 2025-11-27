@@ -1,13 +1,14 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { ItemView, WorkspaceLeaf, TFile, EventRef, setIcon } from "obsidian";
+import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator, ValidationResult } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { RefreshingView } from "./refreshing-view";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -16,15 +17,12 @@ interface GroupedFocusItems {
   generalActions: { [sphere: string]: FocusItem[] };
 }
 
-export class FocusView extends ItemView {
+export class FocusView extends RefreshingView {
   private settings: PluginSettings;
   private validator: FocusValidator;
   private scanner: FlowProjectScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
-  private modifyEventRef: EventRef | null = null;
-  private refreshTimeout: NodeJS.Timeout | null = null;
-  private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
   private allProjects: FlowProject[] = [];
   private draggedItem: FocusItem | null = null;
@@ -43,6 +41,10 @@ export class FocusView extends ItemView {
     } catch {
       this.hasDataview = false;
     }
+  }
+
+  protected getDebounceTime(): number {
+    return this.hasDataview ? 500 : 2000;
   }
 
   private extractCheckboxStatus(lineContent: string): string {
@@ -100,16 +102,12 @@ export class FocusView extends ItemView {
     this.allProjects = await this.scanner.scanProjects();
 
     // Register event listener for metadata cache changes (fires after file is indexed)
-    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
-      // Check if file has list items (tasks) that might be focus items
+    this.registerMetadataCacheListener((file: TFile) => {
       const cache = this.app.metadataCache.getFileCache(file);
       if (cache?.listItems && cache.listItems.length > 0) {
-        // Check if this file contains any focus items
-        const hasFocusItems = this.focusItems.some((item) => item.file === file.path);
-        if (hasFocusItems) {
-          this.scheduleRefresh();
-        }
+        return this.focusItems.some((item) => item.file === file.path);
       }
+      return false;
     });
 
     // Clear container and render actual content
@@ -141,41 +139,10 @@ export class FocusView extends ItemView {
   }
 
   async onClose() {
-    // Unregister event listener
-    if (this.modifyEventRef) {
-      this.app.metadataCache.offref(this.modifyEventRef);
-      this.modifyEventRef = null;
-    }
-
-    // Clear any pending refresh
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-      this.refreshTimeout = null;
-    }
+    this.cleanup();
   }
 
-  private scheduleRefresh() {
-    // Use short debounce with Dataview (fast), longer without (slow file scanning)
-    const debounceTime = this.hasDataview ? 500 : 2000;
-
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-    }
-
-    this.refreshTimeout = setTimeout(async () => {
-      await this.refresh();
-      this.refreshTimeout = null;
-    }, debounceTime);
-  }
-
-  private async refresh() {
-    // Prevent concurrent refreshes
-    if (this.isRefreshing) {
-      return;
-    }
-
-    this.isRefreshing = true;
-
+  protected async performRefresh(): Promise<void> {
     try {
       // Reload focus items from file to pick up changes from other views
       await this.loadFocus();
@@ -260,8 +227,6 @@ export class FocusView extends ItemView {
       }
     } catch (error) {
       console.error("Failed to refresh focus view", error);
-    } finally {
-      this.isRefreshing = false;
     }
   }
 

@@ -247,7 +247,7 @@ describe("FocusView", () => {
         children: [null, createMockElement()],
       };
 
-      await (view as any).refresh();
+      await (view as any).performRefresh();
 
       // Both items should remain in the focus (waiting-for items should NOT be removed)
       expect(mockFocusItems).toHaveLength(2);
@@ -805,7 +805,7 @@ describe("FocusView", () => {
       // Mock file read
       mockApp.vault.read = jest.fn().mockResolvedValue("- [ ] Pinned action");
 
-      await (testView as any).refresh();
+      await (testView as any).performRefresh();
 
       // Check isPinned state is preserved
       expect(mockFocusItems[0].isPinned).toBe(true);
@@ -1207,7 +1207,7 @@ describe("FocusView", () => {
         validateItem: jest.fn().mockResolvedValue({ found: true }),
       };
 
-      await (view as any).refresh();
+      await (view as any).performRefresh();
 
       const remaining = (view as any).focusItems;
       expect(remaining.length).toBe(2);

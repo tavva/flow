@@ -1,11 +1,12 @@
 // ABOUTME: Leaf view displaying all waiting-for items aggregated from across the vault.
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
-import { ItemView, WorkspaceLeaf, TFile, EventRef, setIcon } from "obsidian";
+import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 import { WaitingForValidator } from "./waiting-for-validator";
 import { PluginSettings } from "./types";
+import { RefreshingView } from "./refreshing-view";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -13,14 +14,11 @@ interface GroupedItems {
   [filePath: string]: WaitingForItem[];
 }
 
-export class WaitingForView extends ItemView {
+export class WaitingForView extends RefreshingView {
   private settings: PluginSettings;
   private scanner: WaitingForScanner;
   private validator: WaitingForValidator;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
-  private modifyEventRef: EventRef | null = null;
-  private refreshTimeout: NodeJS.Timeout | null = null;
-  private isRefreshing: boolean = false;
   private hasDataview: boolean = false;
   private saveSettings: () => Promise<void>;
   private selectedSpheres: string[] = []; // Local state, not persisted
@@ -40,6 +38,10 @@ export class WaitingForView extends ItemView {
     }
   }
 
+  protected getDebounceTime(): number {
+    return this.hasDataview ? 500 : 15000;
+  }
+
   getViewType(): string {
     return WAITING_FOR_VIEW_TYPE;
   }
@@ -57,12 +59,9 @@ export class WaitingForView extends ItemView {
     this.selectedSpheres = [...this.settings.spheres];
 
     // Register event listener for metadata cache changes (fires after file is indexed)
-    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
-      // Check if file has list items (tasks) that might be waiting-for items
+    this.registerMetadataCacheListener((file: TFile) => {
       const cache = this.app.metadataCache.getFileCache(file);
-      if (cache?.listItems && cache.listItems.length > 0) {
-        this.scheduleRefresh();
-      }
+      return !!(cache?.listItems && cache.listItems.length > 0);
     });
 
     const container = this.containerEl.children[1];
@@ -88,52 +87,21 @@ export class WaitingForView extends ItemView {
   }
 
   async onClose() {
-    // Unregister event listener
-    if (this.modifyEventRef) {
-      this.app.metadataCache.offref(this.modifyEventRef);
-      this.modifyEventRef = null;
-    }
-
-    // Clear any pending refresh
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-      this.refreshTimeout = null;
-    }
+    this.cleanup();
   }
 
-  private scheduleRefresh() {
-    // Use short debounce with Dataview (fast), longer without (slow file scanning)
-    const debounceTime = this.hasDataview ? 500 : 15000;
+  protected async performRefresh(): Promise<void> {
+    const container = this.containerEl.children[1];
 
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
+    // Only show loading message for slow manual scans, not for fast Dataview queries
+    let loadingEl: HTMLElement | null = null;
+    if (!this.hasDataview) {
+      container.empty();
+      loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
+      loadingEl.setText("Refreshing...");
     }
-
-    this.refreshTimeout = setTimeout(async () => {
-      await this.refresh();
-      this.refreshTimeout = null;
-    }, debounceTime);
-  }
-
-  private async refresh() {
-    // Prevent concurrent refreshes
-    if (this.isRefreshing) {
-      return;
-    }
-
-    this.isRefreshing = true;
 
     try {
-      const container = this.containerEl.children[1];
-
-      // Only show loading message for slow manual scans, not for fast Dataview queries
-      let loadingEl: HTMLElement | null = null;
-      if (!this.hasDataview) {
-        container.empty();
-        loadingEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
-        loadingEl.setText("Refreshing...");
-      }
-
       const items = await this.scanner.scanWaitingForItems();
 
       // Clear and render
@@ -141,12 +109,9 @@ export class WaitingForView extends ItemView {
       this.renderContent(container as HTMLElement, items);
     } catch (error) {
       console.error("Failed to refresh waiting for view", error);
-      const container = this.containerEl.children[1];
       container.empty();
       const errorEl = container.createDiv({ cls: "flow-gtd-waiting-for-loading" });
       errorEl.setText("Unable to refresh. Check the console for more information.");
-    } finally {
-      this.isRefreshing = false;
     }
   }
 

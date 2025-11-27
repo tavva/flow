@@ -1,9 +1,10 @@
 // ABOUTME: Leaf view displaying all someday items and paused/someday projects aggregated from across the vault.
 // ABOUTME: Allows opening files and viewing content with sphere filtering.
 
-import { ItemView, WorkspaceLeaf, TFile, EventRef } from "obsidian";
+import { WorkspaceLeaf, TFile } from "obsidian";
 import { SomedayScanner, SomedayItem, SomedayProject, SomedayData } from "./someday-scanner";
 import { PluginSettings } from "./types";
+import { RefreshingView } from "./refreshing-view";
 
 export const SOMEDAY_VIEW_TYPE = "flow-gtd-someday-view";
 
@@ -11,18 +12,15 @@ interface GroupedItems {
   [filePath: string]: SomedayItem[];
 }
 
-export class SomedayView extends ItemView {
+export class SomedayView extends RefreshingView {
   private settings: PluginSettings;
   private scanner: SomedayScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
-  private modifyEventRef: EventRef | null = null;
-  private refreshTimeout: NodeJS.Timeout | null = null;
-  private isRefreshing: boolean = false;
   private saveSettings: () => Promise<void>;
   private selectedSpheres: string[] = []; // Local state, not persisted
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
-    super(leaf);
+    super(leaf, 15000); // 15 second debounce
     this.settings = settings;
     this.scanner = new SomedayScanner(this.app, settings);
     this.saveSettings = saveSettings;
@@ -45,9 +43,7 @@ export class SomedayView extends ItemView {
     this.selectedSpheres = [...this.settings.spheres];
 
     // Register event listener for metadata cache changes
-    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
-      this.scheduleRefresh();
-    });
+    this.registerMetadataCacheListener(() => true);
 
     const container = this.containerEl.children[1];
     container.empty();
@@ -70,46 +66,16 @@ export class SomedayView extends ItemView {
   }
 
   async onClose() {
-    // Unregister event listener
-    if (this.modifyEventRef) {
-      this.app.metadataCache.offref(this.modifyEventRef);
-      this.modifyEventRef = null;
-    }
-
-    // Clear any pending refresh
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-      this.refreshTimeout = null;
-    }
+    this.cleanup();
   }
 
-  private scheduleRefresh() {
-    const debounceTime = 15000; // 15 seconds
-
-    if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
-    }
-
-    this.refreshTimeout = setTimeout(async () => {
-      await this.refresh();
-      this.refreshTimeout = null;
-    }, debounceTime);
-  }
-
-  private async refresh() {
-    // Prevent concurrent refreshes
-    if (this.isRefreshing) {
-      return;
-    }
-
-    this.isRefreshing = true;
+  protected async performRefresh(): Promise<void> {
+    const container = this.containerEl.children[1];
+    container.empty();
+    const loadingEl = container.createDiv({ cls: "flow-gtd-someday-loading" });
+    loadingEl.setText("Refreshing...");
 
     try {
-      const container = this.containerEl.children[1];
-      container.empty();
-      const loadingEl = container.createDiv({ cls: "flow-gtd-someday-loading" });
-      loadingEl.setText("Refreshing...");
-
       const data = await this.scanner.scanSomedayData();
 
       // Clear and render
@@ -117,12 +83,9 @@ export class SomedayView extends ItemView {
       this.renderContent(container as HTMLElement, data);
     } catch (error) {
       console.error("Failed to refresh someday view", error);
-      const container = this.containerEl.children[1];
       container.empty();
       const errorEl = container.createDiv({ cls: "flow-gtd-someday-loading" });
       errorEl.setText("Unable to refresh. Check the console for more information.");
-    } finally {
-      this.isRefreshing = false;
     }
   }
 
@@ -389,7 +352,7 @@ export class SomedayView extends ItemView {
     }
 
     // Refresh the view
-    await this.refresh();
+    await this.performRefresh();
   }
 
   private renderEmptyMessage(container: HTMLElement) {
