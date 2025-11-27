@@ -26,6 +26,7 @@ export function renderInboxView(
     loadingContainer.style.textAlign = "center";
     loadingContainer.style.padding = "48px 24px";
     loadingContainer.style.display = "flex";
+    loadingContainer.style.flexDirection = "column";
     loadingContainer.style.alignItems = "center";
     loadingContainer.style.justifyContent = "center";
     loadingContainer.style.minHeight = "200px";
@@ -37,6 +38,14 @@ export function renderInboxView(
     waveIcon.style.alignItems = "center";
     waveIcon.style.justifyContent = "center";
     setIcon(waveIcon, "waves");
+
+    const animatedSvg = loadingContainer.createEl("div");
+    animatedSvg.style.marginTop = "16px";
+    animatedSvg.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 30' width='130px' height='30px'>
+      <text font-family='monospace' fill='var(--text-accent)' font-size='20' y='22'>
+        <tspan>Loading</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.15s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.3s' repeatCount='indefinite' />.</tspan>
+      </text>
+    </svg>`;
   } else if (contentEl.querySelector(".flow-gtd-loading-state")) {
     // Remove loading state if it exists
     contentEl.querySelector(".flow-gtd-loading-state")?.remove();
