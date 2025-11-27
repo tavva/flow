@@ -1,35 +1,19 @@
 import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from "obsidian";
-import { FlowProjectScanner } from "./flow-scanner";
 import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
-import {
-  buildProjectHierarchy,
-  flattenHierarchy,
-  sortHierarchy,
-  ProjectNode,
-} from "./project-hierarchy";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import {
+  SphereDataLoader,
+  SphereViewData,
+  SphereProjectSummary,
+} from "./sphere-data-loader";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
-interface SphereProjectSummary {
-  project: FlowProject;
-  priority: number | null;
-  depth: number; // Hierarchy depth: 0 for root, 1+ for sub-projects
-  parentName?: string; // For subprojects shown outside their parent's priority section
-}
-
-interface SphereViewData {
-  projects: SphereProjectSummary[];
-  projectsNeedingNextActions: SphereProjectSummary[];
-  generalNextActions: string[];
-  generalNextActionsNotice?: string;
-}
-
 export class SphereView extends ItemView {
-  private readonly scanner: FlowProjectScanner;
+  private dataLoader: SphereDataLoader | null = null;
   private readonly lineFinder: ActionLineFinder;
   private readonly fileWriter: FileWriter;
   private sphere: string;
@@ -49,10 +33,16 @@ export class SphereView extends ItemView {
     super(leaf);
     this.sphere = sphere;
     this.settings = settings;
-    this.scanner = new FlowProjectScanner(this.app);
     this.lineFinder = new ActionLineFinder(this.app);
     this.fileWriter = new FileWriter(this.app, settings);
     this.saveSettings = saveSettings;
+  }
+
+  private getDataLoader(): SphereDataLoader {
+    if (!this.dataLoader) {
+      this.dataLoader = new SphereDataLoader(this.app, this.sphere, this.settings);
+    }
+    return this.dataLoader;
   }
 
   getViewType(): string {
@@ -111,139 +101,16 @@ export class SphereView extends ItemView {
     this.sphere = sphere;
     this.settings = settings;
     this.saveSettings = saveSettings;
+    this.dataLoader = new SphereDataLoader(this.app, sphere, settings);
     await this.onOpen();
   }
 
   private async loadSphereData(): Promise<SphereViewData> {
-    const allProjects = await this.scanner.scanProjects();
-
-    // Build hierarchy from ALL projects first (so parent relationships are preserved)
-    const hierarchy = buildProjectHierarchy(allProjects);
-
-    // Build parent lookup for priority comparison
-    const parentLookup = new Map<string, FlowProject>();
-    const buildParentLookup = (nodes: ProjectNode[], parent?: FlowProject) => {
-      for (const node of nodes) {
-        if (parent) {
-          parentLookup.set(node.project.file, parent);
-        }
-        buildParentLookup(node.children, node.project);
-      }
-    };
-    buildParentLookup(hierarchy);
-
-    // Sort hierarchy at each level (siblings within same parent)
-    const sortedHierarchy = sortHierarchy(hierarchy, (a, b) => this.compareProjectNodes(a, b));
-
-    // Flatten the sorted hierarchy (preserves parent-child grouping)
-    const flattenedHierarchy = flattenHierarchy(sortedHierarchy);
-
-    // Filter to sphere projects with live status and map to summaries
-    const projectSummaries = flattenedHierarchy
-      .filter(
-        (node) =>
-          node.project.tags.some((tag) => this.matchesSphereTag(tag)) &&
-          node.project.status === "live" &&
-          !node.project.file.startsWith("Templates/") &&
-          node.project.file !== this.settings.projectTemplateFilePath
-      )
-      .map((node) => {
-        const priority = this.normalizePriority(node.project.priority);
-        const parent = parentLookup.get(node.project.file);
-
-        let depth = node.depth;
-        let parentName: string | undefined;
-
-        // If this is a subproject with different priority than its parent,
-        // promote it to root level but show parent indicator
-        if (depth > 0 && parent) {
-          const parentPriority = this.normalizePriority(parent.priority);
-          if (priority !== parentPriority) {
-            depth = 0;
-            parentName = parent.title;
-          }
-        }
-
-        return {
-          project: node.project,
-          priority,
-          depth,
-          parentName,
-        };
-      });
-
-    // Re-sort by priority so promoted subprojects appear in correct section
-    // Use stable sort (preserve original order within same priority)
-    const indexedSummaries = projectSummaries.map((s, i) => ({ summary: s, originalIndex: i }));
-    indexedSummaries.sort((a, b) => {
-      const aPriority = a.summary.priority;
-      const bPriority = b.summary.priority;
-
-      // Primary sort by priority
-      if (aPriority !== null && bPriority !== null && aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-      if (aPriority !== null && bPriority === null) return -1;
-      if (aPriority === null && bPriority !== null) return 1;
-
-      // Same priority - preserve original order
-      return a.originalIndex - b.originalIndex;
-    });
-    const sortedSummaries = indexedSummaries.map((is) => is.summary);
-
-    const projectsNeedingNextActions = sortedSummaries.filter(
-      ({ project }) => !project.nextActions || project.nextActions.length === 0
-    );
-
-    const { generalNextActions, generalNextActionsNotice } = await this.readGeneralNextActions();
-
-    return {
-      projects: sortedSummaries,
-      projectsNeedingNextActions,
-      generalNextActions,
-      generalNextActionsNotice,
-    };
+    return this.getDataLoader().loadSphereData();
   }
 
   private filterData(data: SphereViewData, query: string): SphereViewData {
-    // Empty query = no filtering
-    if (!query.trim()) {
-      return data;
-    }
-
-    const lowerQuery = query.toLowerCase();
-    const matches = (text: string) => text.toLowerCase().includes(lowerQuery);
-
-    // Filter projects: include if name matches OR has matching actions
-    const filteredProjects = data.projects
-      .map((summary) => {
-        const filteredActions =
-          summary.project.nextActions?.filter((action) => matches(action)) || [];
-
-        const projectNameMatches = matches(summary.project.title);
-        const includeProject = projectNameMatches || filteredActions.length > 0;
-
-        if (!includeProject) return null;
-
-        return {
-          ...summary,
-          project: {
-            ...summary.project,
-            nextActions: projectNameMatches ? summary.project.nextActions : filteredActions,
-          },
-        };
-      })
-      .filter((p): p is SphereProjectSummary => p !== null);
-
-    // Filter general actions
-    const filteredGeneralActions = data.generalNextActions.filter((action) => matches(action));
-
-    return {
-      projects: filteredProjects,
-      projectsNeedingNextActions: data.projectsNeedingNextActions, // Not filtered
-      generalNextActions: filteredGeneralActions,
-      generalNextActionsNotice: data.generalNextActionsNotice,
-    };
+    return this.getDataLoader().filterData(data, query);
   }
 
   private renderSearchHeader(container: HTMLElement): HTMLInputElement {
@@ -683,137 +550,6 @@ export class SphereView extends ItemView {
 
   private renderEmptyMessage(container: HTMLElement, message: string) {
     container.createDiv({ cls: "flow-gtd-sphere-empty" }).setText(message);
-  }
-
-  private compareProjectNodes(a: ProjectNode, b: ProjectNode): number {
-    const aPriority = this.normalizePriority(a.project.priority);
-    const bPriority = this.normalizePriority(b.project.priority);
-
-    if (aPriority !== null && bPriority !== null && aPriority !== bPriority) {
-      return aPriority - bPriority;
-    }
-
-    if (aPriority !== null && bPriority === null) {
-      return -1;
-    }
-
-    if (aPriority === null && bPriority !== null) {
-      return 1;
-    }
-
-    return a.project.title.localeCompare(b.project.title);
-  }
-
-  private compareProjects(a: SphereProjectSummary, b: SphereProjectSummary): number {
-    if (a.priority !== null && b.priority !== null && a.priority !== b.priority) {
-      return a.priority - b.priority;
-    }
-
-    if (a.priority !== null && b.priority === null) {
-      return -1;
-    }
-
-    if (a.priority === null && b.priority !== null) {
-      return 1;
-    }
-
-    return a.project.title.localeCompare(b.project.title);
-  }
-
-  private normalizePriority(priority: FlowProject["priority"]): number | null {
-    if (typeof priority === "number" && Number.isFinite(priority)) {
-      return priority;
-    }
-    return null;
-  }
-
-  private matchesSphereTag(tag: string): boolean {
-    const normalizedTag = tag.replace(/^#/, "").toLowerCase();
-    if (!normalizedTag.startsWith("project/")) {
-      return false;
-    }
-
-    const sphereTag = normalizedTag.slice("project/".length);
-    return this.normalizeSphereValue(sphereTag) === this.normalizeSphereValue(this.sphere);
-  }
-
-  private normalizeSphereValue(value: string): string {
-    return value.trim().toLowerCase().replace(/\s+/g, "-");
-  }
-
-  private async readGeneralNextActions(): Promise<{
-    generalNextActions: string[];
-    generalNextActionsNotice?: string;
-  }> {
-    const path = this.settings.nextActionsFilePath?.trim();
-    if (!path) {
-      return {
-        generalNextActions: [],
-        generalNextActionsNotice: "Next actions file path is not configured in settings.",
-      };
-    }
-
-    const file = this.app.vault.getAbstractFileByPath(path);
-    if (!(file instanceof TFile)) {
-      return {
-        generalNextActions: [],
-        generalNextActionsNotice: `Next actions file "${path}" was not found in the vault.`,
-      };
-    }
-
-    try {
-      const content = await this.app.vault.read(file);
-      return { generalNextActions: this.extractGeneralNextActions(content) };
-    } catch (error) {
-      console.error("Failed to read next actions file", error);
-      return {
-        generalNextActions: [],
-        generalNextActionsNotice: "Unable to read next actions file.",
-      };
-    }
-  }
-
-  private extractGeneralNextActions(content: string): string[] {
-    const lines = content.split(/\r?\n/);
-    const actions: string[] = [];
-    const checkboxPattern = /^[-*]\s*\[([ xXw])\]\s*(.+)$/;
-    const normalizedSphere = this.normalizeSphereValue(this.sphere);
-
-    for (const line of lines) {
-      const match = line.match(checkboxPattern);
-      if (!match) {
-        continue;
-      }
-
-      const checkboxStatus = match[1];
-      let rawText = match[2];
-
-      // Skip completed items ([x] or [X])
-      if (checkboxStatus === "x" || checkboxStatus === "X") {
-        continue;
-      }
-
-      let belongsToSphere = false;
-
-      rawText = rawText.replace(/#sphere\/([^\s]+)/gi, (fullMatch, captured) => {
-        if (this.normalizeSphereValue(String(captured)) === normalizedSphere) {
-          belongsToSphere = true;
-          return "";
-        }
-        return fullMatch;
-      });
-
-      if (!belongsToSphere) {
-        continue;
-      }
-
-      const cleaned = rawText.replace(/\s{2,}/g, " ").trim();
-      if (cleaned.length > 0) {
-        actions.push(cleaned);
-      }
-    }
-
-    return actions;
   }
 
   private getDisplaySphereName(): string {
