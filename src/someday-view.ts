@@ -17,7 +17,8 @@ export class SomedayView extends RefreshingView {
   private scanner: SomedayScanner;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
   private saveSettings: () => Promise<void>;
-  private selectedSpheres: string[] = []; // Local state, not persisted
+  private selectedSpheres: string[] = [];
+  private stateRestored = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf, 15000); // 15 second debounce
@@ -38,9 +39,27 @@ export class SomedayView extends RefreshingView {
     return "calendar-clock";
   }
 
+  // Save state for persistence across Obsidian reloads
+  getState() {
+    return {
+      selectedSpheres: this.selectedSpheres,
+    };
+  }
+
+  // Restore state when Obsidian reloads
+  async setState(state: { selectedSpheres?: string[] }, result: any) {
+    if (state?.selectedSpheres !== undefined) {
+      this.selectedSpheres = state.selectedSpheres;
+      this.stateRestored = true;
+    }
+    await super.setState(state, result);
+  }
+
   async onOpen() {
-    // Reset filter to show all spheres
-    this.selectedSpheres = [...this.settings.spheres];
+    // Only reset filter to show all spheres if state was not restored
+    if (!this.stateRestored) {
+      this.selectedSpheres = [...this.settings.spheres];
+    }
 
     // Register event listener for metadata cache changes
     this.registerMetadataCacheListener(() => true);

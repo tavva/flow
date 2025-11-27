@@ -433,6 +433,11 @@ export class ItemView {
   onClose(): Promise<void> {
     return Promise.resolve();
   }
+
+  async setState(state: any, result: any): Promise<void> {
+    // Base implementation does nothing
+    return Promise.resolve();
+  }
 }
 
 export function setIcon(element: HTMLElement, iconId: string): void {

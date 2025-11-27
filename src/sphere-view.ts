@@ -83,11 +83,22 @@ export class SphereView extends ItemView {
   getState() {
     return {
       sphere: this.sphere,
+      searchQuery: this.searchQuery,
+      showNextActions: this.showNextActions,
     };
   }
 
   // Restore state when Obsidian reloads
-  async setState(state: { sphere?: string }, result: any) {
+  async setState(
+    state: { sphere?: string; searchQuery?: string; showNextActions?: boolean },
+    result: any
+  ) {
+    if (state?.searchQuery !== undefined) {
+      this.searchQuery = state.searchQuery;
+    }
+    if (state?.showNextActions !== undefined) {
+      this.showNextActions = state.showNextActions;
+    }
     if (state?.sphere) {
       this.sphere = state.sphere;
       // Refresh the view to show the correct sphere

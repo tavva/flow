@@ -361,4 +361,52 @@ describe("SomedayView", () => {
       expect(grouped["Other.md"]).toHaveLength(1);
     });
   });
+
+  describe("view state persistence", () => {
+    test("should persist selectedSpheres in getState", () => {
+      (view as any).selectedSpheres = ["work"];
+
+      const state = view.getState();
+
+      expect(state.selectedSpheres).toEqual(["work"]);
+    });
+
+    test("should persist empty selectedSpheres array in getState", () => {
+      (view as any).selectedSpheres = [];
+
+      const state = view.getState();
+
+      expect(state.selectedSpheres).toEqual([]);
+    });
+
+    test("should restore selectedSpheres from setState", async () => {
+      await view.setState({ selectedSpheres: ["personal"] }, {});
+
+      expect((view as any).selectedSpheres).toEqual(["personal"]);
+    });
+
+    test("should restore multiple selectedSpheres from setState", async () => {
+      await view.setState({ selectedSpheres: ["work", "personal"] }, {});
+
+      expect((view as any).selectedSpheres).toEqual(["work", "personal"]);
+    });
+
+    test("should handle undefined selectedSpheres in setState", async () => {
+      (view as any).selectedSpheres = ["work"];
+
+      // setState with no selectedSpheres should not change the existing value
+      await view.setState({}, {});
+
+      expect((view as any).selectedSpheres).toEqual(["work"]);
+    });
+
+    test("should handle empty state object in setState", async () => {
+      (view as any).selectedSpheres = ["personal"];
+
+      await view.setState({}, {});
+
+      // Should preserve existing state when empty object passed
+      expect((view as any).selectedSpheres).toEqual(["personal"]);
+    });
+  });
 });

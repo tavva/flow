@@ -1423,4 +1423,110 @@ describe("SphereView", () => {
       expect(projects[1].classList.contains("flow-gtd-sphere-project-p1")).toBe(false);
     });
   });
+
+  describe("view state persistence", () => {
+    it("should persist searchQuery in getState", () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Set search query
+      (view as any).searchQuery = "test query";
+
+      const state = view.getState();
+
+      expect(state.searchQuery).toBe("test query");
+    });
+
+    it("should persist showNextActions in getState", () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Set showNextActions to false
+      (view as any).showNextActions = false;
+
+      const state = view.getState();
+
+      expect(state.showNextActions).toBe(false);
+    });
+
+    it("should persist sphere in getState", () => {
+      const view = new SphereView(leaf, "personal", settings, mockSaveSettings);
+      view.app = app;
+
+      const state = view.getState();
+
+      expect(state.sphere).toBe("personal");
+    });
+
+    it("should restore searchQuery from setState", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.setState({ searchQuery: "restored query" }, {});
+
+      expect((view as any).searchQuery).toBe("restored query");
+    });
+
+    it("should restore showNextActions from setState", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.setState({ showNextActions: false }, {});
+
+      expect((view as any).showNextActions).toBe(false);
+    });
+
+    it("should restore sphere from setState", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.setState({ sphere: "personal" }, {});
+
+      expect((view as any).sphere).toBe("personal");
+    });
+
+    it("should handle partial state in setState", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Set initial values
+      (view as any).searchQuery = "initial";
+      (view as any).showNextActions = false;
+
+      // Restore only searchQuery
+      await view.setState({ searchQuery: "updated" }, {});
+
+      // searchQuery should be updated, showNextActions should remain
+      expect((view as any).searchQuery).toBe("updated");
+      expect((view as any).showNextActions).toBe(false);
+    });
+
+    it("should refresh view after setState when sphere changes", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      const onOpenSpy = jest.spyOn(view, "onOpen").mockResolvedValue();
+
+      await view.setState({ sphere: "personal" }, {});
+
+      expect(onOpenSpy).toHaveBeenCalled();
+      onOpenSpy.mockRestore();
+    });
+
+    it("should persist all state properties together", () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      (view as any).searchQuery = "my search";
+      (view as any).showNextActions = false;
+
+      const state = view.getState();
+
+      expect(state).toEqual({
+        sphere: "work",
+        searchQuery: "my search",
+        showNextActions: false,
+      });
+    });
+  });
 });
