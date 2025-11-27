@@ -321,6 +321,75 @@ export class SomedayView extends ItemView {
     textSpan.addEventListener("click", () => {
       this.openFile(item.file, item.lineNumber);
     });
+
+    // Add "Move to Next Actions" button
+    const moveButton = itemEl.createEl("button", {
+      cls: "flow-gtd-someday-move-button",
+      text: "→ Next Actions",
+    });
+    moveButton.setAttribute("type", "button");
+    moveButton.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await this.moveToNextActions(item);
+    });
+  }
+
+  private async moveToNextActions(item: SomedayItem): Promise<void> {
+    const somedayFile = this.app.vault.getAbstractFileByPath(item.file);
+    if (!(somedayFile instanceof TFile)) {
+      console.error(`Someday file not found: ${item.file}`);
+      return;
+    }
+
+    const nextActionsPath = this.settings.nextActionsFilePath;
+    const nextActionsFile = this.app.vault.getAbstractFileByPath(nextActionsPath);
+
+    // Read the someday file and remove the line
+    const somedayContent = await this.app.vault.read(somedayFile);
+    const somedayLines = somedayContent.split(/\r?\n/);
+    const lineIndex = item.lineNumber - 1;
+
+    if (lineIndex < 0 || lineIndex >= somedayLines.length) {
+      console.error(`Line number out of range: ${item.lineNumber}`);
+      return;
+    }
+
+    // Get the original line content to preserve checkbox status, dates, etc.
+    const originalLine = somedayLines[lineIndex];
+
+    // Remove the line from someday file
+    somedayLines.splice(lineIndex, 1);
+    await this.app.vault.modify(somedayFile, somedayLines.join("\n"));
+
+    // Build the new line for next actions file
+    let newLine = originalLine;
+
+    // Ensure sphere tag is present
+    const hasSphereTag = /#sphere\/\w+/.test(newLine);
+    if (!hasSphereTag) {
+      // Use the item's sphere if available, or first selected sphere, or first configured sphere
+      const sphere =
+        item.sphere ||
+        (this.selectedSpheres.length > 0 ? this.selectedSpheres[0] : null) ||
+        (this.settings.spheres.length > 0 ? this.settings.spheres[0] : null);
+
+      if (sphere) {
+        newLine = newLine.trimEnd() + ` #sphere/${sphere}`;
+      }
+    }
+
+    // Add to next actions file
+    if (nextActionsFile instanceof TFile) {
+      const nextActionsContent = await this.app.vault.read(nextActionsFile);
+      const newContent = nextActionsContent.trim() + "\n" + newLine + "\n";
+      await this.app.vault.modify(nextActionsFile, newContent);
+    } else {
+      // Create the file if it doesn't exist
+      await this.app.vault.create(nextActionsPath, newLine + "\n");
+    }
+
+    // Refresh the view
+    await this.refresh();
   }
 
   private renderEmptyMessage(container: HTMLElement) {
