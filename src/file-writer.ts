@@ -1,7 +1,7 @@
 import type { App } from "obsidian";
 import { TFile, normalizePath } from "obsidian";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
-import { GTDResponseValidationError } from "./errors";
+import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 
 export class FileWriter {
@@ -41,7 +41,7 @@ export class FileWriter {
     // Check if file already exists
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
     if (existingFile) {
-      throw new Error(`File ${filePath} already exists`);
+      throw new ValidationError(`File ${filePath} already exists`);
     }
 
     const content = await this.buildProjectContent(
@@ -204,7 +204,7 @@ export class FileWriter {
       const newContent = existingContent.trim() + "\n" + content + "\n";
       await this.app.vault.modify(file, newContent);
     } else {
-      throw new Error(`${filePath} is not a file`);
+      throw new FileNotFoundError(filePath);
     }
   }
 
@@ -220,7 +220,7 @@ export class FileWriter {
   ): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project.file}`);
+      throw new FileNotFoundError(project.file);
     }
 
     const actionsArray = Array.isArray(actions) ? actions : [actions];
@@ -249,7 +249,7 @@ export class FileWriter {
   async addReferenceToProject(project: FlowProject, referenceContent: string): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project.file}`);
+      throw new FileNotFoundError(project.file);
     }
 
     let content = await this.app.vault.read(file);
@@ -265,7 +265,7 @@ export class FileWriter {
   async addToPersonDiscussNext(person: PersonNote, item: string): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(person.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Person file not found: ${person.file}`);
+      throw new FileNotFoundError(person.file);
     }
 
     let content = await this.app.vault.read(file);
@@ -280,16 +280,16 @@ export class FileWriter {
    */
   async addToPersonNote(item: EditableItem): Promise<void> {
     if (!item.selectedPerson) {
-      throw new Error("No person selected for person note action");
+      throw new ValidationError("No person selected for person note action");
     }
 
     if (!item.editedName) {
-      throw new Error("No action text provided for person note");
+      throw new ValidationError("No action text provided for person note");
     }
 
     const file = this.app.vault.getAbstractFileByPath(item.selectedPerson.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Person file not found: ${item.selectedPerson.file}`);
+      throw new FileNotFoundError(item.selectedPerson.file);
     }
 
     let content = await this.app.vault.read(file);
@@ -761,7 +761,7 @@ ${originalItemDescription}
   async updateProjectTags(project: FlowProject, newTags: string[]): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project.file}`);
+      throw new FileNotFoundError(project.file);
     }
 
     await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
@@ -781,7 +781,7 @@ ${originalItemDescription}
   async updateProjectPriority(project: FlowProject, newPriority: number): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(project.file);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project.file}`);
+      throw new FileNotFoundError(project.file);
     }
 
     await this.app.fileManager.processFrontMatter(file, (frontmatter) => {

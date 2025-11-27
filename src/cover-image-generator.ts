@@ -4,6 +4,7 @@
 import { TFile, Vault } from "obsidian";
 import { PluginSettings } from "./types";
 import { v4 as uuidv4 } from "uuid";
+import { ValidationError, LLMResponseError } from "./errors";
 
 export interface GenerateCoverImageResult {
   imagePath: string;
@@ -46,7 +47,7 @@ export async function generateCoverImage(
 
   // Check if project already has a cover image
   if (content.includes("cover-image:")) {
-    throw new Error("Project already has a cover image");
+    throw new ValidationError("Project already has a cover image");
   }
 
   // Generate unique filename
@@ -109,18 +110,18 @@ async function callOpenRouterImageAPI(
 
   if (!response.ok) {
     const errorData = (await response.json()) as OpenRouterChatResponse;
-    throw new Error(`Image generation failed: ${errorData.error?.message || response.statusText}`);
+    throw new LLMResponseError(`Image generation failed: ${errorData.error?.message || response.statusText}`);
   }
 
   const data = (await response.json()) as OpenRouterChatResponse;
 
   if (!data.choices || data.choices.length === 0) {
-    throw new Error("No response from image generation API");
+    throw new LLMResponseError("No response from image generation API");
   }
 
   const message = data.choices[0].message;
   if (!message.images || message.images.length === 0) {
-    throw new Error("No image data returned from API");
+    throw new LLMResponseError("No image data returned from API");
   }
 
   // Extract base64 data URL

@@ -6,6 +6,7 @@ import { FileWriter } from "./file-writer";
 import { PluginSettings, FlowProject, FocusItem } from "./types";
 import { ToolDefinition, ToolCall, ToolResult } from "./language-model";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { FileNotFoundError, ValidationError } from "./errors";
 
 export const COACH_TOOLS: ToolDefinition[] = [
   {
@@ -165,7 +166,7 @@ export class ToolExecutor {
     // Validate file exists
     const file = this.app.vault.getAbstractFileByPath(project_path);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project_path}`);
+      throw new FileNotFoundError(project_path);
     }
 
     // Read file to find action and its line number
@@ -186,7 +187,7 @@ export class ToolExecutor {
     }
 
     if (lineNumber === null || lineContent === null) {
-      throw new Error(`Action "${action_text}" not found in ${project_path}`);
+      throw new ValidationError(`Action "${action_text}" not found in ${project_path}`);
     }
 
     // Extract sphere from project tags
@@ -204,7 +205,7 @@ export class ToolExecutor {
       (item) => item.file === project_path && item.text === action_text
     );
     if (alreadyExists) {
-      throw new Error(`Action "${action_text}" is already in focus`);
+      throw new ValidationError(`Action "${action_text}" is already in focus`);
     }
 
     // Add to focus
@@ -236,7 +237,7 @@ export class ToolExecutor {
 
     const file = this.app.vault.getAbstractFileByPath(project_path);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project_path}`);
+      throw new FileNotFoundError(project_path);
     }
 
     let content = await this.app.vault.read(file);
@@ -261,7 +262,7 @@ export class ToolExecutor {
     }
 
     if (!found) {
-      throw new Error(`Action "${old_action}" not found in ${project_path}`);
+      throw new ValidationError(`Action "${old_action}" not found in ${project_path}`);
     }
 
     content = lines.join("\n");
@@ -282,7 +283,7 @@ export class ToolExecutor {
 
     const file = this.app.vault.getAbstractFileByPath(project_path);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project_path}`);
+      throw new FileNotFoundError(project_path);
     }
 
     // Construct minimal FlowProject object for FileWriter
@@ -312,7 +313,7 @@ export class ToolExecutor {
 
     const file = this.app.vault.getAbstractFileByPath(project_path);
     if (!(file instanceof TFile)) {
-      throw new Error(`Project file not found: ${project_path}`);
+      throw new FileNotFoundError(project_path);
     }
 
     await this.app.fileManager.processFrontMatter(file, (frontmatter) => {

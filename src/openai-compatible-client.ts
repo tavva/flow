@@ -5,6 +5,7 @@ import {
   ToolCallResponse,
   ToolCall,
 } from "./language-model";
+import { NetworkError, LLMResponseError } from "./errors";
 
 export interface OpenAICompatibleClientConfig {
   apiKey: string;
@@ -82,13 +83,10 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       });
     } catch (error) {
       // Network-level errors (connection timeout, DNS failure, network unreachable)
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-      if (message.includes("fetch") || message.includes("network") || message.includes("timeout")) {
-        throw new Error(
-          "Network error: Unable to reach the AI service. Please check your internet connection and try again."
-        );
-      }
-      throw new Error(`Network error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new NetworkError(
+        `Unable to reach the AI service: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error instanceof Error ? error : undefined }
+      );
     }
 
     if (!response.ok) {
@@ -101,7 +99,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       } catch (error) {
         // ignore JSON parse errors, fall back to default message
       }
-      throw new Error(errorMessage);
+      throw new LLMResponseError(errorMessage);
     }
 
     const data = (await response.json()) as ChatCompletionResponse;
@@ -109,7 +107,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
     const message = choice?.message;
 
     if (!message || message.content === undefined || message.content === null) {
-      throw new Error("OpenAI-compatible response did not include a message");
+      throw new LLMResponseError("OpenAI-compatible response did not include a message");
     }
 
     if (typeof message.content === "string") {
@@ -123,7 +121,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       .trim();
 
     if (!textContent) {
-      throw new Error("OpenAI-compatible response did not include textual content");
+      throw new LLMResponseError("OpenAI-compatible response did not include textual content");
     }
 
     return textContent;
@@ -169,13 +167,10 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       });
     } catch (error) {
       // Network-level errors (connection timeout, DNS failure, network unreachable)
-      const message = error instanceof Error ? error.message.toLowerCase() : "";
-      if (message.includes("fetch") || message.includes("network") || message.includes("timeout")) {
-        throw new Error(
-          "Network error: Unable to reach the AI service. Please check your internet connection and try again."
-        );
-      }
-      throw new Error(`Network error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new NetworkError(
+        `Unable to reach the AI service: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error instanceof Error ? error : undefined }
+      );
     }
 
     if (!response.ok) {
@@ -188,7 +183,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
       } catch (error) {
         // ignore JSON parse errors, fall back to default message
       }
-      throw new Error(errorMessage);
+      throw new LLMResponseError(errorMessage);
     }
 
     const data = (await response.json()) as ChatCompletionResponse;
@@ -196,7 +191,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
     const message = choice?.message;
 
     if (!message) {
-      throw new Error("OpenAI-compatible response did not include a message");
+      throw new LLMResponseError("OpenAI-compatible response did not include a message");
     }
 
     // Parse text content
@@ -216,7 +211,7 @@ export class OpenAICompatibleClient implements LanguageModelClient {
         try {
           parsedInput = JSON.parse(toolCall.function.arguments);
         } catch (error) {
-          throw new Error(
+          throw new LLMResponseError(
             `Failed to parse tool arguments for ${toolCall.function.name}: ${error instanceof Error ? error.message : String(error)}`
           );
         }

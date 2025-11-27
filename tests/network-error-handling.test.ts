@@ -4,6 +4,7 @@
 import { OpenAICompatibleClient } from "../src/openai-compatible-client";
 import { RateLimitedAnthropicClient } from "../src/anthropic-client";
 import { generateFakeApiKey } from "./test-utils";
+import { NetworkError } from "../src/errors";
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -14,7 +15,7 @@ describe("Network Error Handling", () => {
   });
 
   describe("OpenAICompatibleClient", () => {
-    it("should provide user-friendly error for fetch failures", async () => {
+    it("should throw NetworkError for fetch failures", async () => {
       const client = new OpenAICompatibleClient({
         apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
@@ -28,12 +29,10 @@ describe("Network Error Handling", () => {
           maxTokens: 100,
           messages: [{ role: "user", content: "test" }],
         })
-      ).rejects.toThrow(
-        "Network error: Unable to reach the AI service. Please check your internet connection and try again."
-      );
+      ).rejects.toThrow(NetworkError);
     });
 
-    it("should provide user-friendly error for network failures", async () => {
+    it("should throw NetworkError for network failures", async () => {
       const client = new OpenAICompatibleClient({
         apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
@@ -47,12 +46,10 @@ describe("Network Error Handling", () => {
           maxTokens: 100,
           messages: [{ role: "user", content: "test" }],
         })
-      ).rejects.toThrow(
-        "Network error: Unable to reach the AI service. Please check your internet connection and try again."
-      );
+      ).rejects.toThrow(NetworkError);
     });
 
-    it("should provide user-friendly error for timeout failures", async () => {
+    it("should throw NetworkError for timeout failures", async () => {
       const client = new OpenAICompatibleClient({
         apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
@@ -66,12 +63,10 @@ describe("Network Error Handling", () => {
           maxTokens: 100,
           messages: [{ role: "user", content: "test" }],
         })
-      ).rejects.toThrow(
-        "Network error: Unable to reach the AI service. Please check your internet connection and try again."
-      );
+      ).rejects.toThrow(NetworkError);
     });
 
-    it("should preserve other error messages", async () => {
+    it("should include original error message in NetworkError", async () => {
       const client = new OpenAICompatibleClient({
         apiKey: generateFakeApiKey(),
         baseUrl: "https://api.example.com/v1",
@@ -85,7 +80,7 @@ describe("Network Error Handling", () => {
           maxTokens: 100,
           messages: [{ role: "user", content: "test" }],
         })
-      ).rejects.toThrow("Network error: Invalid API key format");
+      ).rejects.toThrow("Unable to reach the AI service: Invalid API key format");
     });
 
     it("should handle non-Error thrown values", async () => {
@@ -102,7 +97,7 @@ describe("Network Error Handling", () => {
           maxTokens: 100,
           messages: [{ role: "user", content: "test" }],
         })
-      ).rejects.toThrow("Network error: Unknown error");
+      ).rejects.toThrow("Unable to reach the AI service: Unknown error");
     });
 
     it("should handle HTTP error responses normally", async () => {

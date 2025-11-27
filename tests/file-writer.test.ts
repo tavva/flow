@@ -550,7 +550,7 @@ Some content here.
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
       await expect(fileWriter.addNextActionToProject(mockProject, "New action")).rejects.toThrow(
-        "Project file not found: project.md"
+        "File not found: project.md"
       );
     });
 
@@ -693,7 +693,7 @@ tags: project/work
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
       await expect(fileWriter.updateProjectTags(mockProject, ["new-tag"])).rejects.toThrow(
-        "Project file not found: project.md"
+        "File not found: project.md"
       );
     });
   });
@@ -784,7 +784,7 @@ Basic person note content.`;
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
       await expect(fileWriter.addToPersonDiscussNext(mockPerson, "Some topic")).rejects.toThrow(
-        "Person file not found: people/John Doe.md"
+        "File not found: people/John Doe.md"
       );
     });
 
@@ -1279,7 +1279,7 @@ tags:
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
       await expect(fileWriter.updateProjectPriority(mockProject, 3)).rejects.toThrow(
-        "Project file not found: Projects/test-project.md"
+        "File not found: Projects/test-project.md"
       );
     });
 

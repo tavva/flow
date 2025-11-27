@@ -3,6 +3,7 @@
 
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
+import { ValidationError } from "./errors";
 
 const FOCUS_FILE_PATH = "flow-focus-data/focus.md";
 const FOCUS_FILE_VERSION = 1;
@@ -116,7 +117,7 @@ async function ensureFocusDataDirectory(vault: Vault): Promise<void> {
   }
 
   if (focusDataDir) {
-    throw new Error("flow-focus-data exists but is not a folder");
+    throw new ValidationError("flow-focus-data exists but is not a folder");
   }
 
   // Create the folder

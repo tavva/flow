@@ -3,6 +3,7 @@ import { PluginSettings, ProjectReviewResponse, FlowProject } from "./types";
 import { FlowProjectScanner } from "./flow-scanner";
 import { ProjectReviewer } from "./project-reviewer";
 import { createLanguageModelClient } from "./llm-factory";
+import { ConfigurationError } from "./errors";
 
 type ModalStep = "sphere-selection" | "loading" | "results";
 
@@ -372,9 +373,9 @@ export class ReviewModal extends Modal {
       const client = createLanguageModelClient(this.settings);
       if (!client) {
         if (!this.settings.aiEnabled) {
-          throw new Error("AI features are disabled. Please enable AI in plugin settings.");
+          throw new ConfigurationError("AI features are disabled. Please enable AI in plugin settings.");
         }
-        throw new Error(
+        throw new ConfigurationError(
           "Failed to create LLM client. Please check your API key in plugin settings."
         );
       }

@@ -1,6 +1,6 @@
 import { App, TFile } from "obsidian";
 import { FileWriter } from "./file-writer";
-import { GTDResponseValidationError } from "./errors";
+import { GTDResponseValidationError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
@@ -171,7 +171,7 @@ export class InboxItemPersistenceService {
           );
           return item.selectedProject.file;
         } else {
-          throw new Error("No project selected");
+          throw new ValidationError("No project selected");
         }
 
       case "next-actions-file":
@@ -201,7 +201,7 @@ export class InboxItemPersistenceService {
             await this.writer.addReferenceToProject(item.selectedProject, referenceContent);
           }
         } else {
-          throw new Error("No project selected for reference item");
+          throw new ValidationError("No project selected for reference item");
         }
         return null;
 
@@ -210,7 +210,7 @@ export class InboxItemPersistenceService {
           const discussionItem = finalNextActions.length > 0 ? finalNextActions[0] : item.original;
           await this.writer.addToPersonDiscussNext(item.selectedPerson, discussionItem);
         } else {
-          throw new Error("No person selected for person item");
+          throw new ValidationError("No person selected for person item");
         }
         return null;
 

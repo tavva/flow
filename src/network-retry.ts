@@ -1,6 +1,8 @@
 // ABOUTME: Generic retry utility with exponential backoff for handling transient failures.
 // ABOUTME: Provides configurable retry logic with jitter and user feedback callbacks.
 
+import { isRetryableError } from "./errors";
+
 export interface RetryOptions {
   maxAttempts: number;
   baseDelayMs: number;
@@ -49,21 +51,5 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function isRetryableError(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const message = error.message.toLowerCase();
-  const retryableKeywords = [
-    "fetch",
-    "network",
-    "timeout",
-    "econnrefused",
-    "enotfound",
-    "econnreset",
-    "etimedout",
-  ];
-
-  return retryableKeywords.some((keyword) => message.includes(keyword));
-}
+// Re-export for backward compatibility
+export { isRetryableError } from "./errors";

@@ -3,6 +3,7 @@
 
 import type { App, TFile } from "obsidian";
 import { PluginSettings } from "./types";
+import { FileNotFoundError } from "./errors";
 
 export interface GTDContext {
   nextActions: string[];
@@ -83,7 +84,7 @@ export class GTDContextScanner {
   private async readFile(path: string): Promise<string> {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!file) {
-      throw new Error(`File not found: ${path}`);
+      throw new FileNotFoundError(path);
     }
     return await this.app.vault.read(file as TFile);
   }
