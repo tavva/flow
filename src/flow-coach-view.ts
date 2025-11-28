@@ -239,6 +239,200 @@ export class FlowCoachView extends ItemView {
     }
   }
 
+  private async buildWeeklyReviewSystemPrompt(
+    spheres: string[],
+    includeStatuses: string[]
+  ): Promise<string> {
+    // Scan projects from vault
+    const scanner = new FlowProjectScanner(this.app);
+    const allProjects = await scanner.scanProjects();
+
+    // Filter projects by sphere and status
+    const projects = allProjects.filter((p) => {
+      const hasSphere = p.tags.some((tag) => spheres.some((s) => tag === `project/${s}`));
+      const hasStatus = p.status ? includeStatuses.includes(p.status) : includeStatuses.includes("live");
+      return hasSphere && hasStatus;
+    });
+
+    // Scan GTD context
+    const contextScanner = new GTDContextScanner(this.app, this.settings);
+    const gtdContext = await contextScanner.scanContext();
+
+    // Build project hierarchy
+    const hierarchy = buildProjectHierarchy(projects);
+    const flattenedHierarchy = flattenHierarchy(hierarchy);
+    const projectCount = flattenedHierarchy.length;
+
+    const nextActionsCount = gtdContext.nextActions.length;
+    const somedayCount = gtdContext.somedayItems.length;
+    const inboxCount = gtdContext.inboxItems.length;
+
+    const sphereLabel = spheres.join(", ");
+    const statusLabel = includeStatuses.join(", ");
+
+    let prompt = `You are Flow, a GTD (Getting Things Done) coach conducting a weekly review for ${sphereLabel}.\n\n`;
+    prompt += `Weekly Review Context:\n`;
+    prompt += `- Reviewing ${projectCount} projects with status: ${statusLabel}\n`;
+    prompt += `- ${nextActionsCount} next actions from central next actions file\n`;
+    prompt += `- ${somedayCount} items in someday/maybe\n`;
+    prompt += `- ${inboxCount} unprocessed inbox items\n\n`;
+
+    prompt += `Weekly Review Protocol:\n`;
+    prompt += `Guide the user through these six steps systematically:\n\n`;
+    prompt += `1. **Process Inbox to Zero**\n`;
+    prompt += `   - Review all ${inboxCount} inbox items\n`;
+    prompt += `   - Suggest processing each item appropriately\n`;
+    prompt += `   - Wait for acknowledgment before proceeding\n\n`;
+    prompt += `2. **Review Projects**\n`;
+    prompt += `   - Identify stalled projects (no next actions)\n`;
+    prompt += `   - Check for unclear outcomes or descriptions\n`;
+    prompt += `   - Suggest status changes (mark complete, pause, etc.)\n`;
+    prompt += `   - Suggest improvements using show_project_card to display key projects\n`;
+    prompt += `   - Wait for acknowledgment before proceeding\n\n`;
+    prompt += `3. **Review Next Actions**\n`;
+    prompt += `   - Check for vague or unclear actions\n`;
+    prompt += `   - Suggest improvements using update_next_action\n`;
+    prompt += `   - Identify actions to add to focus using move_to_focus\n`;
+    prompt += `   - Wait for acknowledgment before proceeding\n\n`;
+    prompt += `4. **Review Someday/Maybe**\n`;
+    prompt += `   - Highlight items that might be ready to activate\n`;
+    prompt += `   - Suggest pruning irrelevant items\n`;
+    prompt += `   - Wait for acknowledgment before proceeding\n\n`;
+    prompt += `5. **Review Waiting-For**\n`;
+    prompt += `   - Identify items that may need follow-up\n`;
+    prompt += `   - Suggest converting to next actions if appropriate\n`;
+    prompt += `   - Wait for acknowledgment before proceeding\n\n`;
+    prompt += `6. **Set Weekly Focus**\n`;
+    prompt += `   - Suggest key next actions to focus on this week\n`;
+    prompt += `   - Use move_to_focus to add selected actions\n`;
+    prompt += `   - Wait for acknowledgment before completing review\n\n`;
+
+    prompt += `Process Guidelines:\n`;
+    prompt += `- Work through steps sequentially, waiting for acknowledgment\n`;
+    prompt += `- Accept requests to skip steps if user chooses\n`;
+    prompt += `- Use tools to suggest specific improvements\n`;
+    prompt += `- Focus on actionable insights, not just listing data\n`;
+    prompt += `- Ask clarifying questions when needed\n\n`;
+
+    // Add The Flow System section
+    prompt += `The Flow System:\n`;
+    prompt += `Flow is a GTD implementation for Obsidian with specific conventions:\n\n`;
+    prompt += `Spheres:\n`;
+    prompt += `- Life areas for categorising projects (work, personal, etc.)\n`;
+    prompt += `- Projects belong to one sphere via their tags (project/work, project/personal)\n`;
+    prompt += `- You are currently reviewing: ${sphereLabel}\n\n`;
+    prompt += `File Organisation:\n`;
+    prompt += `- Projects folder: Individual project files\n`;
+    prompt += `- Next actions file: Central list for actions not tied to specific projects\n`;
+    prompt += `- Someday file: Future aspirations and maybes\n`;
+    prompt += `- Inbox: Unprocessed items awaiting GTD categorisation\n\n`;
+    prompt += `Project Structure:\n`;
+    prompt += `- Projects are Markdown files with frontmatter (tags, priority, status, creation-date)\n`;
+    prompt += `- Sub-projects reference parents using parent-project: "[[Parent Name]]" in frontmatter\n`;
+    prompt += `- Next actions are Markdown checkboxes under "## Next actions" heading\n`;
+    prompt += `- Projects should have clear outcomes (what does "done" look like?)\n`;
+    prompt += `- Priority: 1-5 scale (1=highest priority, 5=lowest priority)\n\n`;
+    prompt += `Project Statuses:\n`;
+    prompt += `- live: Active projects with ongoing work\n`;
+    prompt += `- hold: Paused projects (waiting on external factors)\n`;
+    prompt += `- archived: Completed or cancelled projects\n`;
+    prompt += `- someday: Projects not yet committed to\n\n`;
+
+    prompt += `Communication Style:\n`;
+    prompt += `- Ask questions only when the current instructions are ambiguous or incomplete\n`;
+    prompt += `- Never ask open-ended, reflective, or rapport-building questions\n`;
+    prompt += `- Focus on providing actionable GTD advice based on the data\n\n`;
+
+    prompt += `Presenting Information:\n`;
+    prompt += `- NEVER list all projects in a table or enumerated list unless explicitly requested\n`;
+    prompt += `- Use high-level summaries by default (e.g., "You have 18 active projects, with 3 at priority-1")\n`;
+    prompt += `- When discussing specific projects, use the show_project_card tool to display them as structured cards\n`;
+    prompt += `- When discussing specific actions, use the show_action_card tool to display them as structured cards\n`;
+    prompt += `- Focus on the subset of projects/actions relevant to the current conversation\n`;
+    prompt += `- Only present detailed lists when the user specifically asks for them\n\n`;
+
+    prompt += `GTD Quality Standards:\n`;
+    prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
+    prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
+    prompt += `- Projects need at least one next action to maintain momentum\n\n`;
+
+    if (projectCount === 0 && nextActionsCount === 0 && somedayCount === 0 && inboxCount === 0) {
+      prompt += `No GTD data found. The weekly review cannot proceed without data.\n`;
+      return prompt;
+    }
+
+    prompt += `---\n\n`;
+
+    if (projectCount > 0) {
+      prompt += `## Projects (${projectCount})\n\n`;
+      prompt += `Projects are shown hierarchically with sub-projects indented under their parents.\n\n`;
+
+      for (const node of flattenedHierarchy) {
+        const project = node.project;
+        const indent = "  ".repeat(node.depth);
+
+        prompt += `${indent}### ${project.title}\n`;
+        prompt += `${indent}File: ${project.file}\n`;
+        prompt += `${indent}Description: ${project.description || "No description"}\n`;
+        prompt += `${indent}Priority: ${project.priority} (1=highest, 5=lowest)\n`;
+        prompt += `${indent}Status: ${project.status}\n`;
+
+        if (node.depth > 0) {
+          prompt += `${indent}(Sub-project at depth ${node.depth})\n`;
+        }
+
+        if (project.status !== "live") {
+          prompt += `${indent}⚠️ Project is ${project.status} - review if status should change\n`;
+        }
+
+        if (project.milestones) {
+          prompt += `${indent}Milestones:\n`;
+          const milestoneLines = project.milestones.split("\n");
+          for (const line of milestoneLines) {
+            prompt += `${indent}${line}\n`;
+          }
+        }
+
+        if (project.nextActions && project.nextActions.length > 0) {
+          prompt += `${indent}Next Actions (${project.nextActions.length}):\n`;
+          for (const action of project.nextActions) {
+            prompt += `${indent}- ${action}\n`;
+          }
+        } else {
+          prompt += `${indent}⚠️ Next Actions: None defined (project may be stalled)\n`;
+        }
+
+        prompt += `\n`;
+      }
+    }
+
+    if (nextActionsCount > 0) {
+      prompt += `## Central Next Actions (${nextActionsCount})\n\n`;
+      for (const action of gtdContext.nextActions) {
+        prompt += `- ${action}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    if (somedayCount > 0) {
+      prompt += `## Someday/Maybe (${somedayCount})\n\n`;
+      for (const item of gtdContext.somedayItems) {
+        prompt += `- ${item}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    if (inboxCount > 0) {
+      prompt += `## Inbox Items (${inboxCount} unprocessed)\n\n`;
+      for (const item of gtdContext.inboxItems) {
+        prompt += `- ${item}\n`;
+      }
+      prompt += `\n`;
+    }
+
+    return prompt;
+  }
+
   private async buildSystemPrompt(protocol?: ReviewProtocol): Promise<string> {
     // Scan projects from vault
     const scanner = new FlowProjectScanner(this.app);
@@ -339,6 +533,21 @@ export class FlowCoachView extends ItemView {
     prompt += `- Next actions must start with a verb, be specific, and completable in one sitting\n`;
     prompt += `- Project outcomes should be clear and measurable (what does "done" look like?)\n`;
     prompt += `- Projects need at least one next action to maintain momentum\n\n`;
+
+    prompt += `Weekly Review Support:\n`;
+    prompt += `When the user requests a weekly review:\n`;
+    prompt += `1. Ask which sphere(s) they want to review (work, personal, both, or all)\n`;
+    prompt += `2. Ask if they want to include only live projects, or also review paused/someday projects\n`;
+    prompt += `3. Once confirmed, use the start_weekly_review tool with their preferences\n`;
+    prompt += `4. The tool will rebuild the conversation context with filtered data and weekly review protocol\n`;
+    prompt += `5. After the tool completes, begin guiding them through the weekly review process\n\n`;
+    prompt += `Example flow:\n`;
+    prompt += `User: "I want to do a weekly review"\n`;
+    prompt += `You: "I'll help with that. Which sphere(s) would you like to review? (work, personal, or both)"\n`;
+    prompt += `User: "Just work"\n`;
+    prompt += `You: "Would you like to review only live projects, or include paused/someday projects as well?"\n`;
+    prompt += `User: "Just live"\n`;
+    prompt += `You: [Call start_weekly_review with spheres=["work"], include_statuses=["live"]]\n\n`;
 
     // Add custom review protocol if provided
     if (protocol) {
@@ -754,16 +963,52 @@ export class FlowCoachView extends ItemView {
       this.activeConversation.displayCards = [];
     }
 
-    // Separate display tools from action tools
+    // Separate display tools, system tools, and action tools
     const displayTools = toolCalls.filter(
       (tc) => tc.name === "show_project_card" || tc.name === "show_action_card"
     );
+    const systemTools = toolCalls.filter((tc) => tc.name === "start_weekly_review");
     const actionTools = toolCalls.filter(
-      (tc) => tc.name !== "show_project_card" && tc.name !== "show_action_card"
+      (tc) =>
+        tc.name !== "show_project_card" &&
+        tc.name !== "show_action_card" &&
+        tc.name !== "start_weekly_review"
     );
 
-    // Process display tools - extract card data and store
+    // Process system tools - execute immediately and modify conversation state
     const toolResults: string[] = [];
+
+    for (const toolCall of systemTools) {
+      try {
+        if (toolCall.name === "start_weekly_review") {
+          const { spheres, include_statuses } = toolCall.input as {
+            spheres: string[];
+            include_statuses?: string[];
+          };
+
+          // Rebuild system prompt with filtered context
+          const newSystemPrompt = await this.buildWeeklyReviewSystemPrompt(
+            spheres,
+            include_statuses || ["live"]
+          );
+
+          // Update conversation system prompt
+          this.activeConversation.systemPrompt = newSystemPrompt;
+
+          const sphereLabel = spheres.join(", ");
+          const statusLabel = (include_statuses || ["live"]).join(", ");
+          toolResults.push(
+            `Started weekly review for ${sphereLabel} sphere(s), including ${statusLabel} projects.`
+          );
+        }
+      } catch (error) {
+        toolResults.push(
+          `Error starting weekly review: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+
+    // Process display tools - extract card data and store
     // Cards should render after the assistant message we just added
     const cardMessageIndex = this.activeConversation.messages.length - 1;
 

@@ -121,6 +121,29 @@ export const COACH_TOOLS: ToolDefinition[] = [
       required: ["file", "line_number"],
     },
   },
+  {
+    name: "start_weekly_review",
+    description:
+      "Start a weekly review with specified sphere(s) and project status filters. Use this when the user requests a weekly review after you've confirmed their preferences.",
+    input_schema: {
+      type: "object",
+      properties: {
+        spheres: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Sphere(s) to review (e.g., ['work'], ['personal'], or ['work', 'personal'])",
+        },
+        include_statuses: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Project statuses to include in review (e.g., ['live'], ['live', 'paused'], ['live', 'someday']). Default: ['live']",
+        },
+      },
+      required: ["spheres"],
+    },
+  },
 ];
 
 export class ToolExecutor {

@@ -17,10 +17,10 @@ jest.mock("../src/focus-persistence", () => ({
 import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
 
 describe("Coach Tool Definitions", () => {
-  it("should export COACH_TOOLS array with 6 tools", () => {
+  it("should export COACH_TOOLS array with 7 tools", () => {
     expect(COACH_TOOLS).toBeDefined();
     expect(Array.isArray(COACH_TOOLS)).toBe(true);
-    expect(COACH_TOOLS.length).toBe(6);
+    expect(COACH_TOOLS.length).toBe(7);
   });
 
   it("should include move_to_focus tool", () => {
@@ -83,6 +83,17 @@ describe("Coach Tool Definitions", () => {
       expect(tool?.input_schema.properties.line_number).toBeDefined();
       expect(tool?.input_schema.required).toContain("file");
       expect(tool?.input_schema.required).toContain("line_number");
+    });
+
+    it("should include start_weekly_review tool", () => {
+      const tool = COACH_TOOLS.find((t) => t.name === "start_weekly_review");
+      expect(tool).toBeDefined();
+      expect(tool?.description).toContain("weekly review");
+      expect(tool?.input_schema.properties.spheres).toBeDefined();
+      expect(tool?.input_schema.properties.include_statuses).toBeDefined();
+      expect(tool?.input_schema.required).toContain("spheres");
+      expect(tool?.input_schema.properties.spheres.type).toBe("array");
+      expect(tool?.input_schema.properties.include_statuses.type).toBe("array");
     });
   });
 });
