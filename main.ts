@@ -5,7 +5,6 @@ import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { ReviewModal } from "./src/review-modal";
 import { NewProjectModal } from "./src/new-project-modal";
-import { ConfirmationModal } from "./src/confirmation-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { SomedayView, SOMEDAY_VIEW_TYPE } from "./src/someday-view";
@@ -344,26 +343,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   private async openInboxProcessingView() {
-    // No API key required - inbox processing is manual only (AI was removed)
-
     // Check if inbox processing view already exists
     const existingLeaves = this.app.workspace.getLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
 
     if (existingLeaves.length > 0) {
       const leaf = existingLeaves[0];
       const view = leaf.view as InboxProcessingView;
-
-      // Check if view has items in progress
-      if (view.hasItemsInProgress()) {
-        const shouldRestart = await this.confirmRestart();
-        if (!shouldRestart) {
-          // Just reveal the existing view
-          this.app.workspace.revealLeaf(leaf);
-          this.app.workspace.setActiveLeaf(leaf, { focus: true });
-          return;
-        }
-        // User wants to restart - will reuse the leaf
-      }
 
       // Reveal and refresh the existing view
       this.app.workspace.revealLeaf(leaf);
@@ -377,19 +362,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
     await leaf.setViewState({
       type: INBOX_PROCESSING_VIEW_TYPE,
       active: true,
-    });
-  }
-
-  private async confirmRestart(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const modal = new ConfirmationModal(
-        this.app,
-        "Restart inbox processing?",
-        "You have items in progress. Starting a new session will discard your current work.",
-        () => resolve(true),
-        () => resolve(false)
-      );
-      modal.open();
     });
   }
 
