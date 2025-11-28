@@ -110,7 +110,9 @@ async function callOpenRouterImageAPI(
 
   if (!response.ok) {
     const errorData = (await response.json()) as OpenRouterChatResponse;
-    throw new LLMResponseError(`Image generation failed: ${errorData.error?.message || response.statusText}`);
+    throw new LLMResponseError(
+      `Image generation failed: ${errorData.error?.message || response.statusText}`
+    );
   }
 
   const data = (await response.json()) as OpenRouterChatResponse;

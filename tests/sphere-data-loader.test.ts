@@ -214,9 +214,7 @@ describe("SphereDataLoader", () => {
       const loader = new SphereDataLoader(mockApp, "work", {} as any);
 
       const data: SphereViewData = {
-        projects: [
-          { project: { title: "Project A" } as FlowProject, priority: 1, depth: 0 },
-        ],
+        projects: [{ project: { title: "Project A" } as FlowProject, priority: 1, depth: 0 }],
         projectsNeedingNextActions: [],
         generalNextActions: ["Action 1"],
       };
@@ -231,8 +229,16 @@ describe("SphereDataLoader", () => {
 
       const data: SphereViewData = {
         projects: [
-          { project: { title: "Website Redesign", nextActions: [] } as FlowProject, priority: 1, depth: 0 },
-          { project: { title: "App Development", nextActions: [] } as FlowProject, priority: 2, depth: 0 },
+          {
+            project: { title: "Website Redesign", nextActions: [] } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+          {
+            project: { title: "App Development", nextActions: [] } as FlowProject,
+            priority: 2,
+            depth: 0,
+          },
         ],
         projectsNeedingNextActions: [],
         generalNextActions: [],
@@ -249,8 +255,16 @@ describe("SphereDataLoader", () => {
 
       const data: SphereViewData = {
         projects: [
-          { project: { title: "Project A", nextActions: ["Call dentist"] } as FlowProject, priority: 1, depth: 0 },
-          { project: { title: "Project B", nextActions: ["Email client"] } as FlowProject, priority: 2, depth: 0 },
+          {
+            project: { title: "Project A", nextActions: ["Call dentist"] } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+          {
+            project: { title: "Project B", nextActions: ["Email client"] } as FlowProject,
+            priority: 2,
+            depth: 0,
+          },
         ],
         projectsNeedingNextActions: [],
         generalNextActions: [],
@@ -284,7 +298,11 @@ describe("SphereDataLoader", () => {
 
       const data: SphereViewData = {
         projects: [
-          { project: { title: "UPPERCASE PROJECT", nextActions: [] } as FlowProject, priority: 1, depth: 0 },
+          {
+            project: { title: "UPPERCASE PROJECT", nextActions: [] } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
         ],
         projectsNeedingNextActions: [],
         generalNextActions: ["lowercase action"],

@@ -373,7 +373,9 @@ export class ReviewModal extends Modal {
       const client = createLanguageModelClient(this.settings);
       if (!client) {
         if (!this.settings.aiEnabled) {
-          throw new ConfigurationError("AI features are disabled. Please enable AI in plugin settings.");
+          throw new ConfigurationError(
+            "AI features are disabled. Please enable AI in plugin settings."
+          );
         }
         throw new ConfigurationError(
           "Failed to create LLM client. Please check your API key in plugin settings."

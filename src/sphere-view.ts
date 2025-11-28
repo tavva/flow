@@ -4,11 +4,7 @@ import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
-import {
-  SphereDataLoader,
-  SphereViewData,
-  SphereProjectSummary,
-} from "./sphere-data-loader";
+import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
