@@ -1,8 +1,6 @@
 // ABOUTME: Plugin settings and configuration types
 // ABOUTME: Contains PluginSettings interface and default values
 
-import { FocusItem } from "./domain";
-
 export type LLMProvider = "anthropic" | "openai-compatible";
 
 export interface PluginSettings {
@@ -28,7 +26,6 @@ export interface PluginSettings {
   autoCreateCoverImage: boolean; // Automatically create cover images for new projects
   displayCoverImages: boolean; // Display cover images on project notes
   spheres: string[];
-  focus?: FocusItem[]; // DEPRECATED: Migrated to file storage (flow/focus.json)
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
   focusArchiveFile: string; // Path to archive file for cleared tasks
   lastFocusClearTimestamp: number; // Timestamp of last auto-clear

@@ -33,9 +33,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Migrate focus from settings to file (one-time migration)
-    await this.migrateFocusToFile();
-
     // Check and clear focus if needed
     await this.checkAndClearFocus();
 
@@ -528,24 +525,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     if (leaf) {
       workspace.revealLeaf(leaf);
-    }
-  }
-
-  private async migrateFocusToFile(): Promise<void> {
-    // Check if settings has focus items (old storage)
-    if (this.settings.focus && this.settings.focus.length > 0) {
-      try {
-        // Save to file
-        await saveFocusItems(this.app.vault, this.settings.focus);
-
-        // Clear from settings
-        this.settings.focus = [];
-        await this.saveSettings();
-
-        console.log("Migrated focus items from settings to file");
-      } catch (error) {
-        console.error("Failed to migrate focus items to file", error);
-      }
     }
   }
 
