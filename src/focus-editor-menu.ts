@@ -3,27 +3,9 @@
 
 import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
-import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
-
-/**
- * Check if a line contains a checkbox (task)
- */
-export function isCheckboxLine(line: string): boolean {
-  return /^[-*]\s*\[(?: |x|X|w)\]/.test(line);
-}
-
-/**
- * Extract the action text from a checkbox line
- */
-export function extractActionText(line: string): string {
-  const match = line.match(/^[-*]\s*\[(?: |x|X|w)\]\s*(.*)$/);
-  if (!match) {
-    return "";
-  }
-  return match[1].trim();
-}
+import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 
 /**
  * Determine the sphere for an action based on file context and inline tags

@@ -9,6 +9,7 @@ import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { RefreshingView } from "./refreshing-view";
+import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -47,9 +48,12 @@ export class FocusView extends RefreshingView {
     return this.hasDataview ? 500 : 2000;
   }
 
-  private extractCheckboxStatus(lineContent: string): string {
-    const match = lineContent.match(/^[-*]\s*\[(.)\]/);
-    return match ? match[1] : " ";
+  private getCheckboxStatusChar(lineContent: string): string {
+    const status = extractCheckboxStatus(lineContent);
+    if (status === "todo") return " ";
+    if (status === "waiting") return "w";
+    if (status === "done") return "x";
+    return " ";
   }
 
   private getMidnightTimestamp(): number {
@@ -184,7 +188,7 @@ export class FocusView extends RefreshingView {
             const line = lines[lineIndex];
             // If marked as complete [x], remove from focus
             // Note: We keep waiting-for [w] items in the focus
-            if (line.match(/\[x\]/i)) {
+            if (isCompletedCheckbox(line)) {
               needsSave = true;
               continue;
             }
@@ -461,7 +465,7 @@ export class FocusView extends RefreshingView {
     const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
     // Check if this is a waiting-for item
-    const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
+    const checkboxStatus = this.getCheckboxStatusChar(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";
 
     // Add handshake emoji for waiting-for items (outside the item box)
@@ -575,7 +579,7 @@ export class FocusView extends RefreshingView {
     }
 
     // Check if this is a waiting-for item
-    const checkboxStatus = this.extractCheckboxStatus(item.lineContent);
+    const checkboxStatus = this.getCheckboxStatusChar(item.lineContent);
     const isWaitingFor = checkboxStatus.toLowerCase() === "w";
 
     // Action text row (with waiting indicator if needed)

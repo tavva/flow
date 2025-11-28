@@ -2,6 +2,7 @@
 // ABOUTME: Used when adding actions to focus to get accurate line references.
 
 import { App, TFile } from "obsidian";
+import { isCheckboxLine } from "./checkbox-utils";
 
 export interface ActionLineResult {
   found: boolean;
@@ -26,7 +27,7 @@ export class ActionLineFinder {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       // Match checkbox lines containing the action text
-      if (line.match(/^[-*]\s*\[(?: |x|X|w)\]/) && line.includes(actionText)) {
+      if (isCheckboxLine(line) && line.includes(actionText)) {
         return {
           found: true,
           lineNumber: i + 1,

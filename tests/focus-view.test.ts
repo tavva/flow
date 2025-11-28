@@ -325,12 +325,12 @@ describe("FocusView", () => {
     });
 
     it("should extract checkbox status from line content", () => {
-      const extractCheckboxStatus = (view as any).extractCheckboxStatus;
+      const getCheckboxStatusChar = (view as any).getCheckboxStatusChar.bind(view);
 
-      expect(extractCheckboxStatus("- [ ] Regular action")).toBe(" ");
-      expect(extractCheckboxStatus("- [w] Waiting action")).toBe("w");
-      expect(extractCheckboxStatus("- [x] Completed action")).toBe("x");
-      expect(extractCheckboxStatus("* [X] Completed with asterisk")).toBe("X");
+      expect(getCheckboxStatusChar("- [ ] Regular action")).toBe(" ");
+      expect(getCheckboxStatusChar("- [w] Waiting action")).toBe("w");
+      expect(getCheckboxStatusChar("- [x] Completed action")).toBe("x");
+      expect(getCheckboxStatusChar("* [X] Completed with asterisk")).toBe("x");
     });
   });
 

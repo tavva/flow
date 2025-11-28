@@ -1,12 +1,8 @@
 // ABOUTME: Tests for focus editor menu functionality - right-click context menu for adding/removing from focus.
 // ABOUTME: Verifies checkbox detection, action text extraction, sphere detection, and focus state checks.
 
-import {
-  isCheckboxLine,
-  extractActionText,
-  determineActionSphere,
-  isActionOnFocus,
-} from "../src/focus-editor-menu";
+import { determineActionSphere, isActionOnFocus } from "../src/focus-editor-menu";
+import { isCheckboxLine, extractActionText } from "../src/checkbox-utils";
 import { FlowProject, FocusItem } from "../src/types";
 import { TFile } from "obsidian";
 

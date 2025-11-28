@@ -1,22 +1,14 @@
 // ABOUTME: Cycles task checkbox status between [ ], [w], and [x] states.
 // ABOUTME: Supports command to cycle task status on the current line in the editor.
 
-export type TaskStatus = "todo" | "waiting" | "done";
+import { CheckboxStatus, extractCheckboxStatus } from "./checkbox-utils";
+
+export type TaskStatus = CheckboxStatus;
 
 const TASK_PATTERN = /^(\s*[-*]\s*)\[([ wWxX])\]\s*(.*)$/;
 
 export function getTaskStatusAtLine(line: string): TaskStatus | null {
-  const match = line.match(TASK_PATTERN);
-  if (!match) {
-    return null;
-  }
-
-  const status = match[2].toLowerCase();
-  if (status === " ") return "todo";
-  if (status === "w") return "waiting";
-  if (status === "x") return "done";
-
-  return null;
+  return extractCheckboxStatus(line);
 }
 
 export function cycleTaskStatus(line: string): string | null {
