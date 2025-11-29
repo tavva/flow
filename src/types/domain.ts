@@ -25,6 +25,7 @@ export interface FlowProject {
   parentProject?: string; // Wikilink to parent project, e.g., "[[Engineering AI Strategy]]"
   milestones?: string; // Raw text from ## Milestones section
   coverImage?: string; // Path to cover image file
+  current?: boolean; // Whether project is marked as a current focus
 }
 
 export interface PersonNote {

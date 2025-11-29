@@ -412,6 +412,57 @@ Get James to review by end of year - he needs to see the architecture first
 Get James to review by end of year - he needs to see the architecture first`
         );
       });
+
+      it("should parse current: true from frontmatter", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work", current: true },
+        };
+        const mockContent = `## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.current).toBe(true);
+      });
+
+      it("should set current to false when not present in frontmatter", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work" },
+        };
+        const mockContent = `## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.current).toBe(false);
+      });
+
+      it("should set current to false for non-boolean values", async () => {
+        const mockFile = new MockTFile("project.md", "Project") as TFile;
+        const mockMetadata: Partial<CachedMetadata> = {
+          frontmatter: { tags: "project/work", current: "yes" },
+        };
+        const mockContent = `## Next actions
+- [ ] Some action
+`;
+
+        (mockMetadataCache.getFileCache as jest.Mock).mockReturnValue(mockMetadata);
+        (mockVault.read as jest.Mock).mockResolvedValue(mockContent);
+
+        const result = await scanner.parseProjectFile(mockFile);
+
+        expect(result?.current).toBe(false);
+      });
     });
 
     describe("searchProjects", () => {

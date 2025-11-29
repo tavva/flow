@@ -126,6 +126,9 @@ export class FocusView extends RefreshingView {
       this.renderClearNotification(container as HTMLElement);
     }
 
+    // Show current projects box
+    this.renderCurrentProjectsBox(container as HTMLElement);
+
     if (this.focusItems.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
@@ -223,6 +226,9 @@ export class FocusView extends RefreshingView {
       if (this.shouldShowClearNotification()) {
         this.renderClearNotification(container as HTMLElement);
       }
+
+      // Show current projects box
+      this.renderCurrentProjectsBox(container as HTMLElement);
 
       if (validatedItems.length === 0) {
         this.renderEmptyMessage(container as HTMLElement);
@@ -710,6 +716,33 @@ export class FocusView extends RefreshingView {
     container
       .createDiv({ cls: "flow-gtd-focus-empty" })
       .setText("No items in focus. Use planning mode in sphere view to add actions.");
+  }
+
+  private renderCurrentProjectsBox(container: HTMLElement) {
+    const currentProjects = this.allProjects.filter((p) => p.current === true);
+    if (currentProjects.length === 0) {
+      return;
+    }
+
+    const box = container.createDiv({ cls: "flow-gtd-focus-current-projects" });
+
+    box.createEl("div", {
+      text: "Current",
+      cls: "flow-gtd-focus-current-projects-header",
+    });
+
+    const list = box.createEl("div", { cls: "flow-gtd-focus-current-projects-list" });
+
+    for (const project of currentProjects) {
+      const projectLink = list.createEl("a", {
+        text: project.title,
+        cls: "flow-gtd-focus-current-project-link",
+      });
+      projectLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.openFile(project.file);
+      });
+    }
   }
 
   private shouldShowClearNotification(): boolean {

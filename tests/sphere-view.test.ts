@@ -1424,6 +1424,150 @@ describe("SphereView", () => {
     });
   });
 
+  describe("current projects indicator", () => {
+    it("should render diamond indicator for current projects", async () => {
+      const currentProject = {
+        file: "Projects/Current.md",
+        title: "Current Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        current: true,
+        nextActions: ["Current action"],
+        mtime: Date.now(),
+      };
+
+      const normalProject = {
+        file: "Projects/Normal.md",
+        title: "Normal Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 2,
+        current: false,
+        nextActions: ["Normal action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([currentProject, normalProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const indicators = container.querySelectorAll(".flow-gtd-sphere-project-current-indicator");
+
+      // Only one project is current, so only one indicator
+      expect(indicators.length).toBe(1);
+      expect(indicators[0].textContent).toBe("◆");
+    });
+
+    it("should not render indicator for non-current projects", async () => {
+      const normalProject = {
+        file: "Projects/Normal.md",
+        title: "Normal Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        current: false,
+        nextActions: ["Normal action"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([normalProject]);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      const indicators = container.querySelectorAll(".flow-gtd-sphere-project-current-indicator");
+
+      expect(indicators.length).toBe(0);
+    });
+  });
+
+  describe("toggleProjectCurrent", () => {
+    it("should add current: true to project frontmatter", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        current: false,
+        nextActions: ["Test action"],
+        mtime: Date.now(),
+      };
+
+      const mockFile = new TFile("Projects/Test.md");
+      app.vault.getAbstractFileByPath = jest.fn().mockReturnValue(mockFile);
+      app.vault.read = jest.fn().mockResolvedValue(`---
+priority: 1
+tags:
+  - project/work
+status: live
+---
+
+# Test Project
+
+## Next actions
+- [ ] Test action
+`);
+      app.vault.modify = jest.fn().mockResolvedValue(undefined);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await (view as any).toggleProjectCurrent(project, true);
+
+      expect(app.vault.modify).toHaveBeenCalled();
+      const modifiedContent = (app.vault.modify as jest.Mock).mock.calls[0][1];
+      expect(modifiedContent).toContain("current: true");
+    });
+
+    it("should remove current field from frontmatter when unmarking", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        current: true,
+        nextActions: ["Test action"],
+        mtime: Date.now(),
+      };
+
+      const mockFile = new TFile("Projects/Test.md");
+      app.vault.getAbstractFileByPath = jest.fn().mockReturnValue(mockFile);
+      app.vault.read = jest.fn().mockResolvedValue(`---
+priority: 1
+tags:
+  - project/work
+status: live
+current: true
+---
+
+# Test Project
+
+## Next actions
+- [ ] Test action
+`);
+      app.vault.modify = jest.fn().mockResolvedValue(undefined);
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await (view as any).toggleProjectCurrent(project, false);
+
+      expect(app.vault.modify).toHaveBeenCalled();
+      const modifiedContent = (app.vault.modify as jest.Mock).mock.calls[0][1];
+      expect(modifiedContent).not.toContain("current:");
+    });
+  });
+
   describe("view state persistence", () => {
     it("should persist searchQuery in getState", () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);

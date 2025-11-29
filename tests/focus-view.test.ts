@@ -1370,4 +1370,117 @@ describe("FocusView", () => {
       expect(createDivSpy).not.toHaveBeenCalled();
     });
   });
+
+  describe("renderCurrentProjectsBox", () => {
+    it("should not render when no current projects", () => {
+      (view as any).allProjects = [
+        { file: "Projects/A.md", title: "Project A", current: false },
+        { file: "Projects/B.md", title: "Project B" }, // no current field
+      ];
+
+      const container = document.createElement("div");
+      const createDivSpy = jest.fn();
+      (container as any).createDiv = createDivSpy;
+
+      (view as any).renderCurrentProjectsBox(container);
+
+      expect(createDivSpy).not.toHaveBeenCalled();
+    });
+
+    it("should render box with current projects", () => {
+      (view as any).allProjects = [
+        { file: "Projects/A.md", title: "Project A", current: true },
+        { file: "Projects/B.md", title: "Project B", current: false },
+        { file: "Projects/C.md", title: "Project C", current: true },
+      ];
+
+      const container = document.createElement("div");
+      const mockBox = document.createElement("div");
+      const mockHeader = document.createElement("div");
+      const mockList = document.createElement("div");
+      const mockLinks: HTMLElement[] = [];
+
+      (container as any).createDiv = jest.fn().mockReturnValue(mockBox);
+      (mockBox as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
+        if (tag === "div" && opts?.cls === "flow-gtd-focus-current-projects-header") {
+          mockHeader.textContent = opts?.text || "";
+          return mockHeader;
+        }
+        if (tag === "div" && opts?.cls === "flow-gtd-focus-current-projects-list") {
+          return mockList;
+        }
+        if (tag === "a") {
+          const link = document.createElement("a");
+          link.textContent = opts?.text || "";
+          link.className = opts?.cls || "";
+          (link as any).addEventListener = jest.fn();
+          mockLinks.push(link);
+          return link;
+        }
+        return document.createElement(tag);
+      });
+
+      (mockList as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
+        const link = document.createElement("a");
+        link.textContent = opts?.text || "";
+        link.className = opts?.cls || "";
+        (link as any).addEventListener = jest.fn();
+        mockLinks.push(link);
+        return link;
+      });
+
+      (view as any).renderCurrentProjectsBox(container);
+
+      // Should have created the box
+      expect((container as any).createDiv).toHaveBeenCalledWith({
+        cls: "flow-gtd-focus-current-projects",
+      });
+
+      // Should have header with "Current" text
+      expect(mockHeader.textContent).toBe("Current");
+
+      // Should have 2 project links (A and C are current)
+      expect(mockLinks.length).toBe(2);
+      expect(mockLinks[0].textContent).toBe("Project A");
+      expect(mockLinks[1].textContent).toBe("Project C");
+    });
+
+    it("should make project links clickable", () => {
+      (view as any).allProjects = [
+        { file: "Projects/A.md", title: "Project A", current: true },
+      ];
+
+      const container = document.createElement("div");
+      const mockBox = document.createElement("div");
+      const mockList = document.createElement("div");
+      let clickHandler: ((e: Event) => void) | null = null;
+
+      (container as any).createDiv = jest.fn().mockReturnValue(mockBox);
+      (mockBox as any).createEl = jest.fn().mockReturnValue(mockList);
+      (mockList as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
+        const link = document.createElement("a");
+        link.textContent = opts?.text || "";
+        (link as any).addEventListener = jest.fn().mockImplementation((event: string, handler: any) => {
+          if (event === "click") {
+            clickHandler = handler;
+          }
+        });
+        return link;
+      });
+
+      // Mock openFile
+      const openFileSpy = jest.fn();
+      (view as any).openFile = openFileSpy;
+
+      (view as any).renderCurrentProjectsBox(container);
+
+      // Simulate click
+      expect(clickHandler).not.toBeNull();
+      const mockEvent = { preventDefault: jest.fn() };
+      clickHandler!(mockEvent as any);
+
+      expect(mockEvent.preventDefault).toHaveBeenCalled();
+      expect(openFileSpy).toHaveBeenCalledWith("Projects/A.md");
+    });
+  });
 });

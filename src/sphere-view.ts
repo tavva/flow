@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer, Menu } from "obsidian";
 import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
@@ -379,6 +379,14 @@ export class SphereView extends ItemView {
 
       const header = content.createDiv({ cls: "flow-gtd-sphere-project-header" });
 
+      // Add current indicator if project is marked as current
+      if (project.current) {
+        header.createSpan({
+          cls: "flow-gtd-sphere-project-current-indicator",
+          text: "◆",
+        });
+      }
+
       const titleLink = header.createEl("a", {
         text: project.title,
         cls: "flow-gtd-sphere-project-title flow-gtd-sphere-project-link",
@@ -387,6 +395,32 @@ export class SphereView extends ItemView {
       titleLink.addEventListener("click", (e) => {
         e.preventDefault();
         this.openProjectFile(project.file);
+      });
+
+      // Context menu for toggling current status
+      titleLink.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        const menu = new Menu();
+        if (project.current) {
+          menu.addItem((item) => {
+            item
+              .setTitle("Remove from current")
+              .setIcon("x")
+              .onClick(async () => {
+                await this.toggleProjectCurrent(project, false);
+              });
+          });
+        } else {
+          menu.addItem((item) => {
+            item
+              .setTitle("Mark as current")
+              .setIcon("star")
+              .onClick(async () => {
+                await this.toggleProjectCurrent(project, true);
+              });
+          });
+        }
+        menu.showAtMouseEvent(e);
       });
 
       // Show parent indicator for subprojects displayed outside parent's priority section
@@ -686,6 +720,72 @@ export class SphereView extends ItemView {
           await (leaf.view as any).onOpen();
         }
       }
+    }
+  }
+
+  private async toggleProjectCurrent(project: FlowProject, markAsCurrent: boolean): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(project.file);
+    if (!(file instanceof TFile)) {
+      console.error(`Project file not found: ${project.file}`);
+      return;
+    }
+
+    try {
+      const content = await this.app.vault.read(file);
+      const lines = content.split("\n");
+
+      // Find frontmatter boundaries
+      let frontmatterStart = -1;
+      let frontmatterEnd = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim() === "---") {
+          if (frontmatterStart === -1) {
+            frontmatterStart = i;
+          } else {
+            frontmatterEnd = i;
+            break;
+          }
+        }
+      }
+
+      if (frontmatterStart === -1 || frontmatterEnd === -1) {
+        console.error("Could not find frontmatter boundaries");
+        return;
+      }
+
+      // Find existing current field
+      let currentFieldLine = -1;
+      for (let i = frontmatterStart + 1; i < frontmatterEnd; i++) {
+        if (lines[i].match(/^current:/)) {
+          currentFieldLine = i;
+          break;
+        }
+      }
+
+      if (markAsCurrent) {
+        // Add or update current: true
+        if (currentFieldLine !== -1) {
+          lines[currentFieldLine] = "current: true";
+        } else {
+          // Insert before closing ---
+          lines.splice(frontmatterEnd, 0, "current: true");
+        }
+      } else {
+        // Remove current field entirely
+        if (currentFieldLine !== -1) {
+          lines.splice(currentFieldLine, 1);
+        }
+      }
+
+      await this.app.vault.modify(file, lines.join("\n"));
+
+      // Refresh the view to show updated indicator
+      await this.refresh();
+
+      // Also refresh focus view in case current projects box needs updating
+      await this.refreshFocusView();
+    } catch (error) {
+      console.error("Failed to toggle project current status", error);
     }
   }
 }

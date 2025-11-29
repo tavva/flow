@@ -1366,6 +1366,13 @@ select.flow-gtd-inline-select option,
   margin-left: 4px;
 }
 
+/* Current project indicator in sphere view */
+.flow-gtd-sphere-project-current-indicator {
+  color: var(--interactive-accent);
+  font-size: 12px;
+  margin-right: 6px;
+}
+
 .flow-gtd-sphere-project-priority {
   font-size: 13px;
   font-weight: 500;
@@ -1780,6 +1787,42 @@ select.flow-gtd-inline-select option,
   font-style: italic;
   padding: 20px 0;
   text-align: center;
+}
+
+/* Current Projects Box */
+.flow-gtd-focus-current-projects {
+  background: var(--background-secondary);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.flow-gtd-focus-current-projects-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+.flow-gtd-focus-current-projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.flow-gtd-focus-current-project-link {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-normal);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.flow-gtd-focus-current-project-link:hover {
+  color: var(--interactive-accent);
+  text-decoration: underline;
 }
 
 .flow-gtd-focus-section {

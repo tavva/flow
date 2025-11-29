@@ -64,6 +64,7 @@ export class FlowProjectScanner {
       parentProject: frontmatter["parent-project"],
       milestones: this.extractSectionText(content, "## Milestones"),
       coverImage: frontmatter["cover-image"],
+      current: frontmatter.current === true,
     };
 
     // Update cache
