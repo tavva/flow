@@ -7,6 +7,7 @@ import { FileWriter } from "./file-writer";
 import { FlowProjectScanner } from "./flow-scanner";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { ActionLineFinder } from "./action-line-finder";
+import { sanitizeFileName, validateNextAction } from "./validation";
 
 interface NewProjectData {
   title: string;
@@ -287,9 +288,24 @@ export class NewProjectModal extends Modal {
       return;
     }
 
+    // Validate and sanitize the project title for file system
+    const sanitizedTitle = sanitizeFileName(this.data.title.trim());
+    if (sanitizedTitle.length === 0) {
+      this.showError(
+        "Project title contains only invalid characters. Please use letters, numbers, or spaces."
+      );
+      return;
+    }
+
     if (!this.data.nextAction.trim()) {
       this.showError("First next action is required");
       return;
+    }
+
+    // Validate next action quality (show warnings but don't block)
+    const actionValidation = validateNextAction(this.data.nextAction.trim());
+    if (actionValidation.warnings && actionValidation.warnings.length > 0) {
+      console.log("Next action warnings:", actionValidation.warnings);
     }
 
     if (this.data.spheres.length === 0) {

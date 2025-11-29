@@ -1,6 +1,7 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS, LLMProvider } from "./types";
+import { validateApiKey } from "./validation";
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
@@ -58,7 +59,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           .setPlaceholder("sk-ant-...")
           .setValue(this.plugin.settings.anthropicApiKey)
           .onChange(async (value) => {
-            this.plugin.settings.anthropicApiKey = value;
+            const trimmed = value.trim();
+            if (trimmed.length > 0) {
+              const validation = validateApiKey(trimmed);
+              if (!validation.valid) {
+                new Notice(validation.error || "Invalid API key format");
+                return;
+              }
+            }
+            this.plugin.settings.anthropicApiKey = trimmed;
             await this.plugin.saveSettings();
           });
         text.inputEl.type = "password";

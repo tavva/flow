@@ -14,6 +14,14 @@ Flow is an Obsidian plugin written in TypeScript. Core services live in `src/` (
 - `npm run evaluate` — launch scripted AI evaluations (requires Anthropic credentials).
 - `npm run version` — bump manifest metadata and stage `manifest.json` plus `versions.json` for release.
 
+## Completion Checklist
+
+Before declaring any task complete, always run:
+
+1. `npm run format` — ensure code is properly formatted
+2. `npm run build` — verify type checking passes
+3. `npm test` — confirm all tests pass
+
 ## Coding Style & Naming Conventions
 
 Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. The CI pipeline will fail if code is not properly formatted. Avoid introducing Unicode unless already present.

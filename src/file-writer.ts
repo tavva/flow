@@ -3,6 +3,7 @@ import { TFile, normalizePath } from "obsidian";
 import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
 import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
+import { sanitizeFileName } from "./validation";
 
 export class FileWriter {
   constructor(
@@ -310,11 +311,7 @@ export class FileWriter {
    * Generate a clean file name from project title
    */
   private generateFileName(title: string): string {
-    const cleaned = title
-      .replace(/[\\/:*?"<>|]/g, "") // Remove filesystem-problematic chars
-      .replace(/\s+/g, " ") // Collapse whitespace
-      .trim()
-      .replace(/\.+$/, ""); // Drop trailing dots that Windows forbids
+    const cleaned = sanitizeFileName(title).replace(/\.+$/, ""); // Drop trailing dots that Windows forbids
 
     return cleaned.length > 0 ? cleaned : "Project";
   }

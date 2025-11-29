@@ -4,7 +4,7 @@ import { GTDResponseValidationError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
-import { validateReminderDate } from "./validation";
+import { validateReminderDate, validateInboxItem, validateNextAction } from "./validation";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { generateCoverImage } from "./cover-image-generator";
 
@@ -74,6 +74,16 @@ export class InboxItemPersistenceService {
       finalNextActions.every((action) => action != null && action.trim().length === 0)
     ) {
       throw new GTDResponseValidationError("Next action cannot be empty when saving this item.");
+    }
+
+    // Validate each next action for length limits
+    for (const action of finalNextActions) {
+      if (action && action.trim().length > 0) {
+        const validation = validateInboxItem(action);
+        if (!validation.valid) {
+          throw new GTDResponseValidationError(validation.error || "Invalid next action");
+        }
+      }
     }
   }
 
