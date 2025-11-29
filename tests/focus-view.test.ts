@@ -1446,9 +1446,7 @@ describe("FocusView", () => {
     });
 
     it("should make project links clickable", () => {
-      (view as any).allProjects = [
-        { file: "Projects/A.md", title: "Project A", current: true },
-      ];
+      (view as any).allProjects = [{ file: "Projects/A.md", title: "Project A", current: true }];
 
       const container = document.createElement("div");
       const mockBox = document.createElement("div");
@@ -1460,11 +1458,13 @@ describe("FocusView", () => {
       (mockList as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
         const link = document.createElement("a");
         link.textContent = opts?.text || "";
-        (link as any).addEventListener = jest.fn().mockImplementation((event: string, handler: any) => {
-          if (event === "click") {
-            clickHandler = handler;
-          }
-        });
+        (link as any).addEventListener = jest
+          .fn()
+          .mockImplementation((event: string, handler: any) => {
+            if (event === "click") {
+              clickHandler = handler;
+            }
+          });
         return link;
       });
 

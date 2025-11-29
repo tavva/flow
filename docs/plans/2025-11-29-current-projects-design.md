@@ -20,6 +20,7 @@ current: true
 ```
 
 **Type changes:**
+
 - Add `current?: boolean` to `FlowProject` interface in `src/types/domain.ts`
 - Parse in `flow-scanner.ts` alongside existing frontmatter fields
 
@@ -28,6 +29,7 @@ current: true
 **Location:** Appears below the "Focus" title, above the Pinned section (or above Project Actions if no pinned items).
 
 **Rendering:**
+
 - Compact box with subtle background (`var(--background-secondary)`)
 - Small header text: "Current"
 - List of project names in smaller font, tightly packed (reduced line-height)
@@ -35,6 +37,7 @@ current: true
 - If no projects are marked current, the box doesn't render at all
 
 **Visual example:**
+
 ```
 ┌─────────────────────────────┐
 │ Current                     │
@@ -49,6 +52,7 @@ current: true
 Current projects get a small diamond indicator (◆) before their name in sphere view.
 
 **Example:**
+
 ```
 ◆ Website Redesign
   - [ ] Draft homepage wireframes
@@ -62,10 +66,12 @@ Current projects get a small diamond indicator (◆) before their name in sphere
 **Trigger:** Right-click on a project name in sphere view.
 
 **Menu items:**
+
 - If project is not current: "Mark as current"
 - If project is current: "Remove from current"
 
 **Behaviour:**
+
 - If marking current: add `current: true` to frontmatter
 - If removing: delete the `current` field entirely (don't set to `false`)
 - No confirmation modal needed — easily reversible
@@ -73,24 +79,31 @@ Current projects get a small diamond indicator (◆) before their name in sphere
 ## Files to Modify
 
 **Type changes:**
+
 - `src/types/domain.ts` — Add `current?: boolean` to `FlowProject`
 
 **Parsing:**
+
 - `src/flow-scanner.ts` — Parse `current` from frontmatter in `parseProjectFile()`
 
 **Focus view:**
+
 - `src/focus-view.ts` — Add `renderCurrentProjectsBox()`, call before pinned section
 
 **Sphere view:**
+
 - `src/sphere-view.ts` — Add visual indicator for current projects, add context menu handler
 
 **Styling:**
+
 - `src/styles.css` — Add styles for current projects box and indicator
 
 **Frontmatter writing:**
+
 - New utility or inline in sphere-view to toggle `current` field in project frontmatter
 
 **Tests:**
+
 - `tests/flow-scanner.test.ts` — Test parsing `current` field
 - `tests/focus-view.test.ts` — Test current projects box rendering
 - `tests/sphere-view.test.ts` — Test indicator and context menu
