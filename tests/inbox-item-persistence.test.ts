@@ -2,10 +2,31 @@ import { InboxItemPersistenceService } from "../src/inbox-item-persistence";
 import { EditableItem } from "../src/inbox-types";
 import { FileWriter } from "../src/file-writer";
 import { GTDResponseValidationError } from "../src/errors";
+import { FocusItem } from "../src/types";
 
 // Mock the cover image generator module before importing anything that uses it
 jest.mock("../src/cover-image-generator", () => ({
   generateCoverImage: jest.fn(),
+}));
+
+// Mock focus persistence
+let mockFocusItems: FocusItem[] = [];
+jest.mock("../src/focus-persistence", () => ({
+  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  saveFocusItems: jest.fn((vault, items) => {
+    mockFocusItems = items;
+    return Promise.resolve();
+  }),
+}));
+
+jest.mock("../src/action-line-finder", () => ({
+  ActionLineFinder: jest.fn().mockImplementation(() => ({
+    findActionLine: jest.fn().mockResolvedValue({
+      found: true,
+      lineNumber: 10,
+      lineContent: "- [x] Call dentist",
+    }),
+  })),
 }));
 
 import { generateCoverImage } from "../src/cover-image-generator";
@@ -23,6 +44,7 @@ describe("InboxItemPersistenceService", () => {
   let service: InboxItemPersistenceService;
 
   beforeEach(() => {
+    mockFocusItems = [];
     writerMocks = {
       createProject: jest.fn().mockResolvedValue({ path: "Projects/Test.md" }),
       addNextActionToProject: jest.fn(),
@@ -228,7 +250,7 @@ describe("InboxItemPersistenceService", () => {
     );
   });
 
-  it("does not add completed items to focus", async () => {
+  it("adds completed items to focus with completedAt timestamp", async () => {
     const mockApp = {
       vault: {
         getAbstractFileByPath: jest.fn(),
@@ -238,7 +260,6 @@ describe("InboxItemPersistenceService", () => {
 
     const mockSettings = {
       nextActionsFilePath: "Next actions.md",
-      focus: [],
     };
 
     const mockSaveSettings = jest.fn();
@@ -262,9 +283,11 @@ describe("InboxItemPersistenceService", () => {
 
     await serviceWithFocus.persist(item);
 
-    // Should not attempt to add to focus because item is marked as done
-    expect(mockSettings.focus.length).toBe(0);
-    expect(mockSaveSettings).not.toHaveBeenCalled();
+    // Completed items should be added to focus with completedAt set
+    expect(mockFocusItems.length).toBe(1);
+    expect(mockFocusItems[0].text).toBe("Call dentist");
+    expect(mockFocusItems[0].completedAt).toBeDefined();
+    expect(mockFocusItems[0].sphere).toBe("personal");
   });
 
   describe("auto-create cover image", () => {

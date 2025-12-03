@@ -36,16 +36,8 @@ export class InboxItemPersistenceService {
     const writtenFilePath = await this.writeResult(item, finalNextActions, result);
 
     // Add to focus if requested and dependencies are available
-    // Don't add completed items to focus (they're already done)
-    const hasCompletedItems = item.markAsDone && item.markAsDone.some((done) => done === true);
-    if (
-      item.addToFocus &&
-      !hasCompletedItems &&
-      writtenFilePath &&
-      this.app &&
-      this.settings &&
-      this.saveSettings
-    ) {
+    // Completed items are added with completedAt set so they appear in "Completed Today"
+    if (item.addToFocus && writtenFilePath && this.app && this.settings && this.saveSettings) {
       await this.addActionsToFocus(writtenFilePath, finalNextActions, item);
     }
   }
@@ -247,7 +239,9 @@ export class InboxItemPersistenceService {
     const focusItems = await loadFocusItems(this.app.vault);
 
     // Add each action to the focus
-    for (const action of actions) {
+    const markAsDone = item.markAsDone || [];
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i];
       const result = await finder.findActionLine(filePath, action);
 
       if (result.found && result.lineNumber && result.lineContent) {
@@ -259,6 +253,7 @@ export class InboxItemPersistenceService {
           sphere: primarySphere || "personal",
           isGeneral,
           addedAt: Date.now(),
+          completedAt: markAsDone[i] ? Date.now() : undefined,
         };
 
         focusItems.push(focusItem);
