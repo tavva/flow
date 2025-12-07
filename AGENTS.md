@@ -1,20 +1,25 @@
-# Repository Guidelines
+This file provides guidance to Claude Code and other agents when working with code in this repository.
 
-## Project Structure & Module Organization
+## Project Overview
 
-Flow is an Obsidian plugin written in TypeScript. Core services live in `src/` (e.g., `flow-scanner.ts`, `inbox-scanner.ts`, `gtd-processor.ts`) with shared contracts in `src/types.ts`. UI wiring stays in `src/main.ts`, and modal styles belong in `styles.css`. Jest specs mirror source files under `tests/` with Obsidian shims in `tests/__mocks__/obsidian.ts`.
+Flow is an Obsidian plugin implementing GTD (Getting Things Done) with AI-powered inbox processing. It uses Claude or OpenAI-compatible models to categorise inbox items into projects, next actions, reference material, someday/maybe items, and person notes.
 
-## Build, Test, and Development Commands
+## Commands
 
-- `npm run dev` — build bundle with esbuild in watch mode; keep it running during active development.
-- `npm run build` — perform a type check via `tsc` then emit the production bundle to `dist/`.
-- `npm run format` — auto-format all code with Prettier (run before committing).
-- `npm run format:check` — verify code formatting without modifying files.
-- `npm test` / `npm run test:watch` / `npm run test:coverage` — execute Jest suites; coverage thresholds are enforced at 80% across metrics.
-- `npm run evaluate` — launch scripted AI evaluations (requires Anthropic credentials).
-- `npm run version` — bump manifest metadata and stage `manifest.json` plus `versions.json` for release.
+```bash
+npm run dev          # Development mode with auto-rebuild
+npm run build        # Type-check and production build
+npm test             # Run all tests
+npm test -- name     # Run specific test file (e.g., npm test -- flow-scanner)
+npm run test:watch   # Tests in watch mode
+npm run test:coverage # Coverage report (80% threshold)
+npm run format       # Format with Prettier
+npm run format:check # Check formatting without modifying
+npm run evaluate     # Run AI evaluations (requires Anthropic credentials)
+npm run version      # Bump manifest metadata for release
+```
 
-## Completion Checklist
+### Completion Checklist
 
 Before declaring any task complete, always run:
 
@@ -22,18 +27,126 @@ Before declaring any task complete, always run:
 2. `npm run build` — verify type checking passes
 3. `npm test` — confirm all tests pass
 
-## Coding Style & Naming Conventions
+## Architecture
 
-Write TypeScript with 2-space indentation (enforced by Prettier). Use PascalCase for classes, camelCase for functions and variables, and UPPER_SNAKE_CASE for exported constants. Keep public APIs explicitly typed, reuse helpers from `src/types.ts`, and add comments only where logic is non-obvious. Run `npm run format` before committing to ensure consistent formatting across the codebase. The CI pipeline will fail if code is not properly formatted. Avoid introducing Unicode unless already present.
+### Core Processing Flow
 
-## Testing Guidelines
+1. **Flow Scanner** (`src/flow-scanner.ts`) - Scans vault for projects (files with `project/*` tags in frontmatter)
+2. **Person Scanner** (`src/person-scanner.ts`) - Scans for person notes (files with `person` tag)
+3. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans inbox folders for items to process
+4. **GTD Processor** (`src/gtd-processor.ts`) - AI analysis with context from existing projects/people
+5. **LLM Factory** (`src/llm-factory.ts`) - Factory for Anthropic/OpenAI-compatible clients
+6. **File Writer** (`src/file-writer.ts`) - Creates/updates project files with Flow frontmatter
 
-Tests reside in `tests/` alongside the mirrored file name (e.g., `tests/flow-scanner.test.ts`). Use Jest with ts-jest, and extend the mocks in `tests/__mocks__/obsidian.ts` when Obsidian APIs change. Ensure new behavior covers both success and failure cases, and maintain ≥80% branch, line, function, and statement coverage by running `npm run test:coverage`.
+### Key Domain Concepts
 
-## Commit & Pull Request Guidelines
+- **Spheres**: Life areas (work, personal) for organising projects
+- **Projects**: Multi-step outcomes with YAML frontmatter (`project/*` tags, priority, status)
+- **Sub-projects**: Hierarchical projects via `parent-project: "[[Parent]]"` in frontmatter
+- **Focus**: Curated set of next actions to work on, stored in `flow-focus-data/focus.md`
+- **Waiting For**: Items awaiting others, marked with `[w]` checkbox status
+- **Someday/Maybe**: Future aspirations not currently committed
 
-Write imperative commit subjects such as "Add inbox batching." Group related changes, avoid committing build artifacts, and run `npm run format` and `npm run build` before requesting review. Pull requests should summarize scope, note manual testing, attach UI screenshots when relevant, and link issues using `Fixes #123` syntax.
+### Project Hierarchy Pattern
 
-## Security & Configuration Tips
+When building hierarchies with filtering (e.g., by sphere), always build hierarchy from ALL projects first, then filter. This preserves parent-child relationships even when parent is in different sphere:
 
-Never commit Anthropic keys or other secrets. Store API keys via the plugin settings tab. Document new configuration defaults in the settings UI or `README.md` so agents and maintainers stay aligned.
+```typescript
+// ✅ CORRECT
+const hierarchy = buildProjectHierarchy(allProjects);
+const flattenedHierarchy = flattenHierarchy(hierarchy);
+const filtered = flattenedHierarchy.filter(/* sphere filter */);
+
+// ❌ WRONG - breaks relationships
+const filtered = allProjects.filter(/* sphere filter */);
+const hierarchy = buildProjectHierarchy(filtered);
+```
+
+### Flow Project Structure
+
+```markdown
+---
+creation-date: 2025-10-05 18:59
+priority: 2
+tags: project/personal
+status: live
+parent-project: "[[Parent Project]]"  # optional
+---
+
+# Project Title
+
+Project description and context.
+
+## Next actions
+
+- [ ] GTD-quality actions ready to do now
+- [w] Items waiting on others
+```
+
+### Views and UI
+
+- **SphereView** (`src/sphere-view.ts`) - Projects/actions for a life area, with planning mode
+- **FocusView** (`src/focus-view.ts`) - Curated action list with pinning and reordering
+- **WaitingForView** (`src/waiting-for-view.ts`) - Aggregated `[w]` items across vault
+- **SomedayView** (`src/someday-view.ts`) - Someday/maybe items
+- **FlowCoachView** (`src/flow-coach-view.ts`) - Chat interface for GTD coaching
+
+### Focus System
+
+- Items stored in `flow-focus-data/focus.md` as JSON with: file, lineNumber, lineContent, text, sphere, isPinned, completedAt
+- **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions
+- **FocusValidator** (`src/focus-validator.ts`) - Validates items when source files change
+- **FocusAutoClear** (`src/focus-auto-clear.ts`) - Automatic daily clearing at configured time
+
+### Task Status Cycling
+
+Checkbox status cycles: `[ ]` → `[w]` → `[x]` via `task-status-cycler.ts`
+
+## Testing
+
+- Jest with ts-jest preset, 80% coverage threshold
+- Mock Obsidian API via `tests/__mocks__/obsidian.ts`
+- Test API keys: Use `generateDeterministicFakeApiKey()` from `tests/test-utils.ts` to avoid security scanner false positives
+
+## Code Standards
+
+### Naming Conventions
+
+- PascalCase for classes
+- camelCase for functions and variables
+- UPPER_SNAKE_CASE for exported constants
+
+### Commit Style
+
+- Write imperative commit subjects (e.g., "Add inbox batching")
+- Link issues using `Fixes #123` syntax
+
+### Security
+
+Never commit API keys or other secrets. Store API keys via the plugin settings tab.
+
+### ABOUTME Comments
+
+All source files start with two ABOUTME lines:
+```typescript
+// ABOUTME: File purpose line 1
+// ABOUTME: File purpose line 2
+```
+
+### GTD Quality
+
+**Next actions must:**
+- Start with action verb, be specific, completable in one sitting
+- Include context (who, where, what specifically)
+- Be 15-150 characters, avoid vague terms
+
+**Project outcomes must:**
+- Be stated as completed outcomes (past tense ideal)
+- Be clear, measurable, define "done"
+
+### LLM Integration
+
+- Default provider: OpenAI-compatible (OpenRouter)
+- Fallback: Anthropic Claude
+- British English for all AI responses
+- Structured JSON output from Claude
