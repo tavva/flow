@@ -11,11 +11,12 @@ The old system tagged tasks with `#flow-planned` inline. The new system stores f
 Two new settings fields track migration state:
 
 ```typescript
-legacyFocusMigrationDismissed: boolean;  // "Don't ask again" for migration
+legacyFocusMigrationDismissed: boolean; // "Don't ask again" for migration
 legacyFocusTagRemovalDismissed: boolean; // "Keep forever" for tag removal
 ```
 
 **Logic:**
+
 - If `#flow-planned` tags exist AND `legacyFocusMigrationDismissed` is false → show migration prompt
 - After migration, if tags still exist AND `legacyFocusTagRemovalDismissed` is false → show tag removal prompt
 
@@ -25,12 +26,12 @@ Scans the entire vault for checkbox lines containing `#flow-planned`:
 
 ```typescript
 interface LegacyFocusItem {
-  file: string;        // File path
-  lineNumber: number;  // 1-indexed
+  file: string; // File path
+  lineNumber: number; // 1-indexed
   lineContent: string; // Full line text
 }
 
-async function scanForLegacyFocusTags(vault: Vault): Promise<LegacyFocusItem[]>
+async function scanForLegacyFocusTags(vault: Vault): Promise<LegacyFocusItem[]>;
 ```
 
 Matches any checkbox state: `- [ ]`, `- [x]`, `- [w]`.
@@ -44,12 +45,13 @@ export async function checkAndPromptLegacyMigration(
   app: App,
   settings: PluginSettings,
   saveSettings: () => Promise<void>
-): Promise<void>
+): Promise<void>;
 ```
 
 Called from `main.ts` `onload()` after settings are loaded.
 
 **File contents:**
+
 - `scanForLegacyFocusTags()` - finds legacy items
 - `migrateLegacyFocusItems()` - converts to new format, skips duplicates
 - `removeLegacyTags()` - strips `#flow-planned` from source files
@@ -77,11 +79,13 @@ When user clicks "Migrate":
 ## Modal UI
 
 **Migration Modal:**
+
 - Title: "Migrate Legacy Focus Items"
 - Body: "Found X items with #flow-planned tags. Would you like to migrate them to the new focus system?"
 - Buttons: [Migrate] [Not now] [Don't ask again]
 
 **Tag Removal Modal:**
+
 - Title: "Remove Legacy Tags"
 - Body: "Migration complete. X items migrated. (Y items skipped - no sphere detected)"
 - "Would you like to remove the #flow-planned tags from your files?"
@@ -100,6 +104,7 @@ The "skipped" line only appears if items were skipped.
 ## Testing
 
 Test coverage in `legacy-focus-migration.test.ts`:
+
 - Scanner finds tags across files
 - Scanner ignores non-checkbox lines
 - Migration creates correct FocusItem structure

@@ -15,6 +15,7 @@ import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
 import { generateCoverImage } from "./src/cover-image-generator";
 import { ProjectCoverDisplay } from "./src/project-cover-display";
+import { checkAndPromptLegacyMigration } from "./src/legacy-focus-migration";
 
 type InboxCommandConfig = {
   id: string;
@@ -32,6 +33,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+
+    // Check for legacy #flow-planned tags and prompt migration
+    await checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this));
 
     // Check and clear focus if needed
     await this.checkAndClearFocus();

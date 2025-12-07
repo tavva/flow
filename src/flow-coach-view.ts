@@ -250,7 +250,9 @@ export class FlowCoachView extends ItemView {
     // Filter projects by sphere and status
     const projects = allProjects.filter((p) => {
       const hasSphere = p.tags.some((tag) => spheres.some((s) => tag === `project/${s}`));
-      const hasStatus = p.status ? includeStatuses.includes(p.status) : includeStatuses.includes("live");
+      const hasStatus = p.status
+        ? includeStatuses.includes(p.status)
+        : includeStatuses.includes("live");
       return hasSphere && hasStatus;
     });
 

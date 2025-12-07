@@ -32,6 +32,8 @@ export interface PluginSettings {
   lastFocusArchiveSucceeded: boolean; // Whether the last archive attempt succeeded
   focusClearedNotificationDismissed: boolean; // Whether user dismissed the clear notification
   completedTodaySectionCollapsed: boolean; // false = expanded by default
+  legacyFocusMigrationDismissed: boolean; // User chose "Don't ask again" for #flow-planned migration
+  legacyFocusTagRemovalDismissed: boolean; // User chose "Keep forever" for legacy tag removal
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -63,4 +65,6 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   lastFocusArchiveSucceeded: false,
   focusClearedNotificationDismissed: false,
   completedTodaySectionCollapsed: false,
+  legacyFocusMigrationDismissed: false,
+  legacyFocusTagRemovalDismissed: false,
 };
