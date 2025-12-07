@@ -70,7 +70,7 @@ creation-date: 2025-10-05 18:59
 priority: 2
 tags: project/personal
 status: live
-parent-project: "[[Parent Project]]"  # optional
+parent-project: "[[Parent Project]]" # optional
 ---
 
 # Project Title
@@ -128,6 +128,7 @@ Never commit API keys or other secrets. Store API keys via the plugin settings t
 ### ABOUTME Comments
 
 All source files start with two ABOUTME lines:
+
 ```typescript
 // ABOUTME: File purpose line 1
 // ABOUTME: File purpose line 2
@@ -136,11 +137,13 @@ All source files start with two ABOUTME lines:
 ### GTD Quality
 
 **Next actions must:**
+
 - Start with action verb, be specific, completable in one sitting
 - Include context (who, where, what specifically)
 - Be 15-150 characters, avoid vague terms
 
 **Project outcomes must:**
+
 - Be stated as completed outcomes (past tense ideal)
 - Be clear, measurable, define "done"
 

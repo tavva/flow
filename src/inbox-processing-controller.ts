@@ -1,20 +1,15 @@
 import { App } from "obsidian";
-import { GTDProcessor } from "./gtd-processor";
 import { FlowProjectScanner } from "./flow-scanner";
 import { PersonScanner } from "./person-scanner";
 import { FileWriter } from "./file-writer";
 import { FlowProject, PluginSettings, PersonNote } from "./types";
 import { InboxItem, InboxScanner } from "./inbox-scanner";
-import { LanguageModelClient } from "./language-model";
-import { createLanguageModelClient, getModelForSettings } from "./llm-factory";
 import { InboxItemPersistenceService } from "./inbox-item-persistence";
 import { DeletionOffsetManager } from "./deletion-offset-manager";
 import { EditableItem } from "./inbox-types";
 import { filterTemplates, filterLiveProjects } from "./project-filters";
 
 interface ControllerDependencies {
-  processor?: GTDProcessor;
-  client?: LanguageModelClient;
   scanner?: FlowProjectScanner;
   personScanner?: PersonScanner;
   writer?: FileWriter;
@@ -24,7 +19,6 @@ interface ControllerDependencies {
 }
 
 export class InboxProcessingController {
-  private processor: GTDProcessor | null;
   private scanner: FlowProjectScanner;
   private personScanner: PersonScanner;
   private writer: FileWriter;
@@ -40,20 +34,6 @@ export class InboxProcessingController {
     saveSettings?: () => Promise<void>
   ) {
     this.settings = settings;
-
-    // Only create processor if we have a client (AI is enabled)
-    const client = dependencies.client ?? createLanguageModelClient(settings);
-    this.processor =
-      dependencies.processor ??
-      (client
-        ? new GTDProcessor(
-            client,
-            settings.spheres,
-            getModelForSettings(settings),
-            settings.projectTemplateFilePath
-          )
-        : null);
-
     this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
     this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
     this.writer = dependencies.writer ?? new FileWriter(app, settings);
