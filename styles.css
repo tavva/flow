@@ -1410,7 +1410,8 @@ select.flow-gtd-inline-select option,
   left: 0;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-normal);
+  color: var(--text-muted);
+  text-transform: uppercase;
   background-color: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
@@ -1422,12 +1423,12 @@ select.flow-gtd-inline-select option,
   box-sizing: border-box;
 }
 
-/* Show dropdown on hover over project box, hide label */
-.flow-gtd-sphere-project:hover .flow-gtd-sphere-project-priority-label {
+/* Show dropdown on hover over priority text only, hide label */
+.flow-gtd-sphere-project-priority-container:hover .flow-gtd-sphere-project-priority-label {
   display: none;
 }
 
-.flow-gtd-sphere-project:hover .flow-gtd-sphere-project-priority-dropdown {
+.flow-gtd-sphere-project-priority-container:hover .flow-gtd-sphere-project-priority-dropdown {
   display: inline-block;
 }
 
