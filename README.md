@@ -1,8 +1,8 @@
 # Flow
 
-**GTD-powered task management for Obsidian with AI assistance.**
+**GTD-powered task management for Obsidian.**
 
-Flow captures everything demanding your attention, processes it using AI, and helps you focus on what matters. Built on David Allen's Getting Things Done methodology.
+Flow captures everything demanding your attention and helps you focus on what matters. Built on David Allen's Getting Things Done methodology.
 
 ![Beta](https://img.shields.io/badge/status-beta-yellow)
 ![Obsidian](https://img.shields.io/badge/Obsidian-plugin-7C3AED)
@@ -16,7 +16,7 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 ## Features
 
 - **Quick Capture** — Get thoughts out of your head instantly via command, ribbon icon, or external tools
-- **AI Processing** — Automatically categorise inbox items into projects, actions, reference, or someday/maybe
+- **Inbox Processing** — Intuitive flow to categorise inbox items into projects, actions, reference, or someday/maybe
 - **Sphere Organisation** — Organise life areas (work, personal) with hierarchical projects
 - **Focus View** — Curate a focused list of next actions from across your vault
 - **Waiting For** — Track items you're waiting on others to complete
@@ -26,20 +26,20 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 
 1. Install Flow in Obsidian (Settings → Community Plugins)
 2. Configure an LLM provider in Settings → Flow:
-   - **Anthropic Claude** — Get a key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
    - **OpenAI-compatible** — Use OpenRouter or any compatible endpoint
+   - **Anthropic Claude** — Get a key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
 3. Click the inbox ribbon icon and capture something
-4. Run "Process Inbox" to see AI categorisation in action
+4. Run "Process Inbox" to categorise items
 
 ## How It Works
 
 **Capture** — When something has your attention, add it to your inbox. Don't organise yet, just get it out of your head.
 
-**Process** — Review your inbox regularly. For each item, Flow's AI suggests:
+**Process** — Review your inbox regularly. For each item you choose:
 
 - What category it belongs to (project, action, reference, someday)
 - Which existing project it might fit
-- How to refine vague inputs into clear, actionable items
+- The sphere, and any other metadata required
 
 **Plan** — Open a sphere view, enter planning mode, and click actions to add them to your focus. Your focus is your curated list of what to work on.
 
@@ -74,6 +74,7 @@ parent-project: "[[Parent Project]]"
 
 ## Privacy
 
+- AI features are optional and disabled by default — Flow works fully without them
 - API keys stored locally in Obsidian settings
 - Data sent only to your configured LLM provider
 - No telemetry or analytics
