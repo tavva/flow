@@ -1,4 +1,4 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer, Menu } from "obsidian";
+import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer, Menu, setIcon } from "obsidian";
 import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
@@ -58,17 +58,46 @@ export class SphereView extends ItemView {
     container.empty();
     container.addClass("flow-gtd-sphere-view");
 
-    const loadingEl = container.createDiv({ cls: "flow-gtd-sphere-loading" });
-    loadingEl.setText("Loading sphere view...");
+    this.renderLoadingState(container as HTMLElement);
 
     try {
       const data = await this.loadSphereData();
-      loadingEl.remove();
       this.renderContent(container as HTMLElement, data);
     } catch (error) {
       console.error("Failed to load sphere view", error);
-      loadingEl.setText("Unable to load sphere details. Check the console for more information.");
+      (container as HTMLElement).empty();
+      const errorEl = container.createDiv({ cls: "flow-gtd-sphere-loading" });
+      errorEl.setText("Unable to load sphere details. Check the console for more information.");
     }
+  }
+
+  private renderLoadingState(container: HTMLElement): void {
+    container.empty();
+
+    const loadingContainer = container.createDiv("flow-gtd-loading-state");
+    loadingContainer.style.textAlign = "center";
+    loadingContainer.style.padding = "48px 24px";
+    loadingContainer.style.display = "flex";
+    loadingContainer.style.flexDirection = "column";
+    loadingContainer.style.alignItems = "center";
+    loadingContainer.style.justifyContent = "center";
+    loadingContainer.style.minHeight = "200px";
+
+    const waveIcon = loadingContainer.createEl("div");
+    waveIcon.style.width = "64px";
+    waveIcon.style.height = "64px";
+    waveIcon.style.display = "flex";
+    waveIcon.style.alignItems = "center";
+    waveIcon.style.justifyContent = "center";
+    setIcon(waveIcon, "waves");
+
+    const animatedSvg = loadingContainer.createEl("div");
+    animatedSvg.style.marginTop = "16px";
+    animatedSvg.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 30' width='130px' height='30px'>
+      <text font-family='monospace' fill='var(--text-accent)' font-size='20' y='22'>
+        <tspan>Loading</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.15s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.3s' repeatCount='indefinite' />.</tspan>
+      </text>
+    </svg>`;
   }
 
   async onClose() {
@@ -263,6 +292,8 @@ export class SphereView extends ItemView {
   }
 
   private renderContent(container: HTMLElement, data: SphereViewData) {
+    container.empty();
+
     // Render sticky header with search
     const searchInput = this.renderSearchHeader(container);
 
