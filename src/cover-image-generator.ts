@@ -69,7 +69,7 @@ export async function generateCoverImage(
   await vault.adapter.writeBinary(imagePath, imageData);
 
   // Update project frontmatter
-  await updateProjectFrontmatter(vault, projectFile, content, imagePath);
+  await updateProjectFrontmatter(vault, projectFile, imagePath);
 
   return { imagePath };
 }
@@ -166,13 +166,16 @@ The project name is: "${projectName}"`;
 
 /**
  * Updates the project file's frontmatter to include the cover image path.
+ * Re-reads the file to preserve any edits made during image generation.
  */
 async function updateProjectFrontmatter(
   vault: Vault,
   projectFile: TFile,
-  content: string,
   imagePath: string
 ): Promise<void> {
+  // Re-read file to get current content (preserves edits made during image generation)
+  const content = await vault.read(projectFile);
+
   // Parse frontmatter and add cover-image field
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
 
