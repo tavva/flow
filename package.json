@@ -27,7 +27,7 @@
     "productivity"
   ],
   "author": "Ben",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/jsdom": "^27.0.0",
