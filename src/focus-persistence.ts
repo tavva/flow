@@ -1,16 +1,63 @@
 // ABOUTME: Handles persistence of focus items to a file in the vault
-// ABOUTME: Stores focus items in flow-focus-data/focus.md for reliable cross-device sync
+// ABOUTME: Uses JSONL format (one JSON object per line) for sync-friendly storage
 
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 import { ValidationError } from "./errors";
 
-const FOCUS_FILE_PATH = "flow-focus-data/focus.md";
-const FOCUS_FILE_VERSION = 1;
+export const FOCUS_FILE_PATH = "flow-focus-data/focus.md";
 
-interface FocusFileFormat {
+interface LegacyFocusFileFormat {
   version: number;
   items: FocusItem[];
+}
+
+/**
+ * Check if content is legacy JSON format (a single JSON object with version and items)
+ */
+function isLegacyFormat(content: string): boolean {
+  const trimmed = content.trim();
+  // Legacy format is a single JSON object containing { "version": ..., "items": [...] }
+  // JSONL format has one JSON object per line, each starting with {
+  // Detect legacy by checking if it parses as an object with "version" property
+  if (!trimmed.startsWith("{")) return false;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return typeof parsed === "object" && parsed !== null && "version" in parsed;
+  } catch {
+    // If it fails to parse as a single JSON, it's likely JSONL or corrupted
+    return false;
+  }
+}
+
+/**
+ * Parse legacy JSON format
+ */
+function parseLegacyFormat(content: string): FocusItem[] {
+  const data: LegacyFocusFileFormat = JSON.parse(content);
+  return data.items || [];
+}
+
+/**
+ * Parse JSONL format (one JSON object per line)
+ */
+function parseJsonlFormat(content: string): FocusItem[] {
+  const items: FocusItem[] = [];
+  const lines = content.split("\n");
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    try {
+      items.push(JSON.parse(trimmed));
+    } catch {
+      console.warn("Skipping invalid line in focus file:", trimmed.substring(0, 50));
+    }
+  }
+
+  return items;
 }
 
 /**
@@ -27,8 +74,10 @@ export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
         const exists = await vault.adapter.exists(FOCUS_FILE_PATH);
         if (exists) {
           const content = await vault.adapter.read(FOCUS_FILE_PATH);
-          const data: FocusFileFormat = JSON.parse(content);
-          return data.items || [];
+          if (isLegacyFormat(content)) {
+            return parseLegacyFormat(content);
+          }
+          return parseJsonlFormat(content);
         }
       } catch (adapterError) {
         // File doesn't exist yet, will return empty array below
@@ -39,21 +88,25 @@ export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
     }
 
     const content = await vault.read(file);
-    const data: FocusFileFormat = JSON.parse(content);
 
-    // Validate version
-    if (data.version !== FOCUS_FILE_VERSION) {
-      console.warn(
-        `Focus file version mismatch: expected ${FOCUS_FILE_VERSION}, got ${data.version}`
-      );
-      // Could add migration logic here in the future
+    // Handle legacy JSON format for migration
+    if (isLegacyFormat(content)) {
+      return parseLegacyFormat(content);
     }
 
-    return data.items || [];
+    return parseJsonlFormat(content);
   } catch (error) {
     console.error("Failed to load focus items from file", error);
     return [];
   }
+}
+
+/**
+ * Convert items to JSONL format (one JSON object per line)
+ */
+function toJsonlFormat(items: FocusItem[]): string {
+  if (items.length === 0) return "";
+  return items.map((item) => JSON.stringify(item)).join("\n");
 }
 
 /**
@@ -64,12 +117,7 @@ export async function saveFocusItems(vault: Vault, items: FocusItem[]): Promise<
     // Ensure flow-focus-data directory exists
     await ensureFocusDataDirectory(vault);
 
-    const data: FocusFileFormat = {
-      version: FOCUS_FILE_VERSION,
-      items,
-    };
-
-    const content = JSON.stringify(data, null, 2);
+    const content = toJsonlFormat(items);
 
     // Check if file exists via cache first
     const file = vault.getAbstractFileByPath(FOCUS_FILE_PATH);
