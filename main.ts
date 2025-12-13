@@ -484,6 +484,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     const { workspace } = this.app;
 
     let leaf = workspace.getLeavesOfType(FOCUS_VIEW_TYPE)[0];
+    const existingView = leaf?.view;
 
     if (!leaf) {
       const rightLeaf = workspace.getRightLeaf(false);
@@ -499,6 +500,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     if (leaf) {
       workspace.revealLeaf(leaf);
       workspace.setActiveLeaf(leaf, { focus: true });
+    }
+
+    // Refresh if view already existed
+    if (existingView && "onOpen" in existingView) {
+      await (existingView as any).onOpen();
     }
   }
 

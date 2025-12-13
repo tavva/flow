@@ -116,8 +116,10 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
   });
 
   describe("activateFocusView", () => {
-    it("should focus existing focus view if already open", async () => {
-      // Setup: Existing leaf with focus view
+    it("should focus and refresh existing focus view if already open", async () => {
+      // Setup: Existing leaf with focus view that has onOpen method
+      const mockOnOpen = jest.fn().mockResolvedValue(undefined);
+      mockLeaf.view = { onOpen: mockOnOpen };
       (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([mockLeaf]);
 
       // Execute
@@ -128,6 +130,9 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
 
       // Verify: Should also set it as active with focus
       expect(mockApp.workspace.setActiveLeaf).toHaveBeenCalledWith(mockLeaf, { focus: true });
+
+      // Verify: Should refresh the view by calling onOpen
+      expect(mockOnOpen).toHaveBeenCalled();
     });
 
     it("should create new focus view if none exists", async () => {
