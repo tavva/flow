@@ -380,10 +380,15 @@ describe("removeLegacyTags", () => {
 
     (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(null);
 
+    // Suppress expected warning about file not found
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+
     // Should not throw
     await removeLegacyTags(mockVault, items);
 
     expect(mockVault.modify).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledWith("Legacy migration: file not found: Deleted.md");
+    warnSpy.mockRestore();
   });
 
   it("cleans up extra whitespace after tag removal", async () => {

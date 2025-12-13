@@ -50,6 +50,7 @@ describe("SomedayView", () => {
     (view as any).app = mockApp;
 
     mockScanner = new SomedayScanner(mockApp as any, mockSettings) as jest.Mocked<SomedayScanner>;
+    mockScanner.scanSomedayData = jest.fn().mockResolvedValue({ items: [], projects: [] });
     (view as any).scanner = mockScanner;
   });
 
@@ -267,9 +268,14 @@ describe("SomedayView", () => {
         sphere: "personal",
       };
 
+      // Suppress expected error about file not found
+      const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
       await (view as any).moveToNextActions(item);
 
       expect(mockApp.vault.modify).not.toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith("Someday file not found: Someday.md");
+      errorSpy.mockRestore();
     });
   });
 

@@ -302,11 +302,8 @@ export class NewProjectModal extends Modal {
       return;
     }
 
-    // Validate next action quality (show warnings but don't block)
-    const actionValidation = validateNextAction(this.data.nextAction.trim());
-    if (actionValidation.warnings && actionValidation.warnings.length > 0) {
-      console.log("Next action warnings:", actionValidation.warnings);
-    }
+    // Validate next action quality (warnings don't block creation)
+    validateNextAction(this.data.nextAction.trim());
 
     if (this.data.spheres.length === 0) {
       this.showError("At least one sphere must be selected");
