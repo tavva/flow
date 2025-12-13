@@ -20,7 +20,7 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 - **Sphere Organisation** — Organise life areas (work, personal) with hierarchical projects
 - **Focus View** — Curate a focused list of next actions from across your vault
 - **Waiting For** — Track items you're waiting on others to complete
-- **Planning Mode** — Build your focus list by clicking actions from sphere views
+- **Planning Mode** — Build your focus list by selecting actions from sphere views
 
 ## Quick Start
 
