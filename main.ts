@@ -34,8 +34,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Check for legacy #flow-planned tags and prompt migration
-    await checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this));
+    // Check for legacy #flow-planned tags and prompt migration (after workspace is ready)
+    this.app.workspace.onLayoutReady(async () => {
+      await checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this));
+    });
 
     // Check and clear focus if needed
     await this.checkAndClearFocus();

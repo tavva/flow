@@ -62,6 +62,7 @@ export class Workspace {
   detachLeavesOfType = jest.fn();
   getActiveFile = jest.fn();
   on = jest.fn(() => ({ unload: jest.fn() }));
+  onLayoutReady = jest.fn((callback: () => void) => callback());
   iterateRootLeaves = jest.fn();
   viewRegistry: Record<string, any> = {};
 }

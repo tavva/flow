@@ -343,8 +343,23 @@ export async function checkAndPromptLegacyMigration(
           result.migrated.length,
           result.skippedNoSphere.length,
           async () => {
-            // Remove tags
+            // Remove tags from source files
             await removeLegacyTags(app.vault, legacyItems);
+
+            // Update focus items to match new line content (without tags)
+            const focusItems = await loadFocusItems(app.vault);
+            const updatedItems = focusItems.map((item) => ({
+              ...item,
+              lineContent: item.lineContent
+                .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                .replace(/\s+$/, "")
+                .replace(/\s{2,}/g, " "),
+              text: item.text
+                .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                .replace(/\s+$/, "")
+                .replace(/\s{2,}/g, " "),
+            }));
+            await saveFocusItems(app.vault, updatedItems);
           },
           async () => {
             // Keep forever
