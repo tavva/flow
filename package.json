@@ -12,6 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "verify": "npm run build && npm test",
     "evaluate:coach": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py",
     "evaluate:coach:watch": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py --watch",
     "evaluate:coach:report": "source venv/bin/activate && deepeval test run tests/coach-evaluation/test_coach_evaluation.py --create-report",
