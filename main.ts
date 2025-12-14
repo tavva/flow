@@ -1,5 +1,5 @@
 import { App, Plugin, Notice, WorkspaceLeaf, MarkdownView } from "obsidian";
-import { PluginSettings, DEFAULT_SETTINGS, CoachState } from "./src/types";
+import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
@@ -23,10 +23,6 @@ type InboxCommandConfig = {
 
 export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
-  coachState: CoachState = {
-    conversations: [],
-    activeConversationId: null,
-  };
   private autoClearInterval: number | null = null;
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
 
@@ -275,17 +271,12 @@ export default class FlowGTDCoachPlugin extends Plugin {
     const data = await this.loadData();
     if (data) {
       this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || data);
-      this.coachState = data.coachState || {
-        conversations: [],
-        activeConversationId: null,
-      };
     }
   }
 
   async saveSettings() {
     await this.saveData({
       settings: this.settings,
-      coachState: this.coachState,
     });
   }
 

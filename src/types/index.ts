@@ -5,4 +5,3 @@ export * from "./domain";
 export * from "./gtd";
 export * from "./settings";
 export * from "./review";
-export * from "./coach";
