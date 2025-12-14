@@ -94,10 +94,18 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    anthropicContainer.createDiv("setting-item-description").innerHTML = `
-                        <p>You can get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a>.</p>
-                        <p><strong>Note:</strong> Your API key is stored locally and never shared.</p>
-                `;
+    const anthropicDesc = anthropicContainer.createDiv("setting-item-description");
+    const anthropicP1 = anthropicDesc.createEl("p");
+    anthropicP1.appendText("You can get your API key from ");
+    anthropicP1.createEl("a", {
+      text: "Anthropic Console",
+      href: "https://console.anthropic.com/settings/keys",
+      attr: { target: "_blank" },
+    });
+    anthropicP1.appendText(".");
+    const anthropicP2 = anthropicDesc.createEl("p");
+    anthropicP2.createEl("strong", { text: "Note:" });
+    anthropicP2.appendText(" Your API key is stored locally and never shared.");
 
     new Setting(openAIContainer)
       .setName("OpenAI-compatible API Key")
@@ -153,10 +161,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    openAIContainer.createDiv("setting-item-description").innerHTML = `
-                        <p>OpenRouter requires the <code>HTTP-Referer</code> and <code>X-Title</code> headers. This plugin sends them automatically when the base URL contains <code>openrouter.ai</code>.</p>
-                        <p><strong>Note:</strong> API keys are stored locally on your device.</p>
-                `;
+    const openAIDesc = openAIContainer.createDiv("setting-item-description");
+    const openAIP1 = openAIDesc.createEl("p");
+    openAIP1.appendText("OpenRouter requires the ");
+    openAIP1.createEl("code", { text: "HTTP-Referer" });
+    openAIP1.appendText(" and ");
+    openAIP1.createEl("code", { text: "X-Title" });
+    openAIP1.appendText(
+      " headers. This plugin sends them automatically when the base URL contains "
+    );
+    openAIP1.createEl("code", { text: "openrouter.ai" });
+    openAIP1.appendText(".");
+    const openAIP2 = openAIDesc.createEl("p");
+    openAIP2.createEl("strong", { text: "Note:" });
+    openAIP2.appendText(" API keys are stored locally on your device.");
 
     const updateProviderVisibility = () => {
       const aiEnabled = this.plugin.settings.aiEnabled;
@@ -171,9 +189,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     updateProviderVisibility();
 
     new Setting(containerEl).setHeading().setName("Default Project Settings");
-    containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>These settings are used when creating new Flow projects.</p>
-		`;
+    containerEl
+      .createDiv("setting-item-description")
+      .createEl("p", { text: "These settings are used when creating new Flow projects." });
 
     // Default Priority
     new Setting(containerEl)
@@ -235,9 +253,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // Inbox Settings
     new Setting(containerEl).setHeading().setName("Inbox Settings");
-    containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Configure inbox folders for processing.</p>
-		`;
+    containerEl
+      .createDiv("setting-item-description")
+      .createEl("p", { text: "Configure inbox folders for processing." });
 
     // Line-at-a-time inbox
     new Setting(containerEl)
@@ -283,9 +301,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // Output Files
     new Setting(containerEl).setHeading().setName("Output Files & Folders");
-    containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Configure where processed items should be saved.</p>
-		`;
+    containerEl
+      .createDiv("setting-item-description")
+      .createEl("p", { text: "Configure where processed items should be saved." });
 
     // Next Actions File
     new Setting(containerEl)
@@ -375,9 +393,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // Spheres
     new Setting(containerEl).setHeading().setName("Spheres");
-    containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Spheres help categorise projects and actions (e.g., personal, work, health).</p>
-		`;
+    containerEl.createDiv("setting-item-description").createEl("p", {
+      text: "Spheres help categorise projects and actions (e.g., personal, work, health).",
+    });
 
     new Setting(containerEl)
       .setName("Spheres")
@@ -397,9 +415,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // Focus Settings
     new Setting(containerEl).setHeading().setName("Focus");
-    containerEl.createDiv("setting-item-description").innerHTML = `
-			<p>Configure automatic clearing and archiving of your focus.</p>
-		`;
+    containerEl
+      .createDiv("setting-item-description")
+      .createEl("p", { text: "Configure automatic clearing and archiving of your focus." });
 
     new Setting(containerEl)
       .setName("Auto-clear time")

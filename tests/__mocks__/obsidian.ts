@@ -131,6 +131,10 @@ function createObsidianElement(tagName: string = "div"): HTMLElement {
     this.textContent = text;
   };
 
+  (el as any).appendText = function (text: string) {
+    this.appendChild(document.createTextNode(text));
+  };
+
   return el;
 }
 

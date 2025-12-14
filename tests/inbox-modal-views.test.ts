@@ -42,6 +42,10 @@ function makeObsidianElement(el: HTMLElement): HTMLElement {
     this.textContent = text;
     return this;
   };
+  (el as any).appendText = function (text: string) {
+    this.appendChild(document.createTextNode(text));
+    return this;
+  };
   (el as any).empty = function () {
     this.innerHTML = "";
     return this;

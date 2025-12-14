@@ -41,11 +41,7 @@ export function renderInboxView(
 
     const animatedSvg = loadingContainer.createEl("div");
     animatedSvg.style.marginTop = "16px";
-    animatedSvg.innerHTML = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 30' width='130px' height='30px'>
-      <text font-family='monospace' fill='var(--text-accent)' font-size='20' y='22'>
-        <tspan>Loading</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.15s' repeatCount='indefinite' />.</tspan><tspan><animate attributeName='opacity' values='0;1' dur='0.4s' begin='0.3s' repeatCount='indefinite' />.</tspan>
-      </text>
-    </svg>`;
+    animatedSvg.appendChild(createLoadingDotsSpinner());
   } else if (contentEl.querySelector(".flow-gtd-loading-state")) {
     // Remove loading state if it exists
     contentEl.querySelector(".flow-gtd-loading-state")?.remove();
@@ -611,7 +607,7 @@ function renderNextActionsEditor(
     removeBtn.setAttribute("type", "button");
     removeBtn.setAttribute("aria-label", "Remove action");
     removeBtn.setAttribute("title", "Remove action");
-    removeBtn.innerHTML = "✕";
+    removeBtn.setText("✕");
 
     // Disable remove button if there's only one action
     const isOnlyAction = currentNextActions.length === 1;
@@ -636,7 +632,10 @@ function renderNextActionsEditor(
   });
   addActionBtn.setAttribute("type", "button");
   addActionBtn.setAttribute("aria-label", "Add action");
-  addActionBtn.innerHTML = '<span style="font-size: 18px">+</span> Add action';
+  const plusSpan = addActionBtn.createSpan();
+  plusSpan.style.fontSize = "18px";
+  plusSpan.setText("+");
+  addActionBtn.appendText(" Add action");
 
   // Set initial state
   updateAddButtonState();
@@ -1152,4 +1151,46 @@ function renderFocusCheckbox(container: HTMLElement, item: EditableItem, state: 
       focusCheckbox.checked = false;
     }
   });
+}
+
+/**
+ * Creates an animated "Loading..." SVG spinner with animated dots.
+ */
+function createLoadingDotsSpinner(): SVGElement {
+  const svgNS = "http://www.w3.org/2000/svg";
+
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 130 30");
+  svg.setAttribute("width", "130px");
+  svg.setAttribute("height", "30px");
+
+  const text = document.createElementNS(svgNS, "text");
+  text.setAttribute("font-family", "monospace");
+  text.setAttribute("fill", "var(--text-accent)");
+  text.setAttribute("font-size", "20");
+  text.setAttribute("y", "22");
+
+  const loadingTspan = document.createElementNS(svgNS, "tspan");
+  loadingTspan.textContent = "Loading";
+  text.appendChild(loadingTspan);
+
+  // Create three animated dots
+  const delays = ["0s", "0.15s", "0.3s"];
+  for (const delay of delays) {
+    const dotTspan = document.createElementNS(svgNS, "tspan");
+    dotTspan.textContent = ".";
+
+    const animate = document.createElementNS(svgNS, "animate");
+    animate.setAttribute("attributeName", "opacity");
+    animate.setAttribute("values", "0;1");
+    animate.setAttribute("dur", "0.4s");
+    animate.setAttribute("begin", delay);
+    animate.setAttribute("repeatCount", "indefinite");
+
+    dotTspan.appendChild(animate);
+    text.appendChild(dotTspan);
+  }
+
+  svg.appendChild(text);
+  return svg;
 }
