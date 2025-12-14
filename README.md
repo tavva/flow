@@ -4,6 +4,7 @@
 
 Flow captures everything demanding your attention and helps you focus on what matters. Built on David Allen's Getting Things Done methodology.
 
+![Version](https://img.shields.io/github/v/release/tavva/flow)
 ![Beta](https://img.shields.io/badge/status-beta-yellow)
 ![Obsidian](https://img.shields.io/badge/Obsidian-plugin-7C3AED)
 
@@ -87,4 +88,4 @@ parent-project: "[[Parent Project]]"
 
 ## Licence
 
-MIT
+GPL-3.0 — see [LICENSE](LICENSE) for details.
