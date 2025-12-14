@@ -1,7 +1,7 @@
 {
   "name": "flow",
-  "version": "0.1.0",
-  "description": "GTD coach for Flow-based Obsidian vaults",
+  "version": "1.0.0",
+  "description": "Implements key processes in David Allen's Getting Things Done (GTD) methodology",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
