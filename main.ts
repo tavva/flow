@@ -9,7 +9,6 @@ import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { SomedayView, SOMEDAY_VIEW_TYPE } from "./src/someday-view";
 import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
-import { FlowCoachView, FLOW_COACH_VIEW_TYPE } from "./src/flow-coach-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
 import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
@@ -80,21 +79,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.registerView(
       FOCUS_VIEW_TYPE,
       (leaf) => new FocusView(leaf, this.settings, this.saveSettings.bind(this))
-    );
-
-    // Register the Flow Coach view
-    this.registerView(
-      FLOW_COACH_VIEW_TYPE,
-      (leaf) =>
-        new FlowCoachView(
-          leaf,
-          this.settings,
-          () => this.saveSettings(),
-          () => this.coachState,
-          (state) => {
-            this.coachState = state;
-          }
-        )
     );
 
     // Add ribbon icon
@@ -181,15 +165,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Open focus",
       callback: () => {
         this.activateFocusView();
-      },
-    });
-
-    // Add Flow Coach command
-    this.addCommand({
-      id: "open-flow-coach",
-      name: "Open Flow Coach",
-      callback: () => {
-        this.activateFlowCoachView();
       },
     });
 
@@ -294,8 +269,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(SOMEDAY_VIEW_TYPE);
     // Detach all focus views
     this.app.workspace.detachLeavesOfType(FOCUS_VIEW_TYPE);
-    // Detach all Flow Coach views
-    this.app.workspace.detachLeavesOfType(FLOW_COACH_VIEW_TYPE);
   }
 
   async loadSettings() {
@@ -507,36 +480,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Refresh if view already existed
     if (existingView && "onOpen" in existingView) {
       await (existingView as any).onOpen();
-    }
-  }
-
-  async activateFlowCoachView() {
-    if (!this.hasRequiredApiKey()) {
-      new Notice(this.getMissingApiKeyMessage());
-      return;
-    }
-
-    const { workspace } = this.app;
-
-    let leaf: WorkspaceLeaf | null = null;
-    const leaves = workspace.getLeavesOfType(FLOW_COACH_VIEW_TYPE);
-
-    if (leaves.length > 0) {
-      // View already exists, activate it
-      leaf = leaves[0];
-    } else {
-      // Create new view in right sidebar
-      leaf = workspace.getRightLeaf(false);
-      if (leaf) {
-        await leaf.setViewState({
-          type: FLOW_COACH_VIEW_TYPE,
-          active: true,
-        });
-      }
-    }
-
-    if (leaf) {
-      workspace.revealLeaf(leaf);
     }
   }
 
