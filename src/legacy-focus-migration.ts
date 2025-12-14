@@ -5,6 +5,7 @@ import { App, Modal, Setting, TFile, Vault } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
 
 const LEGACY_TAG = "#flow-planned";
 
@@ -301,6 +302,19 @@ export class TagRemovalModal extends Modal {
 }
 
 /**
+ * Refresh the focus view if it's open
+ */
+async function refreshFocusView(app: App): Promise<void> {
+  const leaves = app.workspace.getLeavesOfType(FOCUS_VIEW_TYPE);
+  for (const leaf of leaves) {
+    const view = leaf.view;
+    if (view instanceof FocusView) {
+      await view.triggerRefresh();
+    }
+  }
+}
+
+/**
  * Main entry point: check for legacy tags and prompt user for migration
  */
 export async function checkAndPromptLegacyMigration(
@@ -335,6 +349,9 @@ export async function checkAndPromptLegacyMigration(
       const newFocus = [...existingFocus, ...result.migrated];
       await saveFocusItems(app.vault, newFocus);
 
+      // Refresh focus view to show migrated items
+      await refreshFocusView(app);
+
       // Check if tag removal is dismissed
       if (!settings.legacyFocusTagRemovalDismissed) {
         // Show tag removal modal
@@ -360,6 +377,9 @@ export async function checkAndPromptLegacyMigration(
                 .replace(/\s{2,}/g, " "),
             }));
             await saveFocusItems(app.vault, updatedItems);
+
+            // Refresh focus view to show updated items
+            await refreshFocusView(app);
           },
           async () => {
             // Keep forever

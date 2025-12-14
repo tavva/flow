@@ -44,6 +44,9 @@ describe("scanForLegacyFocusTags", () => {
       metadataCache: {
         getFileCache: jest.fn(),
       },
+      workspace: {
+        getLeavesOfType: jest.fn().mockReturnValue([]),
+      },
     } as unknown as jest.Mocked<App>;
   });
 
@@ -690,6 +693,9 @@ describe("checkAndPromptLegacyMigration", () => {
       vault: mockVault,
       metadataCache: {
         getFileCache: jest.fn(),
+      },
+      workspace: {
+        getLeavesOfType: jest.fn().mockReturnValue([]),
       },
     } as unknown as jest.Mocked<App>;
 

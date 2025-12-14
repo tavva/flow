@@ -28,6 +28,28 @@ export abstract class RefreshingView extends ItemView {
   }
 
   /**
+   * Trigger an immediate refresh. Use when external code needs to refresh the view.
+   */
+  public async triggerRefresh(): Promise<void> {
+    if (this.isRefreshing) {
+      return;
+    }
+
+    // Cancel any pending debounced refresh
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+
+    this.isRefreshing = true;
+    try {
+      await this.performRefresh();
+    } finally {
+      this.isRefreshing = false;
+    }
+  }
+
+  /**
    * Schedule a debounced refresh. Multiple calls within debounceTime
    * will only trigger one refresh.
    */
