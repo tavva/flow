@@ -5,6 +5,9 @@ on:
         tags:
             - '*'
 
+permissions:
+    contents: read
+
 jobs:
     preflight:
         runs-on: ubuntu-latest
@@ -71,6 +74,8 @@ jobs:
     release:
         needs: preflight
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         env:
             TAG_NAME: ${{ github.ref_name }}
 

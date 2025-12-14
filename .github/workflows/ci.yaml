@@ -5,6 +5,9 @@ on:
     branches: ["main", "master", "develop", "dev"]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
