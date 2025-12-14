@@ -89,7 +89,7 @@ Project description and context.
 - **FocusView** (`src/focus-view.ts`) - Curated action list with pinning and reordering
 - **WaitingForView** (`src/waiting-for-view.ts`) - Aggregated `[w]` items across vault
 - **SomedayView** (`src/someday-view.ts`) - Someday/maybe items
-- **FlowCoachView** (`src/flow-coach-view.ts`) - Chat interface for GTD coaching
+- **FlowCoachView** (`src/flow-coach-view.ts`) - Chat interface for GTD coaching (incomplete, not currently enabled)
 
 ### Focus System
 
