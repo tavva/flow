@@ -59,8 +59,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run coach evaluation
-        if: ${{ secrets.OPENROUTER_API_KEY != '' }}
         continue-on-error: true
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: npm run evaluate:coach
+        run: |
+          if [ -n "$OPENROUTER_API_KEY" ]; then
+            npm run evaluate:coach
+          else
+            echo "Skipping: OPENROUTER_API_KEY not set"
+          fi
