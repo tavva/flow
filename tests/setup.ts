@@ -8,6 +8,7 @@ if (typeof document === "undefined") {
   (global as any).document = dom.window.document;
   (global as any).window = dom.window;
   (global as any).HTMLElement = dom.window.HTMLElement;
+  (global as any).HTMLInputElement = dom.window.HTMLInputElement;
 }
 
 // Mock obsidian module globally

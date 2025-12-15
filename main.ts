@@ -5,6 +5,7 @@ import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { ReviewModal } from "./src/review-modal";
 import { NewProjectModal } from "./src/new-project-modal";
+import { AddToInboxModal } from "./src/add-to-inbox-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
 import { SomedayView, SOMEDAY_VIEW_TYPE } from "./src/someday-view";
@@ -82,6 +83,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
       this.openInboxProcessingView();
     });
 
+    // Add to inbox ribbon icon
+    this.addRibbonIcon("file-input", "Add to inbox", () => {
+      this.openAddToInboxModal();
+    });
+
     // Add waiting for ribbon icon
     this.addRibbonIcon("clock", "Open Waiting For view", () => {
       this.activateWaitingForView();
@@ -119,6 +125,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Create new project",
       callback: () => {
         this.openNewProjectModal();
+      },
+    });
+
+    // Add to inbox command
+    this.addCommand({
+      id: "add-to-inbox",
+      name: "Add to inbox",
+      callback: () => {
+        this.openAddToInboxModal();
       },
     });
 
@@ -403,6 +418,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   private openNewProjectModal() {
     const modal = new NewProjectModal(this.app, this.settings, () => this.saveSettings());
+    modal.open();
+  }
+
+  private openAddToInboxModal() {
+    const modal = new AddToInboxModal(this.app, this.settings);
     modal.open();
   }
 
