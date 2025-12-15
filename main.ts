@@ -269,9 +269,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   async loadSettings() {
     const data = await this.loadData();
-    if (data) {
-      this.settings = Object.assign({}, DEFAULT_SETTINGS, data.settings || data);
-    }
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data?.settings || data);
   }
 
   async saveSettings() {

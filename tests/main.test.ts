@@ -275,6 +275,33 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
   });
 
+  describe("loadSettings", () => {
+    it("should initialise settings to defaults when loadData returns null (new installation)", async () => {
+      // Create a fresh plugin instance
+      const freshPlugin = new FlowGTDCoachPlugin(mockApp, {
+        id: "flow",
+        name: "Flow",
+        version: "0.1.0",
+        minAppVersion: "0.15.0",
+        description: "Test",
+        author: "Test",
+        authorUrl: "",
+        isDesktopOnly: false,
+      });
+
+      // Mock loadData to return null (simulating first-time installation)
+      freshPlugin.loadData = jest.fn().mockResolvedValue(null);
+
+      // Load settings
+      await freshPlugin.loadSettings();
+
+      // Settings should be initialised with defaults, not undefined
+      expect(freshPlugin.settings).toBeDefined();
+      expect(freshPlugin.settings.legacyFocusMigrationDismissed).toBe(false);
+      expect(freshPlugin.settings.spheres).toEqual(DEFAULT_SETTINGS.spheres);
+    });
+  });
+
   describe("Generate cover image command", () => {
     beforeEach(() => {
       Notice.mockConstructor.mockClear();
