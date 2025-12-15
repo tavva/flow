@@ -9,7 +9,7 @@ npm install
 npm run dev          # Development mode with auto-rebuild
 ```
 
-To test in Obsidian, symlink or copy the built files to your vault's `.obsidian/plugins/flow/` directory.
+To test in Obsidian, symlink or copy the built files to your vault's `.obsidian/plugins/flow/` directory. It's advisable to use the [Hot-Reload plugin](https://github.com/pjeby/hot-reload) to automatically reload the plugin when you make changes.
 
 ## Commands
 
