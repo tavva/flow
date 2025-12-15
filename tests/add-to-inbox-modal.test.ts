@@ -46,8 +46,9 @@ describe("AddToInboxModal", () => {
       // First call returns null (file doesn't exist), second returns the created file
       const mockInboxFile = new TFile("Flow Inbox Files/Flow CLI Inbox.md", "Flow CLI Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock)
-        .mockReturnValueOnce(null)
-        .mockReturnValueOnce(mockInboxFile);
+        .mockReturnValueOnce(null) // inbox file check
+        .mockReturnValueOnce({}) // folder exists check
+        .mockReturnValueOnce(mockInboxFile); // after create
       (mockApp.vault.create as jest.Mock).mockResolvedValue(mockInboxFile);
 
       await modal.onOpen();
@@ -55,6 +56,24 @@ describe("AddToInboxModal", () => {
 
       await (modal as any).submit();
 
+      expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Flow CLI Inbox.md", "");
+    });
+
+    it("should create inbox folder if it does not exist", async () => {
+      const mockInboxFile = new TFile("Flow Inbox Files/Flow CLI Inbox.md", "Flow CLI Inbox.md");
+      (mockApp.vault.getAbstractFileByPath as jest.Mock)
+        .mockReturnValueOnce(null) // inbox file doesn't exist
+        .mockReturnValueOnce(null) // folder doesn't exist
+        .mockReturnValueOnce(mockInboxFile); // after create
+      (mockApp.vault.createFolder as jest.Mock).mockResolvedValue(undefined);
+      (mockApp.vault.create as jest.Mock).mockResolvedValue(mockInboxFile);
+
+      await modal.onOpen();
+      (modal as any).inputValue = "New item";
+
+      await (modal as any).submit();
+
+      expect(mockApp.vault.createFolder).toHaveBeenCalledWith("Flow Inbox Files");
       expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Flow CLI Inbox.md", "");
     });
 

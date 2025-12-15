@@ -1053,6 +1053,32 @@ tags:
       expect(content).toBe("- [ ] Learn Spanish #sphere/personal\n");
     });
 
+    it("should create parent folder when someday file is in a subfolder", async () => {
+      const nestedSettings = {
+        ...mockSettings,
+        somedayFilePath: "GTD/Someday.md",
+      };
+      const nestedFileWriter = new FileWriter(mockApp as App, nestedSettings);
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "GTD") {
+          return null; // folder doesn't exist
+        }
+        return null;
+      });
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);
+      (mockVault.createFolder as jest.Mock).mockResolvedValue(undefined);
+      (mockVault.create as jest.Mock).mockResolvedValue(new TFile("GTD/Someday.md", "Someday"));
+
+      await nestedFileWriter.addToSomedayFile("Learn Spanish", ["personal"]);
+
+      expect(mockVault.createFolder).toHaveBeenCalledWith("GTD");
+      expect(mockVault.create).toHaveBeenCalledWith(
+        "GTD/Someday.md",
+        "- [ ] Learn Spanish #sphere/personal\n"
+      );
+    });
+
     it("should add item with due date to someday file", async () => {
       await fileWriter.addToSomedayFile("Learn Spanish", ["personal"], "2026-01-12");
 

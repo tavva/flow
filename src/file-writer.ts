@@ -77,6 +77,16 @@ export class FileWriter {
     await this.app.vault.createFolder(normalizedPath);
   }
 
+  private async ensureParentFolderExists(filePath: string): Promise<void> {
+    const normalizedPath = normalizePath(filePath);
+    const lastSlashIndex = normalizedPath.lastIndexOf("/");
+
+    if (lastSlashIndex > 0) {
+      const parentPath = normalizedPath.slice(0, lastSlashIndex);
+      await this.ensureFolderExists(parentPath);
+    }
+  }
+
   /**
    * Add an action to the Next Actions file
    *
@@ -183,6 +193,7 @@ export class FileWriter {
     if (!file) {
       // Create the file if it doesn't exist
       try {
+        await this.ensureParentFolderExists(normalizedPath);
         file = await this.app.vault.create(normalizedPath, content + "\n");
       } catch (error) {
         // Handle race condition: file was created between findFileCaseInsensitive and create

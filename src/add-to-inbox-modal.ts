@@ -1,7 +1,7 @@
 // ABOUTME: Modal for quick capture of items to the Flow inbox.
 // ABOUTME: Provides a simple text input that appends to the inbox file.
 
-import { App, Modal, TFile } from "obsidian";
+import { App, Modal, TFile, normalizePath } from "obsidian";
 import { PluginSettings } from "./types";
 
 export class AddToInboxModal extends Modal {
@@ -97,11 +97,14 @@ export class AddToInboxModal extends Modal {
   }
 
   private async getOrCreateInboxFile(): Promise<TFile> {
-    const inboxPath = `${this.settings.inboxFilesFolderPath}/${this.settings.cliInboxFile}`;
+    const inboxPath = normalizePath(
+      `${this.settings.inboxFilesFolderPath}/${this.settings.cliInboxFile}`
+    );
 
     let inboxFile = this.app.vault.getAbstractFileByPath(inboxPath);
 
     if (!inboxFile) {
+      await this.ensureFolderExists(this.settings.inboxFilesFolderPath);
       await this.app.vault.create(inboxPath, "");
       inboxFile = this.app.vault.getAbstractFileByPath(inboxPath);
     }
@@ -111,5 +114,22 @@ export class AddToInboxModal extends Modal {
     }
 
     return inboxFile;
+  }
+
+  private async ensureFolderExists(folderPath: string): Promise<void> {
+    const normalizedPath = normalizePath(folderPath);
+    const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
+
+    if (existing) {
+      return;
+    }
+
+    const lastSlashIndex = normalizedPath.lastIndexOf("/");
+    if (lastSlashIndex > 0) {
+      const parentPath = normalizedPath.slice(0, lastSlashIndex);
+      await this.ensureFolderExists(parentPath);
+    }
+
+    await this.app.vault.createFolder(normalizedPath);
   }
 }
