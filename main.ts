@@ -3,7 +3,6 @@ import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
-import { ReviewModal } from "./src/review-modal";
 import { NewProjectModal } from "./src/new-project-modal";
 import { AddToInboxModal } from "./src/add-to-inbox-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
@@ -109,15 +108,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     inboxCommands.forEach((config) => this.registerInboxCommand(config));
     this.registerSphereCommands();
-
-    // Add project review command
-    this.addCommand({
-      id: "flow-review-projects",
-      name: "Review projects",
-      callback: () => {
-        this.openReviewModal();
-      },
-    });
 
     // Add create project command
     this.addCommand({
@@ -404,16 +394,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return "AI features are disabled. Please enable AI in the plugin settings to use this feature.";
     }
     return "Please set your API key in the plugin settings first";
-  }
-
-  private openReviewModal() {
-    if (!this.hasRequiredApiKey()) {
-      new Notice(this.getMissingApiKeyMessage());
-      return;
-    }
-
-    const modal = new ReviewModal(this.app, this.settings);
-    modal.open();
   }
 
   private openNewProjectModal() {
