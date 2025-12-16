@@ -26,11 +26,8 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 ## Quick Start
 
 1. Install Flow in Obsidian (Settings → Community Plugins)
-2. Configure an LLM provider in Settings → Flow:
-   - **OpenAI-compatible** — Use OpenRouter or any compatible endpoint
-   - **Anthropic Claude** — Get a key from [console.anthropic.com](https://console.anthropic.com/settings/keys)
-3. Click the inbox ribbon icon and capture something
-4. Run "Process Inbox" to categorise items
+2. Click the inbox ribbon icon and capture something
+3. Run "Process Inbox" to categorise items
 
 ## How It Works
 
@@ -67,6 +64,10 @@ parent-project: "[[Parent Project]]"
 - [w] Waiting for design review from Sarah
 ```
 
+## Cover Image Generation
+
+Flow can generate cover images for projects using AI. Configure an image-capable model via [OpenRouter](https://openrouter.ai) in Settings → Flow (`openai/gpt-5-image` creates great cover images in our experience).
+
 ## Documentation
 
 - [GTD Guide](docs/gtd-guide.md) — Understanding GTD methodology and Flow's implementation
@@ -77,7 +78,7 @@ parent-project: "[[Parent Project]]"
 
 - AI features are optional and disabled by default — Flow works fully without them
 - API keys stored locally in Obsidian settings
-- Data sent only to your configured LLM provider
+- Project data sent to your configured LLM provider if enabled (it's optional)
 - No telemetry or analytics
 - Your vault stays under your control
 
