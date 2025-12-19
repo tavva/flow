@@ -100,5 +100,4 @@ jobs:
               run: |
                   gh release create "${TAG_NAME}" \
                     --title="${TAG_NAME}" \
-                    --draft \
                     main.js manifest.json styles.css "${ZIP_NAME}"
