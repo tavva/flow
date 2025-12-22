@@ -15,6 +15,7 @@ export class InboxProcessingView extends ItemView {
   private pendingTarget: RenderTarget = "inbox";
   private pendingFocus: string | null = null;
   private saveSettings: () => Promise<void>;
+  private showingHelp = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -168,6 +169,20 @@ export class InboxProcessingView extends ItemView {
 
     const target = event.target as HTMLElement;
     const selectedItem = this.state.selectedItem;
+
+    // ? shows keyboard shortcuts help
+    if (event.key === "?") {
+      this.toggleHelp();
+      event.preventDefault();
+      return;
+    }
+
+    // Escape closes help overlay if showing
+    if (event.key === "Escape" && this.showingHelp) {
+      this.toggleHelp();
+      event.preventDefault();
+      return;
+    }
 
     // Ctrl+Q (or Cmd+Q on Mac) blurs the input without closing the view
     if (event.key === "q" && (event.ctrlKey || event.metaKey)) {
@@ -339,4 +354,63 @@ export class InboxProcessingView extends ItemView {
       event.preventDefault();
     }
   };
+
+  private toggleHelp() {
+    this.showingHelp = !this.showingHelp;
+    const container = this.containerEl.children[1] as HTMLElement;
+    if (!container) return;
+
+    const existingOverlay = container.querySelector(".flow-inbox-help-overlay");
+    if (existingOverlay) {
+      existingOverlay.remove();
+      return;
+    }
+
+    const overlay = container.createDiv("flow-inbox-help-overlay");
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) this.toggleHelp();
+    });
+
+    const modal = overlay.createDiv("flow-inbox-help-modal");
+
+    const header = modal.createDiv("flow-inbox-help-header");
+    header.createEl("h3", { text: "Keyboard Shortcuts" });
+    const closeBtn = header.createEl("button", { text: "×", cls: "flow-inbox-help-close" });
+    closeBtn.addEventListener("click", () => this.toggleHelp());
+
+    const content = modal.createDiv("flow-inbox-help-content");
+
+    const shortcuts = [
+      { section: "Navigation" },
+      { key: "↑ / ↓", desc: "Select previous/next item" },
+      { key: "?", desc: "Show/hide this help" },
+      { key: "Esc", desc: "Close help overlay" },
+      { section: "Action Types" },
+      { key: "C", desc: "Create project" },
+      { key: "A", desc: "Add to project" },
+      { key: "N", desc: "Next actions" },
+      { key: "S", desc: "Someday/maybe" },
+      { key: "R", desc: "Reference" },
+      { key: "P", desc: "Person note" },
+      { key: "T", desc: "Trash" },
+      { section: "Options" },
+      { key: "⌘/Ctrl + 1-9", desc: "Toggle sphere selection" },
+      { key: "⌘/Ctrl + J", desc: "Toggle 'Add to focus'" },
+      { key: "⌘/Ctrl + D", desc: "Toggle 'Mark as done'" },
+      { key: "⌘/Ctrl + T", desc: "Toggle date section" },
+      { section: "Actions" },
+      { key: "⌘/Ctrl + Enter", desc: "Save item" },
+      { key: "⌘/Ctrl + Q", desc: "Exit text field" },
+    ];
+
+    for (const item of shortcuts) {
+      if ("section" in item && item.section) {
+        content.createEl("h4", { text: item.section, cls: "flow-inbox-help-section" });
+      } else if ("key" in item) {
+        const row = content.createDiv("flow-inbox-help-row");
+        row.createEl("kbd", { text: item.key });
+        row.createEl("span", { text: item.desc });
+      }
+    }
+  }
 }

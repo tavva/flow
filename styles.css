@@ -2279,3 +2279,93 @@ select.flow-gtd-inline-select option,
   width: 100%;
   margin-top: 12px;
 }
+
+/* Help overlay */
+.flow-inbox-help-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.flow-inbox-help-modal {
+  background-color: var(--background-primary);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.flow-inbox-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.flow-inbox-help-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.flow-inbox-help-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  line-height: 1;
+}
+
+.flow-inbox-help-close:hover {
+  color: var(--text-normal);
+}
+
+.flow-inbox-help-section {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 16px 0 8px 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.flow-inbox-help-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.flow-inbox-help-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.flow-inbox-help-row kbd {
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  min-width: 80px;
+  text-align: center;
+}
+
+.flow-inbox-help-row span {
+  color: var(--text-normal);
+  font-size: 14px;
+}
