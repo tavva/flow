@@ -16,6 +16,7 @@ export class InboxModalState {
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
+  public selectedIndex = -1;
 
   private uniqueIdCounter = 0;
 
@@ -24,6 +25,22 @@ export class InboxModalState {
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback
   ) {}
+
+  get selectedItem(): EditableItem | undefined {
+    if (this.selectedIndex >= 0 && this.selectedIndex < this.editableItems.length) {
+      return this.editableItems[this.selectedIndex];
+    }
+    return undefined;
+  }
+
+  selectItem(index: number) {
+    if (this.editableItems.length === 0) {
+      this.selectedIndex = -1;
+      return;
+    }
+    this.selectedIndex = Math.max(0, Math.min(index, this.editableItems.length - 1));
+    this.queueRender("editable");
+  }
 
   get inboxScanner(): Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem"> {
     return this.controller.getInboxScanner();
@@ -67,13 +84,14 @@ export class InboxModalState {
       this.isLoadingInbox = false;
 
       if (inboxEditableItems.length === 0) {
+        this.selectedIndex = -1;
         new Notice("No items found in inbox folders");
         this.requestRender("inbox");
         return;
       }
 
       this.editableItems = inboxEditableItems;
-      this.initializeExpandedState();
+      this.selectedIndex = inboxEditableItems.length > 0 ? 0 : -1;
       new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
       this.requestRender("editable");
     } catch (error) {
@@ -105,9 +123,11 @@ export class InboxModalState {
       await this.controller.saveItem(item, this.deletionOffsets);
       this.editableItems = this.editableItems.filter((current) => current !== item);
 
-      // Auto-expand the first remaining item
-      if (this.editableItems.length > 0) {
-        this.editableItems[0].isExpanded = true;
+      // Adjust selectedIndex after removal
+      if (this.editableItems.length === 0) {
+        this.selectedIndex = -1;
+      } else if (this.selectedIndex >= this.editableItems.length) {
+        this.selectedIndex = this.editableItems.length - 1;
       }
 
       // If we created a new project, refresh the project list so subsequent items can see it
@@ -143,9 +163,11 @@ export class InboxModalState {
 
     this.editableItems = this.editableItems.filter((current) => current !== item);
 
-    // Auto-expand the first remaining item
-    if (this.editableItems.length > 0) {
-      this.editableItems[0].isExpanded = true;
+    // Adjust selectedIndex after removal
+    if (this.editableItems.length === 0) {
+      this.selectedIndex = -1;
+    } else if (this.selectedIndex >= this.editableItems.length) {
+      this.selectedIndex = this.editableItems.length - 1;
     }
 
     new Notice(`🗑️ Discarded item`);
