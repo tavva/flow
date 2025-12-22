@@ -125,6 +125,55 @@ describe("InboxModalState view mode", () => {
   });
 });
 
+describe("InboxModalState last used sphere", () => {
+  it("should initialise lastUsedSphere to first sphere from settings", () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state } = createTestState({ settings });
+
+    expect(state.lastUsedSphere).toBe("work");
+  });
+
+  it("should initialise lastUsedSphere to undefined if no spheres", () => {
+    const settings = createMockSettings();
+    settings.spheres = [];
+    const { state } = createTestState({ settings });
+
+    expect(state.lastUsedSphere).toBeUndefined();
+  });
+
+  it("should update lastUsedSphere when item saved with sphere", async () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state, controller } = createTestState({ settings });
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    state.editableItems[0].selectedSpheres = ["personal"];
+    await state.saveAndRemoveItem(state.editableItems[0]);
+
+    expect(state.lastUsedSphere).toBe("personal");
+  });
+
+  it("should apply lastUsedSphere as default to new items", async () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state, controller } = createTestState({ settings });
+
+    // Simulate lastUsedSphere being set from previous save
+    state.lastUsedSphere = "personal";
+
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    expect(state.editableItems[0].selectedSpheres).toEqual(["personal"]);
+  });
+});
+
 describe("InboxModalState discardItem", () => {
   const createEditableItem = (): EditableItem => ({
     original: "Example",

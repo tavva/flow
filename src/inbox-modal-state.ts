@@ -20,6 +20,7 @@ export class InboxModalState {
   public isLoadingInbox = true;
   public selectedIndex = -1;
   public viewMode: ViewMode = "list";
+  public lastUsedSphere: string | undefined;
 
   private uniqueIdCounter = 0;
 
@@ -27,7 +28,9 @@ export class InboxModalState {
     private readonly controller: InboxProcessingController,
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback
-  ) {}
+  ) {
+    this.lastUsedSphere = settings.spheres?.[0];
+  }
 
   get selectedItem(): EditableItem | undefined {
     if (this.selectedIndex >= 0 && this.selectedIndex < this.editableItems.length) {
@@ -104,6 +107,14 @@ export class InboxModalState {
       }
 
       this.editableItems = inboxEditableItems;
+      // Apply default sphere
+      if (this.lastUsedSphere) {
+        for (const item of this.editableItems) {
+          if (item.selectedSpheres.length === 0) {
+            item.selectedSpheres = [this.lastUsedSphere];
+          }
+        }
+      }
       this.selectedIndex = inboxEditableItems.length > 0 ? 0 : -1;
       new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
       this.requestRender("editable");
@@ -134,6 +145,12 @@ export class InboxModalState {
   async saveAndRemoveItem(item: EditableItem) {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
+
+      // Track last used sphere
+      if (item.selectedSpheres.length > 0) {
+        this.lastUsedSphere = item.selectedSpheres[0];
+      }
+
       this.editableItems = this.editableItems.filter((current) => current !== item);
 
       // Adjust selectedIndex after removal
