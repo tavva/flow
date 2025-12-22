@@ -126,22 +126,6 @@ export class InboxModalState {
     }
   }
 
-  initializeExpandedState() {
-    if (this.editableItems.length > 0) {
-      this.editableItems[0].isExpanded = true;
-      for (let i = 1; i < this.editableItems.length; i++) {
-        this.editableItems[i].isExpanded = false;
-      }
-    }
-  }
-
-  expandItem(item: EditableItem) {
-    for (const editableItem of this.editableItems) {
-      editableItem.isExpanded = editableItem === item;
-    }
-    this.queueRender("editable");
-  }
-
   async saveAndRemoveItem(item: EditableItem) {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
