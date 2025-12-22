@@ -1,7 +1,61 @@
+// ABOUTME: Rendering functions for inbox processing UI components
+// ABOUTME: Includes list pane, detail pane, and shared editing controls
+
 import { DropdownComponent, Setting, setIcon } from "obsidian";
 import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
 import { getActionLabel } from "./inbox-modal-utils";
+
+export interface ListPaneOptions {
+  onRefresh?: () => void;
+  onItemSelect?: (index: number) => void;
+}
+
+export function renderListPane(
+  container: HTMLElement,
+  state: InboxModalState,
+  options: ListPaneOptions = {}
+) {
+  container.empty();
+  container.addClass("flow-inbox-list-pane");
+
+  // Header
+  const header = container.createDiv("flow-inbox-list-header");
+  const title = header.createSpan("flow-inbox-list-title");
+  title.setText(`Inbox (${state.editableItems.length})`);
+
+  const refreshBtn = header.createEl("button", { cls: "flow-inbox-refresh clickable-icon" });
+  setIcon(refreshBtn, "refresh-cw");
+  refreshBtn.setAttribute("aria-label", "Refresh inbox");
+  if (options.onRefresh) {
+    refreshBtn.addEventListener("click", options.onRefresh);
+  }
+
+  // List or empty state
+  if (state.editableItems.length === 0) {
+    const emptyState = container.createDiv("flow-inbox-empty");
+    const icon = emptyState.createDiv("flow-inbox-empty-icon");
+    icon.setText("✨");
+    emptyState.createEl("p", { text: "Your inbox is empty" });
+    return;
+  }
+
+  const list = container.createDiv("flow-inbox-list");
+  state.editableItems.forEach((item, index) => {
+    const itemEl = list.createDiv("flow-inbox-list-item");
+    if (index === state.selectedIndex) {
+      itemEl.addClass("selected");
+    }
+
+    const text = itemEl.createSpan("flow-inbox-list-item-text");
+    text.setText(item.original);
+
+    itemEl.addEventListener("click", () => {
+      state.selectItem(index);
+      options.onItemSelect?.(index);
+    });
+  });
+}
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
