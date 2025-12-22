@@ -371,7 +371,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       )
       .addText((text) =>
         text
-          .setPlaceholder("Flow Inbox.md")
+          .setPlaceholder("Inbox.md")
           .setValue(this.plugin.settings.defaultInboxFile)
           .onChange(async (value) => {
             this.plugin.settings.defaultInboxFile = value;

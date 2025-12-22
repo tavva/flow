@@ -15,7 +15,7 @@ describe("AddToInboxModal", () => {
     settings = {
       ...DEFAULT_SETTINGS,
       inboxFilesFolderPath: "Flow Inbox Files",
-      defaultInboxFile: "Flow Inbox.md",
+      defaultInboxFile: "Inbox.md",
     };
     modal = new AddToInboxModal(mockApp, settings);
   });
@@ -26,7 +26,7 @@ describe("AddToInboxModal", () => {
 
   describe("submission", () => {
     it("should append content to inbox file when submitted", async () => {
-      const mockInboxFile = new TFile("Flow Inbox Files/Flow Inbox.md", "Flow Inbox.md");
+      const mockInboxFile = new TFile("Flow Inbox Files/Inbox.md", "Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockInboxFile);
 
       await modal.onOpen();
@@ -44,7 +44,7 @@ describe("AddToInboxModal", () => {
 
     it("should create inbox file if it does not exist", async () => {
       // First call returns null (file doesn't exist), second returns the created file
-      const mockInboxFile = new TFile("Flow Inbox Files/Flow Inbox.md", "Flow Inbox.md");
+      const mockInboxFile = new TFile("Flow Inbox Files/Inbox.md", "Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock)
         .mockReturnValueOnce(null) // inbox file check
         .mockReturnValueOnce({}) // folder exists check
@@ -56,11 +56,11 @@ describe("AddToInboxModal", () => {
 
       await (modal as any).submit();
 
-      expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Flow Inbox.md", "");
+      expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Inbox.md", "");
     });
 
     it("should create inbox folder if it does not exist", async () => {
-      const mockInboxFile = new TFile("Flow Inbox Files/Flow Inbox.md", "Flow Inbox.md");
+      const mockInboxFile = new TFile("Flow Inbox Files/Inbox.md", "Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock)
         .mockReturnValueOnce(null) // inbox file doesn't exist
         .mockReturnValueOnce(null) // folder doesn't exist
@@ -74,7 +74,7 @@ describe("AddToInboxModal", () => {
       await (modal as any).submit();
 
       expect(mockApp.vault.createFolder).toHaveBeenCalledWith("Flow Inbox Files");
-      expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Flow Inbox.md", "");
+      expect(mockApp.vault.create).toHaveBeenCalledWith("Flow Inbox Files/Inbox.md", "");
     });
 
     it("should not submit when input is empty", async () => {
@@ -97,7 +97,7 @@ describe("AddToInboxModal", () => {
     });
 
     it("should append newline after content", async () => {
-      const mockInboxFile = new TFile("Flow Inbox Files/Flow Inbox.md", "Flow Inbox.md");
+      const mockInboxFile = new TFile("Flow Inbox Files/Inbox.md", "Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockInboxFile);
       (mockApp.vault.read as jest.Mock).mockResolvedValue("Existing content");
 
@@ -113,7 +113,7 @@ describe("AddToInboxModal", () => {
     });
 
     it("should handle empty existing file", async () => {
-      const mockInboxFile = new TFile("Flow Inbox Files/Flow Inbox.md", "Flow Inbox.md");
+      const mockInboxFile = new TFile("Flow Inbox Files/Inbox.md", "Inbox.md");
       (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockInboxFile);
       (mockApp.vault.read as jest.Mock).mockResolvedValue("");
 

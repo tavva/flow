@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   somedayFilePath: "Someday.md",
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
-  defaultInboxFile: "Flow Inbox.md",
+  defaultInboxFile: "Inbox.md",
   coverImagesFolderPath: "Assets/flow-project-cover-images",
   autoCreateCoverImage: false,
   displayCoverImages: true,
