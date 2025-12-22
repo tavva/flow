@@ -11,6 +11,17 @@ export interface ListPaneOptions {
   onItemSelect?: (index: number) => void;
 }
 
+/**
+ * Render the inbox list pane into the provided container, including header, refresh control, empty state, and clickable item list.
+ *
+ * Renders a header showing "Inbox (N)" and a refresh button if provided; when there are no editable items, renders an empty-state message. When items exist, renders each item's original text, highlights the currently selected item, and wires item clicks to select the item and invoke an optional item-select callback.
+ *
+ * @param container - DOM element that will receive the list pane UI
+ * @param state - Inbox modal state containing `editableItems`, `selectedIndex`, and `selectItem` used to drive rendering and selection
+ * @param options - Optional behavior hooks:
+ *   - onRefresh: called when the refresh button is clicked
+ *   - onItemSelect: called with the item's index when an item is clicked
+ */
 export function renderListPane(
   container: HTMLElement,
   state: InboxModalState,
@@ -64,6 +75,21 @@ export interface DetailPaneOptions {
   onDiscard?: (item: EditableItem) => void;
 }
 
+/**
+ * Render the detail/edit pane for the currently selected inbox item into the given container.
+ *
+ * Renders a header (optional Back button and inbox count), an empty-state message when no item
+ * is selected, the item's original text, an action-type selector, and conditional sections:
+ * project creation or selection, person selection, next-actions editor, sphere selector,
+ * focus/mark-done controls, and a collapsible date section. The header also contains Discard
+ * (confirmation) and Save/Delete actions which invoke callbacks from `options` when provided.
+ *
+ * @param options - Optional behavior controls:
+ *   - showBack: when true, shows a Back button that displays the inbox count.
+ *   - onBack: called when the Back button is clicked.
+ *   - onSave: called with the current item when the Save/Delete button is clicked.
+ *   - onDiscard: called with the current item when the Discard action is confirmed.
+ */
 export function renderDetailPane(
   container: HTMLElement,
   state: InboxModalState,
@@ -161,6 +187,15 @@ export function renderDetailPane(
   }
 }
 
+/**
+ * Render a grid of action-type buttons for choosing the item's processing action.
+ *
+ * Renders buttons for the available actions (create-project, add-to-project, next-actions-file, someday-file, reference, person, trash). The currently selected action is given a selected style; clicking a button updates `item.selectedAction` and queues a re-render via `state.queueRender("editable")`.
+ *
+ * @param container - The DOM container to render the selector into.
+ * @param item - The editable item whose `selectedAction` is shown and updated by the selector.
+ * @param state - The inbox modal state used to trigger a render after selection changes.
+ */
 function renderDetailActionTypeSelector(
   container: HTMLElement,
   item: EditableItem,
@@ -207,6 +242,16 @@ export interface InboxViewOptions {
   isLoading?: boolean;
 }
 
+/**
+ * Render the inbox modal view into the provided container, showing loading, header, and empty states as appropriate.
+ *
+ * Renders a centered loading UI when `options.isLoading` is true; otherwise renders a heading and, if there are no other children, an empty-state message explaining that no inbox items were found.
+ *
+ * @param contentEl - Container element to render the inbox view into
+ * @param state - Current inbox modal state (used by other rendering helpers and retained for future renders)
+ * @param options - Rendering options
+ * @param options.isLoading - When true, show the loading UI; defaults to `true`
+ */
 export function renderInboxView(
   contentEl: HTMLElement,
   state: InboxModalState,
@@ -277,6 +322,13 @@ export function renderInboxView(
   }
 }
 
+/**
+ * Renders three grouped action button rows ("Projects", "Actions", "Other") into the given container and updates the item's selectedAction when a button is clicked.
+ *
+ * @param container - Element to receive the action groups
+ * @param item - The editable item whose `selectedAction` is displayed and updated by the buttons
+ * @param state - Modal state used to trigger a re-render via `state.queueRender("editable")` when selection changes
+ */
 function renderActionButtonGroups(
   container: HTMLElement,
   item: EditableItem,
