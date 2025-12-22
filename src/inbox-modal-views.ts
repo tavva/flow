@@ -57,6 +57,155 @@ export function renderListPane(
   });
 }
 
+export interface DetailPaneOptions {
+  showBack?: boolean;
+  onBack?: () => void;
+  onSave?: (item: EditableItem) => void;
+  onDiscard?: (item: EditableItem) => void;
+}
+
+export function renderDetailPane(
+  container: HTMLElement,
+  state: InboxModalState,
+  options: DetailPaneOptions
+) {
+  container.empty();
+  container.addClass("flow-inbox-detail-pane");
+
+  const item = state.selectedItem;
+
+  // Header with buttons
+  const header = container.createDiv("flow-inbox-detail-header");
+
+  if (options.showBack) {
+    const backBtn = header.createEl("button", {
+      cls: "flow-inbox-back-btn clickable-icon",
+    });
+    setIcon(backBtn, "arrow-left");
+    backBtn.createSpan().setText(`Inbox (${state.editableItems.length})`);
+    if (options.onBack) {
+      backBtn.addEventListener("click", options.onBack);
+    }
+  }
+
+  // Empty state
+  if (!item) {
+    const emptyState = container.createDiv("flow-inbox-detail-empty");
+    emptyState.createEl("p", { text: "Select an item to process" });
+    return;
+  }
+
+  // Action buttons in header (right side)
+  const headerActions = header.createDiv("flow-inbox-detail-header-actions");
+
+  const discardBtn = headerActions.createEl("button", {
+    text: "Discard",
+    cls: "flow-inbox-discard-btn",
+  });
+  discardBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to discard this item?")) {
+      options.onDiscard?.(item);
+    }
+  });
+
+  const saveBtn = headerActions.createEl("button", {
+    text: item.selectedAction === "trash" ? "Delete" : "Save",
+    cls: "flow-inbox-save-btn mod-cta",
+  });
+  saveBtn.addEventListener("click", () => options.onSave?.(item));
+
+  // Original text
+  const originalSection = container.createDiv("flow-inbox-detail-section");
+  const originalText = originalSection.createDiv("flow-inbox-detail-original");
+  originalText.setText(item.original);
+
+  // Action type selector
+  const actionSection = container.createDiv("flow-inbox-detail-section");
+  renderDetailActionTypeSelector(actionSection, item, state);
+
+  // Conditional sections based on action type
+  if (item.selectedAction === "create-project") {
+    renderProjectCreationSection(container, item, state);
+  } else if (item.selectedAction === "add-to-project" || item.selectedAction === "reference") {
+    renderProjectSelectionSection(container, item, state);
+  } else if (item.selectedAction === "person") {
+    renderPersonSelectionSection(container, item, state);
+  }
+
+  // Next actions editor (for most action types)
+  if (
+    item.selectedAction !== "reference" &&
+    item.selectedAction !== "trash"
+  ) {
+    renderNextActionsEditor(container, item, state);
+  }
+
+  // Sphere selector (for applicable action types)
+  if (
+    item.selectedAction !== "add-to-project" &&
+    item.selectedAction !== "reference" &&
+    item.selectedAction !== "trash"
+  ) {
+    renderSphereSelector(container, item, state);
+  }
+
+  // Bottom options (focus, mark done, more)
+  if (
+    item.selectedAction === "create-project" ||
+    item.selectedAction === "add-to-project" ||
+    item.selectedAction === "next-actions-file"
+  ) {
+    renderFocusCheckbox(container, item, state);
+  }
+
+  // Date section for applicable action types
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
+    renderDateSection(container, item, state);
+  }
+}
+
+function renderDetailActionTypeSelector(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const selectorEl = container.createDiv("flow-inbox-action-selector");
+
+  const actions = [
+    { key: "c", value: "create-project", label: "Create" },
+    { key: "a", value: "add-to-project", label: "Add" },
+    { key: "n", value: "next-actions-file", label: "Next" },
+    { key: "s", value: "someday-file", label: "Someday" },
+    { key: "r", value: "reference", label: "Ref" },
+    { key: "p", value: "person", label: "Person" },
+    { key: "t", value: "trash", label: "Trash" },
+  ];
+
+  const row1 = selectorEl.createDiv("flow-inbox-action-row");
+  const row2 = selectorEl.createDiv("flow-inbox-action-row");
+
+  actions.forEach((action, index) => {
+    const row = index < 4 ? row1 : row2;
+    const btn = row.createEl("button", {
+      cls: "flow-inbox-action-btn",
+    });
+    btn.setAttribute("data-action", action.value);
+
+    const keyHint = btn.createSpan("flow-inbox-action-key");
+    keyHint.setText(action.key.toUpperCase());
+    btn.appendText(" " + action.label);
+
+    if (item.selectedAction === action.value) {
+      btn.addClass("selected");
+    }
+
+    btn.addEventListener("click", () => {
+      item.selectedAction = action.value as EditableItem["selectedAction"];
+      state.queueRender("editable");
+    });
+  });
+}
+
 export interface EditableItemsViewOptions {
   onClose: () => void;
 }
