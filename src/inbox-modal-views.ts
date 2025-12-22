@@ -133,10 +133,7 @@ export function renderDetailPane(
   }
 
   // Next actions editor (for most action types)
-  if (
-    item.selectedAction !== "reference" &&
-    item.selectedAction !== "trash"
-  ) {
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
     renderNextActionsEditor(container, item, state);
   }
 

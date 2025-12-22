@@ -5,7 +5,11 @@
  * @jest-environment jsdom
  */
 
-import { renderEditableItemContent, renderListPane, renderDetailPane } from "../src/inbox-modal-views";
+import {
+  renderEditableItemContent,
+  renderListPane,
+  renderDetailPane,
+} from "../src/inbox-modal-views";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
 
@@ -328,7 +332,11 @@ describe("renderListPane", () => {
   it("should render list items with text", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const state = createMockState([
-      { original: "This is a very long item that should be shown", selectedAction: "next-actions-file", selectedSpheres: [] },
+      {
+        original: "This is a very long item that should be shown",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+      },
       { original: "Short item", selectedAction: "next-actions-file", selectedSpheres: [] },
     ]);
 
@@ -409,7 +417,8 @@ describe("renderDetailPane", () => {
 
   it("should render full original text", () => {
     const container = makeObsidianElement(document.createElement("div"));
-    const longText = "This is a very long piece of text that would be truncated in the list but should be shown in full here";
+    const longText =
+      "This is a very long piece of text that would be truncated in the list but should be shown in full here";
     const state = createMockState([
       { original: longText, selectedAction: "next-actions-file", selectedSpheres: [] },
     ]);

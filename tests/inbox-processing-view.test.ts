@@ -2,13 +2,14 @@ import { App, WorkspaceLeaf } from "obsidian";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-processing-view";
 import { DEFAULT_SETTINGS } from "../src/types";
 import { InboxModalState } from "../src/inbox-modal-state";
-import { renderInboxView, renderEditableItemsView } from "../src/inbox-modal-views";
+import { renderInboxView, renderListPane, renderDetailPane } from "../src/inbox-modal-views";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock the view modules
 jest.mock("../src/inbox-modal-views", () => ({
   renderInboxView: jest.fn(),
-  renderEditableItemsView: jest.fn(),
+  renderListPane: jest.fn(),
+  renderDetailPane: jest.fn(),
 }));
 
 describe("InboxProcessingView", () => {
@@ -93,6 +94,14 @@ describe("InboxProcessingView", () => {
     jest.useFakeTimers();
 
     const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
+    const createMockDiv = (): any => ({
+      createEl: jest.fn().mockReturnValue({
+        addEventListener: jest.fn(),
+      }),
+      createDiv: jest.fn().mockImplementation(createMockDiv),
+      addClass: jest.fn(),
+      style: {},
+    });
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -101,10 +110,7 @@ describe("InboxProcessingView", () => {
         createEl: jest.fn(),
         style: {},
       }),
-      createDiv: jest.fn().mockReturnValue({
-        createEl: jest.fn(),
-        style: {},
-      }),
+      createDiv: jest.fn().mockImplementation(createMockDiv),
     };
     (view as any).containerEl = {
       children: [null, mockContainer],
@@ -114,28 +120,43 @@ describe("InboxProcessingView", () => {
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
     jest.spyOn((view as any).state, "loadInboxItems").mockResolvedValue(undefined);
 
+    // Add an item so we get the two-pane view
+    (view as any).state.editableItems = [
+      { original: "test", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ];
+    (view as any).state.selectedIndex = 0;
+
     await view.onOpen();
 
     // Clear previous calls from onOpen
-    (renderEditableItemsView as jest.Mock).mockClear();
+    (renderListPane as jest.Mock).mockClear();
+    (renderDetailPane as jest.Mock).mockClear();
 
     // Trigger render request
     (view as any).requestRender("editable", false);
 
     // Should not render immediately
-    expect(renderEditableItemsView).not.toHaveBeenCalled();
+    expect(renderListPane).not.toHaveBeenCalled();
 
     // Fast-forward time
     jest.advanceTimersByTime(50);
 
     // Should render after debounce
-    expect(renderEditableItemsView).toHaveBeenCalled();
+    expect(renderListPane).toHaveBeenCalled();
 
     jest.useRealTimers();
   });
 
   test("handles immediate render requests", async () => {
     const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
+    const createMockDiv = (): any => ({
+      createEl: jest.fn().mockReturnValue({
+        addEventListener: jest.fn(),
+      }),
+      createDiv: jest.fn().mockImplementation(createMockDiv),
+      addClass: jest.fn(),
+      style: {},
+    });
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
@@ -144,10 +165,7 @@ describe("InboxProcessingView", () => {
         createEl: jest.fn(),
         style: {},
       }),
-      createDiv: jest.fn().mockReturnValue({
-        createEl: jest.fn(),
-        style: {},
-      }),
+      createDiv: jest.fn().mockImplementation(createMockDiv),
     };
     (view as any).containerEl = {
       children: [null, mockContainer],
@@ -157,16 +175,23 @@ describe("InboxProcessingView", () => {
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
     jest.spyOn((view as any).state, "loadInboxItems").mockResolvedValue(undefined);
 
+    // Add an item so we get the two-pane view
+    (view as any).state.editableItems = [
+      { original: "test", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ];
+    (view as any).state.selectedIndex = 0;
+
     await view.onOpen();
 
     // Clear previous calls from onOpen
-    (renderEditableItemsView as jest.Mock).mockClear();
+    (renderListPane as jest.Mock).mockClear();
+    (renderDetailPane as jest.Mock).mockClear();
 
     // Trigger immediate render
     (view as any).requestRender("editable", true);
 
     // Should render immediately
-    expect(renderEditableItemsView).toHaveBeenCalled();
+    expect(renderListPane).toHaveBeenCalled();
   });
 
   test("renders inbox target view", async () => {
@@ -196,14 +221,14 @@ describe("InboxProcessingView", () => {
 
     // Clear previous calls from onOpen
     (renderInboxView as jest.Mock).mockClear();
-    (renderEditableItemsView as jest.Mock).mockClear();
+    (renderListPane as jest.Mock).mockClear();
 
     // Trigger immediate render with inbox target
     (view as any).requestRender("inbox", true);
 
     // Should render inbox view
     expect(renderInboxView).toHaveBeenCalled();
-    expect(renderEditableItemsView).not.toHaveBeenCalled();
+    expect(renderListPane).not.toHaveBeenCalled();
   });
 
   test("handles missing container gracefully", async () => {
@@ -215,14 +240,14 @@ describe("InboxProcessingView", () => {
     };
 
     // Clear any previous mock calls
-    (renderEditableItemsView as jest.Mock).mockClear();
+    (renderListPane as jest.Mock).mockClear();
     (renderInboxView as jest.Mock).mockClear();
 
     // Trigger render with missing container - should not throw
     (view as any).requestRender("editable", true);
 
     // Should not call render functions
-    expect(renderEditableItemsView).not.toHaveBeenCalled();
+    expect(renderListPane).not.toHaveBeenCalled();
     expect(renderInboxView).not.toHaveBeenCalled();
   });
 
@@ -254,7 +279,7 @@ describe("InboxProcessingView", () => {
     await view.onOpen();
 
     // Clear previous calls from onOpen
-    (renderEditableItemsView as jest.Mock).mockClear();
+    (renderListPane as jest.Mock).mockClear();
     (renderInboxView as jest.Mock).mockClear();
 
     // Trigger first render request
@@ -270,7 +295,7 @@ describe("InboxProcessingView", () => {
     jest.advanceTimersByTime(50);
 
     // Only the second render should have executed
-    expect(renderEditableItemsView).not.toHaveBeenCalled();
+    expect(renderListPane).not.toHaveBeenCalled();
     expect(renderInboxView).toHaveBeenCalledTimes(1);
 
     jest.useRealTimers();
@@ -430,8 +455,9 @@ describe("InboxProcessingView", () => {
       // Mock view as not active
       ((view as any).app.workspace.getActiveViewOfType as jest.Mock).mockReturnValue(null);
 
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = { selectedAction: "next-actions-file", selectedSpheres: [] } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -445,8 +471,9 @@ describe("InboxProcessingView", () => {
     });
 
     test("ignores keydown when typing in input", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = { selectedAction: "next-actions-file", selectedSpheres: [] } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       const inputEl = document.createElement("input");
@@ -460,9 +487,10 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("updates selected action for expanded item", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+    test("updates selected action for selected item", () => {
+      const item = { selectedAction: "next-actions-file", selectedSpheres: [] } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
 
@@ -526,8 +554,9 @@ describe("InboxProcessingView", () => {
     });
 
     test("ignores unknown keys", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = { selectedAction: "next-actions-file", selectedSpheres: [] } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -586,12 +615,12 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+Enter saves the current item", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: ["personal"],
         original: "test item",
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const saveAndRemoveItemSpy = jest
         .spyOn((view as any).state, "saveAndRemoveItem")
         .mockResolvedValue(undefined);
@@ -613,12 +642,12 @@ describe("InboxProcessingView", () => {
 
     test("Cmd+Enter saves the current item (Mac)", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: ["personal"],
         original: "test item",
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const saveAndRemoveItemSpy = jest
         .spyOn((view as any).state, "saveAndRemoveItem")
         .mockResolvedValue(undefined);
@@ -639,8 +668,9 @@ describe("InboxProcessingView", () => {
     });
 
     test("sets pending focus for Create Project action", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = { selectedAction: "next-actions-file" } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -655,8 +685,9 @@ describe("InboxProcessingView", () => {
     });
 
     test("sets pending focus for Add to Project action", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      const item = { selectedAction: "next-actions-file" } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -674,8 +705,24 @@ describe("InboxProcessingView", () => {
       jest.useFakeTimers();
       (view as any).pendingFocus = ".test-input";
 
+      // Add an item so we don't hit the completion state
+      (view as any).state.editableItems = [
+        { original: "test", selectedAction: "next-actions-file", selectedSpheres: [] },
+      ];
+      (view as any).state.selectedIndex = 0;
+
+      // Set up mock container with proper nesting for two-pane view
+      const createMockDiv = (): any => ({
+        createEl: jest.fn().mockReturnValue({
+          addEventListener: jest.fn(),
+        }),
+        createDiv: jest.fn().mockImplementation(createMockDiv),
+        addClass: jest.fn(),
+        style: {},
+      });
       const mockInput = { focus: jest.fn() };
       const mockContainer = (view as any).containerEl.children[1];
+      mockContainer.createDiv = jest.fn().mockImplementation(createMockDiv);
       mockContainer.querySelector = jest.fn().mockReturnValue(mockInput);
 
       // Trigger render
@@ -696,11 +743,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -724,11 +771,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "create-project",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -748,11 +795,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -772,11 +819,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: ["work"],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -796,11 +843,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "add-to-project",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -820,11 +867,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "reference",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -844,11 +891,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "trash",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -868,11 +915,11 @@ describe("InboxProcessingView", () => {
       settings.spheres = ["work", "personal"];
 
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       // Try Ctrl+3 when only 2 spheres exist
@@ -890,11 +937,11 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+J toggles Add to focus checkbox", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         addToFocus: false,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -915,11 +962,11 @@ describe("InboxProcessingView", () => {
 
     test("Cmd+J toggles Add to focus checkbox (Mac)", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "create-project",
         addToFocus: false,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -936,12 +983,12 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+J unchecks Mark as done when toggling Add to focus on", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         addToFocus: false,
         markAsDone: [true],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -959,11 +1006,11 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+D toggles Mark as done checkbox", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         markAsDone: [false],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -984,11 +1031,11 @@ describe("InboxProcessingView", () => {
 
     test("Cmd+D toggles Mark as done checkbox (Mac)", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "create-project",
         markAsDone: [false],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -1005,10 +1052,10 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+D initializes markAsDone array if not exists", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -1025,12 +1072,12 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+D unchecks Add to focus when toggling Mark as done on", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         addToFocus: true,
         markAsDone: [false],
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -1048,11 +1095,11 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+T toggles date section expansion", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "next-actions-file",
         isDateSectionExpanded: false,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -1073,11 +1120,11 @@ describe("InboxProcessingView", () => {
 
     test("Cmd+T toggles date section expansion (Mac)", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "someday-file",
         isDateSectionExpanded: true,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
@@ -1094,13 +1141,13 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+J/D/T ignored for reference action", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "reference",
         addToFocus: false,
         markAsDone: [false],
         isDateSectionExpanded: false,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       // Try Ctrl+J
@@ -1139,13 +1186,13 @@ describe("InboxProcessingView", () => {
 
     test("Ctrl+J/D/T ignored for trash action", () => {
       const item = {
-        isExpanded: true,
         selectedAction: "trash",
         addToFocus: false,
         markAsDone: [false],
         isDateSectionExpanded: false,
       } as any;
       (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       // Try Ctrl+J

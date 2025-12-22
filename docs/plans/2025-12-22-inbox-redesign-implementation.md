@@ -13,6 +13,7 @@
 ## Task 1: Add Selection State to InboxModalState
 
 **Files:**
+
 - Modify: `src/inbox-modal-state.ts`
 - Test: `tests/inbox-modal-state.test.ts`
 
@@ -162,6 +163,7 @@ git commit -m "Add selection state tracking to InboxModalState"
 ## Task 2: Add View Mode State for Narrow Viewport
 
 **Files:**
+
 - Modify: `src/inbox-modal-state.ts`
 - Test: `tests/inbox-modal-state.test.ts`
 
@@ -236,6 +238,7 @@ git commit -m "Add viewMode state for narrow viewport navigation"
 ## Task 3: Add Last Used Sphere Tracking
 
 **Files:**
+
 - Modify: `src/inbox-modal-state.ts`
 - Test: `tests/inbox-modal-state.test.ts`
 
@@ -358,6 +361,7 @@ git commit -m "Add lastUsedSphere tracking with smart defaults"
 ## Task 4: Create List Pane Rendering Function
 
 **Files:**
+
 - Modify: `src/inbox-modal-views.ts`
 - Test: `tests/inbox-modal-views.test.ts`
 
@@ -370,10 +374,7 @@ describe("renderListPane", () => {
   it("should render list header with item count", () => {
     const container = document.createElement("div");
     const state = createMockState();
-    state.editableItems = [
-      createMockEditableItem("Item 1"),
-      createMockEditableItem("Item 2"),
-    ];
+    state.editableItems = [createMockEditableItem("Item 1"), createMockEditableItem("Item 2")];
 
     renderListPane(container, state);
 
@@ -400,10 +401,7 @@ describe("renderListPane", () => {
   it("should mark selected item with selected class", () => {
     const container = document.createElement("div");
     const state = createMockState();
-    state.editableItems = [
-      createMockEditableItem("Item 1"),
-      createMockEditableItem("Item 2"),
-    ];
+    state.editableItems = [createMockEditableItem("Item 1"), createMockEditableItem("Item 2")];
     state.selectedIndex = 1;
 
     renderListPane(container, state);
@@ -416,10 +414,7 @@ describe("renderListPane", () => {
   it("should call selectItem when item clicked", () => {
     const container = document.createElement("div");
     const state = createMockState();
-    state.editableItems = [
-      createMockEditableItem("Item 1"),
-      createMockEditableItem("Item 2"),
-    ];
+    state.editableItems = [createMockEditableItem("Item 1"), createMockEditableItem("Item 2")];
     state.selectItem = jest.fn();
 
     renderListPane(container, state);
@@ -529,6 +524,7 @@ git commit -m "Add renderListPane function for inbox list"
 ## Task 5: Create Detail Pane Rendering Function
 
 **Files:**
+
 - Modify: `src/inbox-modal-views.ts`
 - Test: `tests/inbox-modal-views.test.ts`
 
@@ -554,7 +550,8 @@ describe("renderDetailPane", () => {
   it("should render full original text", () => {
     const container = document.createElement("div");
     const state = createMockState();
-    const longText = "This is a very long piece of text that would be truncated in the list but should be shown in full here";
+    const longText =
+      "This is a very long piece of text that would be truncated in the list but should be shown in full here";
     state.editableItems = [createMockEditableItem(longText)];
     state.selectedIndex = 0;
 
@@ -715,10 +712,7 @@ export function renderDetailPane(
   }
 
   // Next actions editor (for most action types)
-  if (
-    item.selectedAction !== "reference" &&
-    item.selectedAction !== "trash"
-  ) {
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
     renderNextActionsEditor(container, item, state);
   }
 
@@ -783,11 +777,7 @@ function renderActionTypeSelector(
   });
 }
 
-function renderBottomOptions(
-  container: HTMLElement,
-  item: EditableItem,
-  state: InboxModalState
-) {
+function renderBottomOptions(container: HTMLElement, item: EditableItem, state: InboxModalState) {
   const section = container.createDiv("flow-inbox-detail-section flow-inbox-bottom-options");
 
   // Reuse existing renderFocusCheckbox logic
@@ -832,6 +822,7 @@ git commit -m "Add renderDetailPane function for inbox detail view"
 ## Task 6: Add CSS for Two-Pane Layout
 
 **Files:**
+
 - Modify: `styles.css`
 
 **Step 1: Add layout CSS**
@@ -1112,6 +1103,7 @@ git commit -m "Add CSS for responsive two-pane inbox layout"
 ## Task 7: Update Main View to Use Two-Pane Layout
 
 **Files:**
+
 - Modify: `src/inbox-processing-view.ts`
 - Test: `tests/inbox-processing-view.test.ts`
 
@@ -1133,10 +1125,7 @@ describe("two-pane layout", () => {
 
   it("should update detail pane when selection changes", async () => {
     const { view, container, state } = await createTestView();
-    state.editableItems = [
-      createMockEditableItem("Item 1"),
-      createMockEditableItem("Item 2"),
-    ];
+    state.editableItems = [createMockEditableItem("Item 1"), createMockEditableItem("Item 2")];
     state.selectedIndex = 0;
 
     await view.refresh();
@@ -1305,7 +1294,8 @@ export class InboxProcessingView extends ItemView {
     }
 
     const target = event.target as HTMLElement;
-    const isInInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+    const isInInput =
+      target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
     const item = this.state.selectedItem;
 
     // Navigation shortcuts (work even in narrow mode)
@@ -1397,7 +1387,9 @@ export class InboxProcessingView extends ItemView {
 
     // Cmd+J for add to focus
     if (event.key === "j" && (event.ctrlKey || event.metaKey) && item) {
-      const showsFocus = ["create-project", "add-to-project", "next-actions-file"].includes(item.selectedAction);
+      const showsFocus = ["create-project", "add-to-project", "next-actions-file"].includes(
+        item.selectedAction
+      );
       if (showsFocus) {
         event.preventDefault();
         item.addToFocus = !item.addToFocus;
@@ -1411,7 +1403,9 @@ export class InboxProcessingView extends ItemView {
 
     // Cmd+D for mark as done
     if (event.key === "d" && (event.ctrlKey || event.metaKey) && item) {
-      const showsFocus = ["create-project", "add-to-project", "next-actions-file"].includes(item.selectedAction);
+      const showsFocus = ["create-project", "add-to-project", "next-actions-file"].includes(
+        item.selectedAction
+      );
       if (showsFocus) {
         event.preventDefault();
         if (!item.markAsDone) item.markAsDone = [];
@@ -1427,7 +1421,9 @@ export class InboxProcessingView extends ItemView {
     // Cmd+M for more options toggle
     if (event.key === "m" && (event.ctrlKey || event.metaKey) && item) {
       event.preventDefault();
-      const moreContent = this.detailPaneEl?.querySelector(".flow-inbox-more-content") as HTMLElement;
+      const moreContent = this.detailPaneEl?.querySelector(
+        ".flow-inbox-more-content"
+      ) as HTMLElement;
       const chevron = this.detailPaneEl?.querySelector(".flow-inbox-more-chevron");
       if (moreContent && chevron) {
         const isExpanded = moreContent.style.display !== "none";
@@ -1457,6 +1453,7 @@ git commit -m "Update InboxProcessingView to use two-pane layout"
 ## Task 8: Clean Up Old Accordion Code
 
 **Files:**
+
 - Modify: `src/inbox-modal-views.ts`
 - Modify: `src/inbox-modal-state.ts`
 - Modify: `src/inbox-types.ts`
@@ -1471,11 +1468,13 @@ isExpanded?: boolean;
 ```
 
 In `src/inbox-modal-state.ts`:
+
 - Remove `initializeExpandedState()` method
 - Remove `expandItem()` method
 - Remove all references to `isExpanded`
 
 In `src/inbox-modal-views.ts`:
+
 - Remove `renderEditableItemsView()` function (replaced by renderDetailPane)
 - Remove `renderIndividualEditableItems()` function
 - Remove accordion-related rendering code
@@ -1555,16 +1554,16 @@ git commit -m "Polish inbox redesign based on manual testing"
 
 ## Summary
 
-| Task | Description | Est. Time |
-|------|-------------|-----------|
-| 1 | Add selection state | 10 min |
-| 2 | Add view mode state | 5 min |
-| 3 | Add last used sphere | 10 min |
-| 4 | Create list pane render | 15 min |
-| 5 | Create detail pane render | 20 min |
-| 6 | Add CSS layout | 10 min |
-| 7 | Update main view | 20 min |
-| 8 | Clean up old code | 10 min |
-| 9 | Manual testing | 30 min |
+| Task | Description               | Est. Time |
+| ---- | ------------------------- | --------- |
+| 1    | Add selection state       | 10 min    |
+| 2    | Add view mode state       | 5 min     |
+| 3    | Add last used sphere      | 10 min    |
+| 4    | Create list pane render   | 15 min    |
+| 5    | Create detail pane render | 20 min    |
+| 6    | Add CSS layout            | 10 min    |
+| 7    | Update main view          | 20 min    |
+| 8    | Clean up old code         | 10 min    |
+| 9    | Manual testing            | 30 min    |
 
 **Total: ~2 hours**

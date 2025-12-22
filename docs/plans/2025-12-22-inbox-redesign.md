@@ -6,6 +6,7 @@
 ## Problem
 
 The current inbox processing UI has several issues:
+
 - Too much visual noise - options overwhelm users
 - Can't scan quickly - hard to get an overview of what's in the inbox
 - Keyboard flow is awkward for power users
@@ -20,11 +21,13 @@ Replace the accordion-style inline editing with a **two-pane layout** that separ
 ### Responsive Layout
 
 **Wide viewport (≥800px):** Horizontal split
+
 - List pane: ~300px fixed width
 - Detail pane: remaining width
 - Both visible simultaneously
 
 **Narrow viewport (<800px):** Single pane with navigation
+
 - List view is default
 - Selecting item transitions to detail view
 - Back button returns to list
@@ -32,11 +35,13 @@ Replace the accordion-style inline editing with a **two-pane layout** that separ
 ### List Pane
 
 Simple, scannable list:
+
 - Text only, truncated with ellipsis
 - No icons, checkboxes, or drag handles
 - Subtle separator between items
 
 States:
+
 - Default: normal text
 - Hover: subtle background
 - Selected: accent background
@@ -59,24 +64,26 @@ Action buttons (Discard, Save) in header area, always visible.
 
 ### Conditional Sections by Action Type
 
-| Action | Shows |
-|--------|-------|
+| Action         | Shows                                                  |
+| -------------- | ------------------------------------------------------ |
 | Create Project | Project name input. More: priority, sub-project toggle |
-| Add to Project | Project search/select |
-| Reference | Project search/select. Hides next actions editor |
-| Person | Person dropdown |
-| Next Actions | Nothing extra |
-| Someday | Nothing extra |
-| Trash | Hides next actions, sphere, bottom options |
+| Add to Project | Project search/select                                  |
+| Reference      | Project search/select. Hides next actions editor       |
+| Person         | Person dropdown                                        |
+| Next Actions   | Nothing extra                                          |
+| Someday        | Nothing extra                                          |
+| Trash          | Hides next actions, sphere, bottom options             |
 
 ### Keyboard Navigation
 
 **List navigation:**
+
 - `↑↓` - move selection
 - `Enter` - open detail pane
 - `Esc` - return to list (narrow viewport)
 
 **Detail pane shortcuts:**
+
 - `C/A/N/S/R/P/T` - select action type
 - `⌘1-9` - toggle sphere by position
 - `⌘J` - toggle "Add to focus"
@@ -94,6 +101,7 @@ Single-letter shortcuts only active when not in a text input.
 **Goals:** Clean, minimal, breathable. Consistent with Obsidian.
 
 **Key decisions:**
+
 - No emojis in action buttons (text only)
 - Generous spacing (16px standard, 24px between sections)
 - Use Obsidian CSS variables throughout
