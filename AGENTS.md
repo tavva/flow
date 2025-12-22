@@ -107,6 +107,7 @@ Checkbox status cycles: `[ ]` → `[w]` → `[x]` via `task-status-cycler.ts`
 - Jest with ts-jest preset, 80% coverage threshold
 - Mock Obsidian API via `tests/__mocks__/obsidian.ts`
 - Test API keys: Use `generateDeterministicFakeApiKey()` from `tests/test-utils.ts` to avoid security scanner false positives
+- Use the obsidian-agent-tools:obsidian-automation skill to view an Obsidian vault and view the plugin in action to test and validate changes
 
 ## Code Standards
 
