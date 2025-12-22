@@ -149,34 +149,6 @@ describe("FocusView", () => {
     expect(mockFocusItems).toHaveLength(0);
   });
 
-  it("should refresh sphere views when removing item from focus", async () => {
-    const item: FocusItem = {
-      file: "Test.md",
-      lineNumber: 5,
-      lineContent: "- [ ] Test action",
-      text: "Test action",
-      sphere: "work",
-      isGeneral: false,
-      addedAt: 123456,
-    };
-    mockFocusItems = [item];
-
-    // Mock sphere view leaves
-    const mockSphereView = {
-      onOpen: jest.fn(),
-    };
-    mockApp.workspace.getLeavesOfType = jest.fn().mockReturnValue([
-      {
-        view: mockSphereView,
-      },
-    ]);
-
-    await (view as any).removeFromFocus(item);
-
-    expect(mockApp.workspace.getLeavesOfType).toHaveBeenCalledWith("flow-gtd-sphere-view");
-    expect(mockSphereView.onOpen).toHaveBeenCalled();
-  });
-
   describe("Waiting-for items", () => {
     it("should keep waiting-for items during refresh (not remove them like completed items)", async () => {
       // This test verifies that [w] items are NOT removed during refresh

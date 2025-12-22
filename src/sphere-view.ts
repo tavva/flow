@@ -1,9 +1,17 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer, Menu, setIcon } from "obsidian";
+import {
+  ItemView,
+  WorkspaceLeaf,
+  TFile,
+  MarkdownRenderer,
+  Menu,
+  setIcon,
+  EventRef,
+} from "obsidian";
 import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { loadFocusItems, saveFocusItems, FOCUS_FILE_PATH } from "./focus-persistence";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
@@ -19,6 +27,8 @@ export class SphereView extends ItemView {
   private searchQuery: string = "";
   private refreshInProgress: boolean = false;
   private showNextActions: boolean = true;
+  private metadataCacheEventRef: EventRef | null = null;
+  private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -60,6 +70,9 @@ export class SphereView extends ItemView {
 
     this.renderLoadingState(container as HTMLElement);
 
+    // Register metadata cache listener for automatic refresh when files change
+    this.registerMetadataCacheListener();
+
     try {
       const data = await this.loadSphereData();
       this.renderContent(container as HTMLElement, data);
@@ -97,7 +110,14 @@ export class SphereView extends ItemView {
   }
 
   async onClose() {
-    // Cleanup if needed
+    if (this.metadataCacheEventRef) {
+      this.app.metadataCache.offref(this.metadataCacheEventRef);
+      this.metadataCacheEventRef = null;
+    }
+    if (this.scheduledRefreshTimeout) {
+      clearTimeout(this.scheduledRefreshTimeout);
+      this.scheduledRefreshTimeout = null;
+    }
   }
 
   // Save state for persistence across Obsidian reloads
@@ -135,6 +155,55 @@ export class SphereView extends ItemView {
     this.saveSettings = saveSettings;
     this.dataLoader = new SphereDataLoader(this.app, sphere, settings);
     await this.onOpen();
+  }
+
+  private registerMetadataCacheListener(): void {
+    if (this.metadataCacheEventRef) {
+      this.app.metadataCache.offref(this.metadataCacheEventRef);
+    }
+    this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
+      if (this.isRelevantFile(file)) {
+        this.scheduleAutoRefresh();
+      }
+    });
+  }
+
+  private isRelevantFile(file: TFile): boolean {
+    // Refresh when focus file changes (for "in focus" highlighting)
+    if (file.path === FOCUS_FILE_PATH) {
+      return true;
+    }
+
+    // Refresh when any markdown file in the vault changes that might be a project
+    // We check the metadata cache for project tags
+    const metadata = this.app.metadataCache.getFileCache(file);
+    if (!metadata?.frontmatter?.tags) {
+      return false;
+    }
+
+    const tags = Array.isArray(metadata.frontmatter.tags)
+      ? metadata.frontmatter.tags
+      : [metadata.frontmatter.tags];
+
+    // Check if any tag matches this sphere
+    return tags.some((tag: string) => {
+      const normalizedTag = tag.replace(/^#/, "").toLowerCase();
+      if (!normalizedTag.startsWith("project/")) return false;
+
+      const sphereTag = normalizedTag.slice("project/".length);
+      const normalizedSphere = this.sphere.trim().toLowerCase().replace(/\s+/g, "-");
+      return sphereTag === normalizedSphere;
+    });
+  }
+
+  private scheduleAutoRefresh(): void {
+    if (this.scheduledRefreshTimeout) {
+      clearTimeout(this.scheduledRefreshTimeout);
+    }
+    this.scheduledRefreshTimeout = setTimeout(() => {
+      this.scheduledRefreshTimeout = null;
+      void this.refresh();
+    }, 500);
   }
 
   private async loadSphereData(): Promise<SphereViewData> {
