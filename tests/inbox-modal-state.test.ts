@@ -105,6 +105,26 @@ describe("InboxModalState selection state", () => {
   });
 });
 
+describe("InboxModalState view mode", () => {
+  it("should initialise viewMode to list", () => {
+    const { state } = createTestState();
+    expect(state.viewMode).toBe("list");
+  });
+
+  it("should switch to detail mode when showDetail called", () => {
+    const { state } = createTestState();
+    state.showDetail();
+    expect(state.viewMode).toBe("detail");
+  });
+
+  it("should switch to list mode when showList called", () => {
+    const { state } = createTestState();
+    state.showDetail();
+    state.showList();
+    expect(state.viewMode).toBe("list");
+  });
+});
+
 describe("InboxModalState discardItem", () => {
   const createEditableItem = (): EditableItem => ({
     original: "Example",

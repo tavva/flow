@@ -10,6 +10,8 @@ export type RenderTarget = "inbox" | "editable";
 
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
 
+export type ViewMode = "list" | "detail";
+
 export class InboxModalState {
   public editableItems: EditableItem[] = [];
   public deletionOffsets = new Map<string, number>();
@@ -17,6 +19,7 @@ export class InboxModalState {
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
   public selectedIndex = -1;
+  public viewMode: ViewMode = "list";
 
   private uniqueIdCounter = 0;
 
@@ -39,6 +42,16 @@ export class InboxModalState {
       return;
     }
     this.selectedIndex = Math.max(0, Math.min(index, this.editableItems.length - 1));
+    this.queueRender("editable");
+  }
+
+  showDetail() {
+    this.viewMode = "detail";
+    this.queueRender("editable");
+  }
+
+  showList() {
+    this.viewMode = "list";
     this.queueRender("editable");
   }
 
