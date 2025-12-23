@@ -126,7 +126,7 @@ export class InboxProcessingView extends ItemView {
     const twoPaneContainer = container.createDiv("flow-inbox-container");
 
     // Apply view mode class for narrow viewports
-    twoPaneContainer.addClass(this.state.viewMode === "list" ? "view-list" : "view-detail");
+    twoPaneContainer.classList.add(this.state.viewMode === "list" ? "view-list" : "view-detail");
 
     // List pane
     const listPane = twoPaneContainer.createDiv();

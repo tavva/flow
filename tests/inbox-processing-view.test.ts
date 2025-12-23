@@ -100,11 +100,13 @@ describe("InboxProcessingView", () => {
       }),
       createDiv: jest.fn().mockImplementation(createMockDiv),
       addClass: jest.fn(),
+      classList: { add: jest.fn() },
       style: {},
     });
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
+      classList: { add: jest.fn() },
       createEl: jest.fn().mockReturnValue({
         addEventListener: jest.fn(),
         createEl: jest.fn(),
@@ -155,11 +157,13 @@ describe("InboxProcessingView", () => {
       }),
       createDiv: jest.fn().mockImplementation(createMockDiv),
       addClass: jest.fn(),
+      classList: { add: jest.fn() },
       style: {},
     });
     const mockContainer = {
       empty: jest.fn(),
       addClass: jest.fn(),
+      classList: { add: jest.fn() },
       createEl: jest.fn().mockReturnValue({
         addEventListener: jest.fn(),
         createEl: jest.fn(),
@@ -718,6 +722,7 @@ describe("InboxProcessingView", () => {
         }),
         createDiv: jest.fn().mockImplementation(createMockDiv),
         addClass: jest.fn(),
+        classList: { add: jest.fn() },
         style: {},
       });
       const mockInput = { focus: jest.fn() };
