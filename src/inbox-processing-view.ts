@@ -298,8 +298,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+T to toggle date section
-    if (event.key === "t" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+T or Ctrl+M to toggle date section (M for "More options")
+    if ((event.key === "t" || event.key === "m") && (event.ctrlKey || event.metaKey)) {
       if (selectedItem) {
         // Check if this action type shows date section (all except reference and trash)
         const showsDateSection =
@@ -311,6 +311,16 @@ export class InboxProcessingView extends ItemView {
           event.preventDefault();
           event.stopPropagation();
         }
+      }
+      return;
+    }
+
+    // Ctrl+Backspace to discard current item
+    if (event.key === "Backspace" && (event.ctrlKey || event.metaKey)) {
+      if (selectedItem) {
+        this.state.discardItem(selectedItem);
+        event.preventDefault();
+        event.stopPropagation();
       }
       return;
     }
@@ -397,9 +407,10 @@ export class InboxProcessingView extends ItemView {
       { key: "⌘/Ctrl + 1-9", desc: "Toggle sphere selection" },
       { key: "⌘/Ctrl + J", desc: "Toggle 'Add to focus'" },
       { key: "⌘/Ctrl + D", desc: "Toggle 'Mark as done'" },
-      { key: "⌘/Ctrl + T", desc: "Toggle date section" },
+      { key: "⌘/Ctrl + T/M", desc: "Toggle date section" },
       { section: "Actions" },
       { key: "⌘/Ctrl + Enter", desc: "Save item" },
+      { key: "⌘/Ctrl + Backspace", desc: "Discard item" },
       { key: "⌘/Ctrl + Q", desc: "Exit text field" },
     ];
 

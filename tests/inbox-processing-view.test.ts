@@ -1144,6 +1144,77 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
+    test("Ctrl+M toggles date section expansion (alias for More options)", () => {
+      const item = {
+        selectedAction: "next-actions-file",
+        isDateSectionExpanded: false,
+      } as any;
+      (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "m",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.isDateSectionExpanded).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Ctrl+Backspace discards current item", () => {
+      const item = {
+        selectedAction: "next-actions-file",
+      } as any;
+      (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
+      const discardSpy = jest
+        .spyOn((view as any).state, "discardItem")
+        .mockImplementation(() => {});
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "Backspace",
+        ctrlKey: true,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(discardSpy).toHaveBeenCalledWith(item);
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("Cmd+Backspace discards current item (Mac)", () => {
+      const item = {
+        selectedAction: "create-project",
+      } as any;
+      (view as any).state.editableItems = [item];
+      (view as any).state.selectedIndex = 0;
+      const discardSpy = jest
+        .spyOn((view as any).state, "discardItem")
+        .mockImplementation(() => {});
+
+      handleKeyDown({
+        key: "Backspace",
+        metaKey: true,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(discardSpy).toHaveBeenCalledWith(item);
+    });
+
     test("Ctrl+J/D/T ignored for reference action", () => {
       const item = {
         selectedAction: "reference",
