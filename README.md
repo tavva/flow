@@ -5,6 +5,7 @@
 Flow captures everything demanding your attention and helps you focus on what matters. Built on David Allen's Getting Things Done methodology.
 
 [![Version](https://img.shields.io/github/v/release/tavva/flow?style=for-the-badge)](https://github.com/tavva/flow/releases)
+[![Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%237C3AED&label=downloads&query=%24.flow.downloads&url=https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/community-plugin-stats.json&style=for-the-badge)](https://obsidian.md/plugins?id=flow)
 [![Stable](https://img.shields.io/badge/status-stable-brightgreen?style=for-the-badge)](https://github.com/tavva/flow)
 [![Obsidian](https://img.shields.io/badge/Obsidian-plugin-7C3AED?style=for-the-badge)](https://obsidian.md/plugins?id=flow)
 
@@ -24,6 +25,8 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 - **Planning Mode** — Build your focus list by selecting actions from sphere views
 
 ## Quick Start
+
+[![Install in Obsidian](https://img.shields.io/badge/Install%20in-Obsidian-7C3AED?logo=obsidian&style=for-the-badge)](obsidian://show-plugin?id=flow)
 
 1. Install Flow in Obsidian (Settings → Community Plugins)
 2. Click the inbox ribbon icon and capture something
