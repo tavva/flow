@@ -892,7 +892,6 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].completedAt = Date.now();
         await this.saveFocus();
-        await this.refreshSphereViews();
         await this.onOpen(); // Re-render
       }
     }
@@ -928,7 +927,6 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].lineContent = updatedLine;
         await this.saveFocus();
-        await this.refreshSphereViews();
         await this.onOpen(); // Re-render
       }
     }
@@ -940,7 +938,6 @@ export class FocusView extends RefreshingView {
         !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
     );
     await this.saveFocus();
-    await this.refreshSphereViews();
     await this.onOpen(); // Re-render
   }
 
@@ -1028,18 +1025,5 @@ export class FocusView extends RefreshingView {
     // Remove dragging class
     const target = e.target as HTMLElement;
     target.removeClass("dragging");
-  }
-
-  private async refreshSphereViews(): Promise<void> {
-    const { workspace } = this.app;
-    const leaves = workspace.getLeavesOfType("flow-gtd-sphere-view");
-
-    if (leaves.length > 0) {
-      for (const leaf of leaves) {
-        if (leaf.view && "onOpen" in leaf.view) {
-          await (leaf.view as any).onOpen();
-        }
-      }
-    }
   }
 }

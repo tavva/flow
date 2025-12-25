@@ -363,16 +363,18 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    // CLI Inbox File
+    // Default Inbox File
     new Setting(containerEl)
-      .setName("CLI Inbox File")
-      .setDesc("Filename for CLI quick captures (will be created in Flow Inbox Files folder)")
+      .setName("Default Inbox File")
+      .setDesc(
+        "Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)"
+      )
       .addText((text) =>
         text
-          .setPlaceholder("Flow CLI Inbox.md")
-          .setValue(this.plugin.settings.cliInboxFile)
+          .setPlaceholder("Inbox.md")
+          .setValue(this.plugin.settings.defaultInboxFile)
           .onChange(async (value) => {
-            this.plugin.settings.cliInboxFile = value;
+            this.plugin.settings.defaultInboxFile = value;
             await this.plugin.saveSettings();
           })
       );

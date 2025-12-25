@@ -98,7 +98,7 @@ export class AddToInboxModal extends Modal {
 
   private async getOrCreateInboxFile(): Promise<TFile> {
     const inboxPath = normalizePath(
-      `${this.settings.inboxFilesFolderPath}/${this.settings.cliInboxFile}`
+      `${this.settings.inboxFilesFolderPath}/${this.settings.defaultInboxFile}`
     );
 
     let inboxFile = this.app.vault.getAbstractFileByPath(inboxPath);
