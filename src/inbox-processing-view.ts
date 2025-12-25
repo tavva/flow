@@ -16,6 +16,7 @@ export class InboxProcessingView extends ItemView {
   private pendingFocus: string | null = null;
   private saveSettings: () => Promise<void>;
   private showingHelp = false;
+  private isClosed = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -53,6 +54,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   async onClose() {
+    this.isClosed = true;
     window.removeEventListener("keydown", this.handleKeyDown);
     if (this.renderTimeout) {
       clearTimeout(this.renderTimeout);
@@ -79,8 +81,11 @@ export class InboxProcessingView extends ItemView {
   }
 
   private renderCurrentView(target: RenderTarget) {
-    const container = this.containerEl.children[1] as HTMLElement;
-    if (!container) {
+    if (this.isClosed) {
+      return;
+    }
+    const container = this.containerEl?.children?.[1] as HTMLElement;
+    if (!container || typeof container.empty !== "function") {
       return;
     }
 
@@ -124,6 +129,9 @@ export class InboxProcessingView extends ItemView {
 
     // Two-pane container
     const twoPaneContainer = container.createDiv("flow-inbox-container");
+    if (!twoPaneContainer?.classList) {
+      return;
+    }
 
     // Apply view mode class for narrow viewports
     twoPaneContainer.classList.add(this.state.viewMode === "list" ? "view-list" : "view-detail");
