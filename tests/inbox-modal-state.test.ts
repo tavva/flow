@@ -1,7 +1,178 @@
 import { InboxModalState } from "../src/inbox-modal-state";
-import { EditableItem } from "../src/inbox-types";
-import { DEFAULT_SETTINGS } from "../src/types";
+import { EditableItem, InboxItem } from "../src/inbox-types";
+import { DEFAULT_SETTINGS, PluginSettings } from "../src/types";
 import { InboxProcessingController } from "../src/inbox-processing-controller";
+
+function createMockSettings(overrides: Partial<PluginSettings> = {}): PluginSettings {
+  return { ...DEFAULT_SETTINGS, ...overrides };
+}
+
+function createTestState(options: { settings?: PluginSettings } = {}) {
+  const settings = options.settings ?? createMockSettings();
+  const controller = {
+    loadExistingProjects: jest.fn().mockResolvedValue([]),
+    loadExistingPersons: jest.fn().mockResolvedValue([]),
+    loadInboxEditableItems: jest.fn().mockResolvedValue([]),
+    saveItem: jest.fn().mockResolvedValue(undefined),
+    discardInboxItem: jest.fn().mockResolvedValue(undefined),
+    getInboxScanner: jest.fn().mockReturnValue({
+      getAllInboxItems: jest.fn().mockResolvedValue([]),
+      deleteInboxItem: jest.fn().mockResolvedValue(undefined),
+    }),
+    setInboxScanner: jest.fn(),
+  } as unknown as InboxProcessingController;
+  const render = jest.fn();
+  const state = new InboxModalState(controller, settings, render);
+  return { state, controller, render, settings };
+}
+
+function mockInboxScanner(items: InboxItem[]) {
+  return {
+    getAllInboxItems: jest.fn().mockResolvedValue(items),
+    deleteInboxItem: jest.fn().mockResolvedValue(undefined),
+  };
+}
+
+describe("InboxModalState selection state", () => {
+  it("should initialise selectedIndex to 0 when items loaded", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+
+    await state.loadInboxItems();
+
+    expect(state.selectedIndex).toBe(0);
+  });
+
+  it("should initialise selectedIndex to -1 when no items", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([]);
+
+    await state.loadInboxItems();
+
+    expect(state.selectedIndex).toBe(-1);
+  });
+
+  it("should update selectedIndex when selectItem called", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    state.selectItem(1);
+
+    expect(state.selectedIndex).toBe(1);
+  });
+
+  it("should clamp selectedIndex to valid range", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    state.selectItem(99);
+    expect(state.selectedIndex).toBe(1);
+
+    state.selectItem(-5);
+    expect(state.selectedIndex).toBe(0);
+  });
+
+  it("should return selected item via getter", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    state.selectItem(1);
+
+    expect(state.selectedItem?.original).toBe("Item 2");
+  });
+
+  it("should return undefined for selectedItem when no items", async () => {
+    const { state, controller } = createTestState();
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([]);
+    await state.loadInboxItems();
+
+    expect(state.selectedItem).toBeUndefined();
+  });
+});
+
+describe("InboxModalState view mode", () => {
+  it("should initialise viewMode to list", () => {
+    const { state } = createTestState();
+    expect(state.viewMode).toBe("list");
+  });
+
+  it("should switch to detail mode when showDetail called", () => {
+    const { state } = createTestState();
+    state.showDetail();
+    expect(state.viewMode).toBe("detail");
+  });
+
+  it("should switch to list mode when showList called", () => {
+    const { state } = createTestState();
+    state.showDetail();
+    state.showList();
+    expect(state.viewMode).toBe("list");
+  });
+});
+
+describe("InboxModalState last used sphere", () => {
+  it("should initialise lastUsedSphere to first sphere from settings", () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state } = createTestState({ settings });
+
+    expect(state.lastUsedSphere).toBe("work");
+  });
+
+  it("should initialise lastUsedSphere to undefined if no spheres", () => {
+    const settings = createMockSettings();
+    settings.spheres = [];
+    const { state } = createTestState({ settings });
+
+    expect(state.lastUsedSphere).toBeUndefined();
+  });
+
+  it("should update lastUsedSphere when item saved with sphere", async () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state, controller } = createTestState({ settings });
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    state.editableItems[0].selectedSpheres = ["personal"];
+    await state.saveAndRemoveItem(state.editableItems[0]);
+
+    expect(state.lastUsedSphere).toBe("personal");
+  });
+
+  it("should apply lastUsedSphere as default to new items", async () => {
+    const settings = createMockSettings();
+    settings.spheres = ["work", "personal"];
+    const { state, controller } = createTestState({ settings });
+
+    // Simulate lastUsedSphere being set from previous save
+    state.lastUsedSphere = "personal";
+
+    (controller.loadInboxEditableItems as jest.Mock).mockResolvedValue([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    await state.loadInboxItems();
+
+    expect(state.editableItems[0].selectedSpheres).toEqual(["personal"]);
+  });
+});
 
 describe("InboxModalState discardItem", () => {
   const createEditableItem = (): EditableItem => ({

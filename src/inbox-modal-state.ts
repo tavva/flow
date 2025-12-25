@@ -10,12 +10,17 @@ export type RenderTarget = "inbox" | "editable";
 
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
 
+export type ViewMode = "list" | "detail";
+
 export class InboxModalState {
   public editableItems: EditableItem[] = [];
   public deletionOffsets = new Map<string, number>();
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
+  public selectedIndex = -1;
+  public viewMode: ViewMode = "list";
+  public lastUsedSphere: string | undefined;
 
   private uniqueIdCounter = 0;
 
@@ -23,7 +28,35 @@ export class InboxModalState {
     private readonly controller: InboxProcessingController,
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback
-  ) {}
+  ) {
+    this.lastUsedSphere = settings.spheres?.[0];
+  }
+
+  get selectedItem(): EditableItem | undefined {
+    if (this.selectedIndex >= 0 && this.selectedIndex < this.editableItems.length) {
+      return this.editableItems[this.selectedIndex];
+    }
+    return undefined;
+  }
+
+  selectItem(index: number) {
+    if (this.editableItems.length === 0) {
+      this.selectedIndex = -1;
+      return;
+    }
+    this.selectedIndex = Math.max(0, Math.min(index, this.editableItems.length - 1));
+    this.queueRender("editable");
+  }
+
+  showDetail() {
+    this.viewMode = "detail";
+    this.queueRender("editable");
+  }
+
+  showList() {
+    this.viewMode = "list";
+    this.queueRender("editable");
+  }
 
   get inboxScanner(): Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem"> {
     return this.controller.getInboxScanner();
@@ -67,13 +100,22 @@ export class InboxModalState {
       this.isLoadingInbox = false;
 
       if (inboxEditableItems.length === 0) {
+        this.selectedIndex = -1;
         new Notice("No items found in inbox folders");
         this.requestRender("inbox");
         return;
       }
 
       this.editableItems = inboxEditableItems;
-      this.initializeExpandedState();
+      // Apply default sphere
+      if (this.lastUsedSphere) {
+        for (const item of this.editableItems) {
+          if (item.selectedSpheres.length === 0) {
+            item.selectedSpheres = [this.lastUsedSphere];
+          }
+        }
+      }
+      this.selectedIndex = inboxEditableItems.length > 0 ? 0 : -1;
       new Notice(`Loaded ${inboxEditableItems.length} items from inbox`);
       this.requestRender("editable");
     } catch (error) {
@@ -84,30 +126,22 @@ export class InboxModalState {
     }
   }
 
-  initializeExpandedState() {
-    if (this.editableItems.length > 0) {
-      this.editableItems[0].isExpanded = true;
-      for (let i = 1; i < this.editableItems.length; i++) {
-        this.editableItems[i].isExpanded = false;
-      }
-    }
-  }
-
-  expandItem(item: EditableItem) {
-    for (const editableItem of this.editableItems) {
-      editableItem.isExpanded = editableItem === item;
-    }
-    this.queueRender("editable");
-  }
-
   async saveAndRemoveItem(item: EditableItem) {
     try {
       await this.controller.saveItem(item, this.deletionOffsets);
+
+      // Track last used sphere
+      if (item.selectedSpheres.length > 0) {
+        this.lastUsedSphere = item.selectedSpheres[0];
+      }
+
       this.editableItems = this.editableItems.filter((current) => current !== item);
 
-      // Auto-expand the first remaining item
-      if (this.editableItems.length > 0) {
-        this.editableItems[0].isExpanded = true;
+      // Adjust selectedIndex after removal
+      if (this.editableItems.length === 0) {
+        this.selectedIndex = -1;
+      } else if (this.selectedIndex >= this.editableItems.length) {
+        this.selectedIndex = this.editableItems.length - 1;
       }
 
       // If we created a new project, refresh the project list so subsequent items can see it
@@ -143,9 +177,11 @@ export class InboxModalState {
 
     this.editableItems = this.editableItems.filter((current) => current !== item);
 
-    // Auto-expand the first remaining item
-    if (this.editableItems.length > 0) {
-      this.editableItems[0].isExpanded = true;
+    // Adjust selectedIndex after removal
+    if (this.editableItems.length === 0) {
+      this.selectedIndex = -1;
+    } else if (this.selectedIndex >= this.editableItems.length) {
+      this.selectedIndex = this.editableItems.length - 1;
     }
 
     new Notice(`🗑️ Discarded item`);

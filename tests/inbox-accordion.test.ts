@@ -1,12 +1,12 @@
-// ABOUTME: Tests for accordion behavior in inbox processing view
-// ABOUTME: Ensures only one item is expanded at a time with auto-expand on completion
+// ABOUTME: Tests for selection state behavior in inbox processing view
+// ABOUTME: Ensures proper selection management when items are added, saved, or discarded
 
 import { InboxModalState } from "../src/inbox-modal-state";
 import { InboxProcessingController } from "../src/inbox-processing-controller";
 import { DEFAULT_SETTINGS } from "../src/types";
 import { EditableItem } from "../src/inbox-types";
 
-describe("Inbox Accordion State Logic", () => {
+describe("Inbox Selection State Logic", () => {
   let mockController: InboxProcessingController;
   let mockSettings: typeof DEFAULT_SETTINGS;
 
@@ -18,29 +18,12 @@ describe("Inbox Accordion State Logic", () => {
     mockSettings = { ...DEFAULT_SETTINGS };
   });
 
-  test("first item is marked as expanded on initialization", () => {
+  test("selectedIndex starts at -1 by default", () => {
     const state = new InboxModalState(mockController, mockSettings, jest.fn());
-
-    state.editableItems = [
-      {
-        original: "First item",
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["personal"],
-      } as EditableItem,
-      {
-        original: "Second item",
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["work"],
-      } as EditableItem,
-    ];
-
-    state.initializeExpandedState();
-
-    expect(state.editableItems[0].isExpanded).toBe(true);
-    expect(state.editableItems[1].isExpanded).toBe(false);
+    expect(state.selectedIndex).toBe(-1);
   });
 
-  test("expanding an item collapses all others", () => {
+  test("selectItem updates selectedIndex correctly", () => {
     const renderCallback = jest.fn();
     const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
@@ -49,55 +32,28 @@ describe("Inbox Accordion State Logic", () => {
         original: "First item",
         selectedAction: "next-actions-file",
         selectedSpheres: ["personal"],
-        isExpanded: true,
       } as EditableItem,
       {
         original: "Second item",
         selectedAction: "next-actions-file",
         selectedSpheres: ["work"],
-        isExpanded: false,
       } as EditableItem,
       {
         original: "Third item",
         selectedAction: "create-project",
         selectedSpheres: ["personal"],
-        isExpanded: false,
       } as EditableItem,
     ];
+    state.selectedIndex = 0;
 
-    state.expandItem(state.editableItems[1]);
+    state.selectItem(1);
 
-    expect(state.editableItems[0].isExpanded).toBe(false);
-    expect(state.editableItems[1].isExpanded).toBe(true);
-    expect(state.editableItems[2].isExpanded).toBe(false);
+    expect(state.selectedIndex).toBe(1);
+    expect(state.selectedItem?.original).toBe("Second item");
     expect(renderCallback).toHaveBeenCalledWith("editable");
   });
 
-  test("only one item is expanded at a time after expandItem", () => {
-    const state = new InboxModalState(mockController, mockSettings, jest.fn());
-
-    state.editableItems = [
-      {
-        original: "First item",
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["personal"],
-        isExpanded: true,
-      } as EditableItem,
-      {
-        original: "Second item",
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["work"],
-        isExpanded: false,
-      } as EditableItem,
-    ];
-
-    state.expandItem(state.editableItems[1]);
-
-    const expandedCount = state.editableItems.filter((item) => item.isExpanded).length;
-    expect(expandedCount).toBe(1);
-  });
-
-  test("after saving an item, next item expands automatically", async () => {
+  test("after saving an item, selectedIndex adjusts to stay in range", async () => {
     const renderCallback = jest.fn();
     const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
@@ -105,27 +61,26 @@ describe("Inbox Accordion State Logic", () => {
       original: "First item",
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
-      isExpanded: true,
     };
 
     const secondItem: EditableItem = {
       original: "Second item",
       selectedAction: "next-actions-file",
       selectedSpheres: ["work"],
-      isExpanded: false,
     };
 
     state.editableItems = [firstItem, secondItem];
+    state.selectedIndex = 0;
 
     await state.saveAndRemoveItem(firstItem);
 
-    // After removing first item, second item becomes index 0 and should be expanded
+    // After removing first item, selectedIndex should remain at 0 (now pointing to second item)
     expect(state.editableItems.length).toBe(1);
-    expect(state.editableItems[0].isExpanded).toBe(true);
-    expect(state.editableItems[0].original).toBe("Second item");
+    expect(state.selectedIndex).toBe(0);
+    expect(state.selectedItem?.original).toBe("Second item");
   });
 
-  test("after discarding an item, next item expands automatically", async () => {
+  test("after discarding an item, selectedIndex adjusts to stay in range", async () => {
     const renderCallback = jest.fn();
     const state = new InboxModalState(mockController, mockSettings, renderCallback);
 
@@ -133,7 +88,6 @@ describe("Inbox Accordion State Logic", () => {
       original: "First item",
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
-      isExpanded: true,
       inboxItem: {
         file: "test.md",
         lineNumber: 1,
@@ -146,33 +100,61 @@ describe("Inbox Accordion State Logic", () => {
       original: "Second item",
       selectedAction: "next-actions-file",
       selectedSpheres: ["work"],
-      isExpanded: false,
     };
 
     state.editableItems = [firstItem, secondItem];
+    state.selectedIndex = 0;
 
     await state.discardItem(firstItem);
 
-    // After removing first item, second item becomes index 0 and should be expanded
+    // After removing first item, selectedIndex should remain at 0 (now pointing to second item)
     expect(state.editableItems.length).toBe(1);
-    expect(state.editableItems[0].isExpanded).toBe(true);
-    expect(state.editableItems[0].original).toBe("Second item");
+    expect(state.selectedIndex).toBe(0);
+    expect(state.selectedItem?.original).toBe("Second item");
   });
 
-  test("when last item is removed, no items remain to expand", async () => {
+  test("when last item is removed, selectedIndex becomes -1", async () => {
     const state = new InboxModalState(mockController, mockSettings, jest.fn());
 
     const lastItem: EditableItem = {
       original: "Last item",
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
-      isExpanded: true,
     };
 
     state.editableItems = [lastItem];
+    state.selectedIndex = 0;
 
     await state.saveAndRemoveItem(lastItem);
 
     expect(state.editableItems.length).toBe(0);
+    expect(state.selectedIndex).toBe(-1);
+    expect(state.selectedItem).toBeUndefined();
+  });
+
+  test("removing item at end adjusts selectedIndex to last item", async () => {
+    const state = new InboxModalState(mockController, mockSettings, jest.fn());
+
+    const firstItem: EditableItem = {
+      original: "First item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["personal"],
+    };
+
+    const secondItem: EditableItem = {
+      original: "Second item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+    };
+
+    state.editableItems = [firstItem, secondItem];
+    state.selectedIndex = 1; // Select the last item
+
+    await state.saveAndRemoveItem(secondItem);
+
+    // After removing last item, selectedIndex should adjust to 0
+    expect(state.editableItems.length).toBe(1);
+    expect(state.selectedIndex).toBe(0);
+    expect(state.selectedItem?.original).toBe("First item");
   });
 });

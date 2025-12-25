@@ -5,7 +5,11 @@
  * @jest-environment jsdom
  */
 
-import { renderEditableItemContent } from "../src/inbox-modal-views";
+import {
+  renderEditableItemContent,
+  renderListPane,
+  renderDetailPane,
+} from "../src/inbox-modal-views";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
 
@@ -307,5 +311,189 @@ describe("renderEditableItemContent - date section", () => {
     dateSectionHeader.click();
     expect(dateInputContainer.style.display).toBe("none");
     expect(chevron.textContent).toBe("▶");
+  });
+});
+
+describe("renderListPane", () => {
+  it("should render list header with item count", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+
+    renderListPane(container, state);
+
+    const header = container.querySelector(".flow-inbox-list-header");
+    expect(header?.textContent).toContain("Inbox");
+    expect(header?.textContent).toContain("2");
+  });
+
+  it("should render list items with text", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      {
+        original: "This is a very long item that should be shown",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+      },
+      { original: "Short item", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+
+    renderListPane(container, state);
+
+    const items = container.querySelectorAll(".flow-inbox-list-item");
+    expect(items.length).toBe(2);
+    expect(items[0].textContent).toContain("This is a very long item");
+  });
+
+  it("should mark selected item with selected class", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 1;
+
+    renderListPane(container, state);
+
+    const items = container.querySelectorAll(".flow-inbox-list-item");
+    expect(items[0].classList.contains("selected")).toBe(false);
+    expect(items[1].classList.contains("selected")).toBe(true);
+  });
+
+  it("should call selectItem when item clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+      { original: "Item 2", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectItem = jest.fn();
+
+    renderListPane(container, state);
+
+    const items = container.querySelectorAll(".flow-inbox-list-item");
+    (items[1] as HTMLElement).click();
+
+    expect(state.selectItem).toHaveBeenCalledWith(1);
+  });
+
+  it("should render empty state when no items", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([]);
+
+    renderListPane(container, state);
+
+    const emptyState = container.querySelector(".flow-inbox-empty");
+    expect(emptyState).toBeTruthy();
+    expect(emptyState?.textContent).toContain("empty");
+  });
+
+  it("should render refresh button in header", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Item 1", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+
+    renderListPane(container, state);
+
+    const refreshBtn = container.querySelector(".flow-inbox-refresh");
+    expect(refreshBtn).toBeTruthy();
+  });
+});
+
+describe("renderDetailPane", () => {
+  it("should render empty state when no item selected", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([]);
+    state.selectedIndex = -1;
+
+    renderDetailPane(container, state, {});
+
+    const emptyState = container.querySelector(".flow-inbox-detail-empty");
+    expect(emptyState).toBeTruthy();
+    expect(emptyState?.textContent).toContain("Select an item");
+  });
+
+  it("should render full original text", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const longText =
+      "This is a very long piece of text that would be truncated in the list but should be shown in full here";
+    const state = createMockState([
+      { original: longText, selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, {});
+
+    const originalText = container.querySelector(".flow-inbox-detail-original");
+    expect(originalText?.textContent).toBe(longText);
+  });
+
+  it("should render action type buttons", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Test item", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, {});
+
+    const actionButtons = container.querySelectorAll(".flow-inbox-action-btn");
+    expect(actionButtons.length).toBe(7); // All 7 action types
+  });
+
+  it("should highlight selected action type", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Test item", selectedAction: "someday-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, {});
+
+    const selectedBtn = container.querySelector(".flow-inbox-action-btn.selected");
+    expect(selectedBtn?.textContent).toContain("Someday");
+  });
+
+  it("should render Save and Discard buttons", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Test item", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, {});
+
+    const saveBtn = container.querySelector(".flow-inbox-save-btn");
+    const discardBtn = container.querySelector(".flow-inbox-discard-btn");
+    expect(saveBtn).toBeTruthy();
+    expect(discardBtn).toBeTruthy();
+  });
+
+  it("should render back button when showBack option is true", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Test item", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, { showBack: true });
+
+    const backBtn = container.querySelector(".flow-inbox-back-btn");
+    expect(backBtn).toBeTruthy();
+  });
+
+  it("should not render back button when showBack is false", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([
+      { original: "Test item", selectedAction: "next-actions-file", selectedSpheres: [] },
+    ]);
+    state.selectedIndex = 0;
+
+    renderDetailPane(container, state, { showBack: false });
+
+    const backBtn = container.querySelector(".flow-inbox-back-btn");
+    expect(backBtn).toBeFalsy();
   });
 });

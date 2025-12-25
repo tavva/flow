@@ -1,10 +1,206 @@
+// ABOUTME: Rendering functions for inbox processing UI components
+// ABOUTME: Includes list pane, detail pane, and shared editing controls
+
 import { DropdownComponent, Setting, setIcon } from "obsidian";
 import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
 import { getActionLabel } from "./inbox-modal-utils";
 
-export interface EditableItemsViewOptions {
-  onClose: () => void;
+export interface ListPaneOptions {
+  onRefresh?: () => void;
+  onItemSelect?: (index: number) => void;
+}
+
+export function renderListPane(
+  container: HTMLElement,
+  state: InboxModalState,
+  options: ListPaneOptions = {}
+) {
+  container.empty();
+  container.addClass("flow-inbox-list-pane");
+
+  // Header
+  const header = container.createDiv("flow-inbox-list-header");
+  const title = header.createSpan("flow-inbox-list-title");
+  title.setText(`Inbox (${state.editableItems.length})`);
+
+  const refreshBtn = header.createEl("button", { cls: "flow-inbox-refresh clickable-icon" });
+  setIcon(refreshBtn, "refresh-cw");
+  refreshBtn.setAttribute("aria-label", "Refresh inbox");
+  if (options.onRefresh) {
+    refreshBtn.addEventListener("click", options.onRefresh);
+  }
+
+  // List or empty state
+  if (state.editableItems.length === 0) {
+    const emptyState = container.createDiv("flow-inbox-empty");
+    const icon = emptyState.createDiv("flow-inbox-empty-icon");
+    icon.setText("✨");
+    emptyState.createEl("p", { text: "Your inbox is empty" });
+    return;
+  }
+
+  const list = container.createDiv("flow-inbox-list");
+  state.editableItems.forEach((item, index) => {
+    const itemEl = list.createDiv("flow-inbox-list-item");
+    if (index === state.selectedIndex) {
+      itemEl.addClass("selected");
+    }
+
+    const text = itemEl.createSpan("flow-inbox-list-item-text");
+    text.setText(item.original);
+
+    itemEl.addEventListener("click", () => {
+      state.selectItem(index);
+      options.onItemSelect?.(index);
+    });
+  });
+}
+
+export interface DetailPaneOptions {
+  showBack?: boolean;
+  onBack?: () => void;
+  onSave?: (item: EditableItem) => void;
+  onDiscard?: (item: EditableItem) => void;
+}
+
+export function renderDetailPane(
+  container: HTMLElement,
+  state: InboxModalState,
+  options: DetailPaneOptions
+) {
+  container.empty();
+  container.addClass("flow-inbox-detail-pane");
+
+  const item = state.selectedItem;
+
+  // Header with buttons
+  const header = container.createDiv("flow-inbox-detail-header");
+
+  if (options.showBack) {
+    const backBtn = header.createEl("button", {
+      cls: "flow-inbox-back-btn clickable-icon",
+    });
+    setIcon(backBtn, "arrow-left");
+    backBtn.createSpan().setText(`Inbox (${state.editableItems.length})`);
+    if (options.onBack) {
+      backBtn.addEventListener("click", options.onBack);
+    }
+  }
+
+  // Empty state
+  if (!item) {
+    const emptyState = container.createDiv("flow-inbox-detail-empty");
+    emptyState.createEl("p", { text: "Select an item to process" });
+    return;
+  }
+
+  // Action buttons in header (right side)
+  const headerActions = header.createDiv("flow-inbox-detail-header-actions");
+
+  const discardBtn = headerActions.createEl("button", {
+    text: "Discard",
+    cls: "flow-inbox-discard-btn",
+  });
+  discardBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to discard this item?")) {
+      options.onDiscard?.(item);
+    }
+  });
+
+  const saveBtn = headerActions.createEl("button", {
+    text: item.selectedAction === "trash" ? "Delete" : "Save",
+    cls: "flow-inbox-save-btn mod-cta",
+  });
+  saveBtn.addEventListener("click", () => options.onSave?.(item));
+
+  // Original text
+  const originalSection = container.createDiv("flow-inbox-detail-section");
+  const originalText = originalSection.createDiv("flow-inbox-detail-original");
+  originalText.setText(item.original);
+
+  // Action type selector
+  const actionSection = container.createDiv("flow-inbox-detail-section");
+  renderDetailActionTypeSelector(actionSection, item, state);
+
+  // Conditional sections based on action type
+  if (item.selectedAction === "create-project") {
+    renderProjectCreationSection(container, item, state);
+  } else if (item.selectedAction === "add-to-project" || item.selectedAction === "reference") {
+    renderProjectSelectionSection(container, item, state);
+  } else if (item.selectedAction === "person") {
+    renderPersonSelectionSection(container, item, state);
+  }
+
+  // Next actions editor (for most action types)
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
+    renderNextActionsEditor(container, item, state);
+  }
+
+  // Sphere selector (for applicable action types)
+  if (
+    item.selectedAction !== "add-to-project" &&
+    item.selectedAction !== "reference" &&
+    item.selectedAction !== "trash"
+  ) {
+    renderSphereSelector(container, item, state);
+  }
+
+  // Bottom options (focus, mark done, more)
+  if (
+    item.selectedAction === "create-project" ||
+    item.selectedAction === "add-to-project" ||
+    item.selectedAction === "next-actions-file"
+  ) {
+    renderFocusCheckbox(container, item, state);
+  }
+
+  // Date section for applicable action types
+  if (item.selectedAction !== "reference" && item.selectedAction !== "trash") {
+    renderDateSection(container, item, state);
+  }
+}
+
+function renderDetailActionTypeSelector(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const selectorEl = container.createDiv("flow-inbox-action-selector");
+
+  const actions = [
+    { key: "c", value: "create-project", label: "Create" },
+    { key: "a", value: "add-to-project", label: "Add" },
+    { key: "n", value: "next-actions-file", label: "Next" },
+    { key: "s", value: "someday-file", label: "Someday" },
+    { key: "r", value: "reference", label: "Ref" },
+    { key: "p", value: "person", label: "Person" },
+    { key: "t", value: "trash", label: "Trash" },
+  ];
+
+  const row1 = selectorEl.createDiv("flow-inbox-action-row");
+  const row2 = selectorEl.createDiv("flow-inbox-action-row");
+
+  actions.forEach((action, index) => {
+    const row = index < 4 ? row1 : row2;
+    const btn = row.createEl("button", {
+      cls: "flow-inbox-action-btn",
+    });
+    btn.setAttribute("data-action", action.value);
+
+    const keyHint = btn.createSpan("flow-inbox-action-key");
+    keyHint.setText(action.key.toUpperCase());
+    btn.appendText(" " + action.label);
+
+    if (item.selectedAction === action.value) {
+      btn.addClass("selected");
+    }
+
+    btn.addEventListener("click", () => {
+      item.selectedAction = action.value as EditableItem["selectedAction"];
+      state.queueRender("editable");
+    });
+  });
 }
 
 export interface InboxViewOptions {
@@ -79,173 +275,6 @@ export function renderInboxView(
       "No items found in your Flow inbox folders. Add files to process in your inbox folders, or close this window."
     );
   }
-}
-
-export function renderEditableItemsView(
-  contentEl: HTMLElement,
-  state: InboxModalState,
-  { onClose }: EditableItemsViewOptions
-) {
-  contentEl.empty();
-  contentEl.addClass("flow-gtd-inbox-modal");
-
-  // Header section with title and description
-  const headerSection = contentEl.createDiv("flow-gtd-header-section");
-  headerSection.style.marginBottom = "24px";
-
-  headerSection.createEl("h2", { text: "Flow inbox processing" });
-  headerSection.createEl("p", {
-    text: "Review your inbox items, edit them manually, then save them to your vault.",
-    cls: "flow-gtd-description",
-  });
-
-  renderIndividualEditableItems(contentEl, state);
-
-  if (state.editableItems.length === 0) {
-    const completionEl = contentEl.createDiv("flow-gtd-completion");
-    completionEl.createEl("h3", { text: "🎉 All items processed!" });
-    completionEl.createEl("p", { text: "Your inbox is now empty." });
-
-    new Setting(completionEl).addButton((button) =>
-      button.setButtonText("Close").setCta().onClick(onClose)
-    );
-  }
-}
-
-function renderIndividualEditableItems(container: HTMLElement, state: InboxModalState) {
-  const listContainer = container.createDiv("flow-gtd-items-list");
-
-  state.editableItems.forEach((item, index) => {
-    const itemEl = listContainer.createDiv("flow-gtd-editable-item");
-
-    // Header (always visible, clickable to expand/collapse)
-    const headerEl = itemEl.createDiv("flow-gtd-item-header");
-    headerEl.style.padding = "12px 16px";
-    headerEl.style.cursor = "pointer";
-    headerEl.style.borderBottom = "1px solid var(--background-modifier-border)";
-    headerEl.style.display = "flex";
-    headerEl.style.alignItems = "center";
-    headerEl.style.gap = "12px";
-
-    // Chevron icon
-    const chevron = headerEl.createSpan();
-    chevron.style.fontSize = "12px";
-    chevron.style.transition = "transform 0.2s ease";
-    chevron.setText(item.isExpanded ? "▼" : "▶");
-
-    // Original text preview
-    const headerText = headerEl.createSpan();
-    headerText.style.flex = "1";
-    headerText.style.fontWeight = "500";
-    headerText.setText(item.original);
-
-    // Click handler to toggle expansion
-    headerEl.addEventListener("click", () => {
-      state.expandItem(item);
-    });
-
-    // Content wrapper (collapsible)
-    const contentWrapper = itemEl.createDiv("flow-gtd-editable-item-content");
-    contentWrapper.style.padding = "16px";
-
-    if (!item.isExpanded) {
-      contentWrapper.style.display = "none";
-    }
-
-    // Original Text section (inside collapsible content)
-    const originalBox = contentWrapper.createDiv("flow-gtd-original-box");
-
-    const label = originalBox.createDiv();
-    label.addClass("flow-gtd-section-label");
-    label.style.marginBottom = "8px";
-    label.setText("Original");
-
-    const textDiv = originalBox.createDiv();
-    textDiv.addClass("flow-gtd-original-text");
-    textDiv.style.userSelect = "text";
-    textDiv.style.cursor = "text";
-    textDiv.setText(item.original);
-
-    renderEditableItemContent(contentWrapper, item, state);
-
-    const actionButtons = contentWrapper.createDiv("flow-gtd-item-actions");
-    actionButtons.style.marginTop = "16px";
-    actionButtons.style.paddingTop = "16px";
-    actionButtons.style.borderTop = "1px solid var(--background-modifier-border)";
-    actionButtons.style.display = "flex";
-    actionButtons.style.justifyContent = "space-between";
-    actionButtons.style.alignItems = "center";
-
-    // Discard button on the left
-    const discardButton = actionButtons.createEl("button", {
-      text: "Discard",
-      cls: "flow-gtd-discard-button",
-    });
-    discardButton.setAttribute("type", "button");
-    discardButton.style.backgroundColor = "transparent";
-    discardButton.style.color = "var(--text-muted)";
-    discardButton.style.border = "none";
-    discardButton.style.padding = "8px 20px";
-    discardButton.style.borderRadius = "8px";
-    discardButton.style.cursor = "pointer";
-    discardButton.style.fontSize = "14px";
-    discardButton.style.fontWeight = "500";
-    discardButton.style.transition = "color 0.2s ease";
-    discardButton.addEventListener("mouseenter", () => {
-      discardButton.style.color = "var(--text-normal)";
-    });
-    discardButton.addEventListener("mouseleave", () => {
-      discardButton.style.color = "var(--text-muted)";
-    });
-    discardButton.addEventListener("click", () => {
-      const confirmed = confirm(
-        "Are you sure you want to discard this item? This action cannot be undone."
-      );
-      if (confirmed) {
-        state.discardItem(item);
-      }
-    });
-
-    // Save or Delete button on the right
-    const primaryButton = actionButtons.createEl("button", {
-      text: item.selectedAction === "trash" ? "Delete" : "Save",
-      cls: "flow-gtd-save-button",
-    });
-    primaryButton.setAttribute("type", "button");
-
-    if (item.selectedAction === "trash") {
-      primaryButton.style.backgroundColor = "var(--color-red)";
-      primaryButton.style.color = "white";
-    } else {
-      primaryButton.style.backgroundColor = "var(--interactive-accent)";
-      primaryButton.style.color = "white";
-    }
-
-    primaryButton.style.border = "none";
-    primaryButton.style.padding = "10px 32px";
-    primaryButton.style.borderRadius = "8px";
-    primaryButton.style.cursor = "pointer";
-    primaryButton.style.fontSize = "14px";
-    primaryButton.style.fontWeight = "500";
-    primaryButton.style.transition = "background-color 0.2s ease";
-    primaryButton.style.boxShadow = "0 1px 2px rgba(0, 0, 0, 0.05)";
-
-    primaryButton.addEventListener("mouseenter", () => {
-      if (item.selectedAction === "trash") {
-        primaryButton.style.backgroundColor = "var(--color-red)";
-        primaryButton.style.opacity = "0.9";
-      } else {
-        primaryButton.style.opacity = "0.9";
-      }
-    });
-    primaryButton.addEventListener("mouseleave", () => {
-      primaryButton.style.opacity = "1";
-    });
-
-    primaryButton.addEventListener("click", () => {
-      state.saveAndRemoveItem(item);
-    });
-  });
 }
 
 function renderActionButtonGroups(
