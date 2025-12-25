@@ -26,7 +26,7 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 
 ## Quick Start
 
-[![Install in Obsidian](https://img.shields.io/badge/Install%20in-Obsidian-7C3AED?logo=obsidian&style=for-the-badge)](obsidian://show-plugin?id=flow)
+[![Install in Obsidian](https://img.shields.io/badge/Install%20in-Obsidian-7C3AED?logo=obsidian&style=for-the-badge)](https://obsidian.md/plugins?id=flow)
 
 1. Install Flow in Obsidian (Settings → Community Plugins)
 2. Click the inbox ribbon icon and capture something
