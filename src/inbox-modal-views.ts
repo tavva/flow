@@ -237,7 +237,8 @@ function shouldShowActionsSection(item: EditableItem): boolean {
 }
 
 function shouldShowProjectSection(item: EditableItem): boolean {
-  return getSimplifiedAction(item) === "next";
+  const simplified = getSimplifiedAction(item);
+  return simplified === "next" || simplified === "reference";
 }
 
 function shouldShowSphereSelector(item: EditableItem): boolean {
