@@ -2386,6 +2386,7 @@ select.flow-gtd-inline-select option,
 
 .flow-inbox-sphere-toggle {
   display: flex;
+  gap: 2px;
   border-radius: 0.375rem;
   background: var(--background-secondary);
   padding: 2px;
