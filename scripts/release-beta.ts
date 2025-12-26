@@ -354,11 +354,6 @@ export function confirmRelease(version: string): Promise<boolean> {
     console.log(`    --title "Beta v${version}" \\`);
     console.log("    --prerelease \\");
     console.log(`    ${assets}\n`);
-    console.log(`  gh release create ${version} \\`);
-    console.log("    --repo tavva/flow-release \\");
-    console.log(`    --title "Beta v${version}" \\`);
-    console.log("    --prerelease \\");
-    console.log(`    ${assets}\n`);
     console.log("  git add manifest.json");
     console.log(`  git commit -m "Release beta v${version}"`);
     console.log("  git push\n");
@@ -376,50 +371,42 @@ export function confirmRelease(version: string): Promise<boolean> {
 }
 
 /**
- * Creates GitHub release in both tavva/flow and tavva/flow-release
+ * Creates GitHub release in tavva/flow
  * @param version - Version to release
  * @returns true if successful, false otherwise
  */
 export function createGitHubRelease(version: string): boolean {
   const assets = getReleaseAssets();
-  const repositories = ["tavva/flow", "tavva/flow-release"];
   const releaseNotes = `Beta release v${version}`;
 
-  console.log("\nCreating GitHub releases...\n");
+  console.log("\nCreating GitHub release...\n");
 
-  for (const repo of repositories) {
-    console.log(`Creating release in ${repo}...`);
-    try {
-      execFileSync(
-        "gh",
-        [
-          "release",
-          "create",
-          version,
-          "--repo",
-          repo,
-          "--title",
-          `Beta v${version}`,
-          "--notes",
-          releaseNotes,
-          "--prerelease",
-          ...assets,
-        ],
-        { stdio: "inherit" }
-      );
-      console.log(`✓ Release created in ${repo}\n`);
-    } catch (error) {
-      console.error(
-        `\nError creating release in ${repo}. Manifest was updated but release failed.`
-      );
-      console.error(error instanceof Error ? error.message : String(error));
-      console.error("To rollback: git checkout manifest.json\n");
-      return false;
-    }
+  try {
+    execFileSync(
+      "gh",
+      [
+        "release",
+        "create",
+        version,
+        "--repo",
+        "tavva/flow",
+        "--title",
+        `Beta v${version}`,
+        "--notes",
+        releaseNotes,
+        "--prerelease",
+        ...assets,
+      ],
+      { stdio: "inherit" }
+    );
+    console.log("✓ Release created in tavva/flow\n");
+    return true;
+  } catch (error) {
+    console.error("\nError creating release. Manifest was updated but release failed.");
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("To rollback: git checkout manifest.json\n");
+    return false;
   }
-
-  console.log("✓ All GitHub releases created\n");
-  return true;
 }
 
 /**
