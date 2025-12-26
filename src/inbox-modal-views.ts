@@ -327,48 +327,55 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       updateAddButtonState();
     });
 
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        if (!hasEmptyAction()) {
-          addNewAction();
+    input.addEventListener(
+      "keydown",
+      (e) => {
+        // Ctrl + W: toggle waiting for
+        if (e.key.toLowerCase() === "w" && e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          item.waitingFor![index] = !item.waitingFor![index];
+          state.queueRender("editable");
+          return;
         }
-      }
-      if (e.key === "Backspace" && input.value === "" && currentActions.length > 1) {
-        e.preventDefault();
-        removeAction(index);
-      }
 
-      // Ctrl + W: toggle waiting for
-      if (e.key.toLowerCase() === "w" && e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        item.waitingFor![index] = !item.waitingFor![index];
-        state.queueRender("editable");
-      }
-
-      // Ctrl + F: toggle focus
-      if (e.key.toLowerCase() === "f" && e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        item.addToFocus![index] = !item.addToFocus![index];
-        if (item.addToFocus![index]) {
-          item.markAsDone![index] = false;
+        // Ctrl + F: toggle focus
+        if (e.key.toLowerCase() === "f" && e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          item.addToFocus![index] = !item.addToFocus![index];
+          if (item.addToFocus![index]) {
+            item.markAsDone![index] = false;
+          }
+          state.queueRender("editable");
+          return;
         }
-        state.queueRender("editable");
-      }
 
-      // Ctrl + D: toggle done
-      if (e.key.toLowerCase() === "d" && e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        item.markAsDone![index] = !item.markAsDone![index];
-        if (item.markAsDone![index]) {
-          item.addToFocus![index] = false;
+        // Ctrl + D: toggle done
+        if (e.key.toLowerCase() === "d" && e.ctrlKey && !e.metaKey) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          item.markAsDone![index] = !item.markAsDone![index];
+          if (item.markAsDone![index]) {
+            item.addToFocus![index] = false;
+          }
+          state.queueRender("editable");
+          return;
         }
-        state.queueRender("editable");
-      }
-    });
+
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (!hasEmptyAction()) {
+            addNewAction();
+          }
+        }
+        if (e.key === "Backspace" && input.value === "" && currentActions.length > 1) {
+          e.preventDefault();
+          removeAction(index);
+        }
+      },
+      true
+    );
 
     // Control buttons
     const controls = actionItem.createDiv("flow-inbox-action-controls");
