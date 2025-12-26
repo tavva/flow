@@ -342,6 +342,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       // Ctrl + W: toggle waiting for
       if (e.key.toLowerCase() === "w" && e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        e.stopPropagation();
         item.waitingFor![index] = !item.waitingFor![index];
         state.queueRender("editable");
       }
@@ -349,6 +350,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       // Ctrl + F: toggle focus
       if (e.key.toLowerCase() === "f" && e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        e.stopPropagation();
         item.addToFocus![index] = !item.addToFocus![index];
         if (item.addToFocus![index]) {
           item.markAsDone![index] = false;
@@ -359,6 +361,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       // Ctrl + D: toggle done
       if (e.key.toLowerCase() === "d" && e.ctrlKey && !e.metaKey) {
         e.preventDefault();
+        e.stopPropagation();
         item.markAsDone![index] = !item.markAsDone![index];
         if (item.markAsDone![index]) {
           item.addToFocus![index] = false;
