@@ -335,6 +335,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           e.preventDefault();
           e.stopImmediatePropagation();
           item.waitingFor![index] = !item.waitingFor![index];
+          (item as any).pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
@@ -347,6 +348,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           if (item.addToFocus![index]) {
             item.markAsDone![index] = false;
           }
+          (item as any).pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
@@ -359,6 +361,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           if (item.markAsDone![index]) {
             item.addToFocus![index] = false;
           }
+          (item as any).pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
