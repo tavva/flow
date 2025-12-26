@@ -330,8 +330,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     input.addEventListener(
       "keydown",
       (e) => {
-        // Ctrl + W: toggle waiting for
-        if (e.key.toLowerCase() === "w" && e.ctrlKey && !e.metaKey) {
+        // Ctrl+Shift + W: toggle waiting for
+        if (e.key.toLowerCase() === "w" && e.ctrlKey && e.shiftKey && !e.metaKey) {
           e.preventDefault();
           e.stopImmediatePropagation();
           item.waitingFor![index] = !item.waitingFor![index];
@@ -339,8 +339,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           return;
         }
 
-        // Ctrl + F: toggle focus
-        if (e.key.toLowerCase() === "f" && e.ctrlKey && !e.metaKey) {
+        // Ctrl+Shift + F: toggle focus
+        if (e.key.toLowerCase() === "f" && e.ctrlKey && e.shiftKey && !e.metaKey) {
           e.preventDefault();
           e.stopImmediatePropagation();
           item.addToFocus![index] = !item.addToFocus![index];
@@ -351,8 +351,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           return;
         }
 
-        // Ctrl + D: toggle done
-        if (e.key.toLowerCase() === "d" && e.ctrlKey && !e.metaKey) {
+        // Ctrl+Shift + D: toggle done
+        if (e.key.toLowerCase() === "d" && e.ctrlKey && e.shiftKey && !e.metaKey) {
           e.preventDefault();
           e.stopImmediatePropagation();
           item.markAsDone![index] = !item.markAsDone![index];

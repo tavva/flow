@@ -67,9 +67,9 @@ export class KeyboardShortcutsModal extends Modal {
       {
         title: "In action field",
         shortcuts: [
-          { keys: [ctrlKey, "W"], description: "Toggle waiting for" },
-          { keys: [ctrlKey, "F"], description: "Toggle focus" },
-          { keys: [ctrlKey, "D"], description: "Toggle done" },
+          { keys: [ctrlKey, "⇧", "W"], description: "Toggle waiting for" },
+          { keys: [ctrlKey, "⇧", "F"], description: "Toggle focus" },
+          { keys: [ctrlKey, "⇧", "D"], description: "Toggle done" },
         ],
       },
     ];
