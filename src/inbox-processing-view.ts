@@ -189,6 +189,19 @@ export class InboxProcessingView extends ItemView {
 
     if (!expandedItem) return;
 
+    // Enter focuses the first action input
+    if (event.key === "Enter") {
+      const contentEl = this.containerEl.children[1] as HTMLElement;
+      const firstActionInput = contentEl?.querySelector(
+        ".flow-inbox-action-input"
+      ) as HTMLInputElement;
+      if (firstActionInput) {
+        firstActionInput.focus();
+        event.preventDefault();
+      }
+      return;
+    }
+
     // Quick type switching with single keys
     switch (event.key.toLowerCase()) {
       case "n":

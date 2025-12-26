@@ -424,6 +424,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     item.waitingFor!.push(false);
     item.markAsDone!.push(false);
     focusStates.push(false);
+    // Mark which action to focus after render
+    (item as any).pendingFocusActionIndex = currentActions.length - 1;
     state.queueRender("editable");
   };
 
@@ -444,6 +446,18 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       addNewAction();
     }
   });
+
+  // Focus pending action input after render
+  const pendingIndex = (item as any).pendingFocusActionIndex;
+  if (pendingIndex !== undefined) {
+    delete (item as any).pendingFocusActionIndex;
+    const inputs = actionsList.querySelectorAll(".flow-inbox-action-input");
+    const targetInput = inputs[pendingIndex] as HTMLInputElement | undefined;
+    if (targetInput) {
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => targetInput.focus(), 0);
+    }
+  }
 }
 
 function renderProjectSection(container: HTMLElement, item: EditableItem, state: InboxModalState) {
