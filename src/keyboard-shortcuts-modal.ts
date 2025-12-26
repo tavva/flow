@@ -14,11 +14,21 @@ interface ShortcutGroup {
 }
 
 export class KeyboardShortcutsModal extends Modal {
+  private keyHandler: (e: KeyboardEvent) => void;
+
   constructor(app: App) {
     super(app);
+    this.keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "?") {
+        e.preventDefault();
+        e.stopPropagation();
+        this.close();
+      }
+    };
   }
 
   onOpen() {
+    window.addEventListener("keydown", this.keyHandler, true);
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("flow-keyboard-shortcuts-modal");
@@ -100,6 +110,7 @@ export class KeyboardShortcutsModal extends Modal {
   }
 
   onClose() {
+    window.removeEventListener("keydown", this.keyHandler, true);
     const { contentEl } = this;
     contentEl.empty();
   }
