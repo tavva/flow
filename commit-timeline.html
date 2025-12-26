@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Repository - Commit Timeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 500px;
+            margin-bottom: 2rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .legend {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .legend h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .legend-marker {
+            width: 20px;
+            height: 3px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .legend-date {
+            margin-left: auto;
+            color: #666;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Flow Repository Commit Timeline</h1>
+        <p class="subtitle">Development activity with LLM & Tool milestones</p>
+
+        <div class="chart-container">
+            <canvas id="commitChart"></canvas>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">50</div>
+                <div class="stat-label">Total Commits</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">18</div>
+                <div class="stat-label">Peak Day</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">9</div>
+                <div class="stat-label">Active Days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5.6</div>
+                <div class="stat-label">Avg/Day</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>🚀 LLM & Tool Milestones</h3>
+            <div class="legend-item">
+                <div class="legend-marker" style="background: #10b981;"></div>
+                <span><strong>Claude Sonnet 4.5</strong> - Latest frontier model with extended thinking</span>
+                <span class="legend-date">Oct 2024</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker" style="background: #3b82f6;"></div>
+                <span><strong>Claude Code GA</strong> - General availability release</span>
+                <span class="legend-date">Nov 2024</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker" style="background: #8b5cf6;"></div>
+                <span><strong>Gemini 2.0 Flash</strong> - Google's next-gen model</span>
+                <span class="legend-date">Dec 11, 2024</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker" style="background: #ec4899;"></div>
+                <span><strong>o1 Full Release</strong> - OpenAI reasoning model GA</span>
+                <span class="legend-date">Dec 17, 2024</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-marker" style="background: #f59e0b;"></div>
+                <span><strong>Claude Opus 4.5</strong> - Most capable Claude model</span>
+                <span class="legend-date">Nov 2024</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Commit data
+        const commitData = [
+            { date: '2025-12-07', commits: 6 },
+            { date: '2025-12-08', commits: 4 },
+            { date: '2025-12-13', commits: 8 },
+            { date: '2025-12-14', commits: 18 },
+            { date: '2025-12-15', commits: 7 },
+            { date: '2025-12-16', commits: 1 },
+            { date: '2025-12-19', commits: 1 },
+            { date: '2025-12-22', commits: 3 },
+            { date: '2025-12-25', commits: 2 }
+        ];
+
+        // LLM milestone annotations
+        const milestones = [
+            { date: '2024-10-22', label: 'Claude Sonnet 4.5', color: '#10b981' },
+            { date: '2024-11-05', label: 'Claude Code GA', color: '#3b82f6' },
+            { date: '2024-11-01', label: 'Claude Opus 4.5', color: '#f59e0b' },
+            { date: '2024-12-11', label: 'Gemini 2.0 Flash', color: '#8b5cf6' },
+            { date: '2024-12-17', label: 'o1 Full Release', color: '#ec4899' }
+        ];
+
+        // Create annotations for milestones
+        const annotations = {};
+        milestones.forEach((milestone, index) => {
+            annotations[`milestone${index}`] = {
+                type: 'line',
+                xMin: milestone.date,
+                xMax: milestone.date,
+                borderColor: milestone.color,
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                    content: milestone.label,
+                    enabled: true,
+                    position: 'start',
+                    backgroundColor: milestone.color,
+                    color: 'white',
+                    font: {
+                        size: 10,
+                        weight: 'bold'
+                    },
+                    padding: 4,
+                    rotation: -90,
+                    yAdjust: -10
+                }
+            };
+        });
+
+        const ctx = document.getElementById('commitChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: commitData.map(d => d.date),
+                datasets: [{
+                    label: 'Commits',
+                    data: commitData.map(d => d.commits),
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    hoverBackgroundColor: 'rgba(118, 75, 162, 0.9)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.y} commit${context.parsed.y !== 1 ? 's' : ''}`;
+                            }
+                        }
+                    },
+                    annotation: {
+                        annotations: annotations
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM dd'
+                            }
+                        },
+                        min: '2024-10-01',
+                        max: '2025-12-26',
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 2,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Commits',
+                            font: {
+                                size: 13,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
