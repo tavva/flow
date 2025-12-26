@@ -63,6 +63,14 @@ export class KeyboardShortcutsModal extends Modal {
           { keys: [modifier, "1", "–", "9"], description: "Toggle spheres" },
         ],
       },
+      {
+        title: "In action field",
+        shortcuts: [
+          { keys: [modifier, "W"], description: "Toggle waiting for" },
+          { keys: [modifier, "F"], description: "Toggle focus" },
+          { keys: [modifier, "D"], description: "Toggle done" },
+        ],
+      },
     ];
 
     const content = contentEl.createDiv({ cls: "flow-shortcuts-content" });

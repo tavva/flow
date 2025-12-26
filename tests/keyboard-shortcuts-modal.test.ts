@@ -72,11 +72,12 @@ describe("KeyboardShortcutsModal", () => {
       const contentEl = (modal as any).contentEl;
       const groupTitles = contentEl.querySelectorAll(".flow-shortcuts-group-title");
 
-      expect(groupTitles.length).toBe(3);
+      expect(groupTitles.length).toBe(4);
       const titles = Array.from(groupTitles).map((el: Element) => el.textContent);
       expect(titles).toContain("Quick categorise");
       expect(titles).toContain("Navigation");
       expect(titles).toContain("Actions");
+      expect(titles).toContain("In action field");
     });
   });
 
