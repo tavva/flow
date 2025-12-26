@@ -2206,16 +2206,6 @@ select.flow-gtd-inline-select option,
   border-left: 2px solid var(--color-blue);
 }
 
-.flow-inbox-drag-handle {
-  color: var(--text-muted);
-  font-size: 0.625rem;
-  cursor: grab;
-}
-
-.flow-inbox-drag-handle:active {
-  cursor: grabbing;
-}
-
 .flow-inbox-action-input {
   flex: 1;
   background: none;

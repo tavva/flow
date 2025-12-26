@@ -312,10 +312,6 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       actionItem.addClass("done");
     }
 
-    // Drag handle
-    const dragHandle = actionItem.createSpan({ cls: "flow-inbox-drag-handle" });
-    dragHandle.setText("⠿");
-
     // Input field
     const input = actionItem.createEl("input", { cls: "flow-inbox-action-input" });
     input.type = "text";
