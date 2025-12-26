@@ -2024,3 +2024,519 @@ select.flow-gtd-inline-select option,
     transform: rotate(360deg);
   }
 }
+
+/* ============================================
+   New Inbox Processing View Styles
+   ============================================ */
+
+.flow-inbox-redesign {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0.75rem;
+}
+
+/* Navigation header */
+.flow-inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-header .flow-inbox-count {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.flow-inbox-arrows {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.flow-inbox-arrow-btn {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-arrow-btn:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.flow-inbox-arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Original item box */
+.flow-inbox-original {
+  background: var(--background-secondary);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-original-label {
+  color: var(--text-muted);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.125rem;
+}
+
+.flow-inbox-original h1 {
+  color: var(--text-normal);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Type selector tabs */
+.flow-inbox-type-selector {
+  display: flex;
+  border-radius: 0.5rem;
+  background: var(--background-secondary);
+  padding: 0.1875rem;
+  gap: 0.1875rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-type-btn {
+  flex: 1;
+  padding: 0.4375rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-type-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-type-btn.selected {
+  background: var(--interactive-accent);
+  color: white;
+}
+
+/* Actions section */
+.flow-inbox-actions-section {
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.flow-inbox-section-header .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.flow-inbox-action-count {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  background: var(--background-secondary-alt);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.1875rem;
+}
+
+.flow-inbox-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Individual action item */
+.flow-inbox-action-item {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  animation: flow-inbox-slideIn 0.15s ease-out;
+}
+
+@keyframes flow-inbox-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flow-inbox-action-item:focus-within {
+  border-color: var(--interactive-accent);
+}
+
+.flow-inbox-action-item.done {
+  opacity: 0.5;
+}
+
+.flow-inbox-action-item.done .flow-inbox-action-input {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.flow-inbox-action-item.waiting {
+  border-left: 2px solid var(--color-yellow);
+}
+
+.flow-inbox-action-item.focused {
+  border-left: 2px solid var(--color-blue);
+}
+
+.flow-inbox-drag-handle {
+  color: var(--text-muted);
+  font-size: 0.625rem;
+  cursor: grab;
+}
+
+.flow-inbox-drag-handle:active {
+  cursor: grabbing;
+}
+
+.flow-inbox-action-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+  outline: none;
+  min-width: 0;
+}
+
+.flow-inbox-action-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Action control buttons (waiting, focus, done) */
+.flow-inbox-action-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.flow-inbox-action-ctrl {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  opacity: 0.6;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-action-ctrl:hover {
+  opacity: 1;
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-action-ctrl.active {
+  opacity: 1;
+}
+
+.flow-inbox-action-ctrl.active.waiting-btn {
+  color: var(--color-yellow);
+}
+
+.flow-inbox-action-ctrl.active.focus-btn {
+  color: var(--color-blue);
+}
+
+.flow-inbox-action-ctrl.active.done-btn {
+  color: var(--color-green);
+}
+
+.flow-inbox-remove-action {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.125rem 0.25rem;
+  opacity: 0.4;
+  line-height: 1;
+  transition: opacity 0.15s ease;
+}
+
+.flow-inbox-remove-action:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.flow-inbox-remove-action:disabled {
+  cursor: not-allowed;
+}
+
+/* Add action button */
+.flow-inbox-add-action-btn {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px dashed var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-top: 0.375rem;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-add-action-btn:hover:not(:disabled) {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.flow-inbox-add-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Project section */
+.flow-inbox-project-section {
+  margin-bottom: 0.625rem;
+}
+
+.flow-inbox-project-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flow-inbox-project-row .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-project-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+}
+
+.flow-inbox-project-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.flow-inbox-project-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Project dropdown list */
+.flow-inbox-project-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-inbox-project-dropdown-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-normal);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s ease;
+}
+
+.flow-inbox-project-dropdown-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-project-dropdown-item.selected {
+  background: var(--background-modifier-hover);
+  font-weight: 600;
+}
+
+/* Sphere toggle */
+.flow-inbox-sphere-section {
+  margin-bottom: 0.625rem;
+}
+
+.flow-inbox-sphere-toggle {
+  display: flex;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  padding: 2px;
+}
+
+.flow-inbox-sphere-btn {
+  flex: 1;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-sphere-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-sphere-btn.selected {
+  background: var(--background-secondary-alt);
+  color: var(--text-normal);
+}
+
+/* Due date section */
+.flow-inbox-due-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-due-section .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-due-input {
+  flex: 1;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.flow-inbox-due-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* Bottom bar */
+.flow-inbox-bottom-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--background-secondary-alt);
+}
+
+.flow-inbox-delete-btn {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--background-secondary);
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-delete-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--color-red);
+}
+
+.flow-inbox-save-btn {
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background: var(--interactive-accent);
+  border: none;
+  color: white;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-save-btn:hover {
+  opacity: 0.9;
+}
+
+.flow-inbox-save-btn.delete-mode {
+  background: var(--color-red);
+}
+
+.flow-inbox-action-summary {
+  font-weight: 400;
+  opacity: 0.85;
+  font-size: 0.75rem;
+}
+
+/* Empty state */
+.flow-inbox-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.flow-inbox-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.flow-inbox-empty-title {
+  margin-bottom: 8px;
+}
+
+.flow-inbox-empty-description {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Completion state */
+.flow-inbox-completion {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.flow-inbox-completion h3 {
+  margin-bottom: 12px;
+}
+
+.flow-inbox-completion p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}

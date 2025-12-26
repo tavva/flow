@@ -5,7 +5,7 @@
  * @jest-environment jsdom
  */
 
-import { renderEditableItemContent } from "../src/inbox-modal-views";
+import { renderEditableItemsView, renderInboxView } from "../src/inbox-modal-views";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
 
@@ -72,240 +72,623 @@ function createMockState(editableItems: EditableItem[]): InboxModalState {
   return state;
 }
 
-describe("renderEditableItemContent - action button groups", () => {
-  it("renders action buttons in three groups with headers", () => {
+describe("renderInboxView", () => {
+  it("renders loading state", () => {
     const container = makeObsidianElement(document.createElement("div"));
-    const item: EditableItem = {
-      original: "Test item",
-      isAIProcessed: false,
-      selectedAction: "next-actions-file",
-      selectedSpheres: [],
-    };
-    const state = createMockState([item]);
+    const state = createMockState([]);
 
-    renderEditableItemContent(container, item, state);
+    renderInboxView(container, state, { isLoading: true });
 
-    // Should have action groups container
-    const groupsContainer = container.querySelector(".flow-gtd-action-groups");
-    expect(groupsContainer).toBeTruthy();
-
-    // Should have three groups
-    const groups = container.querySelectorAll(".flow-gtd-action-group");
-    expect(groups.length).toBe(3);
-
-    // Should have group headers
-    const headers = container.querySelectorAll(".flow-gtd-action-group-header");
-    expect(headers.length).toBe(3);
-    expect(headers[0].textContent).toBe("Projects");
-    expect(headers[1].textContent).toBe("Actions");
-    expect(headers[2].textContent).toBe("Other");
-
-    // Projects group should have 3 buttons
-    const projectsButtons = groups[0].querySelectorAll(".flow-gtd-action-button");
-    expect(projectsButtons.length).toBe(3);
-    expect(projectsButtons[0].textContent).toContain("Create");
-    expect(projectsButtons[1].textContent).toContain("Add");
-    expect(projectsButtons[2].textContent).toContain("Reference");
-
-    // Actions group should have 2 buttons
-    const actionsButtons = groups[1].querySelectorAll(".flow-gtd-action-button");
-    expect(actionsButtons.length).toBe(2);
-    expect(actionsButtons[0].textContent).toContain("Next");
-    expect(actionsButtons[1].textContent).toContain("Someday");
-
-    // Other group should have 2 buttons
-    const otherButtons = groups[2].querySelectorAll(".flow-gtd-action-button");
-    expect(otherButtons.length).toBe(2);
-    expect(otherButtons[0].textContent).toContain("Person");
-    expect(otherButtons[1].textContent).toContain("Trash");
+    expect(container.textContent).toContain("Loading inbox");
   });
 
-  it("marks selected action button with 'selected' class", () => {
+  it("renders empty state when not loading and no items", () => {
     const container = makeObsidianElement(document.createElement("div"));
-    const item: EditableItem = {
-      original: "Test item",
-      isAIProcessed: false,
-      selectedAction: "create-project",
-      selectedSpheres: [],
-    };
-    const state = createMockState([item]);
+    const state = createMockState([]);
 
-    renderEditableItemContent(container, item, state);
+    renderInboxView(container, state, { isLoading: false });
 
-    const allButtons = container.querySelectorAll(".flow-gtd-action-button");
-    const selectedButtons = container.querySelectorAll(".flow-gtd-action-button.selected");
+    const emptyState = container.querySelector(".flow-inbox-empty-state");
+    expect(emptyState).toBeTruthy();
+    expect(emptyState?.textContent).toContain("inbox is empty");
+  });
+});
 
-    // Only one button should be selected
-    expect(selectedButtons.length).toBe(1);
+describe("renderEditableItemsView", () => {
+  it("renders completion state when all items processed", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const state = createMockState([]);
+    const onClose = jest.fn();
 
-    // The create-project button should be selected
-    const createButton = Array.from(allButtons).find((btn) => btn.textContent?.includes("Create"));
-    expect(createButton?.classList.contains("selected")).toBe(true);
+    renderEditableItemsView(container, state, { onClose });
+
+    const completionEl = container.querySelector(".flow-inbox-completion");
+    expect(completionEl).toBeTruthy();
+    expect(completionEl?.textContent).toContain("All items processed");
   });
 
-  it("calls state.queueRender when action button clicked", () => {
+  it("renders navigation header with item count", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
       original: "Test item",
-      isAIProcessed: false,
       selectedAction: "next-actions-file",
       selectedSpheres: [],
+      isExpanded: true,
     };
     const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    renderEditableItemContent(container, item, state);
+    renderEditableItemsView(container, state, { onClose });
 
-    const somedayButton = Array.from(container.querySelectorAll(".flow-gtd-action-button")).find(
-      (btn) => btn.textContent?.includes("Someday")
+    const header = container.querySelector(".flow-inbox-header");
+    expect(header).toBeTruthy();
+    expect(header?.textContent).toContain("1 of 1");
+  });
+
+  it("renders original content box", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item content",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const originalBox = container.querySelector(".flow-inbox-original");
+    expect(originalBox).toBeTruthy();
+    expect(originalBox?.textContent).toContain("Test item content");
+  });
+
+  it("renders type selector with three options", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const typeSelector = container.querySelector(".flow-inbox-type-selector");
+    expect(typeSelector).toBeTruthy();
+
+    const typeButtons = typeSelector?.querySelectorAll(".flow-inbox-type-btn");
+    expect(typeButtons?.length).toBe(3);
+
+    const buttonTexts = Array.from(typeButtons || []).map((btn) => btn.textContent);
+    expect(buttonTexts).toContain("⚡ Next");
+    expect(buttonTexts).toContain("💭 Someday");
+    expect(buttonTexts).toContain("📄 Ref");
+  });
+
+  it("marks correct type button as selected", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "someday-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const selectedBtn = container.querySelector(".flow-inbox-type-btn.selected");
+    expect(selectedBtn).toBeTruthy();
+    expect(selectedBtn?.textContent).toContain("Someday");
+  });
+
+  it("renders actions section for next action type", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const actionsSection = container.querySelector(".flow-inbox-actions-section");
+    expect(actionsSection).toBeTruthy();
+
+    const actionsList = container.querySelector(".flow-inbox-actions-list");
+    expect(actionsList).toBeTruthy();
+  });
+
+  it("hides actions section for reference type", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "reference",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const actionsSection = container.querySelector(".flow-inbox-actions-section");
+    expect(actionsSection).toBeNull();
+  });
+
+  it("renders project section for next action type", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const projectSection = container.querySelector(".flow-inbox-project-section");
+    expect(projectSection).toBeTruthy();
+  });
+
+  it("hides project section for someday type", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "someday-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const projectSection = container.querySelector(".flow-inbox-project-section");
+    expect(projectSection).toBeNull();
+  });
+
+  it("renders sphere toggle buttons", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const sphereSection = container.querySelector(".flow-inbox-sphere-section");
+    expect(sphereSection).toBeTruthy();
+
+    const sphereButtons = sphereSection?.querySelectorAll(".flow-inbox-sphere-btn");
+    expect(sphereButtons?.length).toBe(2);
+  });
+
+  it("marks selected spheres", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const selectedBtn = container.querySelector(".flow-inbox-sphere-btn.selected");
+    expect(selectedBtn).toBeTruthy();
+    expect(selectedBtn?.textContent?.toLowerCase()).toContain("work");
+  });
+
+  it("renders due date section", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const dueSection = container.querySelector(".flow-inbox-due-section");
+    expect(dueSection).toBeTruthy();
+
+    const dueInput = dueSection?.querySelector(".flow-inbox-due-input");
+    expect(dueInput).toBeTruthy();
+    expect((dueInput as HTMLInputElement)?.type).toBe("date");
+  });
+
+  it("renders bottom bar with delete and save buttons", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const bottomBar = container.querySelector(".flow-inbox-bottom-bar");
+    expect(bottomBar).toBeTruthy();
+
+    const deleteBtn = container.querySelector(".flow-inbox-delete-btn");
+    expect(deleteBtn).toBeTruthy();
+
+    const saveBtn = container.querySelector(".flow-inbox-save-btn");
+    expect(saveBtn).toBeTruthy();
+    expect(saveBtn?.textContent).toContain("Save");
+  });
+
+  it("shows action count in save button", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedNames: ["Action 1", "Action 2"],
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const saveBtn = container.querySelector(".flow-inbox-save-btn");
+    expect(saveBtn?.textContent).toContain("2 actions");
+  });
+});
+
+describe("type selector interactions", () => {
+  it("updates selectedAction when type button clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const somedayBtn = Array.from(container.querySelectorAll(".flow-inbox-type-btn")).find((btn) =>
+      btn.textContent?.includes("Someday")
     ) as HTMLButtonElement;
 
-    expect(somedayButton).toBeTruthy();
-    somedayButton.click();
+    expect(somedayBtn).toBeTruthy();
+    somedayBtn.click();
 
     expect(item.selectedAction).toBe("someday-file");
     expect(state.queueRender).toHaveBeenCalledWith("editable");
   });
 
-  it("defaults to 'next-actions-file' when selectedAction is undefined", () => {
+  it("updates selectedAction to reference when Ref clicked", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
       original: "Test item",
-      isAIProcessed: false,
-      selectedAction: undefined as any,
+      selectedAction: "next-actions-file",
       selectedSpheres: [],
+      isExpanded: true,
     };
     const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    renderEditableItemContent(container, item, state);
+    renderEditableItemsView(container, state, { onClose });
 
-    const allButtons = container.querySelectorAll(".flow-gtd-action-button");
-    const nextButton = Array.from(allButtons).find((btn) => btn.textContent?.includes("Next"));
+    const refBtn = Array.from(container.querySelectorAll(".flow-inbox-type-btn")).find((btn) =>
+      btn.textContent?.includes("Ref")
+    ) as HTMLButtonElement;
 
-    // Should default to next-actions-file
-    expect(nextButton?.classList.contains("selected")).toBe(true);
+    expect(refBtn).toBeTruthy();
+    refBtn.click();
+
+    expect(item.selectedAction).toBe("reference");
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
   });
 });
 
-describe("renderEditableItemContent - date section", () => {
-  it("should render collapsible date section", () => {
+describe("actions section interactions", () => {
+  it("initializes action input with original content", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Original task text",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const actionInput = container.querySelector(".flow-inbox-action-input") as HTMLInputElement;
+    expect(actionInput).toBeTruthy();
+    expect(actionInput.value).toBe("Original task text");
+  });
+
+  it("renders action control buttons (waiting, focus, done)", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
       original: "Test item",
-      isAIProcessed: true,
       selectedAction: "next-actions-file",
-      selectedSpheres: ["work"],
-      editedName: "Test action",
-      editedNames: ["Test action"],
-      waitingFor: [false],
+      selectedSpheres: [],
+      isExpanded: true,
     };
     const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    renderEditableItemContent(container, item, state);
+    renderEditableItemsView(container, state, { onClose });
 
-    const dateSection = container.querySelector(".flow-gtd-date-section");
-    expect(dateSection).toBeTruthy();
+    const controls = container.querySelector(".flow-inbox-action-controls");
+    expect(controls).toBeTruthy();
 
-    const dateLabel = dateSection?.querySelector(".flow-gtd-date-label");
-    expect(dateLabel?.textContent).toContain("Set due date (optional)");
+    const waitingBtn = controls?.querySelector(".waiting-btn");
+    expect(waitingBtn).toBeTruthy();
+    expect(waitingBtn?.textContent).toContain("🤝");
+
+    const focusBtn = controls?.querySelector(".focus-btn");
+    expect(focusBtn).toBeTruthy();
+
+    const doneBtn = controls?.querySelector(".done-btn");
+    expect(doneBtn).toBeTruthy();
+    expect(doneBtn?.textContent).toContain("✓");
   });
 
-  it("should show different date labels based on action type", () => {
-    const actionLabels: Record<string, string | null> = {
-      "next-actions-file": "Set due date (optional)",
-      "create-project": "Set target date (optional)",
-      "someday-file": "Set reminder date (optional)",
-      person: "Set follow-up date (optional)",
-      reference: null,
-    };
-
-    Object.entries(actionLabels).forEach(([action, expectedLabel]) => {
-      const container = makeObsidianElement(document.createElement("div"));
-      const item: EditableItem = {
-        original: "Test",
-        isAIProcessed: true,
-        selectedAction: action as any,
-        selectedSpheres: ["work"],
-        editedName: "Test",
-      };
-      const state = createMockState([item]);
-
-      renderEditableItemContent(container, item, state);
-
-      const dateSection = container.querySelector(".flow-gtd-date-section") as HTMLElement;
-
-      if (expectedLabel) {
-        expect(dateSection).toBeTruthy();
-        expect(dateSection.style.display).not.toBe("none");
-        const label = dateSection.querySelector(".flow-gtd-date-label");
-        expect(label?.textContent).toBe(expectedLabel);
-      } else {
-        expect(dateSection).toBeNull();
-      }
-    });
-  });
-
-  it("should override date label to 'Set follow-up date (optional)' for waiting-for items", () => {
+  it("toggles waiting state when waiting button clicked", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
       original: "Test item",
-      isAIProcessed: true,
       selectedAction: "next-actions-file",
-      selectedSpheres: ["work"],
-      editedName: "Test action",
-      editedNames: ["Test action"],
-      waitingFor: [true],
+      selectedSpheres: [],
+      isExpanded: true,
     };
     const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    renderEditableItemContent(container, item, state);
+    renderEditableItemsView(container, state, { onClose });
 
-    const dateSection = container.querySelector(".flow-gtd-date-section");
-    expect(dateSection).toBeTruthy();
+    const waitingBtn = container.querySelector(".waiting-btn") as HTMLButtonElement;
+    expect(waitingBtn).toBeTruthy();
 
-    const dateLabel = dateSection?.querySelector(".flow-gtd-date-label");
-    expect(dateLabel?.textContent).toBe("Set follow-up date (optional)");
+    waitingBtn.click();
+
+    expect(item.waitingFor?.[0]).toBe(true);
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
   });
 
-  it("should toggle date section visibility when header clicked", () => {
+  it("toggles done state when done button clicked", () => {
     const container = makeObsidianElement(document.createElement("div"));
     const item: EditableItem = {
       original: "Test item",
-      isAIProcessed: true,
       selectedAction: "next-actions-file",
-      selectedSpheres: ["work"],
-      editedName: "Test action",
-      editedNames: ["Test action"],
-      waitingFor: [false],
+      selectedSpheres: [],
+      isExpanded: true,
     };
     const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    renderEditableItemContent(container, item, state);
+    renderEditableItemsView(container, state, { onClose });
 
-    const dateSection = container.querySelector(".flow-gtd-date-section");
-    const dateSectionHeader = dateSection?.querySelector(
-      ".flow-gtd-date-section-header"
-    ) as HTMLElement;
-    const dateInputContainer = dateSection?.querySelector(
-      ".flow-gtd-date-input-container"
-    ) as HTMLElement;
-    const chevron = dateSection?.querySelector(".flow-gtd-date-chevron") as HTMLElement;
+    const doneBtn = container.querySelector(".done-btn") as HTMLButtonElement;
+    expect(doneBtn).toBeTruthy();
 
-    expect(dateSectionHeader).toBeTruthy();
-    expect(dateInputContainer).toBeTruthy();
-    expect(chevron).toBeTruthy();
+    doneBtn.click();
 
-    // Initially collapsed
-    expect(dateInputContainer.style.display).toBe("none");
-    expect(chevron.textContent).toBe("▶");
+    expect(item.markAsDone?.[0]).toBe(true);
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
+  });
 
-    // Click to expand
-    dateSectionHeader.click();
-    expect(dateInputContainer.style.display).toBe("block");
-    expect(chevron.textContent).toBe("▼");
+  it("renders add action button", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
 
-    // Click to collapse
-    dateSectionHeader.click();
-    expect(dateInputContainer.style.display).toBe("none");
-    expect(chevron.textContent).toBe("▶");
+    renderEditableItemsView(container, state, { onClose });
+
+    const addBtn = container.querySelector(".flow-inbox-add-action-btn");
+    expect(addBtn).toBeTruthy();
+    expect(addBtn?.textContent).toContain("Add action");
+  });
+});
+
+describe("sphere toggle interactions", () => {
+  it("toggles sphere selection when button clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const workBtn = Array.from(container.querySelectorAll(".flow-inbox-sphere-btn")).find((btn) =>
+      btn.textContent?.toLowerCase().includes("work")
+    ) as HTMLButtonElement;
+
+    expect(workBtn).toBeTruthy();
+    workBtn.click();
+
+    expect(item.selectedSpheres).toContain("work");
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
+  });
+
+  it("deselects sphere when already selected", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["work"],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const workBtn = Array.from(container.querySelectorAll(".flow-inbox-sphere-btn")).find((btn) =>
+      btn.textContent?.toLowerCase().includes("work")
+    ) as HTMLButtonElement;
+
+    expect(workBtn).toBeTruthy();
+    workBtn.click();
+
+    expect(item.selectedSpheres).not.toContain("work");
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
+  });
+});
+
+describe("navigation", () => {
+  it("renders navigation arrows", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const arrows = container.querySelector(".flow-inbox-arrows");
+    expect(arrows).toBeTruthy();
+
+    const arrowButtons = arrows?.querySelectorAll(".flow-inbox-arrow-btn");
+    expect(arrowButtons?.length).toBe(2);
+  });
+
+  it("disables prev button on first item", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const prevBtn = container.querySelector(".flow-inbox-arrow-btn") as HTMLButtonElement;
+    expect(prevBtn.disabled).toBe(true);
+  });
+
+  it("disables next button on last item", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const arrowButtons = container.querySelectorAll(".flow-inbox-arrow-btn");
+    const nextBtn = arrowButtons[1] as HTMLButtonElement;
+    expect(nextBtn.disabled).toBe(true);
+  });
+
+  it("enables both arrows when multiple items", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const items: EditableItem[] = [
+      {
+        original: "Item 1",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: false,
+      },
+      {
+        original: "Item 2",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: true,
+      },
+      {
+        original: "Item 3",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: false,
+      },
+    ];
+    const state = createMockState(items);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const arrowButtons = container.querySelectorAll(".flow-inbox-arrow-btn");
+    const prevBtn = arrowButtons[0] as HTMLButtonElement;
+    const nextBtn = arrowButtons[1] as HTMLButtonElement;
+
+    // Item 2 is active (index 1), so both arrows should be enabled
+    expect(prevBtn.disabled).toBe(false);
+    expect(nextBtn.disabled).toBe(false);
+  });
+
+  it("shows correct count for current item", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const items: EditableItem[] = [
+      {
+        original: "Item 1",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: false,
+      },
+      {
+        original: "Item 2",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: true,
+      },
+      {
+        original: "Item 3",
+        selectedAction: "next-actions-file",
+        selectedSpheres: [],
+        isExpanded: false,
+      },
+    ];
+    const state = createMockState(items);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const countSpan = container.querySelector(".flow-inbox-count");
+    expect(countSpan?.textContent).toContain("2 of 3");
   });
 });
