@@ -460,7 +460,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
   const row = section.createDiv("flow-inbox-project-row");
 
   const labelSpan = row.createSpan({ cls: "label" });
-  labelSpan.setText("PROJECT");
+  labelSpan.setText(item.selectedAction === "create-project" ? "NEW PROJECT" : "PROJECT");
 
   const inputWrapper = row.createDiv();
   inputWrapper.style.flex = "1";
@@ -469,7 +469,11 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
   const input = inputWrapper.createEl("input", { cls: "flow-inbox-project-input" });
   input.type = "text";
   input.placeholder = "None";
-  input.value = item.selectedProject?.title || "";
+  // Show project title or new project name being created
+  input.value =
+    item.selectedAction === "create-project"
+      ? item.editedProjectTitle || ""
+      : item.selectedProject?.title || "";
 
   const dropdown = inputWrapper.createDiv("flow-inbox-project-dropdown");
   dropdown.style.display = "none";
@@ -482,11 +486,6 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
           p.title.toLowerCase().includes(searchTerm.toLowerCase())
         )
       : state.existingProjects;
-
-    if (filtered.length === 0) {
-      dropdown.style.display = "none";
-      return;
-    }
 
     // Sort by most recently modified
     const sorted = [...filtered].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
@@ -503,6 +502,30 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
         selectProject(project);
       });
     });
+
+    // Add "Create new project" option when there's a search term
+    if (searchTerm.trim()) {
+      const createBtn = dropdown.createEl("button", { cls: "flow-inbox-project-dropdown-item create-new" });
+      createBtn.setText(`+ Create "${searchTerm.trim()}"`);
+
+      if (item.selectedAction === "create-project") {
+        createBtn.addClass("selected");
+      }
+
+      createBtn.addEventListener("click", () => {
+        item.selectedProject = undefined;
+        item.editedProjectTitle = searchTerm.trim();
+        item.selectedAction = "create-project";
+        input.value = searchTerm.trim();
+        dropdown.style.display = "none";
+        state.queueRender("editable");
+      });
+    }
+
+    if (sorted.length === 0 && !searchTerm.trim()) {
+      dropdown.style.display = "none";
+      return;
+    }
 
     dropdown.style.display = "block";
   };

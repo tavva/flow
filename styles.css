@@ -2380,6 +2380,11 @@ select.flow-gtd-inline-select option,
   font-weight: 600;
 }
 
+.flow-inbox-project-dropdown-item.create-new {
+  color: var(--interactive-accent);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
 /* Sphere toggle */
 .flow-inbox-sphere-section {
   margin-bottom: 0.625rem;
