@@ -276,10 +276,12 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     item.markAsDone.push(false);
   }
 
-  // Initialize addToFocus array (stored as single boolean, but we track per-action)
-  const focusStates: boolean[] = new Array(currentActions.length).fill(false);
-  if (item.addToFocus) {
-    focusStates[0] = true;
+  // Initialize addToFocus array
+  if (!item.addToFocus) {
+    item.addToFocus = new Array(currentActions.length).fill(false);
+  }
+  while (item.addToFocus.length < currentActions.length) {
+    item.addToFocus.push(false);
   }
 
   const section = container.createDiv("flow-inbox-actions-section");
@@ -303,7 +305,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     if (item.waitingFor![index]) {
       actionItem.addClass("waiting");
     }
-    if (focusStates[index]) {
+    if (item.addToFocus![index]) {
       actionItem.addClass("focused");
     }
     if (item.markAsDone![index]) {
@@ -362,16 +364,14 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     const focusBtn = controls.createEl("button", { cls: "flow-inbox-action-ctrl focus-btn" });
     focusBtn.setText("◉");
     focusBtn.title = "Add to focus";
-    if (focusStates[index]) {
+    if (item.addToFocus![index]) {
       focusBtn.addClass("active");
     }
     focusBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      focusStates[index] = !focusStates[index];
-      // Store in item (for now, just track first action's focus state)
-      item.addToFocus = focusStates.some((f) => f);
+      item.addToFocus![index] = !item.addToFocus![index];
       // If enabling focus, disable done for this action
-      if (focusStates[index] && item.markAsDone![index]) {
+      if (item.addToFocus![index] && item.markAsDone![index]) {
         item.markAsDone![index] = false;
       }
       state.queueRender("editable");
@@ -388,9 +388,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       e.stopPropagation();
       item.markAsDone![index] = !item.markAsDone![index];
       // If enabling done, disable focus for this action
-      if (item.markAsDone![index] && focusStates[index]) {
-        focusStates[index] = false;
-        item.addToFocus = focusStates.some((f) => f);
+      if (item.markAsDone![index] && item.addToFocus![index]) {
+        item.addToFocus![index] = false;
       }
       state.queueRender("editable");
     });
@@ -423,7 +422,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     item.editedNames = [...currentActions];
     item.waitingFor!.push(false);
     item.markAsDone!.push(false);
-    focusStates.push(false);
+    item.addToFocus!.push(false);
     // Mark which action to focus after render
     (item as any).pendingFocusActionIndex = currentActions.length - 1;
     state.queueRender("editable");
@@ -434,7 +433,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     item.editedNames = [...currentActions];
     item.waitingFor!.splice(index, 1);
     item.markAsDone!.splice(index, 1);
-    focusStates.splice(index, 1);
+    item.addToFocus!.splice(index, 1);
     if (currentActions.length === 1) {
       item.editedName = currentActions[0];
     }

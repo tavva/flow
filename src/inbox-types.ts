@@ -16,7 +16,7 @@ export interface EditableItem {
   projectPriority?: number;
   parentProject?: FlowProject; // Parent project if creating as sub-project
   isSubProject?: boolean; // Whether to create as sub-project
-  addToFocus?: boolean; // Whether to add next actions to focus after creation
+  addToFocus?: boolean[]; // Track which next actions to add to focus after creation
   dueDate?: string; // Optional date in YYYY-MM-DD format (due date, reminder, or follow-up depending on context)
   isDateSectionExpanded?: boolean; // Whether the date section UI is expanded
   sourceNoteLink?: string; // Wikilink to archived source note for traceability (e.g., "[[note-name|source]]")

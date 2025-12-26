@@ -35,9 +35,10 @@ export class InboxItemPersistenceService {
     const result = this.buildResultForSaving(item, finalNextActions);
     const writtenFilePath = await this.writeResult(item, finalNextActions, result);
 
-    // Add to focus if requested and dependencies are available
+    // Add to focus if any action is marked for focus and dependencies are available
     // Completed items are added with completedAt set so they appear in "Completed Today"
-    if (item.addToFocus && writtenFilePath && this.app && this.settings && this.saveSettings) {
+    const hasAnyFocusAction = item.addToFocus?.some((f) => f) ?? false;
+    if (hasAnyFocusAction && writtenFilePath && this.app && this.settings && this.saveSettings) {
       await this.addActionsToFocus(writtenFilePath, finalNextActions, item);
     }
   }
@@ -238,9 +239,15 @@ export class InboxItemPersistenceService {
     // Load current focus items
     const focusItems = await loadFocusItems(this.app.vault);
 
-    // Add each action to the focus
+    // Add each action marked for focus
+    const addToFocus = item.addToFocus || [];
     const markAsDone = item.markAsDone || [];
     for (let i = 0; i < actions.length; i++) {
+      // Only add actions explicitly marked for focus
+      if (!addToFocus[i]) {
+        continue;
+      }
+
       const action = actions[i];
       const result = await finder.findActionLine(filePath, action);
 

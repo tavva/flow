@@ -277,7 +277,7 @@ describe("InboxItemPersistenceService", () => {
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
       editedName: "Call dentist",
-      addToFocus: true,
+      addToFocus: [true],
       markAsDone: [true],
     };
 
