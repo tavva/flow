@@ -2409,8 +2409,8 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-inbox-sphere-btn.selected {
-  background: var(--background-secondary-alt);
-  color: var(--text-normal);
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 
 /* Due date section */
