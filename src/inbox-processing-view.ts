@@ -227,6 +227,11 @@ export class InboxProcessingView extends ItemView {
         this.state.queueRender("editable");
         event.preventDefault();
         break;
+      case "d":
+        expandedItem.selectedAction = "trash";
+        this.state.queueRender("editable");
+        event.preventDefault();
+        break;
     }
   };
 

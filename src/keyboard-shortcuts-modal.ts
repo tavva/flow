@@ -45,6 +45,7 @@ export class KeyboardShortcutsModal extends Modal {
           { keys: ["N"], description: "Next Actions" },
           { keys: ["S"], description: "Someday/Maybe" },
           { keys: ["R"], description: "Reference" },
+          { keys: ["D"], description: "Discard" },
         ],
       },
       {
