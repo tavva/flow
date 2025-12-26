@@ -2311,8 +2311,9 @@ select.flow-gtd-inline-select option,
 
 .flow-inbox-project-row {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
 }
 
 .flow-inbox-project-row .label {
@@ -2324,7 +2325,7 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-inbox-project-input {
-  flex: 1;
+  width: 100%;
   padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
   background: var(--background-secondary);
