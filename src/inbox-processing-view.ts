@@ -5,6 +5,7 @@ import { PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { InboxModalState, RenderTarget } from "./inbox-modal-state";
 import { renderInboxView, renderEditableItemsView } from "./inbox-modal-views";
+import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal";
 
 export const INBOX_PROCESSING_VIEW_TYPE = "flow-gtd-inbox-processing";
 
@@ -199,6 +200,13 @@ export class InboxProcessingView extends ItemView {
         firstActionInput.focus();
         event.preventDefault();
       }
+      return;
+    }
+
+    // Show keyboard shortcuts help
+    if (event.key === "?") {
+      new KeyboardShortcutsModal(this.app).open();
+      event.preventDefault();
       return;
     }
 

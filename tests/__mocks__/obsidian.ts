@@ -490,3 +490,12 @@ export class MarkdownRenderer {
     element.innerHTML = markdown;
   }
 }
+
+export const Platform = {
+  isMacOS: false,
+  isWin: false,
+  isLinux: true,
+  isMobile: false,
+  isDesktop: true,
+  isDesktopApp: true,
+};

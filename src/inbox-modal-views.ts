@@ -505,7 +505,9 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
 
     // Add "Create new project" option when there's a search term
     if (searchTerm.trim()) {
-      const createBtn = dropdown.createEl("button", { cls: "flow-inbox-project-dropdown-item create-new" });
+      const createBtn = dropdown.createEl("button", {
+        cls: "flow-inbox-project-dropdown-item create-new",
+      });
       createBtn.setText(`+ Create "${searchTerm.trim()}"`);
 
       if (item.selectedAction === "create-project") {

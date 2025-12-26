@@ -2537,3 +2537,146 @@ select.flow-gtd-inline-select option,
   color: var(--text-muted);
   margin-bottom: 24px;
 }
+
+/* ============================================
+   Keyboard Shortcuts Modal
+   ============================================ */
+
+.flow-keyboard-shortcuts-modal {
+  padding: 0;
+}
+
+.modal:has(.flow-keyboard-shortcuts-modal) {
+  width: auto !important;
+  max-width: 420px !important;
+  min-width: 320px !important;
+}
+
+.modal:has(.flow-keyboard-shortcuts-modal) .modal-content {
+  padding: 0;
+}
+
+.flow-shortcuts-header {
+  padding: 20px 24px 0;
+}
+
+.flow-shortcuts-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-normal);
+}
+
+.flow-shortcuts-content {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.flow-shortcuts-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-shortcuts-group-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.flow-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flow-shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.flow-shortcuts-keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.flow-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-family: var(--font-interface);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-normal);
+  background: linear-gradient(
+    180deg,
+    var(--background-primary) 0%,
+    var(--background-secondary) 100%
+  );
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 0 1px var(--background-modifier-border),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.theme-dark .flow-shortcut-key {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  box-shadow:
+    0 1px 0 1px rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.flow-shortcuts-separator {
+  color: var(--text-faint);
+  font-size: 11px;
+  padding: 0 2px;
+}
+
+.flow-shortcuts-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.flow-shortcuts-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.flow-shortcuts-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.flow-shortcuts-footer-text {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.flow-shortcuts-footer .flow-shortcut-key {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+}
