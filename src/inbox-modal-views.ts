@@ -339,15 +339,15 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
         removeAction(index);
       }
 
-      // Ctrl/Cmd + W: toggle waiting for
-      if (e.key.toLowerCase() === "w" && (e.ctrlKey || e.metaKey)) {
+      // Alt/Option + W: toggle waiting for
+      if (e.key.toLowerCase() === "w" && e.altKey) {
         e.preventDefault();
         item.waitingFor![index] = !item.waitingFor![index];
         state.queueRender("editable");
       }
 
-      // Ctrl/Cmd + F: toggle focus
-      if (e.key.toLowerCase() === "f" && (e.ctrlKey || e.metaKey)) {
+      // Alt/Option + F: toggle focus
+      if (e.key.toLowerCase() === "f" && e.altKey) {
         e.preventDefault();
         item.addToFocus![index] = !item.addToFocus![index];
         if (item.addToFocus![index]) {
@@ -356,8 +356,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
         state.queueRender("editable");
       }
 
-      // Ctrl/Cmd + D: toggle done
-      if (e.key.toLowerCase() === "d" && (e.ctrlKey || e.metaKey)) {
+      // Alt/Option + D: toggle done
+      if (e.key.toLowerCase() === "d" && e.altKey) {
         e.preventDefault();
         item.markAsDone![index] = !item.markAsDone![index];
         if (item.markAsDone![index]) {
