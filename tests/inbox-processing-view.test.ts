@@ -508,7 +508,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+Q blurs input focus", () => {
+    test("Ctrl+Shift+Q blurs input focus", () => {
       const blurSpy = jest.fn();
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -520,6 +520,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "q",
         ctrlKey: true,
+        shiftKey: true,
         target: inputEl,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -530,29 +531,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+Q blurs input focus (Mac)", () => {
-      const blurSpy = jest.fn();
-      const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
-      const inputEl = {
-        tagName: "INPUT",
-        blur: blurSpy,
-      };
-
-      handleKeyDown({
-        key: "q",
-        metaKey: true,
-        target: inputEl,
-        preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
-      } as any);
-
-      expect(blurSpy).toHaveBeenCalled();
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
-
-    test("Ctrl+Enter saves the current item", () => {
+    test("Ctrl+Shift+Enter saves the current item", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -569,33 +548,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "Enter",
         ctrlKey: true,
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
-      } as any);
-
-      expect(saveAndRemoveItemSpy).toHaveBeenCalledWith(item);
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
-
-    test("Cmd+Enter saves the current item (Mac)", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["personal"],
-        original: "test item",
-      } as any;
-      (view as any).state.editableItems = [item];
-      const saveAndRemoveItemSpy = jest
-        .spyOn((view as any).state, "saveAndRemoveItem")
-        .mockResolvedValue(undefined);
-      const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
-
-      handleKeyDown({
-        key: "Enter",
-        metaKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -676,7 +629,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+1 toggles first sphere selection", () => {
+    test("Ctrl+Shift+1 toggles first sphere selection", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -693,6 +646,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -704,7 +658,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Ctrl+2 toggles second sphere selection", () => {
+    test("Ctrl+Shift+2 toggles second sphere selection", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -719,6 +673,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "2",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -728,31 +683,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Cmd+1 toggles first sphere selection (Mac)", () => {
-      const settings = (view as any).settings;
-      settings.spheres = ["work", "personal"];
-
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        selectedSpheres: [] as string[],
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-
-      handleKeyDown({
-        key: "1",
-        metaKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.selectedSpheres).toEqual(["work"]);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+1 deselects already selected sphere", () => {
+    test("Ctrl+Shift+1 deselects already selected sphere", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -767,6 +698,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -791,6 +723,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -815,6 +748,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -839,6 +773,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -860,10 +795,11 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+3 when only 2 spheres exist
+      // Try Ctrl+Shift+3 when only 2 spheres exist
       handleKeyDown({
         key: "3",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),

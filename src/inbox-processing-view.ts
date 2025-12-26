@@ -125,8 +125,8 @@ export class InboxProcessingView extends ItemView {
     const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
     const currentIndex = this.state.editableItems.findIndex((item) => item.isExpanded);
 
-    // Ctrl+Q (or Cmd+Q on Mac) blurs the input without closing the view
-    if (event.key === "q" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+Shift+Q blurs the input without closing the view
+    if (event.key === "q" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
         target.blur();
         event.preventDefault();
@@ -135,8 +135,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+Enter (or Cmd+Enter on Mac) saves the current item
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+Shift+Enter saves the current item
+    if (event.key === "Enter" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (expandedItem) {
         this.state.saveAndRemoveItem(expandedItem);
         event.preventDefault();
@@ -159,8 +159,8 @@ export class InboxProcessingView extends ItemView {
       }
     }
 
-    // Ctrl+1, Ctrl+2, etc. to toggle sphere selection
-    if ((event.ctrlKey || event.metaKey) && /^[1-9]$/.test(event.key)) {
+    // Ctrl+Shift+1, Ctrl+Shift+2, etc. to toggle sphere selection
+    if (event.ctrlKey && event.shiftKey && !event.metaKey && /^[1-9]$/.test(event.key)) {
       if (expandedItem) {
         const spheres = this.settings.spheres;
         const sphereIndex = parseInt(event.key) - 1;

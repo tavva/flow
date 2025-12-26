@@ -33,7 +33,6 @@ export class KeyboardShortcutsModal extends Modal {
     contentEl.empty();
     contentEl.addClass("flow-keyboard-shortcuts-modal");
 
-    const modifier = Platform.isMacOS ? "⌘" : "Ctrl";
     const ctrlKey = Platform.isMacOS ? "⌃" : "Ctrl";
 
     const header = contentEl.createDiv({ cls: "flow-shortcuts-header" });
@@ -59,9 +58,9 @@ export class KeyboardShortcutsModal extends Modal {
       {
         title: "Actions",
         shortcuts: [
-          { keys: [modifier, "Enter"], description: "Save and continue" },
-          { keys: [modifier, "Q"], description: "Unfocus input" },
-          { keys: [modifier, "1", "–", "9"], description: "Toggle spheres" },
+          { keys: [ctrlKey, "⇧", "Enter"], description: "Save and continue" },
+          { keys: [ctrlKey, "⇧", "Q"], description: "Unfocus input" },
+          { keys: [ctrlKey, "⇧", "1", "–", "9"], description: "Toggle spheres" },
         ],
       },
       {
