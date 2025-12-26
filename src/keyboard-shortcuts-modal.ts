@@ -34,6 +34,7 @@ export class KeyboardShortcutsModal extends Modal {
     contentEl.addClass("flow-keyboard-shortcuts-modal");
 
     const modifier = Platform.isMacOS ? "⌘" : "Ctrl";
+    const optionKey = Platform.isMacOS ? "⌥" : "Alt";
 
     const header = contentEl.createDiv({ cls: "flow-shortcuts-header" });
     header.createEl("h2", { text: "Keyboard shortcuts" });
@@ -66,9 +67,9 @@ export class KeyboardShortcutsModal extends Modal {
       {
         title: "In action field",
         shortcuts: [
-          { keys: ["Alt", "W"], description: "Toggle waiting for" },
-          { keys: ["Alt", "F"], description: "Toggle focus" },
-          { keys: ["Alt", "D"], description: "Toggle done" },
+          { keys: [optionKey, "W"], description: "Toggle waiting for" },
+          { keys: [optionKey, "F"], description: "Toggle focus" },
+          { keys: [optionKey, "D"], description: "Toggle done" },
         ],
       },
     ];
