@@ -312,12 +312,33 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     if (item.markAsDone![index]) {
       actionItem.addClass("done");
     }
+    if (item.expandedActionIndex === index) {
+      actionItem.addClass("expanded");
+    }
+
+    // Top row: input + status icons + remove button
+    const topRow = actionItem.createDiv("flow-inbox-action-row");
 
     // Input field
-    const input = actionItem.createEl("input", { cls: "flow-inbox-action-input" });
+    const input = topRow.createEl("input", { cls: "flow-inbox-action-input" });
     input.type = "text";
     input.value = actionText;
     input.placeholder = "Action...";
+
+    // Expand when input is focused
+    input.addEventListener("focus", () => {
+      item.expandedActionIndex = index;
+      actionItem.addClass("expanded");
+    });
+
+    // Collapse when focus leaves the action item entirely
+    actionItem.addEventListener("focusout", (e) => {
+      const relatedTarget = e.relatedTarget as Node | null;
+      if (!relatedTarget || !actionItem.contains(relatedTarget)) {
+        item.expandedActionIndex = undefined;
+        actionItem.removeClass("expanded");
+      }
+    });
 
     input.addEventListener("input", () => {
       currentActions[index] = input.value;
@@ -381,12 +402,34 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       true
     );
 
-    // Control buttons
+    // Status icons (shown when collapsed with active states)
+    const statusIcons = topRow.createDiv("flow-inbox-action-status");
+    if (item.waitingFor![index]) {
+      statusIcons.createSpan({ cls: "status-waiting", text: "🤝" });
+    }
+    if (item.addToFocus![index]) {
+      statusIcons.createSpan({ cls: "status-focus", text: "◉" });
+    }
+
+    // Remove button
+    const removeBtn = topRow.createEl("button", { cls: "flow-inbox-remove-action" });
+    removeBtn.setText("×");
+    removeBtn.title = "Remove";
+    removeBtn.disabled = currentActions.length === 1;
+
+    if (currentActions.length > 1) {
+      removeBtn.addEventListener("click", () => {
+        removeAction(index);
+      });
+    }
+
+    // Control buttons row (shown when expanded)
     const controls = actionItem.createDiv("flow-inbox-action-controls");
 
     // Waiting button
     const waitingBtn = controls.createEl("button", { cls: "flow-inbox-action-ctrl waiting-btn" });
-    waitingBtn.setText("🤝");
+    waitingBtn.createSpan({ cls: "btn-icon", text: "🤝" });
+    waitingBtn.createSpan({ cls: "btn-label", text: "Waiting" });
     waitingBtn.title = "Waiting for";
     if (item.waitingFor![index]) {
       waitingBtn.addClass("active");
@@ -399,7 +442,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
 
     // Focus button
     const focusBtn = controls.createEl("button", { cls: "flow-inbox-action-ctrl focus-btn" });
-    focusBtn.setText("◉");
+    focusBtn.createSpan({ cls: "btn-icon", text: "◉" });
+    focusBtn.createSpan({ cls: "btn-label", text: "Focus" });
     focusBtn.title = "Add to focus";
     if (item.addToFocus![index]) {
       focusBtn.addClass("active");
@@ -416,7 +460,8 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
 
     // Done button
     const doneBtn = controls.createEl("button", { cls: "flow-inbox-action-ctrl done-btn" });
-    doneBtn.setText("✓");
+    doneBtn.createSpan({ cls: "btn-icon", text: "✓" });
+    doneBtn.createSpan({ cls: "btn-label", text: "Done" });
     doneBtn.title = "Mark as done";
     if (item.markAsDone![index]) {
       doneBtn.addClass("active");
@@ -430,18 +475,6 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       }
       state.queueRender("editable");
     });
-
-    // Remove button
-    const removeBtn = actionItem.createEl("button", { cls: "flow-inbox-remove-action" });
-    removeBtn.setText("×");
-    removeBtn.title = "Remove";
-    removeBtn.disabled = currentActions.length === 1;
-
-    if (currentActions.length > 1) {
-      removeBtn.addEventListener("click", () => {
-        removeAction(index);
-      });
-    }
   });
 
   // Add action button
