@@ -332,11 +332,22 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     });
 
     // Collapse when focus leaves the action item entirely
+    // Use a delay to allow button clicks to complete before collapsing
     actionItem.addEventListener("focusout", (e) => {
       const relatedTarget = e.relatedTarget as Node | null;
       if (!relatedTarget || !actionItem.contains(relatedTarget)) {
-        item.expandedActionIndex = undefined;
-        actionItem.removeClass("expanded");
+        setTimeout(() => {
+          // If a re-render happened (button clicked), the DOM was replaced
+          // and we should trust the new state
+          if (!document.body.contains(actionItem)) {
+            return;
+          }
+          // Only collapse if still expanded (no button changed the state)
+          if (item.expandedActionIndex === index) {
+            item.expandedActionIndex = undefined;
+            actionItem.removeClass("expanded");
+          }
+        }, 100);
       }
     });
 
@@ -437,6 +448,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     waitingBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       item.waitingFor![index] = !item.waitingFor![index];
+      item.expandedActionIndex = index;
       state.queueRender("editable");
     });
 
@@ -455,6 +467,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       if (item.addToFocus![index] && item.markAsDone![index]) {
         item.markAsDone![index] = false;
       }
+      item.expandedActionIndex = index;
       state.queueRender("editable");
     });
 
@@ -473,6 +486,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
       if (item.markAsDone![index] && item.addToFocus![index]) {
         item.addToFocus![index] = false;
       }
+      item.expandedActionIndex = index;
       state.queueRender("editable");
     });
   });
