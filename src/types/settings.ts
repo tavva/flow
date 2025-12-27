@@ -1,16 +1,10 @@
 // ABOUTME: Plugin settings and configuration types
 // ABOUTME: Contains PluginSettings interface and default values
 
-export type LLMProvider = "anthropic" | "openai-compatible";
-
 export interface PluginSettings {
   aiEnabled: boolean; // Master toggle for all AI functionality
-  llmProvider: LLMProvider;
-  anthropicApiKey: string;
-  anthropicModel: string;
-  openaiApiKey: string;
-  openaiBaseUrl: string;
-  openaiModel: string;
+  openrouterApiKey: string;
+  openrouterBaseUrl: string;
   openrouterImageModel: string;
   defaultPriority: number;
   defaultStatus: string;
@@ -38,13 +32,9 @@ export interface PluginSettings {
 
 export const DEFAULT_SETTINGS: PluginSettings = {
   aiEnabled: false, // Disabled by default
-  llmProvider: "openai-compatible",
-  openaiApiKey: "",
-  openaiBaseUrl: "https://openrouter.ai/api/v1",
-  openaiModel: "google/gemini-2.5-flash",
+  openrouterApiKey: "",
+  openrouterBaseUrl: "https://openrouter.ai/api/v1",
   openrouterImageModel: "google/gemini-2.5-flash-image",
-  anthropicApiKey: "",
-  anthropicModel: "claude-haiku-4-5",
   defaultPriority: 2,
   defaultStatus: "live",
   inboxFilesFolderPath: "Flow Inbox Files",

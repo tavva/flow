@@ -4,25 +4,6 @@
 import { VALID_PROJECT_STATUSES } from "./types";
 
 /**
- * Validates if a string is a valid API key format
- */
-export function validateApiKey(apiKey: string): { valid: boolean; error?: string } {
-  if (!apiKey || apiKey.trim().length === 0) {
-    return { valid: false, error: "API key cannot be empty" };
-  }
-
-  if (!apiKey.startsWith("sk-ant-")) {
-    return { valid: false, error: 'Invalid Anthropic API key format. Should start with "sk-ant-"' };
-  }
-
-  if (apiKey.length < 20) {
-    return { valid: false, error: "API key appears to be too short" };
-  }
-
-  return { valid: true };
-}
-
-/**
  * Validates if a priority value is within acceptable range
  */
 export function validatePriority(priority: number): { valid: boolean; error?: string } {

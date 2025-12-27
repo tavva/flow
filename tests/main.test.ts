@@ -7,6 +7,7 @@ import { WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
 import { FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { SPHERE_VIEW_TYPE } from "../src/sphere-view";
 import { DEFAULT_SETTINGS } from "../src/types";
+import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock the view modules
 jest.mock("../src/inbox-processing-view", () => ({
@@ -219,8 +220,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     it("should return true from hasRequiredApiKey when AI is disabled", () => {
       // Set AI to disabled with no API key
       plugin.settings.aiEnabled = false;
-      plugin.settings.anthropicApiKey = "";
-      plugin.settings.openaiApiKey = "";
+      plugin.settings.openrouterApiKey = "";
 
       const hasKey = (plugin as any).hasRequiredApiKey();
 
@@ -228,10 +228,9 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
 
     it("should return false from hasRequiredApiKey when AI is enabled but API key is missing", () => {
-      // Set AI to enabled with no API key (Anthropic provider)
+      // Set AI to enabled with no API key
       plugin.settings.aiEnabled = true;
-      plugin.settings.llmProvider = "anthropic";
-      plugin.settings.anthropicApiKey = "";
+      plugin.settings.openrouterApiKey = "";
 
       const hasKey = (plugin as any).hasRequiredApiKey();
 
@@ -241,8 +240,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     it("should return true from hasRequiredApiKey when AI is enabled and API key is present", () => {
       // Set AI to enabled with API key
       plugin.settings.aiEnabled = true;
-      plugin.settings.llmProvider = "anthropic";
-      plugin.settings.anthropicApiKey = "sk-ant-test123456789";
+      plugin.settings.openrouterApiKey = generateDeterministicFakeApiKey("main-test");
 
       const hasKey = (plugin as any).hasRequiredApiKey();
 
@@ -327,7 +325,7 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     it("should show error notice if no active file", async () => {
       // Enable AI for this test
       plugin.settings.aiEnabled = true;
-      plugin.settings.openaiApiKey = "test-key";
+      plugin.settings.openrouterApiKey = "test-key";
 
       // No active file
       (mockApp.workspace.getActiveFile as jest.Mock).mockReturnValue(null);

@@ -16,7 +16,6 @@ jest.mock("obsidian");
 
 // Import the mocked classes and make them globally available
 import { TFile } from "obsidian";
-import { resetSharedAnthropicClient } from "../src/anthropic-client";
 
 // Make TFile available globally for instanceof checks
 (global as any).TFile = TFile;
@@ -42,9 +41,8 @@ console.error = (...args: any[]) => {
   originalConsoleError.apply(console, args);
 };
 
-// Ensure all timers and API clients are cleaned up after each test
+// Ensure all timers are cleaned up after each test
 afterEach(() => {
   jest.useRealTimers();
   jest.clearAllTimers();
-  resetSharedAnthropicClient();
 });

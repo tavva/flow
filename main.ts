@@ -382,11 +382,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return true;
     }
 
-    if (this.settings.llmProvider === "openai-compatible") {
-      return Boolean(this.settings.openaiApiKey);
-    }
-
-    return Boolean(this.settings.anthropicApiKey);
+    return Boolean(this.settings.openrouterApiKey);
   }
 
   private getMissingApiKeyMessage(): string {

@@ -17,7 +17,7 @@ describe("InboxProcessingView", () => {
 
   const testSettings = {
     ...DEFAULT_SETTINGS,
-    openaiApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
+    openrouterApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
   };
 
   let mockSaveSettings: jest.Mock;

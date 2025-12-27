@@ -63,7 +63,6 @@ describe("NewProjectModal", () => {
 
     const settings = {
       ...DEFAULT_SETTINGS,
-      anthropicApiKey: generateDeterministicFakeApiKey("test-modal"),
       spheres: ["personal", "work"],
       defaultPriority: 2,
     };

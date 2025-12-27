@@ -23,8 +23,8 @@ describe("generateCoverImage", () => {
     } as unknown as jest.Mocked<Vault>;
 
     mockSettings = {
-      openaiApiKey: generateDeterministicFakeApiKey("openrouter-test"),
-      openaiBaseUrl: "https://openrouter.ai/api/v1",
+      openrouterApiKey: generateDeterministicFakeApiKey("openrouter-test"),
+      openrouterBaseUrl: "https://openrouter.ai/api/v1",
       openrouterImageModel: "google/gemini-2.5-flash-image",
       coverImagesFolderPath: "Assets/flow-project-cover-images",
     } as PluginSettings;

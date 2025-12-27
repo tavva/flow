@@ -1,5 +1,4 @@
 import {
-  validateApiKey,
   validatePriority,
   validateStatus,
   validateProjectTag,
@@ -10,32 +9,6 @@ import {
 } from "../src/validation";
 
 describe("Validation", () => {
-  describe("validateApiKey", () => {
-    it("should accept valid Anthropic API key", () => {
-      const result = validateApiKey("sk-ant-api03-1234567890abcdefghijklmnop");
-      expect(result.valid).toBe(true);
-      expect(result.error).toBeUndefined();
-    });
-
-    it("should reject empty API key", () => {
-      const result = validateApiKey("");
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("cannot be empty");
-    });
-
-    it("should reject API key with wrong prefix", () => {
-      const result = validateApiKey("sk-wrong-1234567890abcdefghijklmnop");
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("Invalid Anthropic API key format");
-    });
-
-    it("should reject too short API key", () => {
-      const result = validateApiKey("sk-ant-short");
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain("too short");
-    });
-  });
-
   describe("validatePriority", () => {
     it("should accept valid priority values", () => {
       for (let i = 1; i <= 5; i++) {

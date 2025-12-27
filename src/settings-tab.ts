@@ -1,7 +1,6 @@
-import { App, PluginSettingTab, Setting, Notice } from "obsidian";
+import { App, PluginSettingTab, Setting } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
-import { DEFAULT_SETTINGS, LLMProvider } from "./types";
-import { validateApiKey } from "./validation";
+import { DEFAULT_SETTINGS } from "./types";
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
@@ -287,140 +286,61 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // AI Settings
     new Setting(containerEl).setHeading().setName("AI Settings");
+    containerEl.createDiv("setting-item-description").createEl("p", {
+      text: "Configure OpenRouter for AI-powered cover image generation.",
+    });
+
+    const aiSettingsContainer = containerEl.createDiv();
 
     new Setting(containerEl)
       .setName("Enable AI features")
       .setDesc(
-        "Enable AI-powered inbox processing and project review. When disabled, all AI functionality is unavailable."
+        "Enable AI-powered cover image generation. When disabled, AI functionality is unavailable."
       )
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.aiEnabled).onChange(async (value) => {
           this.plugin.settings.aiEnabled = value;
           await this.plugin.saveSettings();
-          updateProviderVisibility();
+          aiSettingsContainer.style.display = value ? "" : "none";
         })
       );
 
-    const providerDropdownContainer = containerEl.createDiv();
-    new Setting(providerDropdownContainer)
-      .setName("AI Provider")
-      .setDesc("Choose which language model to use for GTD processing.")
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOptions({
-            "openai-compatible": "OpenAI-compatible (e.g. OpenRouter)",
-            anthropic: "Anthropic Messages API",
-          })
-          .setValue(this.plugin.settings.llmProvider)
-          .onChange(async (value) => {
-            this.plugin.settings.llmProvider = value as LLMProvider;
-            await this.plugin.saveSettings();
-            updateProviderVisibility();
-          })
-      );
-
-    const anthropicContainer = containerEl.createDiv();
-    const openAIContainer = containerEl.createDiv();
-
-    new Setting(anthropicContainer)
-      .setName("Anthropic API Key")
-      .setDesc("Enter your Anthropic API key to enable AI-powered GTD processing")
+    new Setting(aiSettingsContainer)
+      .setName("OpenRouter API Key")
+      .setDesc("Enter your OpenRouter API key for AI-powered features.")
       .addText((text) => {
         text
-          .setPlaceholder("sk-ant-...")
-          .setValue(this.plugin.settings.anthropicApiKey)
+          .setPlaceholder("sk-or-v1-...")
+          .setValue(this.plugin.settings.openrouterApiKey)
           .onChange(async (value) => {
-            const trimmed = value.trim();
-            if (trimmed.length > 0) {
-              const validation = validateApiKey(trimmed);
-              if (!validation.valid) {
-                new Notice(validation.error || "Invalid API key format");
-                return;
-              }
-            }
-            this.plugin.settings.anthropicApiKey = trimmed;
+            this.plugin.settings.openrouterApiKey = value.trim();
             await this.plugin.saveSettings();
           });
         text.inputEl.type = "password";
       })
       .addButton((button) =>
         button.setButtonText("Get API Key").onClick(() => {
-          window.open("https://console.anthropic.com/settings/keys", "_blank");
+          window.open("https://openrouter.ai/keys", "_blank");
         })
       );
 
-    new Setting(anthropicContainer)
-      .setName("Anthropic Model")
-      .setDesc(
-        "Specify the Anthropic Messages API model ID to use for GTD processing (e.g., claude-sonnet-4-20250514)."
-      )
+    new Setting(aiSettingsContainer)
+      .setName("OpenRouter Base URL")
+      .setDesc("Override the API base URL (defaults to OpenRouter).")
       .addText((text) =>
         text
-          .setPlaceholder(DEFAULT_SETTINGS.anthropicModel)
-          .setValue(this.plugin.settings.anthropicModel)
+          .setPlaceholder(DEFAULT_SETTINGS.openrouterBaseUrl)
+          .setValue(this.plugin.settings.openrouterBaseUrl)
           .onChange(async (value) => {
-            const trimmedValue = value.trim() || DEFAULT_SETTINGS.anthropicModel;
-            this.plugin.settings.anthropicModel = trimmedValue;
+            this.plugin.settings.openrouterBaseUrl =
+              value.trim() || DEFAULT_SETTINGS.openrouterBaseUrl;
             await this.plugin.saveSettings();
           })
       );
 
-    const anthropicDesc = anthropicContainer.createDiv("setting-item-description");
-    const anthropicP1 = anthropicDesc.createEl("p");
-    anthropicP1.appendText("You can get your API key from ");
-    anthropicP1.createEl("a", {
-      text: "Anthropic Console",
-      href: "https://console.anthropic.com/settings/keys",
-      attr: { target: "_blank" },
-    });
-    anthropicP1.appendText(".");
-    const anthropicP2 = anthropicDesc.createEl("p");
-    anthropicP2.createEl("strong", { text: "Note:" });
-    anthropicP2.appendText(" Your API key is stored locally and never shared.");
-
-    new Setting(openAIContainer)
-      .setName("OpenAI-compatible API Key")
-      .setDesc("Enter the API key for your OpenAI-compatible provider (e.g., OpenRouter).")
-      .addText((text) => {
-        text
-          .setPlaceholder("sk-or-v1-...")
-          .setValue(this.plugin.settings.openaiApiKey)
-          .onChange(async (value) => {
-            this.plugin.settings.openaiApiKey = value;
-            await this.plugin.saveSettings();
-          });
-        text.inputEl.type = "password";
-      });
-
-    new Setting(openAIContainer)
-      .setName("OpenAI-compatible Base URL")
-      .setDesc("Override the API base URL (use https://openrouter.ai/api/v1 for OpenRouter).")
-      .addText((text) =>
-        text
-          .setPlaceholder(DEFAULT_SETTINGS.openaiBaseUrl)
-          .setValue(this.plugin.settings.openaiBaseUrl)
-          .onChange(async (value) => {
-            this.plugin.settings.openaiBaseUrl = value.trim() || DEFAULT_SETTINGS.openaiBaseUrl;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(openAIContainer)
-      .setName("OpenAI-compatible Model")
-      .setDesc("Specify the model ID to use with your OpenAI-compatible provider.")
-      .addText((text) =>
-        text
-          .setPlaceholder(DEFAULT_SETTINGS.openaiModel)
-          .setValue(this.plugin.settings.openaiModel)
-          .onChange(async (value) => {
-            this.plugin.settings.openaiModel = value.trim() || DEFAULT_SETTINGS.openaiModel;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(openAIContainer)
-      .setName("OpenRouter Image Model")
-      .setDesc("Specify the OpenRouter model ID to use for image generation.")
+    new Setting(aiSettingsContainer)
+      .setName("Image Model")
+      .setDesc("OpenRouter model ID for generating project cover images.")
       .addText((text) =>
         text
           .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
@@ -432,31 +352,17 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
-    const openAIDesc = openAIContainer.createDiv("setting-item-description");
-    const openAIP1 = openAIDesc.createEl("p");
-    openAIP1.appendText("OpenRouter requires the ");
-    openAIP1.createEl("code", { text: "HTTP-Referer" });
-    openAIP1.appendText(" and ");
-    openAIP1.createEl("code", { text: "X-Title" });
-    openAIP1.appendText(
-      " headers. This plugin sends them automatically when the base URL contains "
-    );
-    openAIP1.createEl("code", { text: "openrouter.ai" });
-    openAIP1.appendText(".");
-    const openAIP2 = openAIDesc.createEl("p");
-    openAIP2.createEl("strong", { text: "Note:" });
-    openAIP2.appendText(" API keys are stored locally on your device.");
+    const descEl = aiSettingsContainer.createDiv("setting-item-description");
+    const p1 = descEl.createEl("p");
+    p1.appendText("Get an API key from ");
+    p1.createEl("a", {
+      text: "OpenRouter",
+      href: "https://openrouter.ai/keys",
+      attr: { target: "_blank" },
+    });
+    p1.appendText(". Your key is stored locally and never shared.");
 
-    const updateProviderVisibility = () => {
-      const aiEnabled = this.plugin.settings.aiEnabled;
-      const isAnthropic = this.plugin.settings.llmProvider === "anthropic";
-
-      // Show/hide all AI-related settings based on AI enabled state
-      providerDropdownContainer.style.display = aiEnabled ? "" : "none";
-      anthropicContainer.style.display = aiEnabled && isAnthropic ? "" : "none";
-      openAIContainer.style.display = aiEnabled && !isAnthropic ? "" : "none";
-    };
-
-    updateProviderVisibility();
+    // Set initial visibility
+    aiSettingsContainer.style.display = this.plugin.settings.aiEnabled ? "" : "none";
   }
 }
