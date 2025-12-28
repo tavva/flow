@@ -13,7 +13,7 @@ Flow captures everything demanding your attention and helps you focus on what ma
 
 Your mind is constantly interrupted by things you need to remember: tasks, ideas, commitments, follow-ups. These open loops consume mental energy that should go towards your actual work.
 
-Flow gets everything out of your head and into a trusted system, so you can focus completely on what you're doing right now.
+Flow gets everything out of your head and into a trusted system, so you can focus completely on what you're doing right now. It's based on GTD principles but doesn't require you to follow the methodology rigidly.
 
 ## Features
 
@@ -41,6 +41,8 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 - What category it belongs to (project, action, reference, someday)
 - Which existing project it might fit
 - The sphere, and any other metadata required
+
+![Processing Inbox](docs/assets/processing.png)
 
 **Plan** — Open a sphere view, enter planning mode, and click actions to add them to your focus. Your focus is your curated list of what to work on.
 
