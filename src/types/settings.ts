@@ -18,6 +18,7 @@ export interface PluginSettings {
   inboxFolderPath: string;
   processedInboxFolderPath: string;
   nextActionsHeaderText: string; // Header text to use instead of "Next actions"
+  milestonesHeaderText: string; // Header text to use instead of "Milestones"
   nextActionsFilePath: string;
   somedayFilePath: string;
   projectsFolderPath: string;
@@ -53,6 +54,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   processedInboxFolderPath: "Processed Inbox Folder Notes",
   nextActionsFilePath: "Next actions.md",
   nextActionsHeaderText: "Next actions",
+  milestonesHeaderText: "Milestones",
   somedayFilePath: "Someday.md",
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
@@ -81,4 +83,16 @@ export function nextActionsHeaderText(settings: PluginSettings): string {
     return headerText;
   }
   return "Next actions";
+}
+
+/**
+ * Returns "Milestones" header text from settings if present;
+ * returns a fallback text otherwise.
+ */
+export function milestonesHeaderText(settings: PluginSettings): string {
+  const headerText = settings.milestonesHeaderText;
+  if (headerText && headerText.trim().length > 0) {
+    return headerText;
+  }
+  return "Milestones";
 }

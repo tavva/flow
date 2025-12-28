@@ -1,5 +1,5 @@
 import type { App, TFile, CachedMetadata } from "obsidian";
-import { FlowProject, nextActionsHeaderText, PluginSettings } from "./types";
+import { FlowProject, milestonesHeaderText, nextActionsHeaderText, PluginSettings } from "./types";
 import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
 
 export class FlowProjectScanner {
@@ -65,7 +65,7 @@ export class FlowProjectScanner {
       mtime: file.stat.mtime,
       nextActions: this.extractSection(content, `## ${nextActionsHeaderText(this.settings)}`),
       parentProject: frontmatter["parent-project"],
-      milestones: this.extractSectionText(content, "## Milestones"),
+      milestones: this.extractSectionText(content, `## ${milestonesHeaderText(this.settings)}`),
       coverImage: frontmatter["cover-image"],
       current: frontmatter.current === true,
     };

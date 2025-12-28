@@ -379,6 +379,22 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Milestones Header Text
+    new Setting(containerEl)
+      .setName("Milestones Header Text")
+      .setDesc(
+        "Alternative text for the \"Milestones\" header in project files."
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("Milestones")
+          .setValue(this.plugin.settings.milestonesHeaderText)
+          .onChange(async (value) => {
+            this.plugin.settings.milestonesHeaderText = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Default Inbox File
     new Setting(containerEl)
       .setName("Default Inbox File")
