@@ -32,7 +32,7 @@ export class NewProjectModal extends Modal {
     super(app);
     this.settings = settings;
     this.saveSettings = saveSettings;
-    this.scanner = new FlowProjectScanner(app);
+    this.scanner = new FlowProjectScanner(app, settings);
     this.fileWriter = new FileWriter(app, settings);
     this.data = {
       title: "",

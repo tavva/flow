@@ -35,7 +35,7 @@ export class SphereDataLoader {
     this.app = app;
     this.sphere = sphere;
     this.settings = settings;
-    this.scanner = new FlowProjectScanner(app);
+    this.scanner = new FlowProjectScanner(app, settings);
   }
 
   async loadSphereData(): Promise<SphereViewData> {

@@ -33,7 +33,7 @@ export class FocusView extends RefreshingView {
     super(leaf);
     this.settings = settings;
     this.validator = new FocusValidator(this.app);
-    this.scanner = new FlowProjectScanner(this.app);
+    this.scanner = new FlowProjectScanner(this.app, settings);
     this.saveSettings = saveSettings;
 
     // Check if Dataview is available for fast refreshes
