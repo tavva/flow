@@ -32,7 +32,7 @@ export class SomedayScanner {
   constructor(app: App, settings: PluginSettings) {
     this.app = app;
     this.settings = settings;
-    this.projectScanner = new FlowProjectScanner(app);
+    this.projectScanner = new FlowProjectScanner(app, settings);
   }
 
   private extractSphere(lineContent: string): string | undefined {

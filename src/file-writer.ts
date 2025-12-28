@@ -1,9 +1,10 @@
 import type { App } from "obsidian";
 import { TFile, normalizePath } from "obsidian";
-import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
+import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote, nextActionsHeaderText } from "./types";
 import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { sanitizeFileName } from "./validation";
+import escapeRegex from "regex-escape";
 
 export class FileWriter {
   constructor(
@@ -244,7 +245,7 @@ export class FileWriter {
       const isDone = markAsDone[i] || false;
       content = this.addActionToSection(
         content,
-        "## Next actions",
+        `## ${nextActionsHeaderText(this.settings)}`,
         action,
         isWaiting,
         isDone,
@@ -413,62 +414,64 @@ export class FileWriter {
     }
 
     // Add next actions to the template
-    let content = templateContent;
+    let actionsText = "";
+    const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
+
+    if (result.nextActions && result.nextActions.length > 0) {
+      actionsText =
+        result.nextActions
+          .map((action, i) => {
+            const isDone = markAsDone[i] || false;
+            const isWaiting = waitingFor[i] || false;
+
+            let checkbox: string;
+            let actionText = action;
+
+            if (isDone) {
+              checkbox = "- [x]";
+              const completionDate = new Date().toISOString().split("T")[0];
+              actionText = `${action} ✅ ${completionDate}`;
+            } else if (isWaiting) {
+              checkbox = "- [w]";
+            } else {
+              checkbox = "- [ ]";
+            }
+
+            return `${checkbox} ${actionText}${dueDateSuffix}`;
+          })
+          .join("\n") + "\n";
+    } else if (result.nextAction) {
+      const isDone = markAsDone[0] || false;
+      const isWaiting = waitingFor[0] || false;
+
+      let checkbox: string;
+      let actionText = result.nextAction;
+
+      if (isDone) {
+        checkbox = "- [x]";
+        const completionDate = new Date().toISOString().split("T")[0];
+        actionText = `${result.nextAction} ✅ ${completionDate}`;
+      } else if (isWaiting) {
+        checkbox = "- [w]";
+      } else {
+        checkbox = "- [ ]";
+      }
+
+      actionsText = `${checkbox} ${actionText}${dueDateSuffix}\n`;
+    }
 
     // Find the "## Next actions" section and add the actions
-    const nextActionsRegex = /(## Next actions\s*\n)(\s*)/;
+    let content = templateContent;
+    const nextActionsRegex = new RegExp(`(##\\s*${escapeRegex(nextActionsHeaderText(this.settings))}\\s*(?:\\n|$))(\\s*)`);
     const match = content.match(nextActionsRegex);
 
     if (match) {
-      let actionsText = "";
-      const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
-
-      if (result.nextActions && result.nextActions.length > 0) {
-        actionsText =
-          result.nextActions
-            .map((action, i) => {
-              const isDone = markAsDone[i] || false;
-              const isWaiting = waitingFor[i] || false;
-
-              let checkbox: string;
-              let actionText = action;
-
-              if (isDone) {
-                checkbox = "- [x]";
-                const completionDate = new Date().toISOString().split("T")[0];
-                actionText = `${action} ✅ ${completionDate}`;
-              } else if (isWaiting) {
-                checkbox = "- [w]";
-              } else {
-                checkbox = "- [ ]";
-              }
-
-              return `${checkbox} ${actionText}${dueDateSuffix}`;
-            })
-            .join("\n") + "\n";
-      } else if (result.nextAction) {
-        const isDone = markAsDone[0] || false;
-        const isWaiting = waitingFor[0] || false;
-
-        let checkbox: string;
-        let actionText = result.nextAction;
-
-        if (isDone) {
-          checkbox = "- [x]";
-          const completionDate = new Date().toISOString().split("T")[0];
-          actionText = `${result.nextAction} ✅ ${completionDate}`;
-        } else if (isWaiting) {
-          checkbox = "- [w]";
-        } else {
-          checkbox = "- [ ]";
-        }
-
-        actionsText = `${checkbox} ${actionText}${dueDateSuffix}\n`;
-      }
-
       // Replace "## Next actions\n<any whitespace>" with "## Next actions\n<actions>\n"
       // This ensures proper spacing regardless of template whitespace
       content = content.replace(nextActionsRegex, `$1${actionsText}\n`);
+    } else {
+      // Fallback: Append at the end if the section is not found
+      content += `\n## ${nextActionsHeaderText(this.settings)}\n${actionsText}\n`;
     }
 
     return content;
@@ -490,6 +493,7 @@ export class FileWriter {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
     const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+    const nextActionsHeader = nextActionsHeaderText(this.settings);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
@@ -524,7 +528,7 @@ status: ${this.settings.defaultStatus}`;
 
 ${originalItemDescription}
 
-## Next actions
+## ${nextActionsHeader}
 `;
 
     // Handle multiple next actions or single next action

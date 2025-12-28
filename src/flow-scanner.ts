@@ -1,11 +1,14 @@
 import type { App, TFile, CachedMetadata } from "obsidian";
-import { FlowProject } from "./types";
+import { FlowProject, milestonesHeaderText, nextActionsHeaderText, PluginSettings } from "./types";
 import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
 
 export class FlowProjectScanner {
   private cache: Map<string, { mtime: number; project: FlowProject }> = new Map();
 
-  constructor(private app: App) {}
+  constructor(
+    private app: App,
+    private settings: PluginSettings
+  ) {}
 
   /**
    * Scans the vault for all Flow projects (files with tags starting with 'project/')
@@ -60,9 +63,9 @@ export class FlowProjectScanner {
       status: frontmatter.status,
       creationDate: frontmatter["creation-date"],
       mtime: file.stat.mtime,
-      nextActions: this.extractSection(content, "## Next actions"),
+      nextActions: this.extractSection(content, `## ${nextActionsHeaderText(this.settings)}`),
       parentProject: frontmatter["parent-project"],
-      milestones: this.extractSectionText(content, "## Milestones"),
+      milestones: this.extractSectionText(content, `## ${milestonesHeaderText(this.settings)}`),
       coverImage: frontmatter["cover-image"],
       current: frontmatter.current === true,
     };

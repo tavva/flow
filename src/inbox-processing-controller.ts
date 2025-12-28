@@ -34,7 +34,7 @@ export class InboxProcessingController {
     saveSettings?: () => Promise<void>
   ) {
     this.settings = settings;
-    this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
+    this.scanner = dependencies.scanner ?? new FlowProjectScanner(app, settings);
     this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
     this.writer = dependencies.writer ?? new FileWriter(app, settings);
     this.inboxScanner = (
