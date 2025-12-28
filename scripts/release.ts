@@ -1,10 +1,11 @@
 // ABOUTME: Production release script for creating and publishing versioned releases.
-// ABOUTME: Handles version bumping, file updates, and git tag creation.
+// ABOUTME: Handles version bumping, release notes, file updates, and GitHub release creation.
 
 import * as readline from "readline";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "fs";
 import { join } from "path";
-import { execSync, execFileSync } from "child_process";
+import { execSync, execFileSync, spawnSync } from "child_process";
+import { tmpdir } from "os";
 
 export interface ParsedVersion {
   major: number;
@@ -192,6 +193,7 @@ export function checkTests(): boolean {
  */
 export function runPreflightChecks(): boolean {
   if (!checkGitStatus()) return false;
+  if (!checkGitHubCLI()) return false;
   if (!checkFormatting()) return false;
   if (!checkTests()) return false;
   return true;
@@ -225,6 +227,107 @@ export function verifyBuildFiles(): void {
 
   if (!existsSync(join(process.cwd(), "styles.css"))) {
     console.log("Note: styles.css not found (plugin may not have styles)");
+  }
+}
+
+/**
+ * Verifies gh CLI is installed and authenticated
+ */
+export function checkGitHubCLI(): boolean {
+  try {
+    execSync("gh --version", { encoding: "utf-8", stdio: "pipe" });
+  } catch {
+    console.error("Error: GitHub CLI (gh) is not installed");
+    console.error("Install from: https://cli.github.com/");
+    return false;
+  }
+
+  try {
+    execSync("gh auth status", { encoding: "utf-8", stdio: "pipe" });
+    return true;
+  } catch {
+    console.error("Error: GitHub CLI is not authenticated");
+    console.error("Run: gh auth login");
+    return false;
+  }
+}
+
+/**
+ * Determines which release assets to include based on file presence
+ */
+export function getReleaseAssets(): string[] {
+  const hasStyles = existsSync(join(process.cwd(), "styles.css"));
+  return hasStyles ? ["manifest.json", "main.js", "styles.css"] : ["manifest.json", "main.js"];
+}
+
+/**
+ * Opens the user's editor to write release notes
+ */
+export function promptReleaseNotes(version: string): string {
+  const editor = process.env.EDITOR || process.env.VISUAL || "vi";
+  const tempFile = join(tmpdir(), `flow-release-notes-${version}.md`);
+
+  const template = `# Release ${version}
+
+## What's New
+
+-
+
+## Bug Fixes
+
+-
+
+<!-- Lines starting with # will be kept. Delete sections you don't need. -->
+`;
+
+  writeFileSync(tempFile, template, "utf-8");
+
+  console.log(`\nOpening ${editor} for release notes...`);
+  console.log("Save and close the editor when done.\n");
+
+  const result = spawnSync(editor, [tempFile], {
+    stdio: "inherit",
+  });
+
+  if (result.status !== 0) {
+    unlinkSync(tempFile);
+    throw new Error("Editor exited with non-zero status");
+  }
+
+  const content = readFileSync(tempFile, "utf-8");
+  unlinkSync(tempFile);
+
+  // Remove empty sections and clean up
+  const lines = content.split("\n");
+  const cleanedLines = lines.filter((line) => {
+    // Keep non-empty lines that aren't just "- " placeholder
+    const trimmed = line.trim();
+    return trimmed !== "-" && trimmed !== "- ";
+  });
+
+  return cleanedLines.join("\n").trim();
+}
+
+/**
+ * Creates GitHub release with assets
+ */
+export function createGitHubRelease(version: string, releaseNotes: string): boolean {
+  const assets = getReleaseAssets();
+
+  console.log("Creating GitHub release...\n");
+
+  try {
+    execFileSync(
+      "gh",
+      ["release", "create", version, "--title", `v${version}`, "--notes", releaseNotes, ...assets],
+      { stdio: "inherit" }
+    );
+    console.log("\n✓ GitHub release created\n");
+    return true;
+  } catch (error) {
+    console.error("\nError creating GitHub release");
+    console.error(error instanceof Error ? error.message : String(error));
+    return false;
   }
 }
 
@@ -286,14 +389,19 @@ export function promptVersionBump(current: ParsedVersion): Promise<string> {
 /**
  * Displays planned commands and asks for confirmation
  */
-export function confirmRelease(version: string): Promise<boolean> {
+export function confirmRelease(version: string, releaseNotes: string): Promise<boolean> {
   return new Promise((resolve) => {
+    const assets = getReleaseAssets().join(" ");
+
+    console.log("\n--- Release Notes Preview ---\n");
+    console.log(releaseNotes);
+    console.log("\n-----------------------------\n");
+
     console.log("The following commands will be executed:\n");
     console.log("  git add package.json manifest.json versions.json");
     console.log(`  git commit -m "Release v${version}"`);
-    console.log(`  git tag ${version}`);
-    console.log("  git push && git push --tags\n");
-    console.log("This will trigger the GitHub Actions workflow to create the release.\n");
+    console.log("  git push");
+    console.log(`  gh release create ${version} --title "v${version}" ${assets}\n`);
 
     const rl = readline.createInterface({
       input: process.stdin,
@@ -308,10 +416,10 @@ export function confirmRelease(version: string): Promise<boolean> {
 }
 
 /**
- * Commits changes, creates tag, and pushes
+ * Commits changes and pushes
  */
-export function commitTagAndPush(version: string): boolean {
-  console.log("Committing, tagging, and pushing...\n");
+export function commitAndPush(version: string): boolean {
+  console.log("Committing and pushing...\n");
 
   try {
     execFileSync("git", ["add", "package.json", "manifest.json", "versions.json"], {
@@ -320,10 +428,8 @@ export function commitTagAndPush(version: string): boolean {
     execFileSync("git", ["commit", "-m", `Release v${version}`], {
       stdio: "inherit",
     });
-    execFileSync("git", ["tag", version], { stdio: "inherit" });
     execFileSync("git", ["push"], { stdio: "inherit" });
-    execFileSync("git", ["push", "--tags"], { stdio: "inherit" });
-    console.log("\n✓ Changes committed, tagged, and pushed\n");
+    console.log("\n✓ Changes committed and pushed\n");
     return true;
   } catch (error) {
     console.error("\nError during git operations");
@@ -389,21 +495,38 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Prompt for release notes
+  let releaseNotes: string;
+  try {
+    releaseNotes = promptReleaseNotes(nextVersion);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("Reverting version changes...");
+    rollbackVersionFiles();
+    process.exit(1);
+  }
+
   // Confirm and execute
-  const confirmed = await confirmRelease(nextVersion);
+  const confirmed = await confirmRelease(nextVersion, releaseNotes);
   if (!confirmed) {
     console.log("Release cancelled. Reverting version changes...");
     rollbackVersionFiles();
     process.exit(0);
   }
 
-  // Commit, tag, and push
-  if (!commitTagAndPush(nextVersion)) {
+  // Commit and push
+  if (!commitAndPush(nextVersion)) {
     process.exit(1);
   }
 
-  console.log(`\n✓ Version ${nextVersion} tagged and pushed!`);
-  console.log("GitHub Actions will create the release automatically.\n");
+  // Create GitHub release (this also creates the tag)
+  if (!createGitHubRelease(nextVersion, releaseNotes)) {
+    console.error("Release commit was pushed but GitHub release creation failed.");
+    console.error(`You can manually create the release: gh release create ${nextVersion}`);
+    process.exit(1);
+  }
+
+  console.log(`\n✓ Version ${nextVersion} released successfully!\n`);
 }
 
 // Run if called directly
