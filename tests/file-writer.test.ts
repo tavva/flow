@@ -426,6 +426,155 @@ status: live
       expect(content).toContain('parent-project: "[[Parent Project]]"');
     });
 
+    it("should replace {{date}} placeholder with YYYY-MM-DD format", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Date Test Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: {{ date }}
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        if (path === "Templates/Project.md") {
+          return templateFile;
+        }
+
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "test");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      // Should match YYYY-MM-DD format (date only, no time)
+      expect(content).toMatch(/creation-date: \d{4}-\d{2}-\d{2}\n/);
+      expect(content).not.toMatch(/creation-date: \d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
+    });
+
+    it("should replace {{time}} placeholder with HH:mm format", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Time Test Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: {{ date }}
+creation-time: {{ time }}
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        if (path === "Templates/Project.md") {
+          return templateFile;
+        }
+
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "test");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      // Should match HH:mm format (time only)
+      expect(content).toMatch(/creation-time: \d{2}:\d{2}\n/);
+    });
+
+    it("should replace {{status}} placeholder with default status from settings", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Status Test Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: {{ date }}
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: {{ status }}
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+
+        if (path === "Templates/Project.md") {
+          return templateFile;
+        }
+
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "test");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      // Should use the defaultStatus from settings which is "live"
+      expect(content).toContain("status: live");
+    });
+
     it("should add parent-project to frontmatter when creating sub-project with fallback", async () => {
       const result: GTDProcessingResult = {
         isActionable: true,

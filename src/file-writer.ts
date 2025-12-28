@@ -382,7 +382,10 @@ export class FileWriter {
     let templateContent = await this.app.vault.read(templateFile);
 
     // Parse template variables
-    const date = this.formatDate(new Date());
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+    const date = this.formatDate(now);
+    const time = this.formatTime(now);
     const sphereTagsForTemplate =
       spheres.length > 0 ? spheres.map((s) => `project/${s}`).join("\n  - ") : "project/personal";
 
@@ -396,7 +399,10 @@ export class FileWriter {
 
     // Replace template variables
     templateContent = templateContent
+      .replace(/{{\s*date\s*}}/g, date)
+      .replace(/{{\s*time\s*}}/g, time)
       .replace(/{{\s*priority\s*}}/g, projectPriority.toString())
+      .replace(/{{\s*status\s*}}/g, this.settings.defaultStatus)
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
       .replace(
         /{{\s*description\s*}}/g,
@@ -404,10 +410,10 @@ export class FileWriter {
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
-    // Handle both 12-hour (hh:mm) and 24-hour (HH:mm) formats
+    // Both HH:mm and hh:mm patterns are replaced with 24-hour format
     templateContent = templateContent
-      .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, date)
-      .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, date);
+      .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, dateTime)
+      .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, dateTime);
 
     // Add parent-project to frontmatter if provided
     if (parentProject) {
@@ -500,7 +506,8 @@ export class FileWriter {
     dueDate?: string,
     sourceNoteLink?: string
   ): string {
-    const date = this.formatDate(new Date());
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
     const title = result.projectOutcome || originalItem;
     const description = this.formatDescription(originalItem, sourceNoteLink, result.description);
 
@@ -519,7 +526,7 @@ export class FileWriter {
         : this.settings.defaultPriority;
 
     let content = `---
-creation-date: ${date}
+creation-date: ${dateTime}
 priority:
   ${projectPriorityFallback}
 tags:
@@ -764,9 +771,9 @@ ${description}
   }
 
   /**
-   * Format a date for Flow frontmatter (YYYY-MM-DD HH:mm)
+   * Format a datetime for Flow frontmatter (YYYY-MM-DD HH:mm)
    */
-  private formatDate(date: Date): string {
+  private formatDateTime(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -774,6 +781,27 @@ ${description}
     const minutes = String(date.getMinutes()).padStart(2, "0");
 
     return `${year}-${month}-${day} ${hours}:${minutes}`;
+  }
+
+  /**
+   * Format a date for Flow frontmatter (YYYY-MM-DD)
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * Format a time for Flow frontmatter (HH:mm)
+   */
+  private formatTime(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${hours}:${minutes}`;
   }
 
   /**
