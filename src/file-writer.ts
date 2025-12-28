@@ -751,7 +751,7 @@ ${originalItemDescription}
   }
 
   /**
-   * Format a date for Flow frontmatter (YYYY-MM-DD HH:mm)
+   * Format a date for Flow frontmatter (YYYY-MM-DDTHH:mm:00)
    */
   private formatDate(date: Date): string {
     const year = date.getFullYear();
@@ -760,7 +760,7 @@ ${originalItemDescription}
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
 
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:00`;
   }
 
   /**
