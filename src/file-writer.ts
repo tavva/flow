@@ -327,6 +327,19 @@ export class FileWriter {
     return cleaned.length > 0 ? cleaned : "Project";
   }
 
+  private formatDescription(
+    originalItem: string,
+    sourceNoteLink?: string,
+    description?: string
+  ): string {
+    // If a description is explicitly provided, use it directly (for manually created projects)
+    if (description && description.length > 0) {
+      return description;
+    }
+    // Otherwise, format as an inbox item reference
+    return this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+  }
+
   private formatOriginalInboxItem(originalItem: string, sourceNoteLink?: string): string {
     const normalized = originalItem.replace(/\s+/g, " ").trim();
     const sourceSuffix = sourceNoteLink ? ` (${sourceNoteLink})` : "";
@@ -387,7 +400,7 @@ export class FileWriter {
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
       .replace(
         /{{\s*description\s*}}/g,
-        this.formatOriginalInboxItem(originalItem, sourceNoteLink)
+        this.formatDescription(originalItem, sourceNoteLink, result.description)
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
@@ -489,7 +502,7 @@ export class FileWriter {
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
-    const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+    const description = this.formatDescription(originalItem, sourceNoteLink, result.description);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
@@ -522,7 +535,7 @@ status: ${this.settings.defaultStatus}`;
 
 # Description
 
-${originalItemDescription}
+${description}
 
 ## Next actions
 `;

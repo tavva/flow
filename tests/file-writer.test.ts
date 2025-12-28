@@ -490,6 +490,84 @@ status: live
       expect(content).toContain("- [ ] Draft proposal outline 📅 2025-11-05");
       expect(content).toContain("- [ ] Review with stakeholders 📅 2025-11-05");
     });
+
+    it("should use description directly when provided (no 'Original inbox item:' prefix)", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "My Project",
+        nextAction: "First step",
+        reasoning: "User created project directly",
+        description: "This is a custom project description",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "User created",
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "original inbox text", ["work"]);
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("This is a custom project description");
+      expect(content).not.toContain("Original inbox item:");
+    });
+
+    it("should use 'Original inbox item:' format when description is empty", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "My Project",
+        nextAction: "First step",
+        reasoning: "Some reasoning",
+        description: "",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Multi-step",
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "call Bob about the project", ["work"]);
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("Original inbox item: call Bob about the project");
+    });
+
+    it("should use 'Original inbox item:' format when description is undefined", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "My Project",
+        nextAction: "First step",
+        reasoning: "Some reasoning",
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Multi-step",
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") {
+          return {};
+        }
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue({} as TFile);
+
+      await fileWriter.createProject(result, "inbox item text", ["work"]);
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain("Original inbox item: inbox item text");
+    });
   });
 
   describe("addNextActionToProject", () => {
