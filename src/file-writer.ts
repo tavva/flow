@@ -4,6 +4,7 @@ import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote, nextActio
 import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { sanitizeFileName } from "./validation";
+import escapeRegex from "regex-escape";
 
 export class FileWriter {
   constructor(
@@ -416,8 +417,7 @@ export class FileWriter {
     let content = templateContent;
 
     // Find the "## Next actions" section and add the actions
-    // TODO: Properly escape the regex (using RegExp.escape if available)
-    const nextActionsRegex = new RegExp(`(##\\s*${nextActionsHeaderText(this.settings)}\\s*\\n)(\\s*)`);
+    const nextActionsRegex = new RegExp(`(##\\s*${escapeRegex(nextActionsHeaderText(this.settings))}\\s*\\n)(\\s*)`);
     const match = content.match(nextActionsRegex);
 
     if (match) {
