@@ -417,7 +417,7 @@ export class FileWriter {
     let content = templateContent;
 
     // Find the "## Next actions" section and add the actions
-    const nextActionsRegex = new RegExp(`(##\\s*${escapeRegex(nextActionsHeaderText(this.settings))}\\s*\\n)(\\s*)`);
+    const nextActionsRegex = new RegExp(`(##\\s*${escapeRegex(nextActionsHeaderText(this.settings))}\\s*(?:\\n|$))(\\s*)`);
     const match = content.match(nextActionsRegex);
 
     if (match) {
