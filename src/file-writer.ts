@@ -1,6 +1,6 @@
 import type { App } from "obsidian";
 import { TFile, normalizePath } from "obsidian";
-import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./types";
+import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote, nextActionsHeaderText } from "./types";
 import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { sanitizeFileName } from "./validation";
@@ -244,7 +244,7 @@ export class FileWriter {
       const isDone = markAsDone[i] || false;
       content = this.addActionToSection(
         content,
-        "## Next actions",
+        `## ${nextActionsHeaderText(this.settings)}`,
         action,
         isWaiting,
         isDone,
@@ -416,7 +416,8 @@ export class FileWriter {
     let content = templateContent;
 
     // Find the "## Next actions" section and add the actions
-    const nextActionsRegex = /(## Next actions\s*\n)(\s*)/;
+    // TODO: Properly escape the regex (using RegExp.escape if available)
+    const nextActionsRegex = new RegExp(`(##\\s*${nextActionsHeaderText(this.settings)}\\s*\\n)(\\s*)`);
     const match = content.match(nextActionsRegex);
 
     if (match) {
@@ -490,6 +491,7 @@ export class FileWriter {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
     const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+    const nextActionsHeader = nextActionsHeaderText(this.settings);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
@@ -524,7 +526,7 @@ status: ${this.settings.defaultStatus}`;
 
 ${originalItemDescription}
 
-## Next actions
+## ${nextActionsHeader}
 `;
 
     // Handle multiple next actions or single next action

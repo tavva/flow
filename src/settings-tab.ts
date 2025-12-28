@@ -363,6 +363,22 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Next Actions Header Text
+    new Setting(containerEl)
+      .setName("Next Actions Header Text")
+      .setDesc(
+        "Alternative text for the \"Next actions\" header in project files."
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("Next actions")
+          .setValue(this.plugin.settings.nextActionsHeaderText)
+          .onChange(async (value) => {
+            this.plugin.settings.nextActionsHeaderText = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Default Inbox File
     new Setting(containerEl)
       .setName("Default Inbox File")
