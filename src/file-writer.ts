@@ -782,7 +782,7 @@ ${originalItemDescription}
   }
 
   /**
-   * Format a time for Flow frontmatter (hh:mm)
+   * Format a time for Flow frontmatter (HH:mm)
    */
   private formatTime(date: Date): string {
     const hours = String(date.getHours()).padStart(2, "0");
