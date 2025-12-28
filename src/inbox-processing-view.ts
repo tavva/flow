@@ -85,7 +85,10 @@ export class InboxProcessingView extends ItemView {
     }
 
     if (target === "editable") {
-      renderEditableItemsView(container, this.state, { onClose: () => this.handleClose() });
+      renderEditableItemsView(container, this.state, {
+        onClose: () => this.handleClose(),
+        onShowHelp: () => new KeyboardShortcutsModal(this.app).open(),
+      });
 
       if (this.pendingFocus) {
         const selector = this.pendingFocus;

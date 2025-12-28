@@ -8,6 +8,7 @@ import { FlowProject } from "./types";
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
+  onShowHelp?: () => void;
 }
 
 export interface InboxViewOptions {
@@ -61,7 +62,7 @@ export function renderInboxView(
 export function renderEditableItemsView(
   contentEl: HTMLElement,
   state: InboxModalState,
-  { onClose }: EditableItemsViewOptions
+  { onClose, onShowHelp }: EditableItemsViewOptions
 ) {
   contentEl.empty();
   contentEl.addClass("flow-gtd-inbox-modal");
@@ -92,7 +93,7 @@ export function renderEditableItemsView(
   const container = contentEl.createDiv("flow-inbox-redesign");
 
   // Navigation header
-  renderNavigationHeader(container, state, activeIndex);
+  renderNavigationHeader(container, state, activeIndex, onShowHelp);
 
   // Original item display
   renderOriginalBox(container, currentItem);
@@ -127,14 +128,25 @@ export function renderEditableItemsView(
 function renderNavigationHeader(
   container: HTMLElement,
   state: InboxModalState,
-  currentIndex: number
+  currentIndex: number,
+  onShowHelp?: () => void
 ) {
   const header = container.createDiv("flow-inbox-header");
 
   const countSpan = header.createSpan({ cls: "flow-inbox-count" });
   countSpan.setText(`Inbox · ${currentIndex + 1} of ${state.editableItems.length}`);
 
-  const arrows = header.createDiv("flow-inbox-arrows");
+  const navGroup = header.createDiv("flow-inbox-nav-group");
+
+  // Help hint
+  if (onShowHelp) {
+    const helpHint = navGroup.createEl("button", { cls: "flow-inbox-help-hint" });
+    helpHint.setText("?");
+    helpHint.title = "Keyboard shortcuts";
+    helpHint.addEventListener("click", onShowHelp);
+  }
+
+  const arrows = navGroup.createDiv("flow-inbox-arrows");
 
   const prevBtn = arrows.createEl("button", { cls: "flow-inbox-arrow-btn" });
   prevBtn.setText("←");

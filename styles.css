@@ -2048,6 +2048,28 @@ select.flow-gtd-inline-select option,
   font-size: 0.75rem;
 }
 
+.flow-inbox-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flow-inbox-help-hint {
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.flow-inbox-help-hint:hover {
+  opacity: 1;
+  color: var(--text-muted);
+}
+
 .flow-inbox-arrows {
   display: flex;
   gap: 0.25rem;
