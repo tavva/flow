@@ -327,10 +327,17 @@ export class FileWriter {
     return cleaned.length > 0 ? cleaned : "Project";
   }
 
-  private formatDescription(originalItem: string, sourceNoteLink?: string, reasoning?: string): string {
-    const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
-    const reasoningSuffix = reasoning && reasoning.length > 0 ? `\n\n${reasoning}` : "";
-    return `${originalItemDescription}${reasoningSuffix}`;
+  private formatDescription(
+    originalItem: string,
+    sourceNoteLink?: string,
+    description?: string
+  ): string {
+    // If a description is explicitly provided, use it directly (for manually created projects)
+    if (description && description.length > 0) {
+      return description;
+    }
+    // Otherwise, format as an inbox item reference
+    return this.formatOriginalInboxItem(originalItem, sourceNoteLink);
   }
 
   private formatOriginalInboxItem(originalItem: string, sourceNoteLink?: string): string {
@@ -393,7 +400,7 @@ export class FileWriter {
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
       .replace(
         /{{\s*description\s*}}/g,
-        this.formatDescription(originalItem, sourceNoteLink, result.reasoning)
+        this.formatDescription(originalItem, sourceNoteLink, result.description)
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
@@ -495,7 +502,7 @@ export class FileWriter {
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
-    const description = this.formatDescription(originalItem, sourceNoteLink, result.reasoning);
+    const description = this.formatDescription(originalItem, sourceNoteLink, result.description);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
