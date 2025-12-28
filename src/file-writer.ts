@@ -327,6 +327,12 @@ export class FileWriter {
     return cleaned.length > 0 ? cleaned : "Project";
   }
 
+  private formatDescription(originalItem: string, sourceNoteLink?: string, reasoning?: string): string {
+    const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+    const reasoningSuffix = reasoning && reasoning.length > 0 ? `\n\n${reasoning}` : "";
+    return `${originalItemDescription}${reasoningSuffix}`;
+  }
+
   private formatOriginalInboxItem(originalItem: string, sourceNoteLink?: string): string {
     const normalized = originalItem.replace(/\s+/g, " ").trim();
     const sourceSuffix = sourceNoteLink ? ` (${sourceNoteLink})` : "";
@@ -387,7 +393,7 @@ export class FileWriter {
       .replace(/{{\s*sphere\s*}}/g, sphereTagsForTemplate)
       .replace(
         /{{\s*description\s*}}/g,
-        this.formatOriginalInboxItem(originalItem, sourceNoteLink)
+        this.formatDescription(originalItem, sourceNoteLink, result.reasoning)
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
@@ -489,7 +495,7 @@ export class FileWriter {
   ): string {
     const date = this.formatDate(new Date());
     const title = result.projectOutcome || originalItem;
-    const originalItemDescription = this.formatOriginalInboxItem(originalItem, sourceNoteLink);
+    const description = this.formatDescription(originalItem, sourceNoteLink, result.reasoning);
 
     // Format sphere tags for YAML list format
     const sphereTagsList =
@@ -522,7 +528,7 @@ status: ${this.settings.defaultStatus}`;
 
 # Description
 
-${originalItemDescription}
+${description}
 
 ## Next actions
 `;
