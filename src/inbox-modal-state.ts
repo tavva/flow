@@ -111,7 +111,9 @@ export class InboxModalState {
       }
 
       // If we created a new project, refresh the project list so subsequent items can see it
+      // Small delay to let Obsidian's metadata cache update after file creation
       if (item.selectedAction === "create-project") {
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await this.loadReferenceData();
       }
 
