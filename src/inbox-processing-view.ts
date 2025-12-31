@@ -235,7 +235,9 @@ export class InboxProcessingView extends ItemView {
         event.preventDefault();
         break;
       case "p": {
-        const projectInput = this.containerEl.querySelector(".flow-inbox-project-input") as HTMLInputElement;
+        const projectInput = this.containerEl.querySelector(
+          ".flow-inbox-project-input"
+        ) as HTMLInputElement;
         if (projectInput) {
           projectInput.focus();
         }
