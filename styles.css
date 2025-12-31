@@ -2035,13 +2035,6 @@ select.flow-gtd-inline-select option,
   padding: 0.75rem;
 }
 
-@media (min-width: 768px) {
-  .flow-inbox-redesign {
-    max-width: 36rem;
-    padding: 1.5rem;
-  }
-}
-
 /* Navigation header */
 .flow-inbox-header {
   display: flex;
@@ -2750,4 +2743,34 @@ select.flow-gtd-inline-select option,
   height: 20px;
   padding: 0 6px;
   font-size: 10px;
+}
+
+/* ============================================
+   Inbox Processing Desktop Overrides
+   ============================================ */
+
+@media (min-width: 768px) {
+  .flow-inbox-redesign {
+    max-width: 36rem;
+    padding: 1.25rem;
+  }
+
+  .flow-inbox-original {
+    padding: 1rem 1.25rem;
+  }
+
+  .flow-inbox-actions-section {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .flow-inbox-project-section {
+    margin-top: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .flow-inbox-bottom-bar {
+    padding-top: 1.5rem;
+    margin-top: 1.25rem;
+  }
 }
