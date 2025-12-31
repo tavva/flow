@@ -129,7 +129,7 @@ export class InboxProcessingView extends ItemView {
     const currentIndex = this.state.editableItems.findIndex((item) => item.isExpanded);
 
     // Ctrl+Shift+Q blurs the input without closing the view
-    if (event.key === "q" && event.ctrlKey && event.shiftKey && !event.metaKey) {
+    if (event.key.toLowerCase() === "q" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
         target.blur();
         event.preventDefault();
