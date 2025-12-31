@@ -2035,6 +2035,13 @@ select.flow-gtd-inline-select option,
   padding: 0.75rem;
 }
 
+@media (min-width: 768px) {
+  .flow-inbox-redesign {
+    max-width: 36rem;
+    padding: 1.5rem;
+  }
+}
+
 /* Navigation header */
 .flow-inbox-header {
   display: flex;
