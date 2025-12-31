@@ -231,8 +231,7 @@ export class InboxProcessingView extends ItemView {
         event.preventDefault();
         break;
       case "d":
-        expandedItem.selectedAction = "trash";
-        this.state.queueRender("editable");
+        this.state.confirmAndDiscardItem(expandedItem);
         event.preventDefault();
         break;
     }

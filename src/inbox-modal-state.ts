@@ -129,6 +129,15 @@ export class InboxModalState {
     }
   }
 
+  confirmAndDiscardItem(item: EditableItem) {
+    const confirmed = confirm(
+      "Are you sure you want to discard this item? This action cannot be undone."
+    );
+    if (confirmed) {
+      this.discardItem(item);
+    }
+  }
+
   async discardItem(item: EditableItem) {
     if (item.inboxItem) {
       try {

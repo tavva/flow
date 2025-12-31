@@ -716,12 +716,7 @@ function renderBottomBar(container: HTMLElement, item: EditableItem, state: Inbo
   deleteBtn.setText("🗑");
   deleteBtn.title = "Discard item";
   deleteBtn.addEventListener("click", () => {
-    const confirmed = confirm(
-      "Are you sure you want to discard this item? This action cannot be undone."
-    );
-    if (confirmed) {
-      state.discardItem(item);
-    }
+    state.confirmAndDiscardItem(item);
   });
 
   // Save button
