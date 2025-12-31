@@ -2419,24 +2419,40 @@ select.flow-gtd-inline-select option,
   border: 1px solid var(--background-modifier-border);
   border-radius: 0.375rem;
   margin-top: 0.25rem;
+  padding: 0.25rem 0;
   z-index: 100;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .flow-inbox-project-dropdown-item {
+  display: block;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   font-size: 0.8125rem;
   color: var(--text-normal);
   border: none;
+  border-radius: 0;
   background: transparent;
   width: 100%;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   transition: background 0.1s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .flow-inbox-project-dropdown-item:hover {
   background: var(--background-modifier-hover);
+}
+
+.flow-inbox-project-dropdown-item:focus {
+  background: var(--background-modifier-hover);
+  outline: none;
+  box-shadow: none;
 }
 
 .flow-inbox-project-dropdown-item.selected {
@@ -2445,7 +2461,10 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-inbox-project-dropdown-item.create-new {
-  color: var(--interactive-accent);
+  color: var(--text-accent);
+  font-weight: 500;
+  margin-top: 0.25rem;
+  padding-top: 0.625rem;
   border-top: 1px solid var(--background-modifier-border);
 }
 
