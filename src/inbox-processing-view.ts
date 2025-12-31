@@ -234,6 +234,14 @@ export class InboxProcessingView extends ItemView {
         this.state.confirmAndDiscardItem(expandedItem);
         event.preventDefault();
         break;
+      case "p": {
+        const projectInput = this.containerEl.querySelector(".flow-inbox-project-input") as HTMLInputElement;
+        if (projectInput) {
+          projectInput.focus();
+        }
+        event.preventDefault();
+        break;
+      }
     }
   };
 

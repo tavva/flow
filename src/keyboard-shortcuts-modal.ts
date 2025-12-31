@@ -54,6 +54,7 @@ export class KeyboardShortcutsModal extends Modal {
           { keys: ["←"], description: "Previous item" },
           { keys: ["→"], description: "Next item" },
           { keys: ["Enter"], description: "Focus action input" },
+          { keys: ["P"], description: "Focus project input" },
         ],
       },
       {
