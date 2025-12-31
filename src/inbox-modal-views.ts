@@ -578,8 +578,23 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
   const dropdown = inputWrapper.createDiv("flow-inbox-project-dropdown");
   dropdown.style.display = "none";
 
+  let highlightedIndex = -1;
+  let dropdownItems: HTMLElement[] = [];
+
+  const updateHighlight = () => {
+    dropdownItems.forEach((el, i) => {
+      el.toggleClass("highlighted", i === highlightedIndex);
+    });
+    // Scroll highlighted item into view
+    if (highlightedIndex >= 0 && dropdownItems[highlightedIndex]) {
+      dropdownItems[highlightedIndex].scrollIntoView({ block: "nearest" });
+    }
+  };
+
   const updateDropdown = (searchTerm: string) => {
     dropdown.empty();
+    dropdownItems = [];
+    highlightedIndex = -1;
 
     const filtered = searchTerm
       ? state.existingProjects.filter((p) =>
@@ -593,6 +608,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
     sorted.slice(0, 10).forEach((project) => {
       const projectBtn = dropdown.createEl("button", { cls: "flow-inbox-project-dropdown-item" });
       projectBtn.setText(project.title);
+      dropdownItems.push(projectBtn);
 
       if (item.selectedProject?.file === project.file) {
         projectBtn.addClass("selected");
@@ -609,6 +625,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
         cls: "flow-inbox-project-dropdown-item create-new",
       });
       createBtn.setText(`+ Create "${searchTerm.trim()}"`);
+      dropdownItems.push(createBtn);
 
       if (item.selectedAction === "create-project") {
         createBtn.addClass("selected");
@@ -655,6 +672,29 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
     }
   });
 
+  input.addEventListener("keydown", (e) => {
+    if (dropdown.style.display === "none" || dropdownItems.length === 0) {
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      highlightedIndex = Math.min(highlightedIndex + 1, dropdownItems.length - 1);
+      updateHighlight();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      highlightedIndex = Math.max(highlightedIndex - 1, 0);
+      updateHighlight();
+    } else if (e.key === "Enter" && highlightedIndex >= 0) {
+      e.preventDefault();
+      dropdownItems[highlightedIndex].click();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      dropdown.style.display = "none";
+      highlightedIndex = -1;
+    }
+  });
+
   input.addEventListener("focus", () => {
     updateDropdown(input.value);
   });
@@ -663,6 +703,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
     // Delay to allow click on dropdown item
     setTimeout(() => {
       dropdown.style.display = "none";
+      highlightedIndex = -1;
     }, 200);
   });
 }

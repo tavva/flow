@@ -2445,7 +2445,8 @@ select.flow-gtd-inline-select option,
   box-shadow: none;
 }
 
-.flow-inbox-project-dropdown-item:hover {
+.flow-inbox-project-dropdown-item:hover,
+.flow-inbox-project-dropdown-item.highlighted {
   background: var(--background-modifier-hover);
 }
 
