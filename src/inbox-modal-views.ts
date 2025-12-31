@@ -637,6 +637,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
         item.selectedAction = "create-project";
         input.value = searchTerm.trim();
         dropdown.style.display = "none";
+        input.blur();
         state.queueRender("editable");
       });
     }
@@ -653,6 +654,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
     item.selectedProject = project;
     input.value = project?.title || "";
     dropdown.style.display = "none";
+    input.blur();
 
     // When a project is selected, change action to add-to-project
     if (project) {
