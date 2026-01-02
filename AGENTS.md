@@ -66,7 +66,7 @@ const hierarchy = buildProjectHierarchy(filtered);
 
 ```markdown
 ---
-creation-date: 2025-10-05 18:59
+creation-date: 2025-10-05T18:59:00
 priority: 2
 tags: project/personal
 status: live
