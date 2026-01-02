@@ -4,7 +4,7 @@
 import { Setting } from "obsidian";
 import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
-import { FlowProject } from "./types";
+import { FlowProject, PersonNote } from "./types";
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
@@ -106,9 +106,9 @@ export function renderEditableItemsView(
     renderActionsSection(container, currentItem, state);
   }
 
-  // Project section (only for Next action type)
+  // Project/Person section (only for Next action type)
   if (shouldShowProjectSection(currentItem)) {
-    renderProjectSection(container, currentItem, state);
+    renderProjectPersonSection(container, currentItem, state);
   }
 
   // Sphere toggle (for types that need sphere)
@@ -555,12 +555,16 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
   }
 }
 
-function renderProjectSection(container: HTMLElement, item: EditableItem, state: InboxModalState) {
+function renderProjectPersonSection(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
   const section = container.createDiv("flow-inbox-project-section");
   const row = section.createDiv("flow-inbox-project-row");
 
   const labelSpan = row.createSpan({ cls: "label" });
-  labelSpan.setText(item.selectedAction === "create-project" ? "NEW PROJECT" : "PROJECT");
+  labelSpan.setText(item.selectedAction === "create-project" ? "NEW PROJECT" : "PROJECT/PERSON");
 
   const inputWrapper = row.createDiv();
   inputWrapper.style.flex = "1";
@@ -569,11 +573,14 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
   const input = inputWrapper.createEl("input", { cls: "flow-inbox-project-input" });
   input.type = "text";
   input.placeholder = "None";
-  // Show project title or new project name being created
-  input.value =
-    item.selectedAction === "create-project"
-      ? item.editedProjectTitle || ""
-      : item.selectedProject?.title || "";
+  // Show project title, person name, or new project name being created
+  if (item.selectedAction === "create-project") {
+    input.value = item.editedProjectTitle || "";
+  } else if (item.selectedPerson) {
+    input.value = `👤 ${item.selectedPerson.title}`;
+  } else {
+    input.value = item.selectedProject?.title || "";
+  }
 
   const dropdown = inputWrapper.createDiv("flow-inbox-project-dropdown");
   dropdown.style.display = "none";
@@ -596,16 +603,24 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
     dropdownItems = [];
     highlightedIndex = -1;
 
-    const filtered = searchTerm
+    // Filter and sort projects
+    const filteredProjects = searchTerm
       ? state.existingProjects.filter((p) =>
           p.title.toLowerCase().includes(searchTerm.toLowerCase())
         )
       : state.existingProjects;
+    const sortedProjects = [...filteredProjects].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
 
-    // Sort by most recently modified
-    const sorted = [...filtered].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+    // Filter and sort persons
+    const filteredPersons = searchTerm
+      ? state.existingPersons.filter((p) =>
+          p.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      : state.existingPersons;
+    const sortedPersons = [...filteredPersons].sort((a, b) => a.title.localeCompare(b.title));
 
-    sorted.slice(0, 10).forEach((project) => {
+    // Add projects (up to 10)
+    sortedProjects.slice(0, 10).forEach((project) => {
       const projectBtn = dropdown.createEl("button", { cls: "flow-inbox-project-dropdown-item" });
       projectBtn.setText(project.title);
       dropdownItems.push(projectBtn);
@@ -618,6 +633,25 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
         selectProject(project);
       });
     });
+
+    // Add persons (up to 10) with emoji prefix
+    if (sortedPersons.length > 0) {
+      sortedPersons.slice(0, 10).forEach((person) => {
+        const personBtn = dropdown.createEl("button", {
+          cls: "flow-inbox-project-dropdown-item person-item",
+        });
+        personBtn.setText(`👤 ${person.title}`);
+        dropdownItems.push(personBtn);
+
+        if (item.selectedPerson?.file === person.file) {
+          personBtn.addClass("selected");
+        }
+
+        personBtn.addEventListener("click", () => {
+          selectPerson(person);
+        });
+      });
+    }
 
     // Add "Create new project" option when there's a search term
     if (searchTerm.trim()) {
@@ -633,6 +667,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
 
       createBtn.addEventListener("click", () => {
         item.selectedProject = undefined;
+        item.selectedPerson = undefined;
         item.editedProjectTitle = searchTerm.trim();
         item.selectedAction = "create-project";
         input.value = searchTerm.trim();
@@ -642,7 +677,7 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
       });
     }
 
-    if (sorted.length === 0 && !searchTerm.trim()) {
+    if (sortedProjects.length === 0 && sortedPersons.length === 0 && !searchTerm.trim()) {
       dropdown.style.display = "none";
       return;
     }
@@ -652,24 +687,42 @@ function renderProjectSection(container: HTMLElement, item: EditableItem, state:
 
   const selectProject = (project: FlowProject | undefined) => {
     item.selectedProject = project;
+    item.selectedPerson = undefined;
     input.value = project?.title || "";
     dropdown.style.display = "none";
     input.blur();
 
-    // When a project is selected, change action to add-to-project
     if (project) {
       item.selectedAction = "add-to-project";
     } else {
       item.selectedAction = "next-actions-file";
     }
+    state.queueRender("editable");
+  };
+
+  const selectPerson = (person: PersonNote | undefined) => {
+    item.selectedPerson = person;
+    item.selectedProject = undefined;
+    item.editedProjectTitle = undefined;
+    input.value = person ? `👤 ${person.title}` : "";
+    dropdown.style.display = "none";
+    input.blur();
+
+    if (person) {
+      item.selectedAction = "person";
+    } else {
+      item.selectedAction = "next-actions-file";
+    }
+    state.queueRender("editable");
   };
 
   input.addEventListener("input", () => {
     updateDropdown(input.value);
 
-    // If input is cleared, deselect project
+    // If input is cleared, deselect project and person
     if (input.value.trim() === "") {
       item.selectedProject = undefined;
+      item.selectedPerson = undefined;
       item.selectedAction = "next-actions-file";
     }
   });

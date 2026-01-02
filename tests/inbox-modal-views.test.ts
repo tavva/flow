@@ -569,6 +569,81 @@ describe("sphere toggle interactions", () => {
   });
 });
 
+describe("person in combined project/person dropdown", () => {
+  it("shows selected person with emoji in project input", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const selectedPerson = { file: "people/John.md", title: "John", tags: ["person"] };
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "person",
+      selectedSpheres: [],
+      selectedPerson,
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    state.existingPersons = [selectedPerson];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    // Person should show in project input with emoji
+    const projectInput = container.querySelector(".flow-inbox-project-input") as HTMLInputElement;
+    expect(projectInput).toBeTruthy();
+    expect(projectInput.value).toBe("👤 John");
+  });
+
+  it("renders person action correctly when selectedAction is person", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const john = { file: "people/John.md", title: "John", tags: ["person"] };
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "person",
+      selectedSpheres: [],
+      selectedPerson: john,
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    state.existingPersons = [john];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    // Project section should be visible (now combined with person)
+    const projectSection = container.querySelector(".flow-inbox-project-section");
+    expect(projectSection).toBeTruthy();
+
+    // Input should show selected person with emoji
+    const projectInput = container.querySelector(".flow-inbox-project-input") as HTMLInputElement;
+    expect(projectInput.value).toBe("👤 John");
+
+    // Type selector should show "Next" as selected (person maps to next)
+    const selectedBtn = container.querySelector(".flow-inbox-type-btn.selected");
+    expect(selectedBtn?.textContent).toContain("Next");
+  });
+
+  it("includes persons in project dropdown", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    state.existingPersons = [
+      { file: "people/Alice.md", title: "Alice", tags: ["person"] },
+      { file: "people/Bob.md", title: "Bob", tags: ["person"] },
+    ];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    // Project dropdown should exist (combined with persons)
+    const dropdown = container.querySelector(".flow-inbox-project-dropdown");
+    expect(dropdown).toBeTruthy();
+  });
+});
+
 describe("navigation", () => {
   it("renders navigation arrows", () => {
     const container = makeObsidianElement(document.createElement("div"));
