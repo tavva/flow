@@ -175,7 +175,7 @@ describe("FileWriter", () => {
 
       const templateFile = new TFile("Templates/Project.md", "Project template");
       const templateContent = `---
-creation-date: <% tp.date.now("YYYY-MM-DD HH:mm") %>
+creation-date: <% tp.date.now("YYYY-MM-DDTHH:mm:00") %>
 priority:
   {{ priority }}
 tags:

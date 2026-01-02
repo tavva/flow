@@ -410,8 +410,9 @@ export class FileWriter {
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
-    // Both HH:mm and hh:mm patterns are replaced with 24-hour format
+    // All patterns are replaced with ISO-like datetime format
     templateContent = templateContent
+      .replace(/<% tp\.date\.now\("YYYY-MM-DDTHH:mm:00"\) %>/g, dateTime)
       .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, dateTime)
       .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, dateTime);
 
