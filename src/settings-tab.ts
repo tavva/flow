@@ -412,6 +412,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
               .map((s) => s.trim())
               .filter((s) => s.length > 0);
             await this.plugin.saveSettings();
+            this.plugin.updateSphereCommands();
           })
       );
 

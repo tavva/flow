@@ -256,6 +256,11 @@ export class Plugin {
       this.app.commands.commands[`${this.manifest.id}:${command.id}`] = command;
     }
   }
+  removeCommand(commandId: string) {
+    if (this.app.commands && this.app.commands.commands) {
+      delete this.app.commands.commands[`${this.manifest.id}:${commandId}`];
+    }
+  }
   addSettingTab(tab: any) {}
   registerView(type: string, viewCreator: any) {
     if (this.app.workspace.viewRegistry) {
