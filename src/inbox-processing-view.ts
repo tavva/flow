@@ -213,6 +213,28 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
+    // Number keys 1-9 to toggle sphere selection (when not in input)
+    if (/^[1-9]$/.test(event.key)) {
+      const spheres = this.settings.spheres;
+      const sphereIndex = parseInt(event.key) - 1;
+
+      const simplified = this.getSimplifiedAction(expandedItem);
+      const showsSphereSelector = simplified === "next" || simplified === "someday";
+
+      if (showsSphereSelector && sphereIndex >= 0 && sphereIndex < spheres.length) {
+        const sphere = spheres[sphereIndex];
+        if (expandedItem.selectedSpheres.includes(sphere)) {
+          expandedItem.selectedSpheres = expandedItem.selectedSpheres.filter((s) => s !== sphere);
+        } else {
+          expandedItem.selectedSpheres.push(sphere);
+        }
+        this.state.queueRender("editable");
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
     // Quick type switching with single keys
     switch (event.key.toLowerCase()) {
       case "n":

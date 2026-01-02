@@ -808,5 +808,135 @@ describe("InboxProcessingView", () => {
       expect(item.selectedSpheres).toEqual([]);
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
+
+    test("plain number key toggles sphere when not in input", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+      const stopPropagationSpy = jest.fn();
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+        stopPropagation: stopPropagationSpy,
+      } as any);
+
+      expect(item.selectedSpheres).toEqual(["work"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+
+    test("plain number key deselects already selected sphere", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: ["work"],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
+
+    test("plain number key is ignored when in input", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "next-actions-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      const inputEl = document.createElement("input");
+      handleKeyDown({
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
+        target: inputEl,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("plain number key ignored for reference action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "reference",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("plain number key works for someday-file action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
+      const item = {
+        isExpanded: true,
+        selectedAction: "someday-file",
+        selectedSpheres: [] as string[],
+      } as any;
+      (view as any).state.editableItems = [item];
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      handleKeyDown({
+        key: "2",
+        ctrlKey: false,
+        shiftKey: false,
+        target: document.body,
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+      } as any);
+
+      expect(item.selectedSpheres).toEqual(["personal"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+    });
   });
 });
