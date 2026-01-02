@@ -21,6 +21,7 @@ export interface GTDProcessingResult {
   nextAction?: string; // Optional for non-actionable items
   nextActions?: string[]; // Support multiple next actions
   reasoning: string;
+  description?: string; // User-provided description for manually created projects
   suggestedProjects?: ProjectSuggestion[];
   suggestedPersons?: PersonSuggestion[];
   recommendedAction: ProcessingAction;

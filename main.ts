@@ -25,6 +25,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
   private autoClearInterval: number | null = null;
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
+  private registeredSphereCommandIds: string[] = [];
 
   async onload() {
     await this.loadSettings();
@@ -302,14 +303,25 @@ export default class FlowGTDCoachPlugin extends Plugin {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
 
+      const commandId = `sphere-view-${normalizedId || "default"}`;
+      this.registeredSphereCommandIds.push(commandId);
+
       this.addCommand({
-        id: `sphere-view-${normalizedId || "default"}`,
+        id: commandId,
         name: `Open ${this.getDisplaySphereName(sphere)} sphere`,
         callback: () => {
           this.openSphereView(sphere);
         },
       });
     });
+  }
+
+  updateSphereCommands() {
+    for (const commandId of this.registeredSphereCommandIds) {
+      this.removeCommand(commandId);
+    }
+    this.registeredSphereCommandIds = [];
+    this.registerSphereCommands();
   }
 
   private async openInboxProcessingView() {

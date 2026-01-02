@@ -16,7 +16,8 @@ npm run test:coverage # Coverage report (80% threshold)
 npm run format       # Format with Prettier
 npm run format:check # Check formatting without modifying
 npm run evaluate     # Run AI evaluations (requires Anthropic credentials)
-npm run version      # Bump manifest metadata for release
+npm run release      # Interactive production release workflow
+npm run release:beta # Interactive beta release workflow
 ```
 
 ### Completion Checklist

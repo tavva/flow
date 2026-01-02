@@ -351,7 +351,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Project Template File")
       .setDesc(
-        "Template file used when creating new projects. Supports {{priority}}, {{sphere}}, and {{description}} variables."
+        "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables."
       )
       .addText((text) =>
         text
@@ -412,6 +412,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
               .map((s) => s.trim())
               .filter((s) => s.length > 0);
             await this.plugin.saveSettings();
+            this.plugin.updateSphereCommands();
           })
       );
 

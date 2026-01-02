@@ -302,6 +302,38 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
   });
 
+  describe("Sphere command re-registration", () => {
+    it("should update sphere commands when spheres change", async () => {
+      // Initial spheres are "personal" and "work" from DEFAULT_SETTINGS
+      const initialCommands = Object.keys(mockApp.commands.commands);
+      expect(initialCommands).toContain("flow:sphere-view-personal");
+      expect(initialCommands).toContain("flow:sphere-view-work");
+
+      // Change spheres
+      plugin.settings.spheres = ["health", "family"];
+
+      // Call updateSphereCommands (exposed for testing, or via saveSettings)
+      await plugin.updateSphereCommands();
+
+      // Old commands should be removed, new ones registered
+      const updatedCommands = Object.keys(mockApp.commands.commands);
+      expect(updatedCommands).not.toContain("flow:sphere-view-personal");
+      expect(updatedCommands).not.toContain("flow:sphere-view-work");
+      expect(updatedCommands).toContain("flow:sphere-view-health");
+      expect(updatedCommands).toContain("flow:sphere-view-family");
+    });
+
+    it("should handle sphere names with special characters", async () => {
+      plugin.settings.spheres = ["work-life", "side_projects", "health & fitness"];
+      await plugin.updateSphereCommands();
+
+      const commands = Object.keys(mockApp.commands.commands);
+      expect(commands).toContain("flow:sphere-view-work-life");
+      expect(commands).toContain("flow:sphere-view-side-projects");
+      expect(commands).toContain("flow:sphere-view-health-fitness");
+    });
+  });
+
   describe("Generate cover image command", () => {
     beforeEach(() => {
       Notice.mockConstructor.mockClear();
