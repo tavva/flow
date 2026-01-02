@@ -32,6 +32,16 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 2. Click the inbox ribbon icon and capture something
 3. Run "Process Inbox" to categorise items
 
+## Installing the Beta
+
+To get early access to new features before they're released:
+
+1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins
+2. Open BRAT settings and click "Add Beta plugin"
+3. Enter `tavva/flow` and enable it
+
+BRAT will automatically update to the latest beta when new versions are released. To switch back to stable, remove the plugin from BRAT.
+
 ## How It Works
 
 **Capture** — When something has your attention, add it to your inbox. Don't organise yet, just get it out of your head.

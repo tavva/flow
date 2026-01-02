@@ -323,7 +323,8 @@ export class NewProjectModal extends Modal {
         projectOutcome: this.data.title.trim(),
         projectPriority: this.data.priority,
         nextAction: this.data.nextAction.trim(),
-        reasoning: this.data.description.trim() || this.data.title.trim(),
+        reasoning: "User created project directly",
+        description: this.data.description.trim(),
         recommendedAction: "create-project",
         recommendedActionReasoning: "User created project directly",
       };

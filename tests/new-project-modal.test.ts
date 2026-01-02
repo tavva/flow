@@ -159,7 +159,8 @@ describe("NewProjectModal", () => {
         expect.objectContaining({
           projectOutcome: "Test Project",
           nextAction: "First action",
-          reasoning: "Project description",
+          reasoning: "User created project directly",
+          description: "Project description",
           projectPriority: 1,
         }),
         "Test Project",
@@ -202,7 +203,7 @@ describe("NewProjectModal", () => {
       );
     });
 
-    it("should use title as reasoning when description is empty", async () => {
+    it("should pass empty description when description is not provided", async () => {
       await modal.onOpen();
 
       const data = (modal as any).data;
@@ -218,7 +219,8 @@ describe("NewProjectModal", () => {
 
       expect(writerInstance.createProject).toHaveBeenCalled();
       const firstArg = writerInstance.createProject.mock.calls[0][0];
-      expect(firstArg.reasoning).toBe("Test Project");
+      expect(firstArg.reasoning).toBe("User created project directly");
+      expect(firstArg.description).toBe("");
     });
 
     it("should add action to focus when option is enabled", async () => {
