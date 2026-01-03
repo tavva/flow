@@ -129,9 +129,7 @@ describe("Main Branch Version Detection", () => {
   });
 
   test("should parse version from main branch manifest", () => {
-    mockExecSync.mockReturnValue(
-      JSON.stringify({ version: "1.1.1" }) as unknown as Buffer
-    );
+    mockExecSync.mockReturnValue(JSON.stringify({ version: "1.1.1" }) as unknown as Buffer);
 
     const result = getMainBranchVersion();
 
