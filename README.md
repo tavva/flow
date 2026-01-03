@@ -55,6 +55,7 @@ If you use the beta we'd love to hear from you in the repo [Discussions](https:/
 - The sphere, and any other metadata required
 
 ![Processing Inbox](docs/assets/processing.png)
+
 _Note the above screenshot is from the redesigned inbox processing flow, available in the beta version_
 
 **Plan** — Open a sphere view, enter planning mode, and click actions to add them to your focus. Your focus is your curated list of what to work on.
