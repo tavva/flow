@@ -4,6 +4,8 @@ import {
   calculateNextVersion,
   checkFormatting,
   checkTests,
+  compareBaseVersions,
+  getMainBranchVersion,
 } from "../scripts/release-beta";
 import { execSync } from "child_process";
 
@@ -90,6 +92,70 @@ describe("Next Version Calculation", () => {
     const current = parseVersion("12.34.56-beta.78");
     const next = calculateNextVersion(current, "auto");
     expect(next).toBe("12.34.56-beta.79");
+  });
+});
+
+describe("Base Version Comparison", () => {
+  test("should return 0 for equal base versions", () => {
+    const a = parseVersion("1.2.3-beta.1")!;
+    const b = parseVersion("1.2.3-beta.5")!;
+    expect(compareBaseVersions(a, b)).toBe(0);
+  });
+
+  test("should return negative when a < b (major)", () => {
+    const a = parseVersion("1.0.0")!;
+    const b = parseVersion("2.0.0")!;
+    expect(compareBaseVersions(a, b)).toBeLessThan(0);
+  });
+
+  test("should return positive when a > b (minor)", () => {
+    const a = parseVersion("1.2.0")!;
+    const b = parseVersion("1.1.0")!;
+    expect(compareBaseVersions(a, b)).toBeGreaterThan(0);
+  });
+
+  test("should return negative when a < b (patch)", () => {
+    const a = parseVersion("1.1.0")!;
+    const b = parseVersion("1.1.1")!;
+    expect(compareBaseVersions(a, b)).toBeLessThan(0);
+  });
+});
+
+describe("Main Branch Version Detection", () => {
+  const mockExecSync = execSync as jest.MockedFunction<typeof execSync>;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("should parse version from main branch manifest", () => {
+    mockExecSync.mockReturnValue(
+      JSON.stringify({ version: "1.1.1" }) as unknown as Buffer
+    );
+
+    const result = getMainBranchVersion();
+
+    expect(result).toEqual({
+      major: 1,
+      minor: 1,
+      patch: 1,
+      betaNumber: undefined,
+      isBeta: false,
+    });
+    expect(mockExecSync).toHaveBeenCalledWith("git show main:manifest.json", {
+      encoding: "utf-8",
+      stdio: "pipe",
+    });
+  });
+
+  test("should return null when git command fails", () => {
+    mockExecSync.mockImplementation(() => {
+      throw new Error("fatal: not a git repository");
+    });
+
+    const result = getMainBranchVersion();
+
+    expect(result).toBeNull();
   });
 });
 

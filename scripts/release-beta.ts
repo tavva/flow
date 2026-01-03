@@ -235,6 +235,30 @@ export function verifyBuildFiles(): void {
 }
 
 /**
+ * Gets the version from the main branch's manifest.json
+ * @returns Parsed version from main branch, or null if unable to read
+ */
+export function getMainBranchVersion(): ParsedVersion | null {
+  try {
+    const output = execSync("git show main:manifest.json", { encoding: "utf-8", stdio: "pipe" });
+    const manifest = JSON.parse(output) as PluginManifest;
+    return parseVersion(manifest.version);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compares base versions (ignoring beta suffix)
+ * @returns negative if a < b, 0 if equal, positive if a > b
+ */
+export function compareBaseVersions(a: ParsedVersion, b: ParsedVersion): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  return a.patch - b.patch;
+}
+
+/**
  * Checks if git working directory is clean
  * @returns true if clean, false otherwise
  */
@@ -494,16 +518,33 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Check main branch version to detect if it has caught up
+  const mainVersion = getMainBranchVersion();
+  const mainHasCaughtUp = mainVersion && compareBaseVersions(mainVersion, current) >= 0;
+
   // Determine next version
   let nextVersion: string;
-  if (current.isBeta) {
-    // Auto-increment beta
+  if (current.isBeta && !mainHasCaughtUp) {
+    // Auto-increment beta (main hasn't caught up yet)
     nextVersion = calculateNextVersion(current, "auto");
     console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
   } else {
-    // Interactive selection
-    const bumpType = await promptVersionBump(current);
-    nextVersion = calculateNextVersion(current, bumpType);
+    // Interactive selection (either non-beta or main has caught up)
+    if (mainHasCaughtUp && mainVersion) {
+      console.log(
+        `Main branch is at ${mainVersion.major}.${mainVersion.minor}.${mainVersion.patch}`
+      );
+      console.log(
+        `Current beta base ${current.major}.${current.minor}.${current.patch} needs bumping.\n`
+      );
+    }
+    const bumpType = await promptVersionBump(
+      mainVersion && mainHasCaughtUp ? mainVersion : current
+    );
+    nextVersion = calculateNextVersion(
+      mainVersion && mainHasCaughtUp ? mainVersion : current,
+      bumpType
+    );
   }
 
   // Update version files
