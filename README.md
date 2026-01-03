@@ -42,6 +42,8 @@ To get early access to new features before they're released (we're currently red
 
 BRAT will automatically update to the latest beta when new versions are released. To switch back to stable, remove the plugin from BRAT.
 
+If you use the beta we'd love to hear from you in the repo [Discussions](https://github.com/tavva/flow/discussions).
+
 ## How It Works
 
 **Capture** — When something has your attention, add it to your inbox. Don't organise yet, just get it out of your head.
