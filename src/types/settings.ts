@@ -15,6 +15,7 @@ export interface PluginSettings {
   somedayFilePath: string;
   projectsFolderPath: string;
   projectTemplateFilePath: string;
+  personTemplateFilePath: string;
   defaultInboxFile: string; // Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)
   coverImagesFolderPath: string; // Folder path for generated project cover images
   autoCreateCoverImage: boolean; // Automatically create cover images for new projects
@@ -44,6 +45,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   somedayFilePath: "Someday.md",
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
+  personTemplateFilePath: "Templates/Person.md",
   defaultInboxFile: "Inbox.md",
   coverImagesFolderPath: "Assets/flow-project-cover-images",
   autoCreateCoverImage: false,

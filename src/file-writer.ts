@@ -288,6 +288,103 @@ export class FileWriter {
   }
 
   /**
+   * Create a new person note file and add the discussion item
+   */
+  async createPerson(personName: string, discussionItem: string): Promise<PersonNote> {
+    const fileName = this.generateFileName(personName);
+    // Create in the same folder as the person template, or root if not specified
+    const templatePath = this.settings.personTemplateFilePath;
+    const templateFolder = templatePath.includes("/")
+      ? templatePath.substring(0, templatePath.lastIndexOf("/"))
+      : "";
+    const folderPath = templateFolder ? normalizePath(templateFolder) : "";
+
+    if (folderPath) {
+      await this.ensureFolderExists(folderPath);
+    }
+
+    const filePath = folderPath
+      ? normalizePath(`${folderPath}/${fileName}.md`)
+      : normalizePath(`${fileName}.md`);
+
+    // Check if file already exists
+    const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+    if (existingFile) {
+      throw new ValidationError(`Person file ${filePath} already exists`);
+    }
+
+    const content = await this.buildPersonContent(personName);
+    const file = await this.app.vault.create(filePath, content);
+
+    // Create PersonNote structure for the new file
+    const newPerson: PersonNote = {
+      file: file.path,
+      title: personName,
+      tags: ["person"],
+    };
+
+    // Add discussion item to the new person's "Discuss next" section
+    await this.addToPersonDiscussNext(newPerson, discussionItem);
+
+    return newPerson;
+  }
+
+  private async buildPersonContent(personName: string): Promise<string> {
+    const templateFile = this.app.vault.getAbstractFileByPath(this.settings.personTemplateFilePath);
+
+    if (!templateFile || !(templateFile instanceof TFile)) {
+      // Fallback template if template file doesn't exist
+      return this.buildPersonContentFallback(personName);
+    }
+
+    let templateContent = await this.app.vault.read(templateFile);
+
+    // Replace Templater-style date variables with actual values
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+    const date = this.formatDate(now);
+    const time = this.formatTime(now);
+
+    // Replace common Templater date patterns
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']YYYY-MM-DD HH:mm["']\s*\)\s*%>/g,
+      dateTime
+    );
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']YYYY-MM-DD["']\s*\)\s*%>/g,
+      date
+    );
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']HH:mm["']\s*\)\s*%>/g,
+      time
+    );
+
+    // Replace Flow-style variables
+    templateContent = templateContent.replace(/\{\{\s*name\s*\}\}/g, personName);
+    templateContent = templateContent.replace(/\{\{\s*date\s*\}\}/g, date);
+    templateContent = templateContent.replace(/\{\{\s*time\s*\}\}/g, time);
+    templateContent = templateContent.replace(/\{\{\s*datetime\s*\}\}/g, dateTime);
+
+    return templateContent;
+  }
+
+  private buildPersonContentFallback(personName: string): string {
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+
+    return `---
+creation-date: ${dateTime}
+tags:
+  - person
+---
+
+## Discuss next
+
+## Notes
+`;
+  }
+
+  /**
    * Add an action to a person note from an EditableItem
    */
   async addToPersonNote(item: EditableItem): Promise<void> {

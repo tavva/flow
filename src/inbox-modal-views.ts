@@ -192,6 +192,7 @@ function getSimplifiedAction(item: EditableItem): SimplifiedAction {
     case "add-to-project":
     case "next-actions-file":
     case "person":
+    case "create-person":
       return "next";
     case "someday-file":
       return "someday";
@@ -564,7 +565,13 @@ function renderProjectPersonSection(
   const row = section.createDiv("flow-inbox-project-row");
 
   const labelSpan = row.createSpan({ cls: "label" });
-  labelSpan.setText(item.selectedAction === "create-project" ? "NEW PROJECT" : "PROJECT/PERSON");
+  const labelText =
+    item.selectedAction === "create-project"
+      ? "NEW PROJECT"
+      : item.selectedAction === "create-person"
+        ? "NEW PERSON"
+        : "PROJECT/PERSON";
+  labelSpan.setText(labelText);
 
   const inputWrapper = row.createDiv();
   inputWrapper.style.flex = "1";
@@ -573,9 +580,11 @@ function renderProjectPersonSection(
   const input = inputWrapper.createEl("input", { cls: "flow-inbox-project-input" });
   input.type = "text";
   input.placeholder = "None";
-  // Show project title, person name, or new project name being created
+  // Show project title, person name, or new project/person name being created
   if (item.selectedAction === "create-project") {
     input.value = item.editedProjectTitle || "";
+  } else if (item.selectedAction === "create-person") {
+    input.value = item.editedPersonName ? `👤 ${item.editedPersonName}` : "";
   } else if (item.selectedPerson) {
     input.value = `👤 ${item.selectedPerson.title}`;
   } else {
@@ -653,24 +662,49 @@ function renderProjectPersonSection(
       });
     }
 
-    // Add "Create new project" option when there's a search term
+    // Add "Create new" options when there's a search term
     if (searchTerm.trim()) {
-      const createBtn = dropdown.createEl("button", {
+      // Create project option
+      const createProjectBtn = dropdown.createEl("button", {
         cls: "flow-inbox-project-dropdown-item create-new",
       });
-      createBtn.setText(`+ Create "${searchTerm.trim()}"`);
-      dropdownItems.push(createBtn);
+      createProjectBtn.setText(`+ Create project "${searchTerm.trim()}"`);
+      dropdownItems.push(createProjectBtn);
 
       if (item.selectedAction === "create-project") {
-        createBtn.addClass("selected");
+        createProjectBtn.addClass("selected");
       }
 
-      createBtn.addEventListener("click", () => {
+      createProjectBtn.addEventListener("click", () => {
         item.selectedProject = undefined;
         item.selectedPerson = undefined;
         item.editedProjectTitle = searchTerm.trim();
+        item.editedPersonName = undefined;
         item.selectedAction = "create-project";
         input.value = searchTerm.trim();
+        dropdown.style.display = "none";
+        input.blur();
+        state.queueRender("editable");
+      });
+
+      // Create person option
+      const createPersonBtn = dropdown.createEl("button", {
+        cls: "flow-inbox-project-dropdown-item create-new",
+      });
+      createPersonBtn.setText(`+ Create person "👤 ${searchTerm.trim()}"`);
+      dropdownItems.push(createPersonBtn);
+
+      if (item.selectedAction === "create-person") {
+        createPersonBtn.addClass("selected");
+      }
+
+      createPersonBtn.addEventListener("click", () => {
+        item.selectedProject = undefined;
+        item.selectedPerson = undefined;
+        item.editedProjectTitle = undefined;
+        item.editedPersonName = searchTerm.trim();
+        item.selectedAction = "create-person";
+        input.value = `👤 ${searchTerm.trim()}`;
         dropdown.style.display = "none";
         input.blur();
         state.queueRender("editable");

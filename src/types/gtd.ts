@@ -10,6 +10,7 @@ export type ProcessingAction =
   | "someday-file"
   | "reference"
   | "person"
+  | "create-person"
   | "trash"
   | "discard";
 

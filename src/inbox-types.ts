@@ -13,6 +13,7 @@ export interface EditableItem {
   waitingFor?: boolean[]; // Track waiting-for status for each next action
   markAsDone?: boolean[]; // Track mark-as-done status for each next action
   editedProjectTitle?: string;
+  editedPersonName?: string;
   projectPriority?: number;
   parentProject?: FlowProject; // Parent project if creating as sub-project
   isSubProject?: boolean; // Whether to create as sub-project

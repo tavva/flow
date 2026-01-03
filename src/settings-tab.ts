@@ -190,6 +190,20 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    // Person Template File
+    new Setting(containerEl)
+      .setName("Person Template File")
+      .setDesc("Template file used when creating new person notes.")
+      .addText((text) =>
+        text
+          .setPlaceholder("Templates/Person.md")
+          .setValue(this.plugin.settings.personTemplateFilePath)
+          .onChange(async (value) => {
+            this.plugin.settings.personTemplateFilePath = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Default Inbox File
     new Setting(containerEl)
       .setName("Default Inbox File")

@@ -217,6 +217,15 @@ export class InboxItemPersistenceService {
         }
         return null;
 
+      case "create-person":
+        if (item.editedPersonName) {
+          const discussionItem = finalNextActions.length > 0 ? finalNextActions[0] : item.original;
+          await this.writer.createPerson(item.editedPersonName, discussionItem);
+        } else {
+          throw new ValidationError("No person name provided for create-person action");
+        }
+        return null;
+
       case "trash":
       case "discard":
         return null;

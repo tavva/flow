@@ -7,6 +7,7 @@ const ACTION_LABELS: Record<ProcessingAction, string> = {
   "someday-file": "Someday/Maybe File",
   reference: "Reference (Not Actionable)",
   person: "Discuss with Person",
+  "create-person": "Create New Person",
   trash: "Trash (Delete)",
   discard: "Discard (Ignore)",
 };
