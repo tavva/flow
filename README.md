@@ -34,7 +34,7 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 
 ## Installing the Beta
 
-To get early access to new features before they're released:
+To get early access to new features before they're released (we're currently redesigning the inbox processing view!):
 
 1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins
 2. Open BRAT settings and click "Add Beta plugin"
