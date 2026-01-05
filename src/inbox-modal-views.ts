@@ -116,6 +116,11 @@ export function renderEditableItemsView(
     renderSphereToggle(container, currentItem, state);
   }
 
+  // Priority section (only for new projects)
+  if (currentItem.selectedAction === "create-project") {
+    renderPrioritySection(container, currentItem, state);
+  }
+
   // Due date section
   if (shouldShowDueDate(currentItem)) {
     renderDueDateSection(container, currentItem);
@@ -818,6 +823,35 @@ function renderSphereToggle(container: HTMLElement, item: EditableItem, state: I
       } else {
         item.selectedSpheres.push(sphere);
       }
+      state.queueRender("editable");
+    });
+  });
+}
+
+function renderPrioritySection(container: HTMLElement, item: EditableItem, state: InboxModalState) {
+  // Initialize priority from settings if not set
+  if (item.projectPriority === undefined) {
+    item.projectPriority = state.settingsSnapshot.defaultPriority;
+  }
+
+  const section = container.createDiv("flow-inbox-priority-section");
+
+  const labelSpan = section.createSpan({ cls: "label" });
+  labelSpan.setText("PRIORITY");
+
+  const toggle = section.createDiv("flow-inbox-priority-toggle");
+
+  [1, 2, 3, 4, 5].forEach((priority) => {
+    const btn = toggle.createEl("button", { cls: "flow-inbox-priority-btn" });
+    btn.setText(String(priority));
+    btn.title = priority === 1 ? "Highest" : priority === 5 ? "Lowest" : `Priority ${priority}`;
+
+    if (item.projectPriority === priority) {
+      btn.addClass("selected");
+    }
+
+    btn.addEventListener("click", () => {
+      item.projectPriority = priority;
       state.queueRender("editable");
     });
   });

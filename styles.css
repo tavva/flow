@@ -2504,6 +2504,51 @@ select.flow-gtd-inline-select option,
   color: var(--text-on-accent);
 }
 
+/* Priority section */
+.flow-inbox-priority-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-priority-section .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-priority-toggle {
+  display: flex;
+  gap: 2px;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  padding: 2px;
+}
+
+.flow-inbox-priority-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-priority-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-priority-btn.selected {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
 /* Due date section */
 .flow-inbox-due-section {
   display: flex;

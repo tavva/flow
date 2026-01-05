@@ -644,6 +644,116 @@ describe("person in combined project/person dropdown", () => {
   });
 });
 
+describe("priority section for new projects", () => {
+  it("renders priority section when creating new project", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const prioritySection = container.querySelector(".flow-inbox-priority-section");
+    expect(prioritySection).toBeTruthy();
+
+    const priorityButtons = prioritySection?.querySelectorAll(".flow-inbox-priority-btn");
+    expect(priorityButtons?.length).toBe(5);
+  });
+
+  it("hides priority section for non-project actions", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const prioritySection = container.querySelector(".flow-inbox-priority-section");
+    expect(prioritySection).toBeNull();
+  });
+
+  it("initializes priority from settings default", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    // Default priority is 2 in mock settings
+    expect(item.projectPriority).toBe(2);
+
+    const selectedBtn = container.querySelector(".flow-inbox-priority-btn.selected");
+    expect(selectedBtn).toBeTruthy();
+    expect(selectedBtn?.textContent).toBe("2");
+  });
+
+  it("updates priority when button clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      projectPriority: 2,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    // Click priority 4 button
+    const priorityButtons = container.querySelectorAll(".flow-inbox-priority-btn");
+    const priority4Btn = Array.from(priorityButtons).find(
+      (btn) => btn.textContent === "4"
+    ) as HTMLButtonElement;
+
+    expect(priority4Btn).toBeTruthy();
+    priority4Btn.click();
+
+    expect(item.projectPriority).toBe(4);
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
+  });
+
+  it("marks current priority as selected", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      projectPriority: 3,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const selectedBtn = container.querySelector(".flow-inbox-priority-btn.selected");
+    expect(selectedBtn).toBeTruthy();
+    expect(selectedBtn?.textContent).toBe("3");
+  });
+});
+
 describe("navigation", () => {
   it("renders navigation arrows", () => {
     const container = makeObsidianElement(document.createElement("div"));
