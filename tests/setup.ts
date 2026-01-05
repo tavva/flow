@@ -11,6 +11,11 @@ if (typeof document === "undefined") {
   (global as any).HTMLInputElement = dom.window.HTMLInputElement;
 }
 
+// Mock requestAnimationFrame for tests (not provided by JSDOM)
+(global as any).requestAnimationFrame = (callback: FrameRequestCallback): number => {
+  return setTimeout(() => callback(Date.now()), 0) as unknown as number;
+};
+
 // Mock obsidian module globally
 jest.mock("obsidian");
 

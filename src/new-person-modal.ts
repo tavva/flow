@@ -46,17 +46,24 @@ export class NewPersonModal extends Modal {
     contentEl.createEl("h2", { text: "Create New Person" });
 
     // Person name
+    let nameInput: HTMLInputElement | null = null;
     new Setting(contentEl)
       .setName("Name")
       .setDesc("The person's name")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Enter name...")
           .setValue(this.data.name)
           .onChange((value) => {
             this.data.name = value;
-          })
-      );
+          });
+        nameInput = text.inputEl;
+      });
+
+    // Focus the name input after the modal is fully rendered
+    requestAnimationFrame(() => {
+      nameInput?.focus();
+    });
 
     // First discussion item (optional)
     new Setting(contentEl)
