@@ -574,7 +574,7 @@ ${description}
             return `${checkbox} ${actionText}${dueDateSuffix}`;
           })
           .join("\n") + "\n";
-    } else {
+    } else if (result.nextAction && result.nextAction.trim()) {
       const isDone = markAsDone[0] || false;
       const isWaiting = waitingFor[0] || false;
 

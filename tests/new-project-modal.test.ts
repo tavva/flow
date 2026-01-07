@@ -92,7 +92,7 @@ describe("NewProjectModal", () => {
       expect(writerInstance.createProject).not.toHaveBeenCalled();
     });
 
-    it("should require next action", async () => {
+    it("should allow creating project without next action", async () => {
       await modal.onOpen();
 
       const data = (modal as any).data;
@@ -104,7 +104,19 @@ describe("NewProjectModal", () => {
 
       const { FileWriter } = require("../src/file-writer");
       const writerInstance = FileWriter.mock.results[0].value;
-      expect(writerInstance.createProject).not.toHaveBeenCalled();
+      expect(writerInstance.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectOutcome: "Test Project",
+          nextAction: "",
+        }),
+        "Test Project",
+        ["work"],
+        [],
+        undefined,
+        [],
+        undefined,
+        undefined
+      );
     });
 
     it("should require at least one sphere", async () => {
