@@ -260,6 +260,10 @@ function shouldShowProjectSection(item: EditableItem): boolean {
 }
 
 function shouldShowSphereSelector(item: EditableItem): boolean {
+  // Don't show sphere selector when adding to existing project - it already has a sphere
+  if (item.selectedAction === "add-to-project") {
+    return false;
+  }
   const simplified = getSimplifiedAction(item);
   return simplified === "next" || simplified === "someday";
 }
