@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS, LLMProvider } from "./types";
 import { validateApiKey } from "./validation";
+import { FolderPathSuggest, FilePathSuggest } from "./suggesters";
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
@@ -261,43 +262,46 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Line at a time")
       .setDesc("Flow processes all lines in every note in this folder.")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Flow Inbox Files")
           .setValue(this.plugin.settings.inboxFilesFolderPath)
           .onChange(async (value) => {
             this.plugin.settings.inboxFilesFolderPath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
 
     // Note-at-a-time inbox
     new Setting(containerEl)
       .setName("Note at a time")
       .setDesc("Flow processes entire notes one by one in this folder.")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Flow Inbox Folder")
           .setValue(this.plugin.settings.inboxFolderPath)
           .onChange(async (value) => {
             this.plugin.settings.inboxFolderPath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
 
     // Processed inbox folder
     new Setting(containerEl)
       .setName("Processed inbox folder")
       .setDesc("Processed notes from the inbox folder are archived here instead of being deleted.")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Processed Inbox Folder Notes")
           .setValue(this.plugin.settings.processedInboxFolderPath)
           .onChange(async (value) => {
             this.plugin.settings.processedInboxFolderPath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
 
     // Output Files
     new Setting(containerEl).setHeading().setName("Output Files & Folders");
@@ -309,43 +313,46 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Next Actions File")
       .setDesc("File for standalone next actions that aren't part of a project.")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Next actions.md")
           .setValue(this.plugin.settings.nextActionsFilePath)
           .onChange(async (value) => {
             this.plugin.settings.nextActionsFilePath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      });
 
     // Someday File
     new Setting(containerEl)
       .setName("Someday/Maybe File")
       .setDesc("File for someday/maybe items (things you might do in the future).")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Someday.md")
           .setValue(this.plugin.settings.somedayFilePath)
           .onChange(async (value) => {
             this.plugin.settings.somedayFilePath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      });
 
     // Projects Folder
     new Setting(containerEl)
       .setName("Projects Folder")
       .setDesc("Folder where new project files will be created.")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Projects")
           .setValue(this.plugin.settings.projectsFolderPath)
           .onChange(async (value) => {
             this.plugin.settings.projectsFolderPath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
 
     // Project Template File
     new Setting(containerEl)
@@ -353,15 +360,16 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       .setDesc(
         "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables."
       )
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Templates/Project.md")
           .setValue(this.plugin.settings.projectTemplateFilePath)
           .onChange(async (value) => {
             this.plugin.settings.projectTemplateFilePath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      });
 
     // Default Inbox File
     new Setting(containerEl)
@@ -383,15 +391,16 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Cover Images Folder")
       .setDesc("Folder where generated project cover images will be saved")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Assets/flow-project-cover-images")
           .setValue(this.plugin.settings.coverImagesFolderPath)
           .onChange(async (value) => {
             this.plugin.settings.coverImagesFolderPath = value;
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
 
     // Spheres
     new Setting(containerEl).setHeading().setName("Spheres");
@@ -448,14 +457,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       .setDesc(
         "File path where cleared focus items will be archived. Disabled if auto-clear is off."
       )
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Focus Archive.md")
           .setValue(this.plugin.settings.focusArchiveFile)
           .onChange(async (value) => {
             this.plugin.settings.focusArchiveFile = value.trim();
             await this.plugin.saveSettings();
-          })
-      );
+          });
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      });
   }
 }
