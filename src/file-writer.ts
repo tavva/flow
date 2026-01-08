@@ -507,8 +507,9 @@ tags:
       );
 
     // Process Templater date syntax if present, since we're not using Templater's create_new function
-    // Both HH:mm and hh:mm patterns are replaced with 24-hour format
+    // All patterns are replaced with ISO-like datetime format
     templateContent = templateContent
+      .replace(/<% tp\.date\.now\("YYYY-MM-DDTHH:mm:00"\) %>/g, dateTime)
       .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, dateTime)
       .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, dateTime);
 
@@ -670,7 +671,7 @@ ${description}
             return `${checkbox} ${actionText}${dueDateSuffix}`;
           })
           .join("\n") + "\n";
-    } else {
+    } else if (result.nextAction && result.nextAction.trim()) {
       const isDone = markAsDone[0] || false;
       const isWaiting = waitingFor[0] || false;
 
@@ -868,7 +869,7 @@ ${description}
   }
 
   /**
-   * Format a datetime for Flow frontmatter (YYYY-MM-DD HH:mm)
+   * Format a datetime for Flow frontmatter (YYYY-MM-DDTHH:mm:00)
    */
   private formatDateTime(date: Date): string {
     const year = date.getFullYear();
@@ -877,7 +878,7 @@ ${description}
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
 
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}:00`;
   }
 
   /**

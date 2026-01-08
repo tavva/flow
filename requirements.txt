@@ -1,3 +1,4 @@
 deepeval>=3.6.0
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
+urllib3>=2.6.3

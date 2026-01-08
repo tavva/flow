@@ -303,13 +303,10 @@ export class NewProjectModal extends Modal {
       return;
     }
 
-    if (!this.data.nextAction.trim()) {
-      this.showError("First next action is required");
-      return;
+    // Validate next action quality if provided (warnings don't block creation)
+    if (this.data.nextAction.trim()) {
+      validateNextAction(this.data.nextAction.trim());
     }
-
-    // Validate next action quality (warnings don't block creation)
-    validateNextAction(this.data.nextAction.trim());
 
     if (this.data.spheres.length === 0) {
       this.showError("At least one sphere must be selected");
@@ -350,8 +347,8 @@ export class NewProjectModal extends Modal {
         undefined // sourceNoteLink
       );
 
-      // Add to focus if requested
-      if (this.data.addToFocus) {
+      // Add to focus if requested and there's an action to add
+      if (this.data.addToFocus && this.data.nextAction.trim()) {
         await this.addActionToFocus(file.path, this.data.nextAction.trim());
       }
 

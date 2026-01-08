@@ -173,7 +173,7 @@ describe("FileWriter", () => {
 
       const templateFile = new TFile("Templates/Project.md", "Project template");
       const templateContent = `---
-creation-date: <% tp.date.now("YYYY-MM-DD HH:mm") %>
+creation-date: <% tp.date.now("YYYY-MM-DDTHH:mm:00") %>
 priority:
   {{ priority }}
 tags:
@@ -346,8 +346,8 @@ status: live
       await fileWriter.createProject(result, "test");
 
       const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
-      // Should match format: YYYY-MM-DD HH:mm
-      expect(content).toMatch(/creation-date: \d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
+      // Should match format: YYYY-MM-DDTHH:mm:00
+      expect(content).toMatch(/creation-date: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00/);
     });
 
     it("should create project folder when it does not exist", async () => {
