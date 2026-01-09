@@ -2,9 +2,10 @@
 // ABOUTME: Handles version parsing, calculation, and GitHub release creation via BRAT.
 
 import * as readline from "readline";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "fs";
 import { join } from "path";
 import { execSync, execFileSync } from "child_process";
+import { tmpdir } from "os";
 
 interface ParsedVersion {
   major: number;
@@ -376,50 +377,50 @@ export function confirmRelease(version: string): Promise<boolean> {
 }
 
 /**
- * Creates GitHub release in both tavva/flow and tavva/flow-release
+ * Creates GitHub release in tavva/flow
  * @param version - Version to release
  * @returns true if successful, false otherwise
  */
 export function createGitHubRelease(version: string): boolean {
   const assets = getReleaseAssets();
-  const repositories = ["tavva/flow", "tavva/flow-release"];
   const releaseNotes = `Beta release v${version}`;
+  const notesFile = join(tmpdir(), `flow-beta-release-notes-${version}-${Date.now()}.md`);
 
-  console.log("\nCreating GitHub releases...\n");
+  console.log("\nCreating GitHub release...\n");
 
-  for (const repo of repositories) {
-    console.log(`Creating release in ${repo}...`);
+  try {
+    writeFileSync(notesFile, releaseNotes, "utf-8");
+    execFileSync(
+      "gh",
+      [
+        "release",
+        "create",
+        version,
+        "--repo",
+        "tavva/flow",
+        "--title",
+        `Beta v${version}`,
+        "--notes-file",
+        notesFile,
+        "--prerelease",
+        ...assets,
+      ],
+      { stdio: "inherit" }
+    );
+    unlinkSync(notesFile);
+    console.log("✓ Release created in tavva/flow\n");
+    return true;
+  } catch (error) {
     try {
-      execFileSync(
-        "gh",
-        [
-          "release",
-          "create",
-          version,
-          "--repo",
-          repo,
-          "--title",
-          `Beta v${version}`,
-          "--notes",
-          releaseNotes,
-          "--prerelease",
-          ...assets,
-        ],
-        { stdio: "inherit" }
-      );
-      console.log(`✓ Release created in ${repo}\n`);
-    } catch (error) {
-      console.error(
-        `\nError creating release in ${repo}. Manifest was updated but release failed.`
-      );
-      console.error(error instanceof Error ? error.message : String(error));
-      console.error("To rollback: git checkout manifest.json\n");
-      return false;
+      unlinkSync(notesFile);
+    } catch {
+      // Ignore cleanup errors
     }
+    console.error("\nError creating release. Manifest was updated but release failed.");
+    console.error(error instanceof Error ? error.message : String(error));
+    console.error("To rollback: git checkout manifest.json\n");
+    return false;
   }
-
-  console.log("✓ All GitHub releases created\n");
-  return true;
 }
 
 /**

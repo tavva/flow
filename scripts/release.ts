@@ -313,18 +313,35 @@ export function promptReleaseNotes(version: string): string {
  */
 export function createGitHubRelease(version: string, releaseNotes: string): boolean {
   const assets = getReleaseAssets();
+  const notesFile = join(tmpdir(), `flow-release-notes-${version}-${Date.now()}.md`);
 
   console.log("Creating GitHub release...\n");
 
   try {
+    writeFileSync(notesFile, releaseNotes, "utf-8");
     execFileSync(
       "gh",
-      ["release", "create", version, "--title", `v${version}`, "--notes", releaseNotes, ...assets],
+      [
+        "release",
+        "create",
+        version,
+        "--title",
+        `v${version}`,
+        "--notes-file",
+        notesFile,
+        ...assets,
+      ],
       { stdio: "inherit" }
     );
+    unlinkSync(notesFile);
     console.log("\n✓ GitHub release created\n");
     return true;
   } catch (error) {
+    try {
+      unlinkSync(notesFile);
+    } catch {
+      // Ignore cleanup errors
+    }
     console.error("\nError creating GitHub release");
     console.error(error instanceof Error ? error.message : String(error));
     return false;
