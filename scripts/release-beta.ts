@@ -2,9 +2,10 @@
 // ABOUTME: Handles version parsing, calculation, and GitHub release creation via BRAT.
 
 import * as readline from "readline";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from "fs";
 import { join } from "path";
 import { execSync, execFileSync } from "child_process";
+import { tmpdir } from "os";
 
 interface ParsedVersion {
   major: number;
@@ -437,10 +438,12 @@ export function confirmRelease(version: string): Promise<boolean> {
 export function createGitHubRelease(version: string): boolean {
   const assets = getReleaseAssets();
   const releaseNotes = `Beta release v${version}`;
+  const notesFile = join(tmpdir(), `flow-beta-release-notes-${version}-${Date.now()}.md`);
 
   console.log("\nCreating GitHub release...\n");
 
   try {
+    writeFileSync(notesFile, releaseNotes, "utf-8");
     execFileSync(
       "gh",
       [
@@ -451,16 +454,22 @@ export function createGitHubRelease(version: string): boolean {
         "tavva/flow",
         "--title",
         `Beta v${version}`,
-        "--notes",
-        releaseNotes,
+        "--notes-file",
+        notesFile,
         "--prerelease",
         ...assets,
       ],
       { stdio: "inherit" }
     );
+    unlinkSync(notesFile);
     console.log("✓ Release created in tavva/flow\n");
     return true;
   } catch (error) {
+    try {
+      unlinkSync(notesFile);
+    } catch {
+      // Ignore cleanup errors
+    }
     console.error("\nError creating release. Manifest was updated but release failed.");
     console.error(error instanceof Error ? error.message : String(error));
     console.error("To rollback: git checkout manifest.json\n");
