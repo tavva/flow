@@ -112,7 +112,7 @@ export class NewPersonModal extends Modal {
     }
 
     try {
-      const discussionItem = this.data.discussionItem.trim() || this.data.name.trim();
+      const discussionItem = this.data.discussionItem.trim();
       const person = await this.fileWriter.createPerson(this.data.name.trim(), discussionItem);
 
       this.close();

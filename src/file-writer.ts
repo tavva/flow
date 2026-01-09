@@ -323,8 +323,10 @@ export class FileWriter {
       tags: ["person"],
     };
 
-    // Add discussion item to the new person's "Discuss next" section
-    await this.addToPersonDiscussNext(newPerson, discussionItem);
+    // Add discussion item to the new person's "Discuss next" section (if provided)
+    if (discussionItem) {
+      await this.addToPersonDiscussNext(newPerson, discussionItem);
+    }
 
     return newPerson;
   }
