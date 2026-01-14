@@ -195,9 +195,8 @@ export class SphereDataLoader {
       rawText = rawText.replace(/#sphere\/([^\s]+)/gi, (fullMatch, captured) => {
         if (this.normalizeSphereValue(String(captured)) === normalizedSphere) {
           belongsToSphere = true;
-          return "";
         }
-        return fullMatch;
+        return ""; // Always remove sphere tags so text is consistent across spheres
       });
 
       if (!belongsToSphere) {

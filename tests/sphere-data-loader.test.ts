@@ -387,6 +387,28 @@ describe("SphereDataLoader", () => {
       expect(actions).toHaveLength(1);
       expect(actions[0]).toBe("Call client about meeting");
     });
+
+    it("should extract consistent text for actions with multiple sphere tags", () => {
+      // When an action has multiple sphere tags, it appears in multiple sphere views.
+      // The extracted text must be identical across all spheres so that ActionLineFinder
+      // can locate the same line regardless of which sphere view the user clicks from.
+      const content = `- [ ] Call John #sphere/work #sphere/personal`;
+
+      const workLoader = new SphereDataLoader(mockApp, "work", {} as any);
+      const personalLoader = new SphereDataLoader(mockApp, "personal", {} as any);
+
+      const workActions = workLoader.extractGeneralNextActions(content);
+      const personalActions = personalLoader.extractGeneralNextActions(content);
+
+      // Both spheres should find the action
+      expect(workActions).toHaveLength(1);
+      expect(personalActions).toHaveLength(1);
+
+      // The extracted text must be identical - all sphere tags stripped
+      expect(workActions[0]).toBe("Call John");
+      expect(personalActions[0]).toBe("Call John");
+      expect(workActions[0]).toBe(personalActions[0]);
+    });
   });
 
   describe("normalizePriority", () => {
