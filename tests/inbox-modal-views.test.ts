@@ -754,6 +754,166 @@ describe("priority section for new projects", () => {
   });
 });
 
+describe("parent project section for new projects", () => {
+  it("renders parent project section when creating new project", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+    };
+    const state = createMockState([item]);
+    state.existingProjects = [
+      { file: "projects/Parent.md", title: "Parent Project", tags: ["project/work"], mtime: 1000 },
+    ];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const parentSection = container.querySelector(".flow-inbox-parent-project-section");
+    expect(parentSection).toBeTruthy();
+  });
+
+  it("hides parent project section for non-project actions", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const parentSection = container.querySelector(".flow-inbox-parent-project-section");
+    expect(parentSection).toBeNull();
+  });
+
+  it("renders subproject toggle checkbox", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const checkbox = container.querySelector(".flow-inbox-subproject-toggle") as HTMLInputElement;
+    expect(checkbox).toBeTruthy();
+    expect(checkbox.type).toBe("checkbox");
+  });
+
+  it("toggles isSubProject when checkbox clicked", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      isSubProject: false,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const checkbox = container.querySelector(".flow-inbox-subproject-toggle") as HTMLInputElement;
+    expect(checkbox).toBeTruthy();
+
+    // Simulate change event - set checked and trigger change
+    checkbox.checked = true;
+    const changeEvent = document.createEvent("HTMLEvents");
+    changeEvent.initEvent("change", true, true);
+    checkbox.dispatchEvent(changeEvent);
+
+    expect(item.isSubProject).toBe(true);
+    expect(state.queueRender).toHaveBeenCalledWith("editable");
+  });
+
+  it("shows parent project selector when isSubProject is true", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      isSubProject: true,
+    };
+    const state = createMockState([item]);
+    state.existingProjects = [
+      { file: "projects/Parent.md", title: "Parent Project", tags: ["project/work"], mtime: 1000 },
+    ];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const parentInput = container.querySelector(
+      ".flow-inbox-parent-project-input"
+    ) as HTMLInputElement;
+    expect(parentInput).toBeTruthy();
+  });
+
+  it("hides parent project selector when isSubProject is false", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      isSubProject: false,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const parentInput = container.querySelector(".flow-inbox-parent-project-input");
+    expect(parentInput).toBeNull();
+  });
+
+  it("displays selected parent project title in input", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const parentProject = {
+      file: "projects/Parent.md",
+      title: "Parent Project",
+      tags: ["project/work"],
+      mtime: 1000,
+    };
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "create-project",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedProjectTitle: "New Project",
+      isSubProject: true,
+      parentProject,
+    };
+    const state = createMockState([item]);
+    state.existingProjects = [parentProject];
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const parentInput = container.querySelector(
+      ".flow-inbox-parent-project-input"
+    ) as HTMLInputElement;
+    expect(parentInput).toBeTruthy();
+    expect(parentInput.value).toBe("Parent Project");
+  });
+});
+
 describe("navigation", () => {
   it("renders navigation arrows", () => {
     const container = makeObsidianElement(document.createElement("div"));

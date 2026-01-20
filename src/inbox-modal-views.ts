@@ -121,6 +121,11 @@ export function renderEditableItemsView(
     renderPrioritySection(container, currentItem, state);
   }
 
+  // Parent project section (only for new projects)
+  if (currentItem.selectedAction === "create-project") {
+    renderParentProjectSection(container, currentItem, state);
+  }
+
   // Due date section
   if (shouldShowDueDate(currentItem)) {
     renderDueDateSection(container, currentItem);
@@ -859,6 +864,146 @@ function renderPrioritySection(container: HTMLElement, item: EditableItem, state
       state.queueRender("editable");
     });
   });
+}
+
+function renderParentProjectSection(
+  container: HTMLElement,
+  item: EditableItem,
+  state: InboxModalState
+) {
+  const section = container.createDiv("flow-inbox-parent-project-section");
+
+  // Toggle row with checkbox and label
+  const toggleRow = section.createDiv("flow-inbox-parent-toggle-row");
+
+  const checkbox = toggleRow.createEl("input", { cls: "flow-inbox-subproject-toggle" });
+  checkbox.type = "checkbox";
+  checkbox.id = "subproject-toggle";
+  checkbox.checked = item.isSubProject || false;
+
+  const label = toggleRow.createEl("label");
+  label.setAttribute("for", "subproject-toggle");
+  label.setText("Create as sub-project");
+
+  checkbox.addEventListener("change", () => {
+    item.isSubProject = checkbox.checked;
+    if (!checkbox.checked) {
+      item.parentProject = undefined;
+    }
+    state.queueRender("editable");
+  });
+
+  // Parent project selector (only shown when isSubProject is true)
+  if (item.isSubProject) {
+    const selectorWrapper = section.createDiv("flow-inbox-parent-selector");
+    selectorWrapper.style.position = "relative";
+
+    const input = selectorWrapper.createEl("input", { cls: "flow-inbox-parent-project-input" });
+    input.type = "text";
+    input.placeholder = "Search parent project...";
+    input.value = item.parentProject?.title || "";
+
+    const dropdown = selectorWrapper.createDiv("flow-inbox-parent-project-dropdown");
+    dropdown.style.display = "none";
+
+    let highlightedIndex = -1;
+    let dropdownItems: HTMLElement[] = [];
+
+    const updateHighlight = () => {
+      dropdownItems.forEach((el, i) => {
+        el.toggleClass("highlighted", i === highlightedIndex);
+      });
+      if (highlightedIndex >= 0 && dropdownItems[highlightedIndex]) {
+        dropdownItems[highlightedIndex].scrollIntoView({ block: "nearest" });
+      }
+    };
+
+    const updateDropdown = (searchTerm: string) => {
+      dropdown.empty();
+      dropdownItems = [];
+      highlightedIndex = -1;
+
+      // Filter and sort projects
+      const filteredProjects = searchTerm
+        ? state.existingProjects.filter((p) =>
+            p.title.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : state.existingProjects;
+      const sortedProjects = [...filteredProjects].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+
+      if (sortedProjects.length === 0) {
+        dropdown.style.display = "none";
+        return;
+      }
+
+      // Add projects (up to 10)
+      sortedProjects.slice(0, 10).forEach((project) => {
+        const projectBtn = dropdown.createEl("button", {
+          cls: "flow-inbox-parent-project-dropdown-item",
+        });
+        projectBtn.setText(project.title);
+        dropdownItems.push(projectBtn);
+
+        if (item.parentProject?.file === project.file) {
+          projectBtn.addClass("selected");
+        }
+
+        projectBtn.addEventListener("click", () => {
+          item.parentProject = project;
+          input.value = project.title;
+          dropdown.style.display = "none";
+          input.blur();
+          state.queueRender("editable");
+        });
+      });
+
+      dropdown.style.display = "block";
+    };
+
+    input.addEventListener("input", () => {
+      updateDropdown(input.value);
+
+      // Clear parent project if input is cleared
+      if (input.value.trim() === "") {
+        item.parentProject = undefined;
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (dropdown.style.display === "none" || dropdownItems.length === 0) {
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        highlightedIndex = Math.min(highlightedIndex + 1, dropdownItems.length - 1);
+        updateHighlight();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        highlightedIndex = Math.max(highlightedIndex - 1, 0);
+        updateHighlight();
+      } else if (e.key === "Enter" && highlightedIndex >= 0) {
+        e.preventDefault();
+        dropdownItems[highlightedIndex].click();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        dropdown.style.display = "none";
+        highlightedIndex = -1;
+      }
+    });
+
+    input.addEventListener("focus", () => {
+      updateDropdown(input.value);
+    });
+
+    input.addEventListener("blur", () => {
+      // Delay to allow click on dropdown item
+      setTimeout(() => {
+        dropdown.style.display = "none";
+        highlightedIndex = -1;
+      }, 200);
+    });
+  }
 }
 
 function renderDueDateSection(container: HTMLElement, item: EditableItem) {
