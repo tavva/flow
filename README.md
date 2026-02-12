@@ -90,6 +90,7 @@ Flow can generate cover images for projects using AI. Configure an image-capable
 ## Documentation
 
 - [GTD Guide](docs/gtd-guide.md) — Understanding GTD methodology and Flow's implementation
+- [Project Templates](docs/project-templates.md) — Customising project templates, including Templater support
 - [Quick Capture Methods](docs/quick-capture.md) — Tools and workflows for capturing from any device
 - [Contributing](CONTRIBUTING.md) — Development setup, architecture, and how to contribute
 

@@ -56,6 +56,7 @@ export class FileWriter {
       sourceNoteLink
     );
     const file = await this.app.vault.create(filePath, content);
+    await this.processWithTemplater(file);
 
     return file;
   }
@@ -349,6 +350,23 @@ export class FileWriter {
   }
 
   /**
+   * If Templater is installed, process the file to replace any <% %> syntax
+   */
+  private async processWithTemplater(file: TFile): Promise<void> {
+    try {
+      const templaterPlugin = (this.app as any).plugins?.plugins?.["templater-obsidian"];
+      if (templaterPlugin?.templater?.overwrite_file_commands) {
+        await templaterPlugin.templater.overwrite_file_commands(file);
+      }
+    } catch (error) {
+      console.warn(
+        "Flow: Templater processing failed, template syntax may remain unprocessed",
+        error
+      );
+    }
+  }
+
+  /**
    * Build the content for a new project file using template
    */
   private async buildProjectContent(
@@ -408,13 +426,6 @@ export class FileWriter {
         /{{\s*description\s*}}/g,
         this.formatDescription(originalItem, sourceNoteLink, result.description)
       );
-
-    // Process Templater date syntax if present, since we're not using Templater's create_new function
-    // All patterns are replaced with ISO-like datetime format
-    templateContent = templateContent
-      .replace(/<% tp\.date\.now\("YYYY-MM-DDTHH:mm:00"\) %>/g, dateTime)
-      .replace(/<% tp\.date\.now\("YYYY-MM-DD HH:mm"\) %>/g, dateTime)
-      .replace(/<% tp\.date\.now\("YYYY-MM-DD hh:mm"\) %>/g, dateTime);
 
     // Add parent-project to frontmatter if provided
     if (parentProject) {

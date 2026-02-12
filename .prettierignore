@@ -18,6 +18,9 @@ evaluation/results/
 .vscode/
 .idea/
 
+# Documentation (code examples get mangled)
+docs/
+
 # Obsidian plugin files
 manifest.json
 versions.json

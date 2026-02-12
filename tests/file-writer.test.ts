@@ -1555,6 +1555,141 @@ tags:
     });
   });
 
+  describe("Templater integration", () => {
+    it("should call Templater to process file when Templater is installed", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Templater Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: <% tp.date.now("YYYY-MM-DDTHH:mm:00") %>
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      const createdFile = new TFile("Projects/Templater Project.md", "Templater Project");
+      const mockOverwriteFileCommands = jest.fn().mockResolvedValue(undefined);
+
+      (mockApp as any).plugins = {
+        plugins: {
+          "templater-obsidian": {
+            templater: {
+              overwrite_file_commands: mockOverwriteFileCommands,
+            },
+          },
+        },
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") return {};
+        if (path === "Templates/Project.md") return templateFile;
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue(createdFile);
+
+      await fileWriter.createProject(result, "test");
+
+      expect(mockOverwriteFileCommands).toHaveBeenCalledWith(createdFile);
+    });
+
+    it("should preserve Templater syntax in file content when Templater is not installed", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Test Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const templateFile = new TFile("Templates/Project.md", "Project template");
+      const templateContent = `---
+creation-date: <% tp.date.now("YYYY-MM-DDTHH:mm:00") %>
+priority: {{ priority }}
+tags:
+  - {{ sphere }}
+status: live
+---
+
+# Description
+
+{{ description }}
+
+## Next actions
+`;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") return {};
+        if (path === "Templates/Project.md") return templateFile;
+        return null;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(templateContent);
+      (mockVault.create as jest.Mock).mockResolvedValue(new TFile("test.md", "test"));
+
+      await fileWriter.createProject(result, "test");
+
+      const [, content] = (mockVault.create as jest.Mock).mock.calls[0];
+      expect(content).toContain('<% tp.date.now("YYYY-MM-DDTHH:mm:00") %>');
+    });
+
+    it("should handle Templater processing errors gracefully", async () => {
+      const result: GTDProcessingResult = {
+        isActionable: true,
+        category: "project",
+        projectOutcome: "Test Project",
+        nextAction: "First step",
+        reasoning: "Test",
+        suggestedProjects: [],
+        recommendedAction: "create-project",
+        recommendedActionReasoning: "Test",
+      };
+
+      const createdFile = new TFile("Projects/Test Project.md", "Test Project");
+
+      (mockApp as any).plugins = {
+        plugins: {
+          "templater-obsidian": {
+            templater: {
+              overwrite_file_commands: jest.fn().mockRejectedValue(new Error("Templater error")),
+            },
+          },
+        },
+      };
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Projects") return {};
+        return null;
+      });
+      (mockVault.create as jest.Mock).mockResolvedValue(createdFile);
+
+      const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
+      const file = await fileWriter.createProject(result, "test");
+      expect(file).toBe(createdFile);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe("race condition handling", () => {
     it("should handle file creation race condition when adding multiple actions", async () => {
       let createCallCount = 0;
