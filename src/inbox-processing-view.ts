@@ -39,7 +39,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-inbox-modal");
 
@@ -78,7 +78,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   private renderCurrentView(target: RenderTarget) {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     if (!container) {
       return;
     }

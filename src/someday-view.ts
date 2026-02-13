@@ -64,7 +64,7 @@ export class SomedayView extends RefreshingView {
     // Register event listener for metadata cache changes
     this.registerMetadataCacheListener(() => true);
 
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-someday-view");
 
@@ -89,7 +89,7 @@ export class SomedayView extends RefreshingView {
   }
 
   protected async performRefresh(): Promise<void> {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     const loadingEl = container.createDiv({ cls: "flow-gtd-someday-loading" });
     loadingEl.setText("Refreshing...");
@@ -134,7 +134,7 @@ export class SomedayView extends RefreshingView {
         this.toggleSphereFilter(sphere);
         // Re-render the entire view
         const data = await this.scanner.scanSomedayData();
-        const viewContainer = this.containerEl.children[1];
+        const viewContainer = this.contentEl;
         viewContainer.empty();
         this.renderContent(viewContainer as HTMLElement, data);
       });
