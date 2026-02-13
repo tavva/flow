@@ -65,6 +65,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods directly to avoid triggering full loading chain
     const loadReferenceDataMock = jest
@@ -109,6 +110,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods to avoid full loading
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -152,6 +154,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods to avoid full loading
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -187,6 +190,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods to avoid full loading
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -209,10 +213,11 @@ describe("InboxProcessingView", () => {
   test("handles missing container gracefully", async () => {
     const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
 
-    // Set up containerEl with no children
+    // Set up containerEl with no children and no contentEl
     (view as any).containerEl = {
       children: [],
     };
+    (view as any).contentEl = undefined;
 
     // Clear any previous mock calls
     (renderEditableItemsView as jest.Mock).mockClear();
@@ -246,6 +251,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods to avoid full loading
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -294,6 +300,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock workspace.detachLeavesOfType
     const detachMock = jest.fn();
@@ -336,6 +343,7 @@ describe("InboxProcessingView", () => {
     (view as any).containerEl = {
       children: [null, mockContainer],
     };
+    (view as any).contentEl = mockContainer;
 
     // Mock state methods - loadInboxItems should result in empty state
     jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -387,6 +395,7 @@ describe("InboxProcessingView", () => {
       (view as any).containerEl = {
         children: [null, mockContainer],
       };
+      (view as any).contentEl = mockContainer;
 
       // Mock state methods
       jest.spyOn((view as any).state, "loadReferenceData").mockResolvedValue(undefined);
@@ -675,8 +684,8 @@ describe("InboxProcessingView", () => {
       (view as any).pendingFocus = ".test-input";
 
       const mockInput = { focus: jest.fn() };
-      const mockContainer = (view as any).containerEl.children[1];
-      mockContainer.querySelector = jest.fn().mockReturnValue(mockInput);
+      const contentEl = (view as any).contentEl;
+      contentEl.querySelector = jest.fn().mockReturnValue(mockInput);
 
       // Trigger render
       (view as any).renderCurrentView("editable");
@@ -684,7 +693,7 @@ describe("InboxProcessingView", () => {
       // Advance timers for setTimeout
       jest.runAllTimers();
 
-      expect(mockContainer.querySelector).toHaveBeenCalledWith(".test-input");
+      expect(contentEl.querySelector).toHaveBeenCalledWith(".test-input");
       expect(mockInput.focus).toHaveBeenCalled();
       expect((view as any).pendingFocus).toBeNull();
 
