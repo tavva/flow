@@ -64,7 +64,7 @@ export class SphereView extends ItemView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-sphere-view");
 
@@ -275,7 +275,7 @@ export class SphereView extends ItemView {
   }
 
   private toggleNextActionsVisibility(): void {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     const allActionLists = container.querySelectorAll(".flow-gtd-sphere-next-actions");
 
     allActionLists.forEach((list) => {
@@ -305,7 +305,7 @@ export class SphereView extends ItemView {
   }
 
   private async refresh(): Promise<void> {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     container.empty();
     const data = await this.loadSphereData();
     this.renderContent(container, data);
@@ -320,7 +320,7 @@ export class SphereView extends ItemView {
     this.refreshInProgress = true;
 
     try {
-      const container = this.containerEl.children[1] as HTMLElement;
+      const container = this.contentEl;
 
       // Remove all sections except the sticky header
       const children = Array.from(container.children);

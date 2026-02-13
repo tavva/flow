@@ -83,7 +83,7 @@ export class WaitingForView extends RefreshingView {
       return !!(cache?.listItems && cache.listItems.length > 0);
     });
 
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-waiting-for-view");
 
@@ -110,7 +110,7 @@ export class WaitingForView extends RefreshingView {
   }
 
   protected async performRefresh(): Promise<void> {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
 
     // Only show loading message for slow manual scans, not for fast Dataview queries
     let loadingEl: HTMLElement | null = null;
@@ -160,7 +160,7 @@ export class WaitingForView extends RefreshingView {
         this.toggleSphereFilter(sphere);
         // Re-render the entire view
         const items = await this.scanner.scanWaitingForItems();
-        const viewContainer = this.containerEl.children[1];
+        const viewContainer = this.contentEl;
         viewContainer.empty();
         this.renderContent(viewContainer as HTMLElement, items);
       });

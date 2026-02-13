@@ -310,6 +310,7 @@ export class ItemView {
   app: App;
   leaf: WorkspaceLeaf;
   containerEl: any;
+  contentEl: any;
 
   constructor(leaf: WorkspaceLeaf) {
     this.app = new App();
@@ -406,6 +407,7 @@ export class ItemView {
       };
 
       this.containerEl = container;
+      this.contentEl = childElement;
     } else {
       // Fallback for non-DOM environments
       const childElement = {
@@ -422,6 +424,7 @@ export class ItemView {
         createEl: jest.fn(() => childElement),
         addClass: jest.fn(),
       };
+      this.contentEl = childElement;
     }
   }
 

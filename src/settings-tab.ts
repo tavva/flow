@@ -185,7 +185,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Project Template File")
       .setDesc(
-        "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables."
+        "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables. Templater syntax is also supported if Templater is installed. See docs/project-templates.md for details."
       )
       .addText((text) => {
         text

@@ -40,7 +40,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-inbox-modal");
 
@@ -79,7 +79,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   private renderCurrentView(target: RenderTarget) {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     if (!container) {
       return;
     }
@@ -195,8 +195,8 @@ export class InboxProcessingView extends ItemView {
 
     // Enter focuses the first action input
     if (event.key === "Enter") {
-      const contentEl = this.containerEl.children[1] as HTMLElement;
-      const firstActionInput = contentEl?.querySelector(
+      const container = this.contentEl;
+      const firstActionInput = container?.querySelector(
         ".flow-inbox-action-input"
       ) as HTMLInputElement;
       if (firstActionInput) {

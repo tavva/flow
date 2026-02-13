@@ -80,7 +80,7 @@ export class FocusView extends RefreshingView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1];
+    const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-focus-view");
 
@@ -215,7 +215,7 @@ export class FocusView extends RefreshingView {
       }
 
       // Re-render the view
-      const container = this.containerEl.children[1];
+      const container = this.contentEl;
       container.empty();
       container.addClass("flow-gtd-focus-view");
 
