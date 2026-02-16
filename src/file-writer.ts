@@ -636,9 +636,7 @@ ${description}
    * Build person note content from template or fallback
    */
   private async buildPersonContent(name: string): Promise<string> {
-    const templateFile = this.app.vault.getAbstractFileByPath(
-      this.settings.personTemplateFilePath
-    );
+    const templateFile = this.app.vault.getAbstractFileByPath(this.settings.personTemplateFilePath);
 
     if (!templateFile || !(templateFile instanceof TFile)) {
       return this.buildPersonContentFallback();

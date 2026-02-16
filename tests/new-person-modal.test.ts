@@ -84,8 +84,7 @@ describe("NewPersonModal", () => {
 
       await (modal as any).createPerson();
 
-      const leaf = (mockApp.workspace.getLeaf as jest.Mock).mock.results[0]
-        .value;
+      const leaf = (mockApp.workspace.getLeaf as jest.Mock).mock.results[0].value;
       expect(leaf.openFile).toHaveBeenCalled();
     });
 
