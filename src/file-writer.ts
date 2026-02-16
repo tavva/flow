@@ -61,6 +61,26 @@ export class FileWriter {
     return file;
   }
 
+  /**
+   * Create a new person note file
+   */
+  async createPerson(name: string): Promise<TFile> {
+    const fileName = this.generateFileName(name);
+    const folderPath = normalizePath(this.settings.personsFolderPath);
+    await this.ensureFolderExists(folderPath);
+    const filePath = normalizePath(`${folderPath}/${fileName}.md`);
+
+    const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+    if (existingFile) {
+      throw new ValidationError(`File ${filePath} already exists`);
+    }
+
+    const content = await this.buildPersonContent(name);
+    const file = await this.app.vault.create(filePath, content);
+
+    return file;
+  }
+
   private async ensureFolderExists(folderPath: string): Promise<void> {
     const normalizedPath = normalizePath(folderPath);
     const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
@@ -610,6 +630,42 @@ ${description}
 ## Notes + resources
 `;
     return content;
+  }
+
+  /**
+   * Build person note content from template or fallback
+   */
+  private async buildPersonContent(name: string): Promise<string> {
+    const templateFile = this.app.vault.getAbstractFileByPath(
+      this.settings.personTemplateFilePath
+    );
+
+    if (!templateFile || !(templateFile instanceof TFile)) {
+      return this.buildPersonContentFallback();
+    }
+
+    let templateContent = await this.app.vault.read(templateFile);
+
+    const now = new Date();
+    const date = this.formatDate(now);
+    const time = this.formatTime(now);
+
+    templateContent = templateContent
+      .replace(/{{\s*date\s*}}/g, date)
+      .replace(/{{\s*time\s*}}/g, time)
+      .replace(/{{\s*name\s*}}/g, name);
+
+    return templateContent;
+  }
+
+  /**
+   * Fallback content when person template file is not available
+   */
+  private buildPersonContentFallback(): string {
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+
+    return `---\ncreation-date: ${dateTime}\ntags: person\n---\n\n## Discuss next\n`;
   }
 
   /**
