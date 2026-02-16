@@ -4,6 +4,7 @@ import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
 import { InboxProcessingView, INBOX_PROCESSING_VIEW_TYPE } from "./src/inbox-processing-view";
 import { NewProjectModal } from "./src/new-project-modal";
+import { NewPersonModal } from "./src/new-person-modal";
 import { AddToInboxModal } from "./src/add-to-inbox-modal";
 import { cycleTaskStatus } from "./src/task-status-cycler";
 import { WaitingForView, WAITING_FOR_VIEW_TYPE } from "./src/waiting-for-view";
@@ -116,6 +117,15 @@ export default class FlowGTDCoachPlugin extends Plugin {
       name: "Create new project",
       callback: () => {
         this.openNewProjectModal();
+      },
+    });
+
+    // Add create person command
+    this.addCommand({
+      id: "create-person",
+      name: "Create person",
+      callback: () => {
+        this.openNewPersonModal();
       },
     });
 
@@ -410,6 +420,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
   private openNewProjectModal() {
     const modal = new NewProjectModal(this.app, this.settings, () => this.saveSettings());
+    modal.open();
+  }
+
+  private openNewPersonModal() {
+    const modal = new NewPersonModal(this.app, this.settings);
     modal.open();
   }
 
