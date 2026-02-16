@@ -371,6 +371,38 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
 
+    // People Folder
+    new Setting(containerEl)
+      .setName("People Folder")
+      .setDesc("Folder where new person notes will be created.")
+      .addText((text) => {
+        text
+          .setPlaceholder("People")
+          .setValue(this.plugin.settings.personsFolderPath)
+          .onChange(async (value) => {
+            this.plugin.settings.personsFolderPath = value;
+            await this.plugin.saveSettings();
+          });
+        new FolderPathSuggest(this.app, text.inputEl);
+      });
+
+    // Person Template File
+    new Setting(containerEl)
+      .setName("Person Template File")
+      .setDesc(
+        "Template file used when creating new person notes. Supports {{date}}, {{time}}, and {{name}} variables."
+      )
+      .addText((text) => {
+        text
+          .setPlaceholder("Templates/Person.md")
+          .setValue(this.plugin.settings.personTemplateFilePath)
+          .onChange(async (value) => {
+            this.plugin.settings.personTemplateFilePath = value;
+            await this.plugin.saveSettings();
+          });
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      });
+
     // Default Inbox File
     new Setting(containerEl)
       .setName("Default Inbox File")
