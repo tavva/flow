@@ -78,7 +78,7 @@ export class InboxProcessingController {
       original: item.content,
       inboxItem: item,
       selectedAction: "next-actions-file",
-      selectedSpheres: [],
+      selectedSpheres: this.settings.spheres.length === 1 ? [...this.settings.spheres] : [],
     }));
   }
 

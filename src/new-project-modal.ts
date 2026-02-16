@@ -38,7 +38,7 @@ export class NewProjectModal extends Modal {
       title: "",
       nextAction: "",
       description: "",
-      spheres: [],
+      spheres: settings.spheres.length === 1 ? [...settings.spheres] : [],
       priority: settings.defaultPriority,
       isSubProject: false,
       parentProject: null,

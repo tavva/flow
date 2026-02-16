@@ -283,11 +283,27 @@ describe("NewProjectModal", () => {
       expect(data.priority).toBe(2); // Default from settings
     });
 
-    it("should initialize with empty spheres", async () => {
+    it("should initialize with empty spheres when multiple spheres configured", async () => {
       await modal.onOpen();
 
       const data = (modal as any).data;
       expect(data.spheres).toEqual([]);
+    });
+
+    it("should auto-select sphere when only one sphere is configured", async () => {
+      const singleSphereSettings = {
+        ...DEFAULT_SETTINGS,
+        spheres: ["personal"],
+      };
+      const singleSphereModal = new NewProjectModal(
+        mockApp,
+        singleSphereSettings,
+        mockSaveSettings
+      );
+      await singleSphereModal.onOpen();
+
+      const data = (singleSphereModal as any).data;
+      expect(data.spheres).toEqual(["personal"]);
     });
 
     it("should not be sub-project by default", async () => {

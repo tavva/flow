@@ -104,6 +104,67 @@ describe("InboxProcessingController discardInboxItem", () => {
   });
 });
 
+describe("InboxProcessingController createEditableItemsFromInbox", () => {
+  const createController = (settings: PluginSettings) => {
+    const app = new App();
+    return new InboxProcessingController(app as unknown as any, settings, {
+      scanner: { scanProjects: jest.fn() } as any,
+      personScanner: { scanPersons: jest.fn() } as any,
+      writer: {} as any,
+      inboxScanner: {
+        deleteInboxItem: jest.fn(),
+        getAllInboxItems: jest.fn(),
+      } as any,
+      persistenceService: { persist: jest.fn() } as any,
+    });
+  };
+
+  const sampleInboxItems: InboxItem[] = [
+    {
+      type: "line" as const,
+      content: "Buy milk",
+      sourceFile: { path: "inbox.md" } as any,
+      lineNumber: 1,
+    },
+    {
+      type: "line" as const,
+      content: "Call dentist",
+      sourceFile: { path: "inbox.md" } as any,
+      lineNumber: 2,
+    },
+  ];
+
+  it("auto-selects the sphere when only one sphere is configured", () => {
+    const settings = { ...DEFAULT_SETTINGS, spheres: ["personal"] };
+    const controller = createController(settings);
+
+    const items = controller.createEditableItemsFromInbox(sampleInboxItems);
+
+    expect(items[0].selectedSpheres).toEqual(["personal"]);
+    expect(items[1].selectedSpheres).toEqual(["personal"]);
+  });
+
+  it("leaves spheres empty when multiple spheres are configured", () => {
+    const settings = { ...DEFAULT_SETTINGS, spheres: ["personal", "work"] };
+    const controller = createController(settings);
+
+    const items = controller.createEditableItemsFromInbox(sampleInboxItems);
+
+    expect(items[0].selectedSpheres).toEqual([]);
+    expect(items[1].selectedSpheres).toEqual([]);
+  });
+
+  it("leaves spheres empty when no spheres are configured", () => {
+    const settings = { ...DEFAULT_SETTINGS, spheres: [] };
+    const controller = createController(settings);
+
+    const items = controller.createEditableItemsFromInbox(sampleInboxItems);
+
+    expect(items[0].selectedSpheres).toEqual([]);
+    expect(items[1].selectedSpheres).toEqual([]);
+  });
+});
+
 describe("InboxProcessingController with AI disabled", () => {
   const createControllerWithAIDisabled = () => {
     const app = new App();
