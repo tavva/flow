@@ -77,6 +77,7 @@ export class FileWriter {
 
     const content = await this.buildPersonContent(name);
     const file = await this.app.vault.create(filePath, content);
+    await this.processWithTemplater(file);
 
     return file;
   }
