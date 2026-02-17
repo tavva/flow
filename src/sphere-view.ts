@@ -182,6 +182,11 @@ export class SphereView extends ItemView {
   }
 
   private registerWorkspaceEvents(): void {
+    for (const ref of this.workspaceEventRefs) {
+      this.app.workspace.offref(ref);
+    }
+    this.workspaceEventRefs = [];
+
     const completedRef = (this.app.workspace as any).on(
       "flow:action-completed",
       (detail: { file: string; action: string }) => {

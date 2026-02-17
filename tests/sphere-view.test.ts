@@ -1004,8 +1004,8 @@ describe("SphereView", () => {
 
       await view.onClose();
 
-      // offref should have been called for workspace event refs
-      expect(app.workspace.offref).toBeDefined();
+      // offref should have been called for each workspace event ref
+      expect(app.workspace.offref).toHaveBeenCalled();
     });
   });
 
