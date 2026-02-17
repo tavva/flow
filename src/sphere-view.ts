@@ -29,6 +29,7 @@ export class SphereView extends ItemView {
   private showNextActions: boolean = true;
   private metadataCacheEventRef: EventRef | null = null;
   private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  private suppressFocusRefresh: boolean = false;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -162,7 +163,13 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
     }
     this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
-      if (file.path === FOCUS_FILE_PATH || this.isRelevantFile(file)) {
+      if (file.path === FOCUS_FILE_PATH) {
+        if (this.suppressFocusRefresh) {
+          this.suppressFocusRefresh = false;
+          return;
+        }
+        this.scheduleAutoRefresh();
+      } else if (this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
     });
@@ -301,35 +308,9 @@ export class SphereView extends ItemView {
 
   private async refresh(): Promise<void> {
     const container = this.contentEl;
-    const scrollTop = container.scrollTop;
     const data = await this.loadSphereData();
     container.empty();
     this.renderContent(container, data);
-    await this.waitForRenderSettled(container);
-    container.scrollTop = scrollTop;
-  }
-
-  private waitForRenderSettled(container: HTMLElement): Promise<void> {
-    if (typeof MutationObserver === "undefined") {
-      return Promise.resolve();
-    }
-
-    return new Promise((resolve) => {
-      const observer = new MutationObserver(() => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-          observer.disconnect();
-          resolve();
-        }, 50);
-      });
-
-      let timeout = setTimeout(() => {
-        observer.disconnect();
-        resolve();
-      }, 50);
-
-      observer.observe(container, { childList: true, subtree: true, characterData: true });
-    });
   }
 
   private async refreshContent(): Promise<void> {
@@ -774,6 +755,7 @@ export class SphereView extends ItemView {
 
     const focusItems = await loadFocusItems(this.app.vault);
     focusItems.push(item);
+    this.suppressFocusRefresh = true;
     await saveFocusItems(this.app.vault, focusItems);
     await this.activateFocusView();
     await this.refreshFocusView();
@@ -793,6 +775,7 @@ export class SphereView extends ItemView {
     const updatedFocus = focusItems.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
+    this.suppressFocusRefresh = true;
     await saveFocusItems(this.app.vault, updatedFocus);
     await this.activateFocusView();
     await this.refreshFocusView();

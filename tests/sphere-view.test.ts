@@ -780,7 +780,7 @@ describe("SphereView", () => {
   });
 
   describe("focus file change handling", () => {
-    it("should trigger full refresh when focus file changes", async () => {
+    it("should trigger full refresh when focus file changes externally", async () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
@@ -802,26 +802,29 @@ describe("SphereView", () => {
 
       refreshSpy.mockRestore();
     });
-  });
 
-  describe("scroll position preservation", () => {
-    it("should preserve scroll position across refresh", async () => {
+    it("should suppress refresh when focus file change originated from this view", async () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;
 
       await view.onOpen();
 
-      // Simulate a scrolled state
-      const container = view.contentEl;
-      Object.defineProperty(container, "scrollTop", {
-        value: 350,
-        writable: true,
-        configurable: true,
-      });
+      const refreshSpy = jest.spyOn(view as any, "scheduleAutoRefresh");
 
-      await (view as any).refresh();
+      const metadataCacheOnCall = (app.metadataCache.on as jest.Mock).mock.calls.find(
+        (call: any[]) => call[0] === "changed"
+      );
+      const changeHandler = metadataCacheOnCall[1];
+      const focusFile = new TFile("flow-focus-data/focus.md");
 
-      expect(container.scrollTop).toBe(350);
+      // Set the suppress flag (as addToFocus/removeFromFocus would)
+      (view as any).suppressFocusRefresh = true;
+      changeHandler(focusFile);
+
+      expect(refreshSpy).not.toHaveBeenCalled();
+      expect((view as any).suppressFocusRefresh).toBe(false);
+
+      refreshSpy.mockRestore();
     });
   });
 
