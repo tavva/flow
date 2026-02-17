@@ -1236,6 +1236,154 @@ describe("FocusView", () => {
     });
   });
 
+  describe("Context filtering", () => {
+    it("should discover contexts from focus items", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries",
+          sphere: "personal",
+          isGeneral: true,
+          addedAt: Date.now(),
+          contexts: ["errands"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 3,
+          lineContent: "- [ ] Email boss #context/phone #context/computer",
+          text: "Email boss",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone", "computer"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 4,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      const contexts = (view as any).discoverContexts(items);
+
+      expect(contexts).toEqual(["computer", "errands", "phone"]);
+    });
+
+    it("should filter items by selected contexts", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries",
+          sphere: "personal",
+          isGeneral: true,
+          addedAt: Date.now(),
+          contexts: ["errands"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 3,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      (view as any).selectedContexts = ["phone"];
+
+      const filtered = (view as any).filterItemsByContext(items);
+
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].text).toBe("Call dentist");
+    });
+
+    it("should return all items when no contexts selected", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      (view as any).selectedContexts = [];
+
+      const filtered = (view as any).filterItemsByContext(items);
+
+      expect(filtered).toHaveLength(2);
+    });
+
+    it("should persist selectedContexts in getState", () => {
+      (view as any).selectedContexts = ["phone", "errands"];
+
+      const state = view.getState();
+
+      expect(state.selectedContexts).toEqual(["phone", "errands"]);
+    });
+
+    it("should restore selectedContexts from setState", async () => {
+      await view.setState({ selectedContexts: ["computer"] }, {} as any);
+
+      expect((view as any).selectedContexts).toEqual(["computer"]);
+    });
+
+    it("should toggle context filter", () => {
+      (view as any).selectedContexts = [];
+
+      (view as any).toggleContextFilter("phone");
+      expect((view as any).selectedContexts).toEqual(["phone"]);
+
+      (view as any).toggleContextFilter("errands");
+      expect((view as any).selectedContexts).toEqual(["phone", "errands"]);
+
+      (view as any).toggleContextFilter("phone");
+      expect((view as any).selectedContexts).toEqual(["errands"]);
+    });
+  });
+
   // Helper function for creating mock focus items
   const createMockFocusItem = (): FocusItem => ({
     file: "test.md",

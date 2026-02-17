@@ -28,6 +28,7 @@ export class FocusView extends RefreshingView {
   private allProjects: FlowProject[] = [];
   private draggedItem: FocusItem | null = null;
   private focusItems: FocusItem[] = [];
+  private selectedContexts: string[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -65,6 +66,21 @@ export class FocusView extends RefreshingView {
   private getCompletedTodayItems(): FocusItem[] {
     const midnight = this.getMidnightTimestamp();
     return this.focusItems.filter((item) => item.completedAt && item.completedAt >= midnight);
+  }
+
+  // Save state for persistence across Obsidian reloads
+  getState() {
+    return {
+      selectedContexts: this.selectedContexts,
+    };
+  }
+
+  // Restore state when Obsidian reloads
+  async setState(state: { selectedContexts?: string[] }, result: any) {
+    if (state?.selectedContexts !== undefined) {
+      this.selectedContexts = state.selectedContexts;
+    }
+    await super.setState(state, result);
   }
 
   getViewType(): string {
@@ -126,15 +142,21 @@ export class FocusView extends RefreshingView {
       this.renderClearNotification(container as HTMLElement);
     }
 
+    // Render context filter buttons (using all items so all contexts are discoverable)
+    this.renderContextFilter(container as HTMLElement, this.focusItems);
+
     // Show current projects box
     this.renderCurrentProjectsBox(container as HTMLElement);
 
-    if (this.focusItems.length === 0) {
+    // Apply context filter
+    const filteredItems = this.filterItemsByContext(this.focusItems);
+
+    if (filteredItems.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
     }
 
-    this.renderGroupedItems(container as HTMLElement, this.focusItems);
+    this.renderGroupedItems(container as HTMLElement, filteredItems);
   }
 
   private async loadFocus(): Promise<void> {
@@ -227,17 +249,79 @@ export class FocusView extends RefreshingView {
         this.renderClearNotification(container as HTMLElement);
       }
 
+      // Render context filter buttons (using all items so all contexts are discoverable)
+      this.renderContextFilter(container as HTMLElement, validatedItems);
+
       // Show current projects box
       this.renderCurrentProjectsBox(container as HTMLElement);
 
-      if (validatedItems.length === 0) {
+      // Apply context filter
+      const filteredItems = this.filterItemsByContext(validatedItems);
+
+      if (filteredItems.length === 0) {
         this.renderEmptyMessage(container as HTMLElement);
       } else {
-        this.renderGroupedItems(container as HTMLElement, validatedItems);
+        this.renderGroupedItems(container as HTMLElement, filteredItems);
       }
     } catch (error) {
       console.error("Failed to refresh focus view", error);
     }
+  }
+
+  private discoverContexts(items: FocusItem[]): string[] {
+    const contexts = new Set<string>();
+    for (const item of items) {
+      for (const context of item.contexts || []) {
+        contexts.add(context);
+      }
+    }
+    return Array.from(contexts).sort();
+  }
+
+  private renderContextFilter(container: HTMLElement, items: FocusItem[]) {
+    const availableContexts = this.discoverContexts(items);
+    if (availableContexts.length === 0) {
+      return;
+    }
+
+    const filterContainer = container.createDiv({ cls: "flow-gtd-context-buttons" });
+
+    availableContexts.forEach((context) => {
+      const isSelected = this.selectedContexts.includes(context);
+      const button = filterContainer.createEl("button", {
+        cls: "flow-gtd-context-button",
+      });
+      button.setAttribute("type", "button");
+      button.setText(context);
+
+      if (isSelected) {
+        button.addClass("selected");
+      }
+
+      button.addEventListener("click", async () => {
+        this.toggleContextFilter(context);
+        await this.onOpen();
+      });
+    });
+  }
+
+  private toggleContextFilter(context: string) {
+    const index = this.selectedContexts.indexOf(context);
+    if (index === -1) {
+      this.selectedContexts.push(context);
+    } else {
+      this.selectedContexts.splice(index, 1);
+    }
+  }
+
+  private filterItemsByContext(items: FocusItem[]): FocusItem[] {
+    if (this.selectedContexts.length === 0) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      return (item.contexts || []).some((c) => this.selectedContexts.includes(c));
+    });
   }
 
   private groupItems(items: FocusItem[]): GroupedFocusItems {
