@@ -189,6 +189,14 @@ export class SphereView extends ItemView {
       }
     );
     this.workspaceEventRefs.push(completedRef);
+
+    const waitingRef = (this.app.workspace as any).on(
+      "flow:action-waiting",
+      (detail: { file: string; action: string }) => {
+        void this.markActionWaitingInDom(detail.file, detail.action);
+      }
+    );
+    this.workspaceEventRefs.push(waitingRef);
   }
 
   private removeActionFromDom(file: string, action: string): void {
@@ -201,6 +209,22 @@ export class SphereView extends ItemView {
         item.getAttribute("data-focus-action") === action
       ) {
         item.remove();
+        return;
+      }
+    }
+  }
+
+  private async markActionWaitingInDom(file: string, action: string): Promise<void> {
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i] as HTMLElement;
+      if (
+        item.getAttribute("data-focus-file") === file &&
+        item.getAttribute("data-focus-action") === action
+      ) {
+        item.empty();
+        await MarkdownRenderer.renderMarkdown(`🤝 ${action}`, item, "", this);
         return;
       }
     }

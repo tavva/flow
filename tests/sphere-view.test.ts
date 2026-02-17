@@ -942,6 +942,53 @@ describe("SphereView", () => {
       expect(items[0].getAttribute("data-focus-action")).toBe("Send email");
     });
 
+    it("should add handshake emoji on flow:action-waiting event", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Call client", "Send email"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client",
+      });
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const container = view.containerEl.children[1] as HTMLElement;
+
+      // Find the workspace.on call for flow:action-waiting
+      const workspaceOnCalls = (app.workspace.on as jest.Mock).mock.calls;
+      const waitingHandler = workspaceOnCalls.find(
+        (call: any[]) => call[0] === "flow:action-waiting"
+      );
+      expect(waitingHandler).toBeTruthy();
+
+      // Simulate waiting-for event for "Call client"
+      waitingHandler[1]({ file: "Projects/Test.md", action: "Call client" });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // The action should still exist but now have the handshake emoji
+      const items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(2);
+      const callClientItem = Array.from(items).find(
+        (item) => item.getAttribute("data-focus-action") === "Call client"
+      );
+      expect(callClientItem).toBeTruthy();
+      expect(callClientItem!.textContent).toContain("🤝");
+    });
+
     it("should clean up workspace event listeners on close", async () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;

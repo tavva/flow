@@ -931,6 +931,10 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].lineContent = updatedLine;
         await this.saveFocus();
+        (this.app.workspace as any).trigger("flow:action-waiting", {
+          file: item.file,
+          action: item.text,
+        });
         await this.onOpen(); // Re-render
       }
     }
