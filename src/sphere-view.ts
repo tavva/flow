@@ -28,6 +28,7 @@ export class SphereView extends ItemView {
   private refreshInProgress: boolean = false;
   private showNextActions: boolean = true;
   private metadataCacheEventRef: EventRef | null = null;
+  private workspaceEventRefs: EventRef[] = [];
   private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
   private suppressFocusRefresh: boolean = false;
 
@@ -73,6 +74,7 @@ export class SphereView extends ItemView {
 
     // Register metadata cache listener for automatic refresh when files change
     this.registerMetadataCacheListener();
+    this.registerWorkspaceEvents();
 
     try {
       const data = await this.loadSphereData();
@@ -115,6 +117,10 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
       this.metadataCacheEventRef = null;
     }
+    for (const ref of this.workspaceEventRefs) {
+      this.app.workspace.offref(ref);
+    }
+    this.workspaceEventRefs = [];
     if (this.scheduledRefreshTimeout) {
       clearTimeout(this.scheduledRefreshTimeout);
       this.scheduledRefreshTimeout = null;
@@ -168,11 +174,56 @@ export class SphereView extends ItemView {
           this.suppressFocusRefresh = false;
           return;
         }
-        this.scheduleAutoRefresh();
+        void this.refreshFocusHighlighting();
       } else if (this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
     });
+  }
+
+  private registerWorkspaceEvents(): void {
+    const completedRef = (this.app.workspace as any).on(
+      "flow:action-completed",
+      (detail: { file: string; action: string }) => {
+        this.removeActionFromDom(detail.file, detail.action);
+      }
+    );
+    this.workspaceEventRefs.push(completedRef);
+  }
+
+  private removeActionFromDom(file: string, action: string): void {
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (
+        item.getAttribute("data-focus-file") === file &&
+        item.getAttribute("data-focus-action") === action
+      ) {
+        item.remove();
+        return;
+      }
+    }
+  }
+
+  private async refreshFocusHighlighting(): Promise<void> {
+    const focusItems = await loadFocusItems(this.app.vault);
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i] as HTMLElement;
+      const file = item.getAttribute("data-focus-file");
+      const action = item.getAttribute("data-focus-action");
+      const inFocus = focusItems.some(
+        (focusItem) => focusItem.file === file && focusItem.text === action
+      );
+      if (inFocus) {
+        item.classList.add("sphere-action-in-focus");
+      } else {
+        item.classList.remove("sphere-action-in-focus");
+      }
+    }
   }
 
   private isRelevantFile(file: TFile): boolean {

@@ -46,6 +46,7 @@ describe("FocusView", () => {
       workspace: {
         getLeaf: jest.fn(),
         getLeavesOfType: jest.fn().mockReturnValue([]),
+        trigger: jest.fn(),
       },
       metadataCache: {
         on: jest.fn(),
@@ -1083,6 +1084,37 @@ describe("FocusView", () => {
       expect(items.length).toBe(1);
       expect(items[0].completedAt).toBeDefined();
       expect(items[0].completedAt).toBeGreaterThan(Date.now() - 1000);
+    });
+
+    it("should trigger flow:action-completed workspace event", async () => {
+      const mockItem: FocusItem = {
+        file: "Projects/Test.md",
+        lineNumber: 5,
+        lineContent: "- [ ] Test action",
+        text: "Test action",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: Date.now(),
+      };
+
+      const TFile = require("obsidian").TFile;
+      const mockTFile = Object.create(TFile.prototype);
+      mockTFile.path = "Projects/Test.md";
+
+      mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
+      mockApp.vault.read.mockResolvedValue("line1\nline2\nline3\nline4\n- [ ] Test action\nline6");
+
+      (view as any).focusItems = [mockItem];
+      (view as any).validator = {
+        validateItem: jest.fn().mockResolvedValue({ found: true }),
+      };
+
+      await (view as any).markItemComplete(mockItem);
+
+      expect(mockApp.workspace.trigger).toHaveBeenCalledWith("flow:action-completed", {
+        file: "Projects/Test.md",
+        action: "Test action",
+      });
     });
   });
 

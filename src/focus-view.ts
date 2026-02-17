@@ -892,6 +892,10 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].completedAt = Date.now();
         await this.saveFocus();
+        (this.app.workspace as any).trigger("flow:action-completed", {
+          file: item.file,
+          action: item.text,
+        });
         await this.onOpen(); // Re-render
       }
     }
