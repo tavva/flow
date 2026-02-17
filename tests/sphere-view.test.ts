@@ -1668,6 +1668,7 @@ current: true
         sphere: "work",
         searchQuery: "my search",
         showNextActions: false,
+        selectedContexts: [],
       });
     });
   });
