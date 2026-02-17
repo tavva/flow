@@ -19,6 +19,7 @@ jest.mock("../src/focus-persistence", () => ({
     mockFocusItems = items;
     return Promise.resolve();
   }),
+  FOCUS_FILE_PATH: "flow-focus-data/focus.md",
 }));
 
 import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
@@ -668,6 +669,346 @@ describe("SphereView", () => {
     });
   });
 
+  describe("action item data attributes", () => {
+    it("should set data-focus-file and data-focus-action on rendered action items", async () => {
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client about meeting",
+      });
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      // Create a real DOM list element with Obsidian methods
+      const listEl = document.createElement("ul");
+      (listEl as any).createEl = function (tag: string, opts?: any) {
+        const el = document.createElement(tag);
+        if (opts?.cls) el.className = opts.cls;
+        if (opts?.text) el.textContent = opts.text;
+        this.appendChild(el);
+        (el as any).createSpan = function (spanOpts?: any) {
+          const span = document.createElement("span");
+          if (spanOpts?.cls) span.className = spanOpts.cls;
+          if (spanOpts?.text) span.textContent = spanOpts.text;
+          this.appendChild(span);
+          return span;
+        };
+        (el as any).addClass = function (cls: string) {
+          this.classList.add(cls);
+        };
+        return el;
+      };
+
+      await (view as any).renderActionItem(
+        listEl,
+        "Call client about meeting",
+        "Projects/Test.md",
+        "work",
+        false
+      );
+
+      const item = listEl.querySelector("li");
+      expect(item).toBeTruthy();
+      expect(item!.getAttribute("data-focus-file")).toBe("Projects/Test.md");
+      expect(item!.getAttribute("data-focus-action")).toBe("Call client about meeting");
+    });
+  });
+
+  describe("focus highlighting on refresh", () => {
+    it("should update sphere-action-in-focus class on refresh", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Call client", "Send email"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client",
+      });
+
+      // Start with no focus items
+      mockFocusItems = [];
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      let items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(2);
+      items.forEach((item) => {
+        expect(item.classList.contains("sphere-action-in-focus")).toBe(false);
+      });
+
+      // Add "Call client" to focus and refresh
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call client",
+          text: "Call client",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      await (view as any).refresh();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      items = container.querySelectorAll("li[data-focus-file]");
+      let focusedCount = 0;
+      items.forEach((item) => {
+        if (item.classList.contains("sphere-action-in-focus")) {
+          focusedCount++;
+          expect(item.getAttribute("data-focus-action")).toBe("Call client");
+        }
+      });
+
+      expect(focusedCount).toBe(1);
+    });
+  });
+
+  describe("focus file change handling", () => {
+    it("should update CSS classes without full refresh when focus file changes", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const refreshSpy = jest.spyOn(view as any, "scheduleAutoRefresh");
+      const highlightSpy = jest.spyOn(view as any, "refreshFocusHighlighting");
+
+      const metadataCacheOnCall = (app.metadataCache.on as jest.Mock).mock.calls.find(
+        (call: any[]) => call[0] === "changed"
+      );
+      expect(metadataCacheOnCall).toBeTruthy();
+
+      const changeHandler = metadataCacheOnCall[1];
+      const focusFile = new TFile("flow-focus-data/focus.md");
+      changeHandler(focusFile);
+
+      expect(refreshSpy).not.toHaveBeenCalled();
+      expect(highlightSpy).toHaveBeenCalled();
+
+      refreshSpy.mockRestore();
+      highlightSpy.mockRestore();
+    });
+
+    it("should suppress CSS update when focus file change originated from this view", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      const highlightSpy = jest.spyOn(view as any, "refreshFocusHighlighting");
+
+      const metadataCacheOnCall = (app.metadataCache.on as jest.Mock).mock.calls.find(
+        (call: any[]) => call[0] === "changed"
+      );
+      const changeHandler = metadataCacheOnCall[1];
+      const focusFile = new TFile("flow-focus-data/focus.md");
+
+      // Set the suppress flag (as addToFocus/removeFromFocus would)
+      (view as any).suppressFocusRefresh = true;
+      changeHandler(focusFile);
+
+      expect(highlightSpy).not.toHaveBeenCalled();
+      expect((view as any).suppressFocusRefresh).toBe(false);
+
+      highlightSpy.mockRestore();
+    });
+
+    it("should add/remove sphere-action-in-focus via CSS-only update", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Call client", "Send email"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client",
+      });
+
+      mockFocusItems = [];
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      let items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(2);
+      items.forEach((item) => {
+        expect(item.classList.contains("sphere-action-in-focus")).toBe(false);
+      });
+
+      // Add "Call client" to focus and run CSS-only update
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call client",
+          text: "Call client",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      await (view as any).refreshFocusHighlighting();
+
+      items = container.querySelectorAll("li[data-focus-file]");
+      let focusedCount = 0;
+      items.forEach((item) => {
+        if (item.classList.contains("sphere-action-in-focus")) {
+          focusedCount++;
+          expect(item.getAttribute("data-focus-action")).toBe("Call client");
+        }
+      });
+      expect(focusedCount).toBe(1);
+
+      // Remove from focus and run CSS-only update
+      mockFocusItems = [];
+      await (view as any).refreshFocusHighlighting();
+
+      items = container.querySelectorAll("li[data-focus-file]");
+      items.forEach((item) => {
+        expect(item.classList.contains("sphere-action-in-focus")).toBe(false);
+      });
+    });
+  });
+
+  describe("workspace event handling", () => {
+    it("should remove action from DOM on flow:action-completed event", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Call client", "Send email"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client",
+      });
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const container = view.containerEl.children[1] as HTMLElement;
+      let items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(2);
+
+      // Find the workspace.on call for flow:action-completed
+      const workspaceOnCalls = (app.workspace.on as jest.Mock).mock.calls;
+      const completedHandler = workspaceOnCalls.find(
+        (call: any[]) => call[0] === "flow:action-completed"
+      );
+      expect(completedHandler).toBeTruthy();
+
+      // Simulate completion event for "Call client"
+      completedHandler[1]({ file: "Projects/Test.md", action: "Call client" });
+
+      items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(1);
+      expect(items[0].getAttribute("data-focus-action")).toBe("Send email");
+    });
+
+    it("should add handshake emoji on flow:action-waiting event", async () => {
+      const project = {
+        file: "Projects/Test.md",
+        title: "Test Project",
+        tags: ["project/work"],
+        status: "live" as const,
+        priority: 1,
+        nextActions: ["Call client", "Send email"],
+        mtime: Date.now(),
+      };
+
+      mockScanner.scanProjects.mockResolvedValue([project]);
+      mockLineFinder.findActionLine.mockResolvedValue({
+        found: true,
+        lineNumber: 5,
+        lineContent: "- [ ] Call client",
+      });
+
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const container = view.containerEl.children[1] as HTMLElement;
+
+      // Find the workspace.on call for flow:action-waiting
+      const workspaceOnCalls = (app.workspace.on as jest.Mock).mock.calls;
+      const waitingHandler = workspaceOnCalls.find(
+        (call: any[]) => call[0] === "flow:action-waiting"
+      );
+      expect(waitingHandler).toBeTruthy();
+
+      // Simulate waiting-for event for "Call client"
+      waitingHandler[1]({ file: "Projects/Test.md", action: "Call client" });
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // The action should still exist but now have the handshake emoji
+      const items = container.querySelectorAll("li[data-focus-file]");
+      expect(items.length).toBe(2);
+      const callClientItem = Array.from(items).find(
+        (item) => item.getAttribute("data-focus-action") === "Call client"
+      );
+      expect(callClientItem).toBeTruthy();
+      expect(callClientItem!.textContent).toContain("🤝");
+    });
+
+    it("should clean up workspace event listeners on close", async () => {
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+
+      await view.onOpen();
+
+      // Verify workspace events were registered
+      const workspaceOnCalls = (app.workspace.on as jest.Mock).mock.calls;
+      const completedHandler = workspaceOnCalls.find(
+        (call: any[]) => call[0] === "flow:action-completed"
+      );
+      expect(completedHandler).toBeTruthy();
+
+      await view.onClose();
+
+      // offref should have been called for each workspace event ref
+      expect(app.workspace.offref).toHaveBeenCalled();
+    });
+  });
+
   describe("waiting-for visual indicator", () => {
     it("should display handshake emoji for waiting-for items", async () => {
       // Mock line finder to return waiting-for checkbox for one action
@@ -693,6 +1034,7 @@ describe("SphereView", () => {
             add: jest.fn(),
           },
           addEventListener: jest.fn(),
+          setAttribute: jest.fn(),
         }),
       };
 

@@ -311,6 +311,7 @@ describe("Focus Manual Reordering Integration", () => {
       workspace: {
         getLeaf: jest.fn(),
         getLeavesOfType: jest.fn().mockReturnValue([]),
+        trigger: jest.fn(),
       },
       metadataCache: {
         on: jest.fn(),
