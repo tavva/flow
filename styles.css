@@ -835,6 +835,50 @@ select.flow-gtd-inline-select option,
   color: var(--background-primary);
 }
 
+/* Context filter buttons */
+.flow-gtd-context-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.flow-gtd-context-button {
+  padding: 4px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.flow-gtd-context-button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.flow-gtd-context-button.selected {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.theme-dark .flow-gtd-context-button {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .flow-gtd-context-button:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.theme-dark .flow-gtd-context-button.selected {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
 /* Action button groups */
 .flow-gtd-action-groups {
   display: flex;
