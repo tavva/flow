@@ -162,11 +162,7 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
     }
     this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
-      if (file.path === FOCUS_FILE_PATH) {
-        void this.refreshFocusHighlighting();
-        return;
-      }
-      if (this.isRelevantFile(file)) {
+      if (file.path === FOCUS_FILE_PATH || this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
     });
@@ -305,9 +301,11 @@ export class SphereView extends ItemView {
 
   private async refresh(): Promise<void> {
     const container = this.contentEl;
-    container.empty();
+    const scrollTop = container.scrollTop;
     const data = await this.loadSphereData();
+    container.empty();
     this.renderContent(container, data);
+    container.scrollTop = scrollTop;
   }
 
   private async refreshContent(): Promise<void> {
@@ -805,23 +803,6 @@ export class SphereView extends ItemView {
     if (leaf) {
       workspace.revealLeaf(leaf);
     }
-  }
-
-  private async refreshFocusHighlighting(): Promise<void> {
-    const focusItems = await loadFocusItems(this.app.vault);
-    const actionElements = this.contentEl.querySelectorAll("li[data-focus-file]");
-
-    actionElements.forEach((el: Element) => {
-      const file = el.getAttribute("data-focus-file");
-      const action = el.getAttribute("data-focus-action");
-      const inFocus = focusItems.some((item) => item.file === file && item.text === action);
-
-      if (inFocus) {
-        el.classList.add("sphere-action-in-focus");
-      } else {
-        el.classList.remove("sphere-action-in-focus");
-      }
-    });
   }
 
   private async refreshFocusView(): Promise<void> {
