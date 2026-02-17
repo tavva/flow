@@ -305,7 +305,31 @@ export class SphereView extends ItemView {
     const data = await this.loadSphereData();
     container.empty();
     this.renderContent(container, data);
+    await this.waitForRenderSettled(container);
     container.scrollTop = scrollTop;
+  }
+
+  private waitForRenderSettled(container: HTMLElement): Promise<void> {
+    if (typeof MutationObserver === "undefined") {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      const observer = new MutationObserver(() => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          observer.disconnect();
+          resolve();
+        }, 50);
+      });
+
+      let timeout = setTimeout(() => {
+        observer.disconnect();
+        resolve();
+      }, 50);
+
+      observer.observe(container, { childList: true, subtree: true, characterData: true });
+    });
   }
 
   private async refreshContent(): Promise<void> {
