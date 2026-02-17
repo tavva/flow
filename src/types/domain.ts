@@ -46,4 +46,5 @@ export interface FocusItem {
   addedAt: number; // Timestamp
   isPinned?: boolean; // true if item is in pinned section
   completedAt?: number; // Timestamp when marked complete
+  contexts?: string[]; // GTD context tags (#context/X) from the action line
 }

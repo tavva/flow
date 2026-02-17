@@ -56,8 +56,8 @@ describe("focus-persistence JSONL format", () => {
       const result = await loadFocusItems(mockVault);
 
       expect(result).toHaveLength(2);
-      expect(result[0]).toEqual(item1);
-      expect(result[1]).toEqual(item2);
+      expect(result[0]).toEqual({ ...item1, contexts: [] });
+      expect(result[1]).toEqual({ ...item2, contexts: [] });
     });
 
     it("handles empty file", async () => {
@@ -136,6 +136,49 @@ describe("focus-persistence JSONL format", () => {
       expect(result[0].text).toBe("Legacy task");
     });
 
+    it("defaults contexts to empty array when loading items without contexts field", async () => {
+      const itemWithoutContexts = {
+        file: "Projects/Test.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Task 1",
+        text: "Task 1",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: 1700000000000,
+      };
+
+      const mockFile = new TFile();
+      mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+      mockVault.read.mockResolvedValue(JSON.stringify(itemWithoutContexts));
+
+      const result = await loadFocusItems(mockVault);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].contexts).toEqual([]);
+    });
+
+    it("preserves contexts when loading items with contexts field", async () => {
+      const itemWithContexts = {
+        file: "Projects/Test.md",
+        lineNumber: 10,
+        lineContent: "- [ ] Call dentist #context/phone",
+        text: "Call dentist #context/phone",
+        sphere: "work",
+        isGeneral: false,
+        addedAt: 1700000000000,
+        contexts: ["phone"],
+      };
+
+      const mockFile = new TFile();
+      mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+      mockVault.read.mockResolvedValue(JSON.stringify(itemWithContexts));
+
+      const result = await loadFocusItems(mockVault);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].contexts).toEqual(["phone"]);
+    });
+
     it("returns empty array when file does not exist", async () => {
       mockVault.getAbstractFileByPath.mockReturnValue(null);
       (mockVault.adapter.exists as jest.Mock).mockResolvedValue(false);
@@ -178,7 +221,7 @@ describe("focus-persistence JSONL format", () => {
 
       // Should still get the valid first item
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(item1);
+      expect(result[0]).toEqual({ ...item1, contexts: [] });
 
       consoleSpy.mockRestore();
     });
