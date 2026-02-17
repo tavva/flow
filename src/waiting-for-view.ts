@@ -65,10 +65,7 @@ export class WaitingForView extends RefreshingView {
   }
 
   // Restore state when Obsidian reloads
-  async setState(
-    state: { selectedSpheres?: string[]; selectedContexts?: string[] },
-    result: any
-  ) {
+  async setState(state: { selectedSpheres?: string[]; selectedContexts?: string[] }, result: any) {
     if (state?.selectedSpheres !== undefined) {
       this.selectedSpheres = state.selectedSpheres;
       this.stateRestored = true;
