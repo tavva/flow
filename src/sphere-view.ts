@@ -162,6 +162,10 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
     }
     this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
+      if (file.path === FOCUS_FILE_PATH) {
+        void this.refreshFocusHighlighting();
+        return;
+      }
       if (this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
@@ -169,11 +173,6 @@ export class SphereView extends ItemView {
   }
 
   private isRelevantFile(file: TFile): boolean {
-    // Refresh when focus file changes (for "in focus" highlighting)
-    if (file.path === FOCUS_FILE_PATH) {
-      return true;
-    }
-
     // Refresh when any markdown file in the vault changes that might be a project
     // We check the metadata cache for project tags
     const metadata = this.app.metadataCache.getFileCache(file);
@@ -595,6 +594,8 @@ export class SphereView extends ItemView {
     const displayText = isWaitingFor ? `🤝 ${action}` : action;
 
     const item = list.createEl("li");
+    item.setAttribute("data-focus-file", file);
+    item.setAttribute("data-focus-action", action);
     await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
     item.style.cursor = "pointer";
 
@@ -804,6 +805,23 @@ export class SphereView extends ItemView {
     if (leaf) {
       workspace.revealLeaf(leaf);
     }
+  }
+
+  private async refreshFocusHighlighting(): Promise<void> {
+    const focusItems = await loadFocusItems(this.app.vault);
+    const actionElements = this.contentEl.querySelectorAll("li[data-focus-file]");
+
+    actionElements.forEach((el: Element) => {
+      const file = el.getAttribute("data-focus-file");
+      const action = el.getAttribute("data-focus-action");
+      const inFocus = focusItems.some((item) => item.file === file && item.text === action);
+
+      if (inFocus) {
+        el.classList.add("sphere-action-in-focus");
+      } else {
+        el.classList.remove("sphere-action-in-focus");
+      }
+    });
   }
 
   private async refreshFocusView(): Promise<void> {
