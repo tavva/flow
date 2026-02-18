@@ -37,6 +37,7 @@ export class Vault {
 
 export class MetadataCache {
   getFileCache = jest.fn();
+  getTags = jest.fn().mockReturnValue({});
   on = jest.fn(() => ({ unload: jest.fn() }));
   offref = jest.fn();
 }

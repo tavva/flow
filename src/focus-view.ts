@@ -280,6 +280,10 @@ export class FocusView extends RefreshingView {
 
   private renderContextFilter(container: HTMLElement, items: FocusItem[]) {
     const availableContexts = this.discoverContexts(items);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
     if (availableContexts.length === 0) {
       return;
     }
@@ -401,11 +405,11 @@ export class FocusView extends RefreshingView {
     }
 
     // Completed Today section (at the end)
-    this.renderCompletedTodaySection(container);
+    const completedToday = this.filterItemsByContext(this.getCompletedTodayItems());
+    this.renderCompletedTodaySection(container, completedToday);
   }
 
-  private renderCompletedTodaySection(container: HTMLElement): void {
-    const completedItems = this.getCompletedTodayItems();
+  private renderCompletedTodaySection(container: HTMLElement, completedItems: FocusItem[]): void {
     if (completedItems.length === 0) return;
 
     const section = container.createDiv({ cls: "flow-gtd-focus-section" });

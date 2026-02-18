@@ -104,5 +104,7 @@ export class TagSuggest extends AbstractInputSuggest<string> {
     // Place cursor after the inserted tag
     const newCursorPos = tagInfo.start + tag.length;
     this.inputEl.setSelectionRange(newCursorPos, newCursorPos);
+
+    this.close();
   }
 }

@@ -9,6 +9,7 @@ export class AddToInboxModal extends Modal {
   private settings: PluginSettings;
   private inputEl: HTMLInputElement | null = null;
   private warningEl: HTMLElement | null = null;
+  private tagSuggest: TagSuggest | null = null;
 
   constructor(app: App, settings: PluginSettings) {
     super(app);
@@ -62,13 +63,16 @@ export class AddToInboxModal extends Modal {
     captureButton.addEventListener("click", () => this.submit());
 
     // Attach tag autocomplete
-    new TagSuggest(this.app, this.inputEl);
+    this.tagSuggest?.close();
+    this.tagSuggest = new TagSuggest(this.app, this.inputEl);
 
     // Focus the input
     this.inputEl.focus();
   }
 
   onClose() {
+    this.tagSuggest?.close();
+    this.tagSuggest = null;
     const { contentEl } = this;
     contentEl.empty();
   }

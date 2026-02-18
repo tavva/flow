@@ -203,6 +203,10 @@ export class SomedayView extends RefreshingView {
 
   private renderContextFilter(container: HTMLElement, items: SomedayItem[]) {
     const availableContexts = this.discoverContexts(items);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
     if (availableContexts.length === 0) {
       return;
     }

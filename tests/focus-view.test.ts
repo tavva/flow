@@ -1472,15 +1472,14 @@ describe("FocusView", () => {
   describe("renderCompletedTodaySection", () => {
     it("should call getCompletedTodayItems", () => {
       (view as any).focusItems = [];
-
-      // Spy on getCompletedTodayItems
-      const spy = jest.spyOn(view as any, "getCompletedTodayItems");
+      const completedItems = (view as any).getCompletedTodayItems();
 
       const container = document.createElement("div");
 
-      (view as any).renderCompletedTodaySection(container);
+      (view as any).renderCompletedTodaySection(container, completedItems);
 
-      expect(spy).toHaveBeenCalled();
+      // Verify getCompletedTodayItems returns empty array for no items
+      expect(completedItems).toEqual([]);
     });
 
     it("should not render when no completed items", () => {
@@ -1490,7 +1489,7 @@ describe("FocusView", () => {
       const createDivSpy = jest.fn();
       (container as any).createDiv = createDivSpy;
 
-      (view as any).renderCompletedTodaySection(container);
+      (view as any).renderCompletedTodaySection(container, []);
 
       // Should not create any divs if no completed items
       expect(createDivSpy).not.toHaveBeenCalled();

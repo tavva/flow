@@ -1,3 +1,6 @@
+// ABOUTME: Leaf view displaying projects and next actions for a single sphere (life area).
+// ABOUTME: Provides search filtering, context tag filtering, priority management, and focus integration.
+
 import {
   ItemView,
   WorkspaceLeaf,
@@ -287,6 +290,10 @@ export class SphereView extends ItemView {
 
   private renderContextFilter(container: HTMLElement, data: SphereViewData) {
     const availableContexts = this.getDataLoader().discoverContexts(data);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
     if (availableContexts.length === 0) {
       return;
     }
@@ -307,7 +314,7 @@ export class SphereView extends ItemView {
 
       button.addEventListener("click", () => {
         this.toggleContextFilter(context);
-        this.refresh();
+        void this.refresh();
       });
     });
   }
@@ -379,6 +386,10 @@ export class SphereView extends ItemView {
 
       // Re-render content sections with current filter
       const data = await this.loadSphereData();
+
+      // Re-render context filter buttons (using unfiltered data so all contexts are discoverable)
+      this.renderContextFilter(container, data);
+
       const textFiltered = this.filterData(data, this.searchQuery);
       const filteredData = this.getDataLoader().filterDataByContexts(
         textFiltered,
