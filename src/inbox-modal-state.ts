@@ -1,3 +1,6 @@
+// ABOUTME: Manages UI state for inbox processing including item selection, expansion, and persistence.
+// ABOUTME: Coordinates between the processing controller and the render views.
+
 import { App, Notice } from "obsidian";
 import { FlowProject, PersonNote, PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
