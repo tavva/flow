@@ -1370,6 +1370,12 @@ describe("FocusView", () => {
       expect((view as any).selectedContexts).toEqual(["computer"]);
     });
 
+    it("should default selectedContexts to empty array when not in state", async () => {
+      await view.setState({}, {} as any);
+
+      expect((view as any).selectedContexts).toEqual([]);
+    });
+
     it("should toggle context filter", () => {
       (view as any).selectedContexts = [];
 
