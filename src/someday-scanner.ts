@@ -4,6 +4,7 @@
 import { App, TFile } from "obsidian";
 import { FlowProject, PluginSettings } from "./types";
 import { FlowProjectScanner } from "./flow-scanner";
+import { extractContexts } from "./context-tags";
 
 export interface SomedayItem {
   file: string;
@@ -12,6 +13,7 @@ export interface SomedayItem {
   lineContent: string; // Full line content for validation
   text: string;
   sphere?: string; // Sphere extracted from inline tag
+  contexts: string[]; // GTD context tags (#context/X) from the action line
 }
 
 export interface SomedayProject {
@@ -94,6 +96,7 @@ export class SomedayScanner {
             lineContent: line,
             text,
             sphere: this.extractSphere(line),
+            contexts: extractContexts(line),
           });
         }
       }

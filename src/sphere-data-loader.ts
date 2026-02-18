@@ -10,6 +10,7 @@ import {
   sortHierarchy,
   ProjectNode,
 } from "./project-hierarchy";
+import { extractContexts } from "./context-tags";
 
 export interface SphereProjectSummary {
   project: FlowProject;
@@ -168,6 +169,58 @@ export class SphereDataLoader {
       generalNextActions: filteredGeneralActions,
       generalNextActionsNotice: data.generalNextActionsNotice,
     };
+  }
+
+  filterDataByContexts(data: SphereViewData, selectedContexts: string[]): SphereViewData {
+    if (selectedContexts.length === 0) {
+      return data;
+    }
+
+    const matchesContext = (action: string) => {
+      const contexts = extractContexts(action);
+      return contexts.some((c) => selectedContexts.includes(c));
+    };
+
+    const filteredProjects = data.projects
+      .map((summary) => {
+        const filteredActions = summary.project.nextActions?.filter(matchesContext) || [];
+        if (filteredActions.length === 0) return null;
+
+        return {
+          ...summary,
+          project: { ...summary.project, nextActions: filteredActions },
+        };
+      })
+      .filter((p): p is SphereProjectSummary => p !== null);
+
+    const filteredGeneralActions = data.generalNextActions.filter(matchesContext);
+
+    return {
+      projects: filteredProjects,
+      projectsNeedingNextActions: data.projectsNeedingNextActions,
+      generalNextActions: filteredGeneralActions,
+      generalNextActionsNotice: data.generalNextActionsNotice,
+    };
+  }
+
+  discoverContexts(data: SphereViewData): string[] {
+    const contexts = new Set<string>();
+
+    for (const summary of data.projects) {
+      for (const action of summary.project.nextActions || []) {
+        for (const context of extractContexts(action)) {
+          contexts.add(context);
+        }
+      }
+    }
+
+    for (const action of data.generalNextActions) {
+      for (const context of extractContexts(action)) {
+        contexts.add(context);
+      }
+    }
+
+    return Array.from(contexts).sort();
   }
 
   extractGeneralNextActions(content: string): string[] {

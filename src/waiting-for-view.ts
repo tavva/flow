@@ -22,6 +22,7 @@ export class WaitingForView extends RefreshingView {
   private hasDataview: boolean = false;
   private saveSettings: () => Promise<void>;
   private selectedSpheres: string[] = [];
+  private selectedContexts: string[] = [];
   private stateRestored = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
@@ -59,14 +60,18 @@ export class WaitingForView extends RefreshingView {
   getState() {
     return {
       selectedSpheres: this.selectedSpheres,
+      selectedContexts: this.selectedContexts,
     };
   }
 
   // Restore state when Obsidian reloads
-  async setState(state: { selectedSpheres?: string[] }, result: any) {
+  async setState(state: { selectedSpheres?: string[]; selectedContexts?: string[] }, result: any) {
     if (state?.selectedSpheres !== undefined) {
       this.selectedSpheres = state.selectedSpheres;
       this.stateRestored = true;
+    }
+    if (state?.selectedContexts !== undefined) {
+      this.selectedContexts = state.selectedContexts;
     }
     await super.setState(state, result);
   }
@@ -194,6 +199,69 @@ export class WaitingForView extends RefreshingView {
     });
   }
 
+  private discoverContexts(items: WaitingForItem[]): string[] {
+    const contexts = new Set<string>();
+    for (const item of items) {
+      for (const context of item.contexts) {
+        contexts.add(context);
+      }
+    }
+    return Array.from(contexts).sort();
+  }
+
+  private renderContextFilter(container: HTMLElement, items: WaitingForItem[]) {
+    const availableContexts = this.discoverContexts(items);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
+    if (availableContexts.length === 0) {
+      return;
+    }
+
+    const filterContainer = container.createDiv({ cls: "flow-gtd-context-buttons" });
+
+    availableContexts.forEach((context) => {
+      const isSelected = this.selectedContexts.includes(context);
+      const button = filterContainer.createEl("button", {
+        cls: "flow-gtd-context-button",
+      });
+      button.setAttribute("type", "button");
+      button.setText(context);
+
+      if (isSelected) {
+        button.addClass("selected");
+      }
+
+      button.addEventListener("click", async () => {
+        this.toggleContextFilter(context);
+        const refreshedItems = await this.scanner.scanWaitingForItems();
+        const viewContainer = this.contentEl;
+        viewContainer.empty();
+        this.renderContent(viewContainer as HTMLElement, refreshedItems);
+      });
+    });
+  }
+
+  private toggleContextFilter(context: string) {
+    const index = this.selectedContexts.indexOf(context);
+    if (index === -1) {
+      this.selectedContexts.push(context);
+    } else {
+      this.selectedContexts.splice(index, 1);
+    }
+  }
+
+  private filterItemsByContext(items: WaitingForItem[]): WaitingForItem[] {
+    if (this.selectedContexts.length === 0) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      return item.contexts.some((c) => this.selectedContexts.includes(c));
+    });
+  }
+
   private renderContent(container: HTMLElement, items: WaitingForItem[]) {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-waiting-for-title" });
     titleEl.setText("Waiting For");
@@ -201,8 +269,11 @@ export class WaitingForView extends RefreshingView {
     // Render sphere filter buttons
     this.renderSphereFilter(container);
 
-    // Apply filter
-    const filteredItems = this.filterItemsBySphere(items);
+    // Render context filter buttons (using unfiltered items so all contexts are discoverable)
+    this.renderContextFilter(container, items);
+
+    // Apply filters
+    const filteredItems = this.filterItemsByContext(this.filterItemsBySphere(items));
 
     if (filteredItems.length === 0) {
       this.renderEmptyMessage(container);

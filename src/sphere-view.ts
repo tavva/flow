@@ -1,3 +1,6 @@
+// ABOUTME: Leaf view displaying projects and next actions for a single sphere (life area).
+// ABOUTME: Provides search filtering, context tag filtering, priority management, and focus integration.
+
 import {
   ItemView,
   WorkspaceLeaf,
@@ -13,6 +16,7 @@ import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
 import { loadFocusItems, saveFocusItems, FOCUS_FILE_PATH } from "./focus-persistence";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
+import { extractContexts } from "./context-tags";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -29,6 +33,7 @@ export class SphereView extends ItemView {
   private showNextActions: boolean = true;
   private metadataCacheEventRef: EventRef | null = null;
   private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  private selectedContexts: string[] = [];
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -126,12 +131,18 @@ export class SphereView extends ItemView {
       sphere: this.sphere,
       searchQuery: this.searchQuery,
       showNextActions: this.showNextActions,
+      selectedContexts: this.selectedContexts,
     };
   }
 
   // Restore state when Obsidian reloads
   async setState(
-    state: { sphere?: string; searchQuery?: string; showNextActions?: boolean },
+    state: {
+      sphere?: string;
+      searchQuery?: string;
+      showNextActions?: boolean;
+      selectedContexts?: string[];
+    },
     result: any
   ) {
     if (state?.searchQuery !== undefined) {
@@ -139,6 +150,9 @@ export class SphereView extends ItemView {
     }
     if (state?.showNextActions !== undefined) {
       this.showNextActions = state.showNextActions;
+    }
+    if (state?.selectedContexts !== undefined) {
+      this.selectedContexts = state.selectedContexts;
     }
     if (state?.sphere) {
       this.sphere = state.sphere;
@@ -274,6 +288,46 @@ export class SphereView extends ItemView {
     return searchInput;
   }
 
+  private renderContextFilter(container: HTMLElement, data: SphereViewData) {
+    const availableContexts = this.getDataLoader().discoverContexts(data);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
+    if (availableContexts.length === 0) {
+      return;
+    }
+
+    const filterContainer = container.createDiv({ cls: "flow-gtd-context-buttons" });
+
+    availableContexts.forEach((context) => {
+      const isSelected = this.selectedContexts.includes(context);
+      const button = filterContainer.createEl("button", {
+        cls: "flow-gtd-context-button",
+      });
+      button.setAttribute("type", "button");
+      button.setText(context);
+
+      if (isSelected) {
+        button.addClass("selected");
+      }
+
+      button.addEventListener("click", () => {
+        this.toggleContextFilter(context);
+        void this.refresh();
+      });
+    });
+  }
+
+  private toggleContextFilter(context: string) {
+    const index = this.selectedContexts.indexOf(context);
+    if (index === -1) {
+      this.selectedContexts.push(context);
+    } else {
+      this.selectedContexts.splice(index, 1);
+    }
+  }
+
   private toggleNextActionsVisibility(): void {
     const container = this.contentEl;
     const allActionLists = container.querySelectorAll(".flow-gtd-sphere-next-actions");
@@ -332,7 +386,15 @@ export class SphereView extends ItemView {
 
       // Re-render content sections with current filter
       const data = await this.loadSphereData();
-      const filteredData = this.filterData(data, this.searchQuery);
+
+      // Re-render context filter buttons (using unfiltered data so all contexts are discoverable)
+      this.renderContextFilter(container, data);
+
+      const textFiltered = this.filterData(data, this.searchQuery);
+      const filteredData = this.getDataLoader().filterDataByContexts(
+        textFiltered,
+        this.selectedContexts
+      );
 
       this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
       this.renderProjectsSection(container, filteredData.projects);
@@ -362,11 +424,18 @@ export class SphereView extends ItemView {
     // Render sticky header with search
     const searchInput = this.renderSearchHeader(container);
 
+    // Render context filter buttons (using unfiltered data so all contexts are discoverable)
+    this.renderContextFilter(container, data);
+
     // Setup keyboard shortcuts
     this.setupKeyboardShortcuts(container, searchInput);
 
-    // Filter data based on search query
-    const filteredData = this.filterData(data, this.searchQuery);
+    // Filter data based on search query and context selection
+    const textFiltered = this.filterData(data, this.searchQuery);
+    const filteredData = this.getDataLoader().filterDataByContexts(
+      textFiltered,
+      this.selectedContexts
+    );
 
     // Render filtered sections
     this.renderProjectsNeedingActionsSection(container, filteredData.projectsNeedingNextActions);
@@ -747,6 +816,7 @@ export class SphereView extends ItemView {
       sphere,
       isGeneral,
       addedAt: Date.now(),
+      contexts: extractContexts(lineContent),
     };
 
     const focusItems = await loadFocusItems(this.app.vault);

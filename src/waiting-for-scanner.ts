@@ -3,6 +3,7 @@
 
 import { App, TFile } from "obsidian";
 import { getAPI } from "obsidian-dataview";
+import { extractContexts } from "./context-tags";
 
 export interface WaitingForItem {
   file: string;
@@ -11,6 +12,7 @@ export interface WaitingForItem {
   lineContent: string; // Full line content for validation
   text: string;
   sphere?: string; // Sphere extracted from inline tag or project tag
+  contexts: string[]; // GTD context tags (#context/X) from the action line
 }
 
 export class WaitingForScanner {
@@ -104,6 +106,7 @@ export class WaitingForScanner {
         lineContent,
         text: task.text,
         sphere: this.extractSphere(lineContent, task.path),
+        contexts: extractContexts(lineContent),
       });
     }
 
@@ -148,6 +151,7 @@ export class WaitingForScanner {
           lineContent: line,
           text,
           sphere: this.extractSphere(line, file.path),
+          contexts: extractContexts(line),
         });
       }
     });

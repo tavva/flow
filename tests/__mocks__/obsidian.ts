@@ -37,6 +37,7 @@ export class Vault {
 
 export class MetadataCache {
   getFileCache = jest.fn();
+  getTags = jest.fn().mockReturnValue({});
   on = jest.fn(() => ({ unload: jest.fn() }));
   offref = jest.fn();
 }
@@ -497,6 +498,17 @@ export class MarkdownRenderer {
     // In real Obsidian, this would parse markdown and create proper DOM
     element.innerHTML = markdown;
   }
+}
+
+export class AbstractInputSuggest<T> {
+  protected app: App;
+
+  constructor(app: App, inputEl: HTMLElement) {
+    this.app = app;
+  }
+
+  setValue(value: string): void {}
+  close(): void {}
 }
 
 export const Platform = {
