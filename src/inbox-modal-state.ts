@@ -1,4 +1,4 @@
-import { Notice } from "obsidian";
+import { App, Notice } from "obsidian";
 import { FlowProject, PersonNote, PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { EditableItem } from "./inbox-types";
@@ -11,6 +11,7 @@ export type RenderTarget = "inbox" | "editable";
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
 
 export class InboxModalState {
+  public app!: App;
   public editableItems: EditableItem[] = [];
   public deletionOffsets = new Map<string, number>();
   public existingProjects: FlowProject[] = [];

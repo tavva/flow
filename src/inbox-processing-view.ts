@@ -25,6 +25,7 @@ export class InboxProcessingView extends ItemView {
     this.state = new InboxModalState(controller, settings, (target, options) =>
       this.requestRender(target, options?.immediate === true)
     );
+    this.state.app = this.app;
   }
 
   getViewType(): string {

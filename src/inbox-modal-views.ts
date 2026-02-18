@@ -5,6 +5,7 @@ import { Setting } from "obsidian";
 import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
 import { FlowProject, PersonNote } from "./types";
+import { TagSuggest } from "./tag-suggest";
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
@@ -351,6 +352,9 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     input.type = "text";
     input.value = actionText;
     input.placeholder = "Action...";
+
+    // Attach tag autocomplete
+    new TagSuggest(state.app, input);
 
     // Expand when input is focused
     input.addEventListener("focus", () => {
