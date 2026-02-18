@@ -499,6 +499,17 @@ export class MarkdownRenderer {
   }
 }
 
+export class AbstractInputSuggest<T> {
+  protected app: App;
+
+  constructor(app: App, inputEl: HTMLElement) {
+    this.app = app;
+  }
+
+  setValue(value: string): void {}
+  close(): void {}
+}
+
 export const Platform = {
   isMacOS: false,
   isWin: false,

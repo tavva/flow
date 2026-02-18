@@ -32,7 +32,7 @@ describe("AddToInboxModal", () => {
       await modal.onOpen();
 
       // Set the input value
-      (modal as any).inputValue = "Buy milk";
+      (modal as any).inputEl.value = "Buy milk";
 
       await (modal as any).submit();
 
@@ -52,7 +52,7 @@ describe("AddToInboxModal", () => {
       (mockApp.vault.create as jest.Mock).mockResolvedValue(mockInboxFile);
 
       await modal.onOpen();
-      (modal as any).inputValue = "New item";
+      (modal as any).inputEl.value = "New item";
 
       await (modal as any).submit();
 
@@ -69,7 +69,7 @@ describe("AddToInboxModal", () => {
       (mockApp.vault.create as jest.Mock).mockResolvedValue(mockInboxFile);
 
       await modal.onOpen();
-      (modal as any).inputValue = "New item";
+      (modal as any).inputEl.value = "New item";
 
       await (modal as any).submit();
 
@@ -79,7 +79,7 @@ describe("AddToInboxModal", () => {
 
     it("should not submit when input is empty", async () => {
       await modal.onOpen();
-      (modal as any).inputValue = "";
+      (modal as any).inputEl.value = "";
 
       await (modal as any).submit();
 
@@ -89,7 +89,7 @@ describe("AddToInboxModal", () => {
 
     it("should not submit when input is only whitespace", async () => {
       await modal.onOpen();
-      (modal as any).inputValue = "   ";
+      (modal as any).inputEl.value = "   ";
 
       await (modal as any).submit();
 
@@ -102,7 +102,7 @@ describe("AddToInboxModal", () => {
       (mockApp.vault.read as jest.Mock).mockResolvedValue("Existing content");
 
       await modal.onOpen();
-      (modal as any).inputValue = "New item";
+      (modal as any).inputEl.value = "New item";
 
       await (modal as any).submit();
 
@@ -118,7 +118,7 @@ describe("AddToInboxModal", () => {
       (mockApp.vault.read as jest.Mock).mockResolvedValue("");
 
       await modal.onOpen();
-      (modal as any).inputValue = "First item";
+      (modal as any).inputEl.value = "First item";
 
       await (modal as any).submit();
 
@@ -129,7 +129,7 @@ describe("AddToInboxModal", () => {
   describe("validation", () => {
     it("should show warning when trying to submit empty input", async () => {
       await modal.onOpen();
-      (modal as any).inputValue = "";
+      (modal as any).inputEl.value = "";
 
       await (modal as any).submit();
 
