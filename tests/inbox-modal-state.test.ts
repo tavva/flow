@@ -1,3 +1,4 @@
+import { App } from "obsidian";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
 import { DEFAULT_SETTINGS } from "../src/types";
@@ -20,7 +21,7 @@ describe("InboxModalState discardItem", () => {
     const discardInboxItem = jest.fn().mockResolvedValue(undefined);
     const controller = { discardInboxItem } as unknown as InboxProcessingController;
     const render = jest.fn();
-    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+    const state = new InboxModalState(new App(), controller, DEFAULT_SETTINGS, render);
     const item = createEditableItem();
 
     state.editableItems = [item];
@@ -36,7 +37,7 @@ describe("InboxModalState discardItem", () => {
     const discardInboxItem = jest.fn().mockRejectedValue(new Error("failed to delete inbox item"));
     const controller = { discardInboxItem } as unknown as InboxProcessingController;
     const render = jest.fn();
-    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+    const state = new InboxModalState(new App(), controller, DEFAULT_SETTINGS, render);
     const item = createEditableItem();
 
     state.editableItems = [item];
@@ -56,7 +57,7 @@ describe("InboxModalState discardItem", () => {
     const discardInboxItem = jest.fn();
     const controller = { discardInboxItem } as unknown as InboxProcessingController;
     const render = jest.fn();
-    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+    const state = new InboxModalState(new App(), controller, DEFAULT_SETTINGS, render);
 
     const item: EditableItem = {
       original: "Example",
@@ -113,7 +114,7 @@ describe("InboxModalState saveAndRemoveItem with project creation", () => {
     } as unknown as InboxProcessingController;
 
     const render = jest.fn();
-    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+    const state = new InboxModalState(new App(), controller, DEFAULT_SETTINGS, render);
 
     // Load initial reference data
     await state.loadReferenceData();
@@ -159,7 +160,7 @@ describe("InboxModalState saveAndRemoveItem with project creation", () => {
     } as unknown as InboxProcessingController;
 
     const render = jest.fn();
-    const state = new InboxModalState(controller, DEFAULT_SETTINGS, render);
+    const state = new InboxModalState(new App(), controller, DEFAULT_SETTINGS, render);
 
     // Load initial reference data
     await state.loadReferenceData();

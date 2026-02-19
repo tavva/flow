@@ -1,4 +1,7 @@
-import { Notice } from "obsidian";
+// ABOUTME: Manages UI state for inbox processing including item selection, expansion, and persistence.
+// ABOUTME: Coordinates between the processing controller and the render views.
+
+import { App, Notice } from "obsidian";
 import { FlowProject, PersonNote, PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { EditableItem } from "./inbox-types";
@@ -20,6 +23,7 @@ export class InboxModalState {
   private uniqueIdCounter = 0;
 
   constructor(
+    public readonly app: App,
     private readonly controller: InboxProcessingController,
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback

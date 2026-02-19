@@ -5,12 +5,17 @@
  * @jest-environment jsdom
  */
 
+import { App } from "obsidian";
 import { renderEditableItemsView, renderInboxView } from "../src/inbox-modal-views";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { EditableItem } from "../src/inbox-types";
+import { TagSuggest } from "../src/tag-suggest";
 
 // Mock Obsidian
 jest.mock("obsidian");
+
+// Mock TagSuggest
+jest.mock("../src/tag-suggest");
 
 // Helper to add Obsidian's createDiv and createEl methods to an HTMLElement
 function makeObsidianElement(el: HTMLElement): HTMLElement {
@@ -64,7 +69,7 @@ function createMockState(editableItems: EditableItem[]): InboxModalState {
   } as any;
   const mockRenderCallback = jest.fn();
 
-  const state = new InboxModalState(mockController, mockSettings, mockRenderCallback);
+  const state = new InboxModalState(new App(), mockController, mockSettings, mockRenderCallback);
   state.editableItems = editableItems;
   state.queueRender = jest.fn();
   state.existingProjects = [];
@@ -1035,5 +1040,51 @@ describe("navigation", () => {
 
     const countSpan = container.querySelector(".flow-inbox-count");
     expect(countSpan?.textContent).toContain("2 of 3");
+  });
+});
+
+describe("tag autocomplete on action inputs", () => {
+  beforeEach(() => {
+    (TagSuggest as jest.Mock).mockClear();
+  });
+
+  it("attaches TagSuggest to each action input", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Test item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+      editedNames: ["Action one", "Action two"],
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const actionInputs = container.querySelectorAll(".flow-inbox-action-input");
+    expect(actionInputs.length).toBe(2);
+    expect(TagSuggest).toHaveBeenCalledTimes(2);
+    expect(TagSuggest).toHaveBeenCalledWith(state.app, actionInputs[0]);
+    expect(TagSuggest).toHaveBeenCalledWith(state.app, actionInputs[1]);
+  });
+
+  it("attaches TagSuggest to single action input", () => {
+    const container = makeObsidianElement(document.createElement("div"));
+    const item: EditableItem = {
+      original: "Single action item",
+      selectedAction: "next-actions-file",
+      selectedSpheres: [],
+      isExpanded: true,
+    };
+    const state = createMockState([item]);
+    const onClose = jest.fn();
+
+    renderEditableItemsView(container, state, { onClose });
+
+    const actionInputs = container.querySelectorAll(".flow-inbox-action-input");
+    expect(actionInputs.length).toBe(1);
+    expect(TagSuggest).toHaveBeenCalledTimes(1);
+    expect(TagSuggest).toHaveBeenCalledWith(state.app, actionInputs[0]);
   });
 });
