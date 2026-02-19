@@ -908,7 +908,11 @@ export class FocusView extends RefreshingView {
   }
 
   private handleRenderedTextClick(e: MouseEvent, item: FocusItem): void {
-    const target = e.target as HTMLElement;
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) {
+      this.openFile(item.file, item.lineNumber);
+      return;
+    }
 
     // Handle clicks on internal links (wikilinks)
     const internalLink = target.closest("a.internal-link") as HTMLElement | null;
