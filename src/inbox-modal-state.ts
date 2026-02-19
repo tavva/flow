@@ -14,7 +14,6 @@ export type RenderTarget = "inbox" | "editable";
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
 
 export class InboxModalState {
-  public app!: App;
   public editableItems: EditableItem[] = [];
   public deletionOffsets = new Map<string, number>();
   public existingProjects: FlowProject[] = [];
@@ -24,6 +23,7 @@ export class InboxModalState {
   private uniqueIdCounter = 0;
 
   constructor(
+    public readonly app: App,
     private readonly controller: InboxProcessingController,
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback

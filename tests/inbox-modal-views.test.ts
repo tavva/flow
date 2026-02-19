@@ -69,8 +69,7 @@ function createMockState(editableItems: EditableItem[]): InboxModalState {
   } as any;
   const mockRenderCallback = jest.fn();
 
-  const state = new InboxModalState(mockController, mockSettings, mockRenderCallback);
-  state.app = new App();
+  const state = new InboxModalState(new App(), mockController, mockSettings, mockRenderCallback);
   state.editableItems = editableItems;
   state.queueRender = jest.fn();
   state.existingProjects = [];

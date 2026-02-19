@@ -108,7 +108,7 @@ describe("Inbox deletion handling", () => {
   it("tracks per-file deletions when saving multiple processed inbox items", async () => {
     const controller = new InboxProcessingController(app as unknown as App, settings);
     const renderCallback = jest.fn();
-    const state = new InboxModalState(controller, settings, renderCallback);
+    const state = new InboxModalState(app as unknown as App, controller, settings, renderCallback);
 
     const deleteMock = jest.fn().mockResolvedValue(undefined);
 

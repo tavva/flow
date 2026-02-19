@@ -22,10 +22,9 @@ export class InboxProcessingView extends ItemView {
     this.settings = settings;
     this.saveSettings = saveSettings;
     const controller = new InboxProcessingController(this.app, settings, {}, saveSettings);
-    this.state = new InboxModalState(controller, settings, (target, options) =>
+    this.state = new InboxModalState(this.app, controller, settings, (target, options) =>
       this.requestRender(target, options?.immediate === true)
     );
-    this.state.app = this.app;
   }
 
   getViewType(): string {
