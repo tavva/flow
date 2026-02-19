@@ -1538,7 +1538,7 @@ describe("FocusView", () => {
       );
     });
 
-    it("should not navigate to source file when clicking a link inside action text", async () => {
+    it("should open linked note when clicking an internal link in action text", async () => {
       mockFocusItems = [
         {
           file: "Projects/Test.md",
@@ -1550,6 +1550,9 @@ describe("FocusView", () => {
           addedAt: Date.now(),
         },
       ];
+
+      // Mock workspace.openLinkText
+      mockApp.workspace.openLinkText = jest.fn();
 
       await view.onOpen();
 
@@ -1564,7 +1567,7 @@ describe("FocusView", () => {
       fakeLink.setAttribute("data-href", "John");
       textSpan.appendChild(fakeLink);
 
-      // Spy on openFile
+      // Spy on openFile to ensure it's NOT called
       const openFileSpy = jest.fn();
       (view as any).openFile = openFileSpy;
 
@@ -1573,7 +1576,58 @@ describe("FocusView", () => {
       Object.defineProperty(clickEvent, "target", { value: fakeLink });
       textSpan.dispatchEvent(clickEvent);
 
+      // Should open the linked note, not the source file
       expect(openFileSpy).not.toHaveBeenCalled();
+      expect(mockApp.workspace.openLinkText).toHaveBeenCalledWith("John", "Projects/Test.md");
+    });
+
+    it("should open tag search when clicking a tag in action text", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries #context/errands",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      // Mock the global search plugin
+      const mockOpenGlobalSearch = jest.fn();
+      (mockApp as any).internalPlugins = {
+        getPluginById: jest.fn().mockReturnValue({
+          instance: { openGlobalSearch: mockOpenGlobalSearch },
+        }),
+      };
+
+      await view.onOpen();
+
+      // Find the text span
+      const container = (view as any).contentEl as HTMLElement;
+      const textSpan = container.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textSpan).toBeTruthy();
+
+      // Create a fake tag element inside the text span
+      const fakeTag = document.createElement("a");
+      fakeTag.className = "tag";
+      fakeTag.setAttribute("href", "#context/errands");
+      fakeTag.textContent = "#context/errands";
+      textSpan.appendChild(fakeTag);
+
+      // Spy on openFile to ensure it's NOT called
+      const openFileSpy = jest.fn();
+      (view as any).openFile = openFileSpy;
+
+      // Simulate clicking the tag element
+      const clickEvent = new (window as any).MouseEvent("click", { bubbles: true });
+      Object.defineProperty(clickEvent, "target", { value: fakeTag });
+      textSpan.dispatchEvent(clickEvent);
+
+      // Should open search for the tag, not navigate to source file
+      expect(openFileSpy).not.toHaveBeenCalled();
+      expect(mockOpenGlobalSearch).toHaveBeenCalledWith("tag:#context/errands");
     });
   });
 

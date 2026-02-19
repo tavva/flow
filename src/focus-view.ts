@@ -582,11 +582,7 @@ export class FocusView extends RefreshingView {
     }
 
     textSpan.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a")) {
-        return;
-      }
-      this.openFile(item.file, item.lineNumber);
+      this.handleRenderedTextClick(e, item);
     });
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
@@ -702,11 +698,7 @@ export class FocusView extends RefreshingView {
     }
 
     textSpan.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a")) {
-        return;
-      }
-      this.openFile(item.file, item.lineNumber);
+      this.handleRenderedTextClick(e, item);
     });
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
@@ -784,11 +776,7 @@ export class FocusView extends RefreshingView {
     textSpan.style.opacity = "0.6";
 
     textSpan.addEventListener("click", (e) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a")) {
-        return;
-      }
-      this.openFile(item.file, item.lineNumber);
+      this.handleRenderedTextClick(e, item);
     });
 
     // No action buttons for completed items
@@ -917,6 +905,41 @@ export class FocusView extends RefreshingView {
       // If getRoot() throws, treat leaf as detached
       return false;
     }
+  }
+
+  private handleRenderedTextClick(e: MouseEvent, item: FocusItem): void {
+    const target = e.target as HTMLElement;
+
+    // Handle clicks on internal links (wikilinks)
+    const internalLink = target.closest("a.internal-link") as HTMLElement | null;
+    if (internalLink) {
+      e.preventDefault();
+      const href = internalLink.getAttribute("data-href");
+      if (href) {
+        this.app.workspace.openLinkText(href, item.file);
+      }
+      return;
+    }
+
+    // Handle clicks on tags
+    const tagLink = target.closest("a.tag") as HTMLElement | null;
+    if (tagLink) {
+      e.preventDefault();
+      const tag = tagLink.textContent;
+      if (tag) {
+        const searchPlugin = (this.app as any).internalPlugins?.getPluginById?.("global-search");
+        searchPlugin?.instance?.openGlobalSearch?.(`tag:${tag}`);
+      }
+      return;
+    }
+
+    // Handle clicks on any other link (e.g. external URLs)
+    if (target.closest("a")) {
+      return;
+    }
+
+    // Default: navigate to source file
+    this.openFile(item.file, item.lineNumber);
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {
