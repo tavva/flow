@@ -1,7 +1,7 @@
 // tests/focus-view.test.ts
 import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { FocusItem } from "../src/types";
-import { WorkspaceLeaf } from "obsidian";
+import { WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 
 jest.mock("obsidian");
 
@@ -1456,6 +1456,127 @@ describe("FocusView", () => {
     });
   });
 
+  describe("Clickable links in action text", () => {
+    let renderSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      renderSpy = jest.spyOn(MarkdownRenderer, "renderMarkdown");
+    });
+
+    afterEach(() => {
+      renderSpy.mockRestore();
+    });
+
+    it("should render action text using MarkdownRenderer for unpinned items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call [[John]] about #project/alpha",
+          text: "Call [[John]] about #project/alpha",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Call [[John]] about #project/alpha",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should render action text using MarkdownRenderer for pinned items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Review [[PR-42]] notes",
+          text: "Review [[PR-42]] notes",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          isPinned: true,
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Review [[PR-42]] notes",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should render action text using MarkdownRenderer for completed items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [x] Email [[Sarah]] ✅ 2026-02-19",
+          text: "Email [[Sarah]]",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: Date.now(),
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Email [[Sarah]]",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should not navigate to source file when clicking a link inside action text", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call [[John]]",
+          text: "Call [[John]]",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      await view.onOpen();
+
+      // Find the text span in the rendered DOM
+      const container = (view as any).contentEl as HTMLElement;
+      const textSpan = container.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textSpan).toBeTruthy();
+
+      // Create a fake anchor element inside the text span (simulating a rendered wikilink)
+      const fakeLink = document.createElement("a");
+      fakeLink.className = "internal-link";
+      fakeLink.setAttribute("data-href", "John");
+      textSpan.appendChild(fakeLink);
+
+      // Spy on openFile
+      const openFileSpy = jest.fn();
+      (view as any).openFile = openFileSpy;
+
+      // Simulate clicking the link element
+      const clickEvent = new (window as any).MouseEvent("click", { bubbles: true });
+      Object.defineProperty(clickEvent, "target", { value: fakeLink });
+      textSpan.dispatchEvent(clickEvent);
+
+      expect(openFileSpy).not.toHaveBeenCalled();
+    });
+  });
+
   // Helper function for creating mock focus items
   const createMockFocusItem = (): FocusItem => ({
     file: "test.md",
@@ -1468,7 +1589,7 @@ describe("FocusView", () => {
   });
 
   describe("renderCompletedItem", () => {
-    it("should render completed item with strikethrough and no actions", () => {
+    it("should render completed item with strikethrough and no actions", async () => {
       const mockItem: FocusItem = {
         file: "test.md",
         lineNumber: 5,
@@ -1516,7 +1637,7 @@ describe("FocusView", () => {
         }
       });
 
-      (view as any).renderCompletedItem(container, mockItem);
+      await (view as any).renderCompletedItem(container, mockItem);
 
       const itemEl = container.querySelector(".flow-gtd-focus-completed");
       expect(itemEl).toBeTruthy();

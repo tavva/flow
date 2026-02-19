@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
+import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator, ValidationResult } from "./focus-validator";
@@ -367,7 +367,7 @@ export class FocusView extends RefreshingView {
         cls: "flow-gtd-focus-items flow-gtd-focus-pinned-items",
       });
       pinnedItems.forEach((item) => {
-        this.renderPinnedItem(pinnedList, item);
+        void this.renderPinnedItem(pinnedList, item);
       });
     }
 
@@ -488,7 +488,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderCompletedItem(itemsList, item);
+      void this.renderCompletedItem(itemsList, item);
     });
   }
 
@@ -502,7 +502,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderCompletedItem(itemsList, item);
+      void this.renderCompletedItem(itemsList, item);
     });
   }
 
@@ -537,7 +537,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderItem(itemsList, item);
+      void this.renderItem(itemsList, item);
     });
   }
 
@@ -551,11 +551,11 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderItem(itemsList, item);
+      void this.renderItem(itemsList, item);
     });
   }
 
-  private renderItem(container: HTMLElement, item: FocusItem) {
+  private async renderItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
     // Check if this is a waiting-for item
@@ -572,7 +572,7 @@ export class FocusView extends RefreshingView {
     }
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
 
     // Gray out waiting-for items
@@ -581,7 +581,11 @@ export class FocusView extends RefreshingView {
       textSpan.style.fontStyle = "italic";
     }
 
-    textSpan.addEventListener("click", () => {
+    textSpan.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a")) {
+        return;
+      }
       this.openFile(item.file, item.lineNumber);
     });
 
@@ -644,7 +648,7 @@ export class FocusView extends RefreshingView {
     });
   }
 
-  private renderPinnedItem(container: HTMLElement, item: FocusItem) {
+  private async renderPinnedItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", {
       cls: "flow-gtd-focus-item flow-gtd-focus-pinned-item",
       attr: { draggable: "true" },
@@ -688,7 +692,7 @@ export class FocusView extends RefreshingView {
     }
 
     const textSpan = actionRow.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
 
     // Gray out waiting-for items
@@ -697,7 +701,11 @@ export class FocusView extends RefreshingView {
       textSpan.style.fontStyle = "italic";
     }
 
-    textSpan.addEventListener("click", () => {
+    textSpan.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a")) {
+        return;
+      }
       this.openFile(item.file, item.lineNumber);
     });
 
@@ -758,7 +766,7 @@ export class FocusView extends RefreshingView {
     });
   }
 
-  private renderCompletedItem(container: HTMLElement, item: FocusItem) {
+  private async renderCompletedItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", {
       cls: "flow-gtd-focus-item flow-gtd-focus-completed",
     });
@@ -770,12 +778,16 @@ export class FocusView extends RefreshingView {
     });
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
     textSpan.style.textDecoration = "line-through";
     textSpan.style.opacity = "0.6";
 
-    textSpan.addEventListener("click", () => {
+    textSpan.addEventListener("click", (e) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a")) {
+        return;
+      }
       this.openFile(item.file, item.lineNumber);
     });
 
