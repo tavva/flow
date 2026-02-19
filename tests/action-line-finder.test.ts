@@ -114,16 +114,11 @@ describe("ActionLineFinder", () => {
     );
 
     // The sphere view strips #sphere/X tags, so the action text won't have it
-    const result = await finder.findActionLine(
-      "Next actions.md",
-      "Restaurants to go to #ctx/test"
-    );
+    const result = await finder.findActionLine("Next actions.md", "Restaurants to go to #ctx/test");
 
     expect(result.found).toBe(true);
     expect(result.lineNumber).toBe(1);
-    expect(result.lineContent).toBe(
-      "- [ ] Restaurants to go to #sphere/personal #ctx/test"
-    );
+    expect(result.lineContent).toBe("- [ ] Restaurants to go to #sphere/personal #ctx/test");
   });
 
   it("should return first match when action appears multiple times", async () => {
