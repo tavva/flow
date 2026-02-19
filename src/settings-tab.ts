@@ -266,6 +266,22 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(containerEl)
+      .setName("Context tag prefix")
+      .setDesc(
+        "Tag prefix for GTD contexts on actions (e.g. #context/home, #context/office). " +
+          "Change this to use a different prefix like 'at' for #at/home or 'ctx' for #ctx/office."
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("context")
+          .setValue(this.plugin.settings.contextTagPrefix)
+          .onChange(async (value) => {
+            this.plugin.settings.contextTagPrefix = value.trim() || "context";
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Focus Settings
     new Setting(containerEl).setHeading().setName("Focus");
     containerEl

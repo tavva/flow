@@ -177,7 +177,7 @@ export class SphereDataLoader {
     }
 
     const matchesContext = (action: string) => {
-      const contexts = extractContexts(action);
+      const contexts = extractContexts(action, this.settings.contextTagPrefix);
       return contexts.some((c) => selectedContexts.includes(c));
     };
 
@@ -208,14 +208,14 @@ export class SphereDataLoader {
 
     for (const summary of data.projects) {
       for (const action of summary.project.nextActions || []) {
-        for (const context of extractContexts(action)) {
+        for (const context of extractContexts(action, this.settings.contextTagPrefix)) {
           contexts.add(context);
         }
       }
     }
 
     for (const action of data.generalNextActions) {
-      for (const context of extractContexts(action)) {
+      for (const context of extractContexts(action, this.settings.contextTagPrefix)) {
         contexts.add(context);
       }
     }

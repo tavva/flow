@@ -83,6 +83,18 @@ parent-project: "[[Parent Project]]"
 - [w] Waiting for design review from Sarah
 ```
 
+## Context Tags
+
+Add GTD context tags to your actions to filter by where or how you can do them:
+
+```markdown
+- [ ] Call dentist #context/phone
+- [ ] Review budget spreadsheet #context/computer
+- [ ] Pick up dry cleaning #context/errands
+```
+
+Context tags appear as filters in sphere and waiting-for views. The prefix is configurable in settings — change `context` to `at`, `ctx`, or whatever suits your workflow.
+
 ## Cover Image Generation
 
 Flow can generate cover images for projects using AI. Configure an image-capable model via [OpenRouter](https://openrouter.ai) in Settings → Flow (`openai/gpt-5-image` creates great cover images in our experience).

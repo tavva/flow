@@ -4,6 +4,7 @@
 import { App, TFile } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { extractContexts } from "./context-tags";
+import { PluginSettings } from "./types";
 
 export interface WaitingForItem {
   file: string;
@@ -17,9 +18,11 @@ export interface WaitingForItem {
 
 export class WaitingForScanner {
   private app: App;
+  private settings: PluginSettings;
 
-  constructor(app: App) {
+  constructor(app: App, settings: PluginSettings) {
     this.app = app;
+    this.settings = settings;
   }
 
   private extractSphere(lineContent: string, filePath: string): string | undefined {
@@ -106,7 +109,7 @@ export class WaitingForScanner {
         lineContent,
         text: task.text,
         sphere: this.extractSphere(lineContent, task.path),
-        contexts: extractContexts(lineContent),
+        contexts: extractContexts(lineContent, this.settings.contextTagPrefix),
       });
     }
 
@@ -151,7 +154,7 @@ export class WaitingForScanner {
           lineContent: line,
           text,
           sphere: this.extractSphere(line, file.path),
-          contexts: extractContexts(line),
+          contexts: extractContexts(line, this.settings.contextTagPrefix),
         });
       }
     });

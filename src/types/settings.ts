@@ -20,6 +20,7 @@ export interface PluginSettings {
   coverImagesFolderPath: string; // Folder path for generated project cover images
   autoCreateCoverImage: boolean; // Automatically create cover images for new projects
   displayCoverImages: boolean; // Display cover images on project notes
+  contextTagPrefix: string; // Prefix for GTD context tags (e.g. #context/home)
   spheres: string[];
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
   focusArchiveFile: string; // Path to archive file for cleared tasks
@@ -50,6 +51,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   coverImagesFolderPath: "Assets/flow-project-cover-images",
   autoCreateCoverImage: false,
   displayCoverImages: true,
+  contextTagPrefix: "context",
   spheres: ["personal", "work"],
   focusAutoClearTime: "03:00",
   focusArchiveFile: "Focus Archive.md",

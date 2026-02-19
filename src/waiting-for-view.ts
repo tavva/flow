@@ -28,7 +28,7 @@ export class WaitingForView extends RefreshingView {
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
-    this.scanner = new WaitingForScanner(this.app);
+    this.scanner = new WaitingForScanner(this.app, settings);
     this.validator = new WaitingForValidator(this.app);
     this.saveSettings = saveSettings;
 

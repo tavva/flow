@@ -96,7 +96,7 @@ export class SomedayScanner {
             lineContent: line,
             text,
             sphere: this.extractSphere(line),
-            contexts: extractContexts(line),
+            contexts: extractContexts(line, this.settings.contextTagPrefix),
           });
         }
       }

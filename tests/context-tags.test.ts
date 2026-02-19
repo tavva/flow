@@ -39,3 +39,21 @@ describe("extractContexts", () => {
     expect(extractContexts("Task #context/phone #context/phone")).toEqual(["phone"]);
   });
 });
+
+describe("extractContexts with custom prefix", () => {
+  it("extracts tags with a custom prefix", () => {
+    expect(extractContexts("Call dentist #at/phone", "at")).toEqual(["phone"]);
+  });
+
+  it("extracts multiple tags with a custom prefix", () => {
+    expect(extractContexts("Task #ctx/home #ctx/errand", "ctx")).toEqual(["home", "errand"]);
+  });
+
+  it("ignores default context tags when using custom prefix", () => {
+    expect(extractContexts("Task #context/phone #at/home", "at")).toEqual(["home"]);
+  });
+
+  it("is case-insensitive with custom prefix", () => {
+    expect(extractContexts("Task #At/Phone", "at")).toEqual(["phone"]);
+  });
+});
