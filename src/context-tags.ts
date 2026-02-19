@@ -1,21 +1,18 @@
-// ABOUTME: Extracts GTD context tags (#context/X) from action line text.
+// ABOUTME: Extracts GTD context tags (e.g. #context/X) from action line text.
 // ABOUTME: Used by scanners and views for context-based filtering.
 
-const CONTEXT_TAG_PATTERN = /#context\/([^\s]+)/gi;
-
-export function extractContexts(text: string): string[] {
+export function extractContexts(text: string, prefix: string = "context"): string[] {
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`#${escaped}\\/([^\\s]+)`, "gi");
   const contexts: string[] = [];
   let match;
 
-  while ((match = CONTEXT_TAG_PATTERN.exec(text)) !== null) {
+  while ((match = pattern.exec(text)) !== null) {
     const context = match[1].toLowerCase();
     if (!contexts.includes(context)) {
       contexts.push(context);
     }
   }
-
-  // Reset lastIndex since we're using a global regex
-  CONTEXT_TAG_PATTERN.lastIndex = 0;
 
   return contexts;
 }

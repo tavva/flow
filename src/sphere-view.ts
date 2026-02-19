@@ -816,7 +816,7 @@ export class SphereView extends ItemView {
       sphere,
       isGeneral,
       addedAt: Date.now(),
-      contexts: extractContexts(lineContent),
+      contexts: extractContexts(lineContent, this.settings.contextTagPrefix),
     };
 
     const focusItems = await loadFocusItems(this.app.vault);

@@ -26,8 +26,9 @@ export class ActionLineFinder {
     // Search for line containing the action text
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      // Match checkbox lines containing the action text
-      if (isCheckboxLine(line) && line.includes(actionText)) {
+      // Strip sphere tags before comparing, since the sphere view removes them from action text
+      const lineWithoutSphere = line.replace(/#sphere\/[^\s]+/gi, "").replace(/\s{2,}/g, " ");
+      if (isCheckboxLine(line) && lineWithoutSphere.includes(actionText)) {
         return {
           found: true,
           lineNumber: i + 1,

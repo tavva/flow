@@ -1,5 +1,9 @@
+// ABOUTME: Tests for WaitingForScanner vault scanning and item extraction.
+// ABOUTME: Covers sphere/context extraction, text normalisation, and Dataview integration.
+
 import { WaitingForScanner } from "../src/waiting-for-scanner";
 import { App, TFile, Vault, MetadataCache, CachedMetadata } from "obsidian";
+import { DEFAULT_SETTINGS } from "../src/types";
 
 describe("WaitingForScanner", () => {
   let mockApp: jest.Mocked<App>;
@@ -23,7 +27,7 @@ describe("WaitingForScanner", () => {
       metadataCache: mockMetadataCache,
     } as unknown as jest.Mocked<App>;
 
-    scanner = new WaitingForScanner(mockApp);
+    scanner = new WaitingForScanner(mockApp, DEFAULT_SETTINGS);
   });
 
   test("should scan vault and find waiting-for items", async () => {
