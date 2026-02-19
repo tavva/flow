@@ -1,3 +1,6 @@
+// ABOUTME: Tests for WaitingForScanner vault scanning and item extraction.
+// ABOUTME: Covers sphere/context extraction, text normalisation, and Dataview integration.
+
 import { WaitingForScanner } from "../src/waiting-for-scanner";
 import { App, TFile, Vault, MetadataCache, CachedMetadata } from "obsidian";
 import { DEFAULT_SETTINGS } from "../src/types";

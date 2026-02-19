@@ -56,4 +56,9 @@ describe("extractContexts with custom prefix", () => {
   it("is case-insensitive with custom prefix", () => {
     expect(extractContexts("Task #At/Phone", "at")).toEqual(["phone"]);
   });
+
+  it("handles prefix containing regex metacharacters", () => {
+    expect(extractContexts("Task #c.t/home", "c.t")).toEqual(["home"]);
+    expect(extractContexts("Task #cat/home", "c.t")).toEqual([]);
+  });
 });

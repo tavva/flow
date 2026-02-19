@@ -2,7 +2,8 @@
 // ABOUTME: Used by scanners and views for context-based filtering.
 
 export function extractContexts(text: string, prefix: string = "context"): string[] {
-  const pattern = new RegExp(`#${prefix}\\/([^\\s]+)`, "gi");
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`#${escaped}\\/([^\\s]+)`, "gi");
   const contexts: string[] = [];
   let match;
 
