@@ -96,13 +96,11 @@ export class NewPersonModal extends Modal {
   }
 
   private async createPerson() {
-    // Validate required fields
     if (!this.data.name.trim()) {
       this.showError("Person name is required");
       return;
     }
 
-    // Validate and sanitize the name for file system
     const sanitizedName = sanitizeFileName(this.data.name.trim());
     if (sanitizedName.length === 0) {
       this.showError(

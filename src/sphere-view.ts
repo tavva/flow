@@ -32,8 +32,10 @@ export class SphereView extends ItemView {
   private refreshInProgress: boolean = false;
   private showNextActions: boolean = true;
   private metadataCacheEventRef: EventRef | null = null;
+  private workspaceEventRefs: EventRef[] = [];
   private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
   private selectedContexts: string[] = [];
+  private suppressFocusRefresh: boolean = false;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -77,6 +79,7 @@ export class SphereView extends ItemView {
 
     // Register metadata cache listener for automatic refresh when files change
     this.registerMetadataCacheListener();
+    this.registerWorkspaceEvents();
 
     try {
       const data = await this.loadSphereData();
@@ -119,6 +122,10 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
       this.metadataCacheEventRef = null;
     }
+    for (const ref of this.workspaceEventRefs) {
+      this.app.workspace.offref(ref);
+    }
+    this.workspaceEventRefs = [];
     if (this.scheduledRefreshTimeout) {
       clearTimeout(this.scheduledRefreshTimeout);
       this.scheduledRefreshTimeout = null;
@@ -176,18 +183,93 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
     }
     this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
-      if (this.isRelevantFile(file)) {
+      if (file.path === FOCUS_FILE_PATH) {
+        if (this.suppressFocusRefresh) {
+          this.suppressFocusRefresh = false;
+          return;
+        }
+        void this.refreshFocusHighlighting();
+      } else if (this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
     });
   }
 
-  private isRelevantFile(file: TFile): boolean {
-    // Refresh when focus file changes (for "in focus" highlighting)
-    if (file.path === FOCUS_FILE_PATH) {
-      return true;
+  private registerWorkspaceEvents(): void {
+    for (const ref of this.workspaceEventRefs) {
+      this.app.workspace.offref(ref);
     }
+    this.workspaceEventRefs = [];
 
+    const completedRef = (this.app.workspace as any).on(
+      "flow:action-completed",
+      (detail: { file: string; action: string }) => {
+        this.removeActionFromDom(detail.file, detail.action);
+      }
+    );
+    this.workspaceEventRefs.push(completedRef);
+
+    const waitingRef = (this.app.workspace as any).on(
+      "flow:action-waiting",
+      (detail: { file: string; action: string }) => {
+        void this.markActionWaitingInDom(detail.file, detail.action);
+      }
+    );
+    this.workspaceEventRefs.push(waitingRef);
+  }
+
+  private removeActionFromDom(file: string, action: string): void {
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (
+        item.getAttribute("data-focus-file") === file &&
+        item.getAttribute("data-focus-action") === action
+      ) {
+        item.remove();
+        return;
+      }
+    }
+  }
+
+  private async markActionWaitingInDom(file: string, action: string): Promise<void> {
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i] as HTMLElement;
+      if (
+        item.getAttribute("data-focus-file") === file &&
+        item.getAttribute("data-focus-action") === action
+      ) {
+        item.empty();
+        await MarkdownRenderer.renderMarkdown(`🤝 ${action}`, item, "", this);
+        return;
+      }
+    }
+  }
+
+  private async refreshFocusHighlighting(): Promise<void> {
+    const focusItems = await loadFocusItems(this.app.vault);
+    const container = this.contentEl;
+    const items = container.querySelectorAll("li[data-focus-file]");
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i] as HTMLElement;
+      const file = item.getAttribute("data-focus-file");
+      const action = item.getAttribute("data-focus-action");
+      const inFocus = focusItems.some(
+        (focusItem) => focusItem.file === file && focusItem.text === action
+      );
+      if (inFocus) {
+        item.classList.add("sphere-action-in-focus");
+      } else {
+        item.classList.remove("sphere-action-in-focus");
+      }
+    }
+  }
+
+  private isRelevantFile(file: TFile): boolean {
     // Refresh when any markdown file in the vault changes that might be a project
     // We check the metadata cache for project tags
     const metadata = this.app.metadataCache.getFileCache(file);
@@ -360,8 +442,8 @@ export class SphereView extends ItemView {
 
   private async refresh(): Promise<void> {
     const container = this.contentEl;
-    container.empty();
     const data = await this.loadSphereData();
+    container.empty();
     this.renderContent(container, data);
   }
 
@@ -664,6 +746,8 @@ export class SphereView extends ItemView {
     const displayText = isWaitingFor ? `🤝 ${action}` : action;
 
     const item = list.createEl("li");
+    item.setAttribute("data-focus-file", file);
+    item.setAttribute("data-focus-action", action);
     await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
     item.style.cursor = "pointer";
 
@@ -821,6 +905,7 @@ export class SphereView extends ItemView {
 
     const focusItems = await loadFocusItems(this.app.vault);
     focusItems.push(item);
+    this.suppressFocusRefresh = true;
     await saveFocusItems(this.app.vault, focusItems);
     await this.activateFocusView();
     await this.refreshFocusView();
@@ -840,6 +925,7 @@ export class SphereView extends ItemView {
     const updatedFocus = focusItems.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
+    this.suppressFocusRefresh = true;
     await saveFocusItems(this.app.vault, updatedFocus);
     await this.activateFocusView();
     await this.refreshFocusView();

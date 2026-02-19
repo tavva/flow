@@ -26,6 +26,7 @@ describe("FileWriter", () => {
     somedayFilePath: "Someday.md",
     projectsFolderPath: "Projects",
     projectTemplateFilePath: "Templates/Project.md",
+    personsFolderPath: "People",
     personTemplateFilePath: "Templates/Person.md",
     spheres: ["personal", "work"],
   };
@@ -1851,13 +1852,13 @@ status: live
 
   describe("createPerson", () => {
     it("should create person with empty Discuss next section when discussion item is empty", async () => {
-      const mockFile = new TFile("Templates/John Doe.md", "John Doe");
+      const mockFile = new TFile("People/John Doe.md", "John Doe");
       let fileCreated = false;
 
       // Mock: template doesn't exist, but after create() the file exists
       (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
         if (path === "Templates/Person.md") return null; // no template
-        if (path === "Templates/John Doe.md" && fileCreated) return mockFile;
+        if (path === "People/John Doe.md" && fileCreated) return mockFile;
         return null;
       });
       (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);
@@ -1885,12 +1886,12 @@ tags:
     });
 
     it("should add discussion item when provided", async () => {
-      const mockFile = new TFile("Templates/Jane Smith.md", "Jane Smith");
+      const mockFile = new TFile("People/Jane Smith.md", "Jane Smith");
       let fileCreated = false;
 
       (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
         if (path === "Templates/Person.md") return null; // no template
-        if (path === "Templates/Jane Smith.md" && fileCreated) return mockFile;
+        if (path === "People/Jane Smith.md" && fileCreated) return mockFile;
         return null;
       });
       (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);

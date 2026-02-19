@@ -293,20 +293,9 @@ export class FileWriter {
    */
   async createPerson(personName: string, discussionItem: string): Promise<PersonNote> {
     const fileName = this.generateFileName(personName);
-    // Create in the same folder as the person template, or root if not specified
-    const templatePath = this.settings.personTemplateFilePath;
-    const templateFolder = templatePath.includes("/")
-      ? templatePath.substring(0, templatePath.lastIndexOf("/"))
-      : "";
-    const folderPath = templateFolder ? normalizePath(templateFolder) : "";
-
-    if (folderPath) {
-      await this.ensureFolderExists(folderPath);
-    }
-
-    const filePath = folderPath
-      ? normalizePath(`${folderPath}/${fileName}.md`)
-      : normalizePath(`${fileName}.md`);
+    const folderPath = normalizePath(this.settings.personsFolderPath);
+    await this.ensureFolderExists(folderPath);
+    const filePath = normalizePath(`${folderPath}/${fileName}.md`);
 
     // Check if file already exists
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
@@ -316,6 +305,7 @@ export class FileWriter {
 
     const content = await this.buildPersonContent(personName);
     const file = await this.app.vault.create(filePath, content);
+    await this.processWithTemplater(file);
 
     // Create PersonNote structure for the new file
     const newPerson: PersonNote = {

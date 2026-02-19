@@ -2,7 +2,7 @@ This file provides guidance to Claude Code and other agents when working with co
 
 ## Project Overview
 
-Flow is an Obsidian plugin implementing GTD (Getting Things Done) with AI-powered inbox processing. It uses Claude or OpenAI-compatible models to categorise inbox items into projects, next actions, reference material, someday/maybe items, and person notes.
+Flow is an Obsidian plugin implementing GTD (Getting Things Done). It provides manual inbox processing, project management with hierarchical spheres, focus lists, waiting-for tracking, and someday/maybe items. LLM integration (via OpenRouter) is used for cover image generation.
 
 ## Commands
 
@@ -15,7 +15,6 @@ npm run test:watch   # Tests in watch mode
 npm run test:coverage # Coverage report (80% threshold)
 npm run format       # Format with Prettier
 npm run format:check # Check formatting without modifying
-npm run evaluate     # Run AI evaluations (requires Anthropic credentials)
 npm run release      # Interactive production release workflow
 npm run release:beta # Interactive beta release workflow
 ```
@@ -30,14 +29,32 @@ Before declaring any task complete, always run:
 
 ## Architecture
 
-### Core Processing Flow
+### Scanners
 
-1. **Flow Scanner** (`src/flow-scanner.ts`) - Scans vault for projects (files with `project/*` tags in frontmatter)
-2. **Person Scanner** (`src/person-scanner.ts`) - Scans for person notes (files with `person` tag)
-3. **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans inbox folders for items to process
-4. **GTD Processor** (`src/gtd-processor.ts`) - AI analysis with context from existing projects/people
-5. **LLM Factory** (`src/llm-factory.ts`) - Factory for Anthropic/OpenAI-compatible clients
-6. **File Writer** (`src/file-writer.ts`) - Creates/updates project files with Flow frontmatter
+- **Flow Scanner** (`src/flow-scanner.ts`) - Scans vault for projects (files with `project/*` tags in frontmatter)
+- **Person Scanner** (`src/person-scanner.ts`) - Scans for person notes (files with `person` tag)
+- **Inbox Scanner** (`src/inbox-scanner.ts`) - Scans inbox folders for items to process
+- **Waiting For Scanner** (`src/waiting-for-scanner.ts`) - Scans for `[w]` items across vault
+- **Someday Scanner** (`src/someday-scanner.ts`) - Scans for someday/maybe items
+- **GTD Context Scanner** (`src/gtd-context-scanner.ts`) - Scans vault for comprehensive GTD system state
+
+### Inbox Processing
+
+Inbox processing is manual and UI-driven (no AI involvement):
+
+- **InboxProcessingView** (`src/inbox-processing-view.ts`) - Full Obsidian tab view for processing
+- **InboxProcessingController** (`src/inbox-processing-controller.ts`) - Coordinates the processing workflow
+- **InboxItemPersistence** (`src/inbox-item-persistence.ts`) - Saves processed items to vault
+- **File Writer** (`src/file-writer.ts`) - Creates/updates project files with Flow frontmatter
+
+Supporting UI: `src/inbox-modal-state.ts`, `src/inbox-modal-utils.ts`, `src/inbox-modal-views.ts`, `src/inbox-types.ts`
+
+### Project Management
+
+- **Project Hierarchy** (`src/project-hierarchy.ts`) - Builds/manages hierarchical project relationships
+- **Project Filters** (`src/project-filters.ts`) - Filtering utilities (live projects, templates)
+- **Sphere Data Loader** (`src/sphere-data-loader.ts`) - Loads and filters sphere data
+- **System Analyzer** (`src/system-analyzer.ts`) - Detects GTD system issues (stalled projects, large inboxes)
 
 ### Key Domain Concepts
 
@@ -90,14 +107,17 @@ Project description and context.
 - **FocusView** (`src/focus-view.ts`) - Curated action list with pinning and reordering
 - **WaitingForView** (`src/waiting-for-view.ts`) - Aggregated `[w]` items across vault
 - **SomedayView** (`src/someday-view.ts`) - Someday/maybe items
-- **FlowCoachView** (`src/flow-coach-view.ts`) - Chat interface for GTD coaching (incomplete, not currently enabled)
+- **InboxProcessingView** (`src/inbox-processing-view.ts`) - Inbox processing interface
+- **RefreshingView** (`src/refreshing-view.ts`) - Base class for auto-refreshing views
 
 ### Focus System
 
-- Items stored in `flow-focus-data/focus.md` as JSON with: file, lineNumber, lineContent, text, sphere, isPinned, completedAt
+- Items stored in `flow-focus-data/focus.md` as JSONL (one JSON object per line, sync-friendly)
+- **FocusPersistence** (`src/focus-persistence.ts`) - Reads/writes focus items in JSONL format
 - **ActionLineFinder** (`src/action-line-finder.ts`) - Finds exact line numbers for actions
 - **FocusValidator** (`src/focus-validator.ts`) - Validates items when source files change
 - **FocusAutoClear** (`src/focus-auto-clear.ts`) - Automatic daily clearing at configured time
+- **WaitingForValidator** (`src/waiting-for-validator.ts`) - Validates/resolves waiting-for items
 
 ### Task Status Cycling
 
@@ -150,7 +170,8 @@ All source files start with two ABOUTME lines:
 
 ### LLM Integration
 
-- Default provider: OpenAI-compatible (OpenRouter)
-- Fallback: Anthropic Claude
-- British English for all AI responses
-- Structured JSON output from Claude
+LLM is used only for cover image generation, not for inbox processing:
+
+- **LLM Factory** (`src/llm-factory.ts`) - Creates LLM clients
+- **Cover Image Generator** (`src/cover-image-generator.ts`) - Generates project cover images via OpenRouter
+- Provider: OpenAI-compatible (OpenRouter)
