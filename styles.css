@@ -2317,9 +2317,15 @@ select.flow-gtd-inline-select option,
   gap: 0.375rem;
 }
 
-/* Show controls when expanded */
-.flow-inbox-action-item.expanded .flow-inbox-action-controls {
+/* Show controls when expanded or on the last action (always visible) */
+.flow-inbox-action-item.expanded .flow-inbox-action-controls,
+.flow-inbox-action-item:last-of-type .flow-inbox-action-controls {
   display: flex;
+}
+
+/* Hide status icons on the last action (controls are always visible) */
+.flow-inbox-action-item:last-of-type .flow-inbox-action-status {
+  display: none;
 }
 
 .flow-inbox-action-ctrl {
