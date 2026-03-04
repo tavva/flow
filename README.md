@@ -8,6 +8,7 @@ Flow captures everything demanding your attention and helps you focus on what ma
 [![Downloads](https://img.shields.io/badge/dynamic/json?logo=obsidian&color=%237C3AED&label=downloads&query=%24.flow.downloads&url=https://raw.githubusercontent.com/obsidianmd/obsidian-releases/master/community-plugin-stats.json&style=for-the-badge)](https://obsidian.md/plugins?id=flow)
 [![Stable](https://img.shields.io/badge/status-stable-brightgreen?style=for-the-badge)](https://github.com/tavva/flow)
 [![Obsidian](https://img.shields.io/badge/Obsidian-plugin-7C3AED?style=for-the-badge)](https://obsidian.md/plugins?id=flow)
+[![CodeRabbit](https://img.shields.io/coderabbit/prs/github/tavva/flow?style=for-the-badge)](https://coderabbit.ai)
 
 ## The Problem
 
