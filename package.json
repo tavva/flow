@@ -51,7 +51,13 @@
     "typescript": "^5.3.3"
   },
   "overrides": {
-    "svelte": "^4.2.19"
+    "svelte": "^4.2.19",
+    "handlebars": "4.7.9",
+    "flatted": "3.4.2",
+    "picomatch": "2.3.2",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": ">=9.0.7"
+    }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
