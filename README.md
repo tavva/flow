@@ -33,9 +33,9 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 2. Click the inbox ribbon icon and capture something
 3. Run "Process Inbox" to categorise items
 
-## Installing the Beta
+## Installing Beta Builds
 
-To get early access to new features before they're released (we're currently redesigning the inbox processing view!):
+To try unreleased builds before they reach the stable community plugin listing:
 
 1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) from Community Plugins
 2. Open BRAT settings and click "Add Beta plugin"
@@ -43,7 +43,7 @@ To get early access to new features before they're released (we're currently red
 
 BRAT will automatically update to the latest beta when new versions are released. To switch back to stable, remove the plugin from BRAT.
 
-If you use the beta we'd love to hear from you in the repo [Discussions](https://github.com/tavva/flow/discussions).
+If you use a beta build we'd love to hear from you in the repo [Discussions](https://github.com/tavva/flow/discussions).
 
 ## How It Works
 
@@ -57,7 +57,7 @@ If you use the beta we'd love to hear from you in the repo [Discussions](https:/
 
 ![Processing Inbox](docs/assets/processing.png)
 
-_Note the above screenshot is from the redesigned inbox processing flow, available in the beta version_
+_Screenshot from the current inbox processing flow._
 
 **Plan** — Open a sphere view, enter planning mode, and click actions to add them to your focus. Your focus is your curated list of what to work on.
 
@@ -111,7 +111,8 @@ Flow can generate cover images for projects using AI. Configure an image-capable
 
 - AI features are optional and disabled by default — Flow works fully without them
 - API keys stored locally in Obsidian settings
-- Project data sent to your configured LLM provider if enabled (it's optional)
+- Flow contacts OpenRouter only when AI cover image generation is enabled and you trigger image generation
+- Project title, description, and context used for cover generation are sent to your configured OpenRouter-compatible endpoint for that request
 - No telemetry or analytics
 - Your vault stays under your control
 
@@ -120,6 +121,6 @@ Flow can generate cover images for projects using AI. Configure an image-capable
 - [Report bugs](https://github.com/tavva/flow/issues)
 - [Discussions](https://github.com/tavva/flow/discussions)
 
-## Licence
+## License
 
-GPL-3.0 — see [LICENSE](LICENSE) for details.
+GPL-3.0-or-later — see [LICENSE](LICENSE) for details.

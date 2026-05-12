@@ -1,0 +1,130 @@
+# Community Page Remediation Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Address the Obsidian community plugin page findings for Flow without cutting a release after every individual change.
+
+**Architecture:** Treat the community page as a public signal that aggregates GitHub metadata, Obsidian release metadata, release assets, and automated static scans. Fix source-of-truth metadata first, then handle scanner findings in focused batches, then publish one release after the batch is verified.
+
+**Tech Stack:** TypeScript, Obsidian plugin API, Jest, esbuild, GitHub Releases, GitHub Actions, Obsidian community plugin metadata.
+
+---
+
+## Findings Summary
+
+Source reviewed: <https://community.obsidian.md/plugins/flow> on 2026-05-12.
+
+The live community page still shows `Current version 1.2.3`, `Last updated 3 months ago`, and `40 releases`, even though the repo is now at `1.3.1`. Treat the current scorecard as stale until the page re-indexes, then re-run the review.
+
+Current public-page findings:
+
+- Health is `79%`, rated `Excellent`.
+- Review is rated `Caution`.
+- The listing description still includes `(Closed source)`.
+- Details panel reports `License: OTHER`.
+- Scorecard says `The repository does not have a license`, even though the repo has a `LICENSE` file. GitHub also reports `licenseInfo.key: other`, so license detection is genuinely failing.
+- README still has beta-era copy: "we're currently redesigning the inbox processing view" and "available in the beta version".
+- Manifest description lacks terminal punctuation.
+- The scan reported 559 review issues against the stale release, mostly:
+  - direct `element.style.*` usage,
+  - `!important` and `:has` CSS,
+  - unhandled promises,
+  - `document`, `setTimeout`, and `clearTimeout` popout-compatibility findings,
+  - `fetch()` instead of Obsidian `requestUrl`,
+  - one runtime `atob()` call,
+  - broad vault read/write/enumeration capability notices,
+  - `any`/error-type/unused-variable lint findings,
+  - two missing GitHub artifact attestations for `main.js` and `styles.css`.
+
+Already handled before this plan:
+
+- Dependency vulnerabilities are cleared in `1.3.1`.
+- Bundled `obsidian-dataview`, Svelte, and unused Anthropic SDK code were removed from Flow's release bundle.
+- GitHub open Dependabot alerts are `0`.
+
+## File Structure
+
+- Modify `README.md`: remove beta-era copy, align privacy/network disclosure, and use "License".
+- Modify `manifest.json`: add punctuation to the description.
+- Modify `package.json`: align SPDX license with the chosen license text.
+- Modify `LICENSE`: replace the current short notice with a GitHub-detectable full license text or add a recognized SPDX-compatible license file.
+- Modify `src/cover-image-generator.ts`: replace `fetch`/`atob` with Obsidian-compatible request and decoding helpers.
+- Modify `src/network-retry.ts`, `src/refreshing-view.ts`, view/modal files: route timers and document/window access through Obsidian-aware helpers.
+- Create `src/obsidian-platform.ts`: central helpers for `activeWindow`, `activeDocument`, and request/timer behavior where needed.
+- Modify `styles.css`: replace `:has` and `!important` rules with Flow-scoped classes and higher-specificity selectors.
+- Modify UI files with heavy inline styles: `src/inbox-modal-views.ts`, `src/new-project-modal.ts`, `src/focus-view.ts`, `src/sphere-view.ts`, `src/waiting-for-view.ts`, `src/add-to-inbox-modal.ts`, `src/new-person-modal.ts`.
+- Modify `.github/workflows/release.yaml` or create a dedicated release workflow: build, upload assets, and create artifact attestations.
+- Modify `docs/RELEASING.md`: document the new release and attestation workflow.
+- Test files to add/update near each affected module.
+
+## Task 1: Public Metadata And Listing Hygiene
+
+- [x] Check whether <https://community.obsidian.md/plugins/flow> has re-indexed `1.3.1`. If it still shows `1.2.3` after the expected cache window, report it to Obsidian or inspect their ingestion path.
+  - 2026-05-12: Page still shows `1.2.3`, `40 releases`, `License: OTHER`, stale README text, and `(Closed source)`. The raw `obsidianmd/obsidian-releases` `community-plugins.json` entry also still contains `(Closed source)`.
+- [x] Update `README.md` to remove beta-specific text for the inbox redesign.
+- [x] Change "Licence" to "License" in `README.md` to match the community site and GitHub convention.
+- [x] Add explicit network disclosure to `README.md`: OpenRouter is contacted only when the user enables AI cover generation and triggers image generation.
+- [x] Update `manifest.json` description to end with punctuation.
+- [ ] Prepare an `obsidianmd/obsidian-releases` PR removing `(Closed source)` from Flow's `community-plugins.json` description.
+  - User reports this was fixed externally; leave open until the raw upstream metadata confirms it.
+- [x] Decide GPL flavor: current `LICENSE` text says GPL v3 or later, while `package.json` says `GPL-3.0-only`.
+- [x] Align `LICENSE`, `package.json`, and `README.md` so GitHub detects the license. Recommended: use the full `GPL-3.0-or-later` text if that matches intent.
+- [ ] Verify with `gh repo view tavva/flow --json licenseInfo` after push.
+
+## Task 2: Network And Privacy Scanner Findings
+
+- [ ] Replace `fetch()` in `src/cover-image-generator.ts` with Obsidian `requestUrl`.
+- [ ] Add focused tests for successful OpenRouter image response, HTTP error response, and malformed response using the new request wrapper.
+- [ ] Replace runtime `atob()` with an explicit, tested base64 decoding helper that does not look like obfuscation and works in Obsidian's runtime targets.
+- [ ] Confirm no remaining references to `console.anthropic.com`, old OpenAI-compatible client files, or unused network domains in source or bundled output.
+- [ ] Rebuild and grep `main.js` for unexpected domains.
+
+## Task 3: Popout Compatibility
+
+- [ ] Create a small helper for active document/window access, likely using `this.app.workspace.activeDocument` / `activeWindow` where available and falling back safely for tests.
+- [ ] Replace direct `document.createElement` / `document.createElementNS` in runtime code with active-document equivalents.
+- [ ] Replace direct `setTimeout` / `clearTimeout` in view and modal classes with active-window equivalents.
+- [ ] Keep utility-only timing code injectable or scoped so tests remain deterministic.
+- [ ] Add tests covering helper fallback behavior and at least one converted view/modal path.
+
+## Task 4: Async Handling
+
+- [ ] Review every community-reported unhandled promise location in current `main`.
+- [ ] For intentional fire-and-forget calls, prefix with `void` and attach `.catch` where user-facing errors should be noticed.
+- [ ] Await save/write/refresh calls where ordering matters.
+- [ ] Add regression tests for any changed sequencing that affects persistence or UI refresh behavior.
+
+## Task 5: CSS And Inline Style Cleanup
+
+- [ ] Replace `.modal:has(...)` selectors by adding Flow-specific classes to modal containers during `onOpen` and removing them during `onClose`.
+- [ ] Remove avoidable `!important` rules by increasing selector specificity or moving rules under Flow-owned container classes.
+- [ ] Move high-volume inline styles out of `src/inbox-modal-views.ts` into `styles.css` first.
+- [ ] Repeat for `new-project-modal`, `focus-view`, `sphere-view`, `waiting-for-view`, `add-to-inbox-modal`, and `new-person-modal`.
+- [ ] Keep dynamic values as CSS variables via `setCssProps` or narrow inline assignment only where values are genuinely data-driven.
+- [ ] Run visual/manual Obsidian checks for inbox processing, new project/person modals, focus view, sphere view, waiting-for view, and keyboard shortcuts modal.
+
+## Task 6: Type And Lint Hygiene
+
+- [ ] Remove stale scan findings that no longer exist after `1.3.1` before editing.
+- [ ] Replace `any` in new and touched code with local interfaces first, especially Dataview task access and workspace event payloads.
+- [ ] Remove unused imports/variables reported by the scanner.
+- [ ] Replace unsafe `TFile` / `TFolder` casts with `instanceof` checks where practical.
+- [ ] Avoid broad refactors outside files already touched by scanner-driven work.
+
+## Task 7: Release Assets And Artifact Attestations
+
+- [ ] Decide whether releases should be fully created by GitHub Actions rather than local `gh release create`.
+- [ ] Update release automation to build `main.js`, `manifest.json`, and `styles.css` in CI.
+- [ ] Add GitHub artifact attestations for `main.js` and `styles.css`.
+- [ ] Update `docs/RELEASING.md` so future releases do not silently miss attestations.
+- [ ] Keep manual release creation as a fallback only if the attestation workflow documents the limitation.
+
+## Task 8: Verification And Final Community Recheck
+
+- [ ] Run `npm run format`.
+- [ ] Run `npm run build`.
+- [ ] Run `npm test`.
+- [ ] Run `npm audit --json` and confirm zero vulnerabilities.
+- [ ] Inspect bundled output for removed dependencies/domains.
+- [ ] Create one release after a coherent remediation batch, not after every individual fix.
+- [ ] After the release is indexed, revisit the community page and record the new Health/Review status, issue count, version, license, and description.
