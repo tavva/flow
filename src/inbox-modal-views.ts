@@ -6,6 +6,7 @@ import { InboxModalState } from "./inbox-modal-state";
 import { EditableItem } from "./inbox-types";
 import { FlowProject, PersonNote } from "./types";
 import { TagSuggest } from "./tag-suggest";
+import { ownerDocumentContains, setActiveTimeout } from "./obsidian-platform";
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
@@ -367,18 +368,22 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     actionItem.addEventListener("focusout", (e) => {
       const relatedTarget = e.relatedTarget as Node | null;
       if (!relatedTarget || !actionItem.contains(relatedTarget)) {
-        setTimeout(() => {
-          // If a re-render happened (button clicked), the DOM was replaced
-          // and we should trust the new state
-          if (!document.body.contains(actionItem)) {
-            return;
-          }
-          // Only collapse if still expanded (no button changed the state)
-          if (item.expandedActionIndex === index) {
-            item.expandedActionIndex = undefined;
-            actionItem.removeClass("expanded");
-          }
-        }, 100);
+        setActiveTimeout(
+          () => {
+            // If a re-render happened (button clicked), the DOM was replaced
+            // and we should trust the new state
+            if (!ownerDocumentContains(actionItem)) {
+              return;
+            }
+            // Only collapse if still expanded (no button changed the state)
+            if (item.expandedActionIndex === index) {
+              item.expandedActionIndex = undefined;
+              actionItem.removeClass("expanded");
+            }
+          },
+          100,
+          actionItem
+        );
       }
     });
 
@@ -569,7 +574,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     const targetInput = inputs[pendingIndex] as HTMLInputElement | undefined;
     if (targetInput) {
       // Use setTimeout to ensure DOM is ready
-      setTimeout(() => targetInput.focus(), 0);
+      setActiveTimeout(() => targetInput.focus(), 0, targetInput);
     }
   }
 }
@@ -808,10 +813,14 @@ function renderProjectPersonSection(
 
   input.addEventListener("blur", () => {
     // Delay to allow click on dropdown item
-    setTimeout(() => {
-      dropdown.style.display = "none";
-      highlightedIndex = -1;
-    }, 200);
+    setActiveTimeout(
+      () => {
+        dropdown.style.display = "none";
+        highlightedIndex = -1;
+      },
+      200,
+      dropdown
+    );
   });
 }
 
@@ -1002,10 +1011,14 @@ function renderParentProjectSection(
 
     input.addEventListener("blur", () => {
       // Delay to allow click on dropdown item
-      setTimeout(() => {
-        dropdown.style.display = "none";
-        highlightedIndex = -1;
-      }, 200);
+      setActiveTimeout(
+        () => {
+          dropdown.style.display = "none";
+          highlightedIndex = -1;
+        },
+        200,
+        dropdown
+      );
     });
   }
 }

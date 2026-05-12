@@ -16,6 +16,7 @@ import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
 import { generateCoverImage } from "./src/cover-image-generator";
 import { ProjectCoverDisplay } from "./src/project-cover-display";
 import { checkAndPromptLegacyMigration } from "./src/legacy-focus-migration";
+import { clearActiveInterval, setActiveInterval, TimerHandle } from "./src/obsidian-platform";
 
 type InboxCommandConfig = {
   id: string;
@@ -24,7 +25,7 @@ type InboxCommandConfig = {
 
 export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
-  private autoClearInterval: number | null = null;
+  private autoClearInterval: TimerHandle | null = null;
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
   private registeredSphereCommandIds: string[] = [];
 
@@ -40,7 +41,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     await this.checkAndClearFocus();
 
     // Set up periodic check (every hour)
-    this.autoClearInterval = window.setInterval(
+    this.autoClearInterval = setActiveInterval(
       async () => {
         await this.checkAndClearFocus();
       },
@@ -261,7 +262,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
   onunload() {
     // Clear the auto-clear interval
     if (this.autoClearInterval !== null) {
-      window.clearInterval(this.autoClearInterval);
+      clearActiveInterval(this.autoClearInterval);
       this.autoClearInterval = null;
     }
 

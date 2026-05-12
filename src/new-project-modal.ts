@@ -8,6 +8,7 @@ import { FlowProjectScanner } from "./flow-scanner";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { ActionLineFinder } from "./action-line-finder";
 import { sanitizeFileName, validateNextAction } from "./validation";
+import { setActiveTimeout } from "./obsidian-platform";
 
 interface NewProjectData {
   title: string;
@@ -281,9 +282,13 @@ export class NewProjectModal extends Modal {
     });
 
     searchInput.addEventListener("blur", () => {
-      setTimeout(() => {
-        listContainer.style.display = "none";
-      }, 200);
+      setActiveTimeout(
+        () => {
+          listContainer.style.display = "none";
+        },
+        200,
+        listContainer
+      );
     });
   }
 

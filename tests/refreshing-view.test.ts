@@ -130,6 +130,26 @@ describe("RefreshingView", () => {
       resolveRefresh!();
       await Promise.resolve();
     });
+
+    it("routes debounce timers through the view content window", () => {
+      const iframe = document.createElement("iframe");
+      document.body.appendChild(iframe);
+      const ownerWindow = iframe.contentWindow as Window;
+      const ownerDocument = iframe.contentDocument as Document;
+      const contentEl = ownerDocument.createElement("div");
+      const setTimeoutSpy = jest.spyOn(ownerWindow, "setTimeout").mockReturnValue(123);
+
+      try {
+        const view = new TestRefreshingView(mockLeaf, 100);
+        (view as any).contentEl = contentEl;
+
+        view.testScheduleRefresh();
+
+        expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 100);
+      } finally {
+        iframe.remove();
+      }
+    });
   });
 
   describe("cleanup", () => {

@@ -2,10 +2,11 @@
 // ABOUTME: Provides debounced refresh, metadata cache listening, and cleanup
 
 import { EventRef, ItemView, TFile, WorkspaceLeaf } from "obsidian";
+import { clearActiveTimeout, setActiveTimeout, TimerHandle } from "./obsidian-platform";
 
 export abstract class RefreshingView extends ItemView {
   private modifyEventRef: EventRef | null = null;
-  private refreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  private refreshTimeout: TimerHandle | null = null;
   protected isRefreshing = false;
   private defaultDebounceTime: number;
 
@@ -37,7 +38,7 @@ export abstract class RefreshingView extends ItemView {
 
     // Cancel any pending debounced refresh
     if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
+      clearActiveTimeout(this.refreshTimeout, this.contentEl);
       this.refreshTimeout = null;
     }
 
@@ -55,23 +56,27 @@ export abstract class RefreshingView extends ItemView {
    */
   protected scheduleRefresh(): void {
     if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
+      clearActiveTimeout(this.refreshTimeout, this.contentEl);
     }
 
-    this.refreshTimeout = setTimeout(async () => {
-      this.refreshTimeout = null;
+    this.refreshTimeout = setActiveTimeout(
+      async () => {
+        this.refreshTimeout = null;
 
-      if (this.isRefreshing) {
-        return;
-      }
+        if (this.isRefreshing) {
+          return;
+        }
 
-      this.isRefreshing = true;
-      try {
-        await this.performRefresh();
-      } finally {
-        this.isRefreshing = false;
-      }
-    }, this.getDebounceTime());
+        this.isRefreshing = true;
+        try {
+          await this.performRefresh();
+        } finally {
+          this.isRefreshing = false;
+        }
+      },
+      this.getDebounceTime(),
+      this.contentEl
+    );
   }
 
   /**
@@ -96,7 +101,7 @@ export abstract class RefreshingView extends ItemView {
     }
 
     if (this.refreshTimeout) {
-      clearTimeout(this.refreshTimeout);
+      clearActiveTimeout(this.refreshTimeout, this.contentEl);
       this.refreshTimeout = null;
     }
   }

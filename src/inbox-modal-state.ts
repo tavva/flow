@@ -8,6 +8,7 @@ import { EditableItem } from "./inbox-types";
 import { InboxScanner } from "./inbox-scanner";
 import { GTDResponseValidationError } from "./errors";
 import { getActionLabel } from "./inbox-modal-utils";
+import { setActiveTimeout } from "./obsidian-platform";
 
 export type RenderTarget = "inbox" | "editable";
 
@@ -117,7 +118,7 @@ export class InboxModalState {
       // If we created a new project, refresh the project list so subsequent items can see it
       // Small delay to let Obsidian's metadata cache update after file creation
       if (item.selectedAction === "create-project") {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise<void>((resolve) => setActiveTimeout(() => resolve(), 100));
         await this.loadReferenceData();
       }
 

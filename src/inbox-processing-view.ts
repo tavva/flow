@@ -6,13 +6,19 @@ import { InboxProcessingController } from "./inbox-processing-controller";
 import { InboxModalState, RenderTarget } from "./inbox-modal-state";
 import { renderInboxView, renderEditableItemsView } from "./inbox-modal-views";
 import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal";
+import {
+  clearActiveTimeout,
+  getWindowForOwner,
+  setActiveTimeout,
+  TimerHandle,
+} from "./obsidian-platform";
 
 export const INBOX_PROCESSING_VIEW_TYPE = "flow-gtd-inbox-processing";
 
 export class InboxProcessingView extends ItemView {
   private settings: PluginSettings;
   private state: InboxModalState;
-  private renderTimeout?: NodeJS.Timeout;
+  private renderTimeout?: TimerHandle;
   private pendingTarget: RenderTarget = "inbox";
   private pendingFocus: string | null = null;
   private saveSettings: () => Promise<void>;
@@ -49,13 +55,13 @@ export class InboxProcessingView extends ItemView {
     await this.state.loadReferenceData();
     await this.state.loadInboxItems();
 
-    window.addEventListener("keydown", this.handleKeyDown);
+    getWindowForOwner(container).addEventListener("keydown", this.handleKeyDown);
   }
 
   async onClose() {
-    window.removeEventListener("keydown", this.handleKeyDown);
+    getWindowForOwner(this.contentEl).removeEventListener("keydown", this.handleKeyDown);
     if (this.renderTimeout) {
-      clearTimeout(this.renderTimeout);
+      clearActiveTimeout(this.renderTimeout, this.contentEl);
       this.renderTimeout = undefined;
     }
   }
@@ -69,13 +75,17 @@ export class InboxProcessingView extends ItemView {
     this.pendingTarget = target;
 
     if (this.renderTimeout) {
-      clearTimeout(this.renderTimeout);
+      clearActiveTimeout(this.renderTimeout, this.contentEl);
     }
 
-    this.renderTimeout = setTimeout(() => {
-      this.renderCurrentView(this.pendingTarget);
-      this.renderTimeout = undefined;
-    }, 50);
+    this.renderTimeout = setActiveTimeout(
+      () => {
+        this.renderCurrentView(this.pendingTarget);
+        this.renderTimeout = undefined;
+      },
+      50,
+      this.contentEl
+    );
   }
 
   private renderCurrentView(target: RenderTarget) {
@@ -93,12 +103,16 @@ export class InboxProcessingView extends ItemView {
       if (this.pendingFocus) {
         const selector = this.pendingFocus;
         // Small timeout to ensure DOM is ready and layout is settled
-        setTimeout(() => {
-          const element = container.querySelector(selector) as HTMLElement;
-          if (element) {
-            element.focus();
-          }
-        }, 0);
+        setActiveTimeout(
+          () => {
+            const element = container.querySelector(selector) as HTMLElement;
+            if (element) {
+              element.focus();
+            }
+          },
+          0,
+          container
+        );
         this.pendingFocus = null;
       }
       return;

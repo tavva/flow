@@ -5,6 +5,7 @@ import { WorkspaceLeaf, TFile } from "obsidian";
 import { SomedayScanner, SomedayItem, SomedayProject, SomedayData } from "./someday-scanner";
 import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
+import { setActiveTimeout } from "./obsidian-platform";
 
 export const SOMEDAY_VIEW_TYPE = "flow-gtd-someday-view";
 
@@ -77,16 +78,22 @@ export class SomedayView extends RefreshingView {
     loadingEl.setText("Loading someday items...");
 
     // Load items asynchronously after view is visible
-    setTimeout(async () => {
-      try {
-        const data = await this.scanner.scanSomedayData();
-        loadingEl.remove();
-        this.renderContent(container as HTMLElement, data);
-      } catch (error) {
-        console.error("Failed to load someday view", error);
-        loadingEl.setText("Unable to load someday items. Check the console for more information.");
-      }
-    }, 0);
+    setActiveTimeout(
+      async () => {
+        try {
+          const data = await this.scanner.scanSomedayData();
+          loadingEl.remove();
+          this.renderContent(container as HTMLElement, data);
+        } catch (error) {
+          console.error("Failed to load someday view", error);
+          loadingEl.setText(
+            "Unable to load someday items. Check the console for more information."
+          );
+        }
+      },
+      0,
+      container
+    );
   }
 
   async onClose() {

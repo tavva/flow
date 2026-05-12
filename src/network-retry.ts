@@ -2,6 +2,7 @@
 // ABOUTME: Provides configurable retry logic with jitter and user feedback callbacks.
 
 import { isRetryableError } from "./errors";
+import { setActiveTimeout } from "./obsidian-platform";
 
 export interface RetryOptions {
   maxAttempts: number;
@@ -48,7 +49,7 @@ function calculateDelay(attempt: number, options: RetryOptions): number {
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => setActiveTimeout(() => resolve(), ms));
 }
 
 // Re-export for backward compatibility

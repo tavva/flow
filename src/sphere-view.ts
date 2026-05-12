@@ -17,6 +17,12 @@ import { FileWriter } from "./file-writer";
 import { loadFocusItems, saveFocusItems, FOCUS_FILE_PATH } from "./focus-persistence";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 import { extractContexts } from "./context-tags";
+import {
+  clearActiveTimeout,
+  createSvgElementForOwner,
+  setActiveTimeout,
+  TimerHandle,
+} from "./obsidian-platform";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -33,7 +39,7 @@ export class SphereView extends ItemView {
   private showNextActions: boolean = true;
   private metadataCacheEventRef: EventRef | null = null;
   private workspaceEventRefs: EventRef[] = [];
-  private scheduledRefreshTimeout: ReturnType<typeof setTimeout> | null = null;
+  private scheduledRefreshTimeout: TimerHandle | null = null;
   private selectedContexts: string[] = [];
   private suppressFocusRefresh: boolean = false;
 
@@ -114,7 +120,7 @@ export class SphereView extends ItemView {
 
     const animatedSvg = loadingContainer.createEl("div");
     animatedSvg.style.marginTop = "16px";
-    animatedSvg.appendChild(createLoadingDotsSpinner());
+    animatedSvg.appendChild(createLoadingDotsSpinner(animatedSvg));
   }
 
   async onClose() {
@@ -127,7 +133,7 @@ export class SphereView extends ItemView {
     }
     this.workspaceEventRefs = [];
     if (this.scheduledRefreshTimeout) {
-      clearTimeout(this.scheduledRefreshTimeout);
+      clearActiveTimeout(this.scheduledRefreshTimeout, this.contentEl);
       this.scheduledRefreshTimeout = null;
     }
   }
@@ -294,12 +300,16 @@ export class SphereView extends ItemView {
 
   private scheduleAutoRefresh(): void {
     if (this.scheduledRefreshTimeout) {
-      clearTimeout(this.scheduledRefreshTimeout);
+      clearActiveTimeout(this.scheduledRefreshTimeout, this.contentEl);
     }
-    this.scheduledRefreshTimeout = setTimeout(() => {
-      this.scheduledRefreshTimeout = null;
-      void this.refresh();
-    }, 500);
+    this.scheduledRefreshTimeout = setActiveTimeout(
+      () => {
+        this.scheduledRefreshTimeout = null;
+        void this.refresh();
+      },
+      500,
+      this.contentEl
+    );
   }
 
   private async loadSphereData(): Promise<SphereViewData> {
@@ -1045,31 +1055,29 @@ export class SphereView extends ItemView {
 /**
  * Creates an animated "Loading..." SVG spinner with animated dots.
  */
-function createLoadingDotsSpinner(): SVGElement {
-  const svgNS = "http://www.w3.org/2000/svg";
-
-  const svg = document.createElementNS(svgNS, "svg");
+function createLoadingDotsSpinner(owner?: Node): SVGElement {
+  const svg = createSvgElementForOwner(owner, "svg");
   svg.setAttribute("viewBox", "0 0 130 30");
   svg.setAttribute("width", "130px");
   svg.setAttribute("height", "30px");
 
-  const text = document.createElementNS(svgNS, "text");
+  const text = createSvgElementForOwner(owner, "text");
   text.setAttribute("font-family", "monospace");
   text.setAttribute("fill", "var(--text-accent)");
   text.setAttribute("font-size", "20");
   text.setAttribute("y", "22");
 
-  const loadingTspan = document.createElementNS(svgNS, "tspan");
+  const loadingTspan = createSvgElementForOwner(owner, "tspan");
   loadingTspan.textContent = "Loading";
   text.appendChild(loadingTspan);
 
   // Create three animated dots
   const delays = ["0s", "0.15s", "0.3s"];
   for (const delay of delays) {
-    const dotTspan = document.createElementNS(svgNS, "tspan");
+    const dotTspan = createSvgElementForOwner(owner, "tspan");
     dotTspan.textContent = ".";
 
-    const animate = document.createElementNS(svgNS, "animate");
+    const animate = createSvgElementForOwner(owner, "animate");
     animate.setAttribute("attributeName", "opacity");
     animate.setAttribute("values", "0;1");
     animate.setAttribute("dur", "0.4s");

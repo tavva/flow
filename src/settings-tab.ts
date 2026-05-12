@@ -2,6 +2,7 @@ import { App, PluginSettingTab, Setting } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS } from "./types";
 import { FolderPathSuggest, FilePathSuggest } from "./suggesters";
+import { openInActiveWindow } from "./obsidian-platform";
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
@@ -379,7 +380,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       })
       .addButton((button) =>
         button.setButtonText("Get API Key").onClick(() => {
-          window.open("https://openrouter.ai/keys", "_blank");
+          openInActiveWindow("https://openrouter.ai/keys", "_blank");
         })
       );
 

@@ -82,11 +82,12 @@ Already handled before this plan:
 
 ## Task 3: Popout Compatibility
 
-- [ ] Create a small helper for active document/window access, likely using `this.app.workspace.activeDocument` / `activeWindow` where available and falling back safely for tests.
-- [ ] Replace direct `document.createElement` / `document.createElementNS` in runtime code with active-document equivalents.
-- [ ] Replace direct `setTimeout` / `clearTimeout` in view and modal classes with active-window equivalents.
-- [ ] Keep utility-only timing code injectable or scoped so tests remain deterministic.
-- [ ] Add tests covering helper fallback behavior and at least one converted view/modal path.
+- [x] Create a small helper for active document/window access, likely using `this.app.workspace.activeDocument` / `activeWindow` where available and falling back safely for tests.
+- [x] Replace direct `document.createElement` / `document.createElementNS` in runtime code with active-document equivalents.
+- [x] Replace direct `setTimeout` / `clearTimeout` in view and modal classes with active-window equivalents.
+- [x] Keep utility-only timing code injectable or scoped so tests remain deterministic.
+- [x] Add tests covering helper fallback behavior and at least one converted view/modal path.
+  - 2026-05-12: Added `src/obsidian-platform.ts`; converted runtime DOM creation, timers, intervals, key listeners, and `window.open` through owner-window/active-window helpers. Source grep now only finds those operations inside the helper plus a plain text UI string.
 
 ## Task 4: Async Handling
 

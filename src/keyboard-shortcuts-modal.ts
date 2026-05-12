@@ -2,6 +2,7 @@
 // ABOUTME: Shows available shortcuts and their actions in a readable format.
 
 import { App, Modal, Platform } from "obsidian";
+import { getWindowForOwner } from "./obsidian-platform";
 
 interface ShortcutDefinition {
   keys: string[];
@@ -28,8 +29,8 @@ export class KeyboardShortcutsModal extends Modal {
   }
 
   onOpen() {
-    window.addEventListener("keydown", this.keyHandler, true);
     const { contentEl } = this;
+    getWindowForOwner(contentEl).addEventListener("keydown", this.keyHandler, true);
     contentEl.empty();
     contentEl.addClass("flow-keyboard-shortcuts-modal");
 
@@ -120,8 +121,8 @@ export class KeyboardShortcutsModal extends Modal {
   }
 
   onClose() {
-    window.removeEventListener("keydown", this.keyHandler, true);
     const { contentEl } = this;
+    getWindowForOwner(contentEl).removeEventListener("keydown", this.keyHandler, true);
     contentEl.empty();
   }
 }

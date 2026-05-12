@@ -7,6 +7,7 @@ import { WaitingForValidator } from "./waiting-for-validator";
 import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
 import { getDataviewApi } from "./dataview-api";
+import { setActiveTimeout } from "./obsidian-platform";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -96,18 +97,22 @@ export class WaitingForView extends RefreshingView {
     loadingEl.setText("Loading waiting for items...");
 
     // Load items asynchronously after view is visible
-    setTimeout(async () => {
-      try {
-        const items = await this.scanner.scanWaitingForItems();
-        loadingEl.remove();
-        this.renderContent(container as HTMLElement, items);
-      } catch (error) {
-        console.error("Failed to load waiting for view", error);
-        loadingEl.setText(
-          "Unable to load waiting for items. Check the console for more information."
-        );
-      }
-    }, 0);
+    setActiveTimeout(
+      async () => {
+        try {
+          const items = await this.scanner.scanWaitingForItems();
+          loadingEl.remove();
+          this.renderContent(container as HTMLElement, items);
+        } catch (error) {
+          console.error("Failed to load waiting for view", error);
+          loadingEl.setText(
+            "Unable to load waiting for items. Check the console for more information."
+          );
+        }
+      },
+      0,
+      container
+    );
   }
 
   async onClose() {

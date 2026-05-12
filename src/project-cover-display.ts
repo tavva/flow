@@ -3,6 +3,7 @@
 
 import { App, MarkdownView, TFile } from "obsidian";
 import { FlowProject, PluginSettings } from "./types";
+import { createElementForOwner } from "./obsidian-platform";
 
 const COVER_IMAGE_CLASS = "flow-project-cover-image-float";
 const COVER_IMAGE_CONTAINER_CLASS = "flow-project-cover-container";
@@ -109,10 +110,10 @@ export class ProjectCoverDisplay {
 
     if (!coverContainer) {
       // Create new cover image container
-      coverContainer = document.createElement("div");
+      coverContainer = createElementForOwner(contentEl, "div");
       coverContainer.classList.add(COVER_IMAGE_CONTAINER_CLASS);
 
-      const img = document.createElement("img");
+      const img = createElementForOwner(contentEl, "img");
       img.classList.add(COVER_IMAGE_CLASS);
       img.src = imageUrl;
       img.alt = "Project cover image";
