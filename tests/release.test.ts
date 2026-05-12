@@ -1,7 +1,12 @@
 // ABOUTME: Tests for production release script version parsing and calculation.
 // ABOUTME: Validates version bumping logic for patch, minor, and major releases.
 
-import { parseVersion, calculateNextVersion, ParsedVersion } from "../scripts/release";
+import {
+  parseVersion,
+  calculateNextVersion,
+  ParsedVersion,
+  buildGitHubReleaseCreateArgs,
+} from "../scripts/release";
 
 describe("parseVersion", () => {
   test("parses production version", () => {
@@ -63,5 +68,25 @@ describe("calculateNextVersion", () => {
 
   test("throws for unknown string that is not valid version", () => {
     expect(() => calculateNextVersion(current, "auto")).toThrow("Invalid version format");
+  });
+});
+
+describe("buildGitHubReleaseCreateArgs", () => {
+  test("creates a draft release without local asset uploads", () => {
+    const args = buildGitHubReleaseCreateArgs("1.3.2", "/tmp/notes.md");
+
+    expect(args).toEqual([
+      "release",
+      "create",
+      "1.3.2",
+      "--title",
+      "v1.3.2",
+      "--notes-file",
+      "/tmp/notes.md",
+      "--draft",
+    ]);
+    expect(args).not.toContain("main.js");
+    expect(args).not.toContain("styles.css");
+    expect(args).not.toContain("manifest.json");
   });
 });

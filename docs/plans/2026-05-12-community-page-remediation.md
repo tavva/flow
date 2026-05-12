@@ -118,11 +118,12 @@ Already handled before this plan:
 
 ## Task 7: Release Assets And Artifact Attestations
 
-- [ ] Decide whether releases should be fully created by GitHub Actions rather than local `gh release create`.
-- [ ] Update release automation to build `main.js`, `manifest.json`, and `styles.css` in CI.
-- [ ] Add GitHub artifact attestations for `main.js` and `styles.css`.
-- [ ] Update `docs/RELEASING.md` so future releases do not silently miss attestations.
-- [ ] Keep manual release creation as a fallback only if the attestation workflow documents the limitation.
+- [x] Decide whether releases should be fully created by GitHub Actions rather than local `gh release create`.
+- [x] Update release automation to build `main.js`, `manifest.json`, and `styles.css` in CI.
+- [x] Add GitHub artifact attestations for `main.js` and `styles.css`.
+- [x] Update `docs/RELEASING.md` so future releases do not silently miss attestations.
+- [x] Keep manual release creation as a fallback only if the attestation workflow documents the limitation.
+  - 2026-05-12: Chosen path is CI-owned release assets. The local production release script now creates a draft GitHub release without uploading local assets; the tag workflow validates versions, runs `npm run verify`, checks release assets, generates GitHub artifact attestations for `manifest.json`, `main.js`, and `styles.css`, and uploads those assets to the draft release. Manual `gh release upload` is documented as an emergency fallback only because it cannot satisfy provenance attestation checks.
 
 ## Task 8: Verification And Final Community Recheck
 

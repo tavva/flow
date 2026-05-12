@@ -1,33 +1,40 @@
 # Releasing Flow
 
-These steps describe how to cut a new Flow release and publish it to both plugin repositories.
+These steps describe how to cut a new Flow release and publish attested release assets.
 
 ## 1. Prepare the release locally
 
 1. Ensure the `main` branch is up to date and the working tree is clean.
-2. Run `npm run release -- <version>` (a leading `v` in the input is ignored, so `npm run release -- v0.6.7` and `npm run release -- 0.6.7` behave the same). The script will:
-   - update `package.json` and `manifest.json`
-   - run the formatter and `npm run verify`
-   - create a release commit and `<version>` tag
-   - build `flow.zip` containing `main.js`, `manifest.json`, and `styles.css`
-3. Review the build artefacts (`main.js`, `styles.css`, `manifest.json`) and any documentation edits before pushing.
+2. Run `npm run release`. The script will:
+   - run the formatter check and full test suite
+   - prompt for the version bump and release notes
+   - update `package.json`, `manifest.json`, and `versions.json`
+   - build the plugin locally so you can catch build failures before publishing
+   - create and push the release commit
+   - create a draft GitHub release with the release notes, but without local asset uploads
+3. Review the local build artifacts (`main.js`, `styles.css`, `manifest.json`) and any documentation edits before confirming the release.
 
 If the script exits early, fix the reported issue and rerun it.
 
-## 2. Push the release
+## 2. Let CI Publish Assets
 
-1. Push the release branch and tag: `git push origin HEAD --tags`.
-2. GitHub Actions will trigger the `Release Flow` workflow on the tag, which uploads both the loose files and the `flow.zip` archive to the draft release.
+The `Release Flow` workflow runs when the release tag is created.
 
-## 3. Monitor automation
+It validates that the tag, `package.json`, and `manifest.json` versions match, installs dependencies with `npm ci`, runs `npm run verify`, checks that `main.js`, `styles.css`, and `manifest.json` exist, generates GitHub artifact attestations for those files, and uploads them to the draft release.
 
-1. The `preflight` job installs dependencies with `npm ci`, checks that the tag matches the bumped version numbers, and runs `npm run verify`.
-2. When `preflight` succeeds, the `release` job drafts releases in both repositories and uploads `main.js`, `styles.css`, and `manifest.json` as artefacts.
+Do not manually upload release assets during the normal flow. Locally uploaded assets cannot receive GitHub Actions provenance attestations, so the Obsidian community scanner may continue to report missing attestations.
 
-## 4. Publish
+## 3. Publish
 
-1. Review the drafted release in `tavva/flow` and add notes or changelog text as needed.
-2. Review the drafted release in `tavva/flow-release`; confirm that the README was synced.
-3. Publish the releases when everything looks correct.
+1. Open the draft release in `tavva/flow`.
+2. Confirm that `manifest.json`, `main.js`, and `styles.css` are attached.
+3. Confirm that the workflow generated artifact attestations for the release assets.
+4. Publish the release when everything looks correct.
+
+## 4. Manual Fallback
+
+If the workflow is unavailable, run `npm run build` and upload `manifest.json`, `main.js`, and `styles.css` with `gh release upload <tag> ... --clobber`.
+
+Treat this as an emergency fallback only. After CI is available again, rerun the release workflow or replace the assets through CI so the release has attestations.
 
 > Tip: If you need to abort a release, delete the local tag and commit, then remove the draft release(s) on GitHub.

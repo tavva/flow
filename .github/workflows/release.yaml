@@ -1,4 +1,4 @@
-name: Validate Release
+name: Release Flow
 
 on:
     push:
@@ -6,16 +6,19 @@ on:
             - '*'
 
 permissions:
-    contents: read
+    contents: write
+    id-token: write
+    attestations: write
+    artifact-metadata: write
 
 jobs:
-    validate:
+    release:
         runs-on: ubuntu-latest
         env:
             TAG_NAME: ${{ github.ref_name }}
 
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
 
             - name: Use Node.js 20
               uses: actions/setup-node@v4
@@ -53,3 +56,31 @@ jobs:
 
             - name: Verify build and tests
               run: npm run verify
+
+            - name: Verify release assets
+              run: |
+                  test -f manifest.json
+                  test -f main.js
+                  test -f styles.css
+
+            - name: Generate artifact attestations
+              uses: actions/attest@v4
+              with:
+                  subject-path: |
+                      manifest.json
+                      main.js
+                      styles.css
+
+            - name: Ensure draft release exists
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+                      normalized_tag="${TAG_NAME#v}"
+                      gh release create "$TAG_NAME" --title "v${normalized_tag}" --draft --generate-notes
+                  fi
+
+            - name: Upload release assets
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: gh release upload "$TAG_NAME" manifest.json main.js styles.css --clobber

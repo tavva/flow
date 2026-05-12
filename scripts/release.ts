@@ -308,33 +308,33 @@ export function promptReleaseNotes(version: string): string {
   return cleanedLines.join("\n").trim();
 }
 
+export function buildGitHubReleaseCreateArgs(version: string, notesFile: string): string[] {
+  return [
+    "release",
+    "create",
+    version,
+    "--title",
+    `v${version}`,
+    "--notes-file",
+    notesFile,
+    "--draft",
+  ];
+}
+
 /**
- * Creates GitHub release with assets
+ * Creates a draft GitHub release without local asset uploads.
+ * The tag workflow builds, attests, and uploads the release assets from CI.
  */
 export function createGitHubRelease(version: string, releaseNotes: string): boolean {
-  const assets = getReleaseAssets();
   const notesFile = join(tmpdir(), `flow-release-notes-${version}-${Date.now()}.md`);
 
-  console.log("Creating GitHub release...\n");
+  console.log("Creating draft GitHub release...\n");
 
   try {
     writeFileSync(notesFile, releaseNotes, "utf-8");
-    execFileSync(
-      "gh",
-      [
-        "release",
-        "create",
-        version,
-        "--title",
-        `v${version}`,
-        "--notes-file",
-        notesFile,
-        ...assets,
-      ],
-      { stdio: "inherit" }
-    );
+    execFileSync("gh", buildGitHubReleaseCreateArgs(version, notesFile), { stdio: "inherit" });
     unlinkSync(notesFile);
-    console.log("\n✓ GitHub release created\n");
+    console.log("\n✓ Draft GitHub release created\n");
     return true;
   } catch (error) {
     try {
@@ -408,8 +408,6 @@ export function promptVersionBump(current: ParsedVersion): Promise<string> {
  */
 export function confirmRelease(version: string, releaseNotes: string): Promise<boolean> {
   return new Promise((resolve) => {
-    const assets = getReleaseAssets().join(" ");
-
     console.log("\n--- Release Notes Preview ---\n");
     console.log(releaseNotes);
     console.log("\n-----------------------------\n");
@@ -418,7 +416,10 @@ export function confirmRelease(version: string, releaseNotes: string): Promise<b
     console.log("  git add package.json manifest.json versions.json");
     console.log(`  git commit -m "Release v${version}"`);
     console.log("  git push");
-    console.log(`  gh release create ${version} --title "v${version}" ${assets}\n`);
+    console.log(
+      `  gh release create ${version} --title "v${version}" --draft --notes-file <notes>`
+    );
+    console.log("  GitHub Actions will build, attest, and upload release assets\n");
 
     const rl = readline.createInterface({
       input: process.stdin,
@@ -536,10 +537,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Create GitHub release (this also creates the tag)
+  // Create draft GitHub release; the tag workflow uploads attested assets
   if (!createGitHubRelease(nextVersion, releaseNotes)) {
     console.error("Release commit was pushed but GitHub release creation failed.");
-    console.error(`You can manually create the release: gh release create ${nextVersion}`);
+    console.error(`You can manually create the draft release: gh release create ${nextVersion}`);
     process.exit(1);
   }
 
