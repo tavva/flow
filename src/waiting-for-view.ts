@@ -321,7 +321,6 @@ export class WaitingForView extends RefreshingView {
         text: items[0].fileName,
         cls: "flow-gtd-waiting-for-file-link",
       });
-      fileLink.style.cursor = "pointer";
       fileLink.addEventListener("click", (e) => {
         e.preventDefault();
         runAsync(this.openFile(filePath), "Failed to open waiting-for source file");
@@ -340,7 +339,6 @@ export class WaitingForView extends RefreshingView {
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-waiting-for-item-text" });
     textSpan.setText(item.text);
-    textSpan.style.cursor = "pointer";
     textSpan.addEventListener("click", () => {
       runAsync(this.openFile(item.file, item.lineNumber), "Failed to open waiting-for item");
     });

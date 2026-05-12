@@ -477,7 +477,6 @@ export class FocusView extends RefreshingView {
       text: displayName.primary,
       cls: "flow-gtd-focus-file-link",
     });
-    fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
       e.preventDefault();
       runAsync(this.openFile(filePath), "Failed to open focus source file");
@@ -485,13 +484,10 @@ export class FocusView extends RefreshingView {
 
     // Add parent project context if it exists
     if (displayName.parent) {
-      const parentSpan = fileHeader.createSpan({
+      fileHeader.createSpan({
         text: ` (${displayName.parent})`,
         cls: "flow-gtd-focus-parent-context",
       });
-      parentSpan.style.fontSize = "0.85em";
-      parentSpan.style.opacity = "0.7";
-      parentSpan.style.fontWeight = "normal";
     }
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
@@ -526,7 +522,6 @@ export class FocusView extends RefreshingView {
       text: displayName.primary,
       cls: "flow-gtd-focus-file-link",
     });
-    fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
       e.preventDefault();
       runAsync(this.openFile(filePath), "Failed to open focus source file");
@@ -534,13 +529,10 @@ export class FocusView extends RefreshingView {
 
     // Add parent project context if it exists
     if (displayName.parent) {
-      const parentSpan = fileHeader.createSpan({
+      fileHeader.createSpan({
         text: ` (${displayName.parent})`,
         cls: "flow-gtd-focus-parent-context",
       });
-      parentSpan.style.fontSize = "0.85em";
-      parentSpan.style.opacity = "0.7";
-      parentSpan.style.fontWeight = "normal";
     }
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
@@ -572,22 +564,16 @@ export class FocusView extends RefreshingView {
 
     // Add handshake emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
-      const handshakeSpan = itemEl.createSpan({
+      itemEl.createSpan({
         cls: "flow-gtd-focus-waiting-indicator",
         text: "🤝 ",
       });
-      handshakeSpan.style.marginRight = "8px";
     }
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
+    const textSpan = itemEl.createSpan({
+      cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
+    });
     await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
-    textSpan.style.cursor = "pointer";
-
-    // Gray out waiting-for items
-    if (isWaitingFor) {
-      textSpan.style.opacity = "0.6";
-      textSpan.style.fontStyle = "italic";
-    }
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -707,15 +693,10 @@ export class FocusView extends RefreshingView {
       });
     }
 
-    const textSpan = actionRow.createSpan({ cls: "flow-gtd-focus-item-text" });
+    const textSpan = actionRow.createSpan({
+      cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
+    });
     await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
-    textSpan.style.cursor = "pointer";
-
-    // Gray out waiting-for items
-    if (isWaitingFor) {
-      textSpan.style.opacity = "0.6";
-      textSpan.style.fontStyle = "italic";
-    }
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -801,11 +782,10 @@ export class FocusView extends RefreshingView {
       text: "✅ ",
     });
 
-    const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
+    const textSpan = itemEl.createSpan({
+      cls: "flow-gtd-focus-item-text is-completed",
+    });
     await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
-    textSpan.style.cursor = "pointer";
-    textSpan.style.textDecoration = "line-through";
-    textSpan.style.opacity = "0.6";
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -816,19 +796,8 @@ export class FocusView extends RefreshingView {
 
   private renderLoadingState(container: HTMLElement) {
     const loadingContainer = container.createDiv("flow-gtd-focus-loading");
-    loadingContainer.style.textAlign = "center";
-    loadingContainer.style.padding = "48px 24px";
-    loadingContainer.style.display = "flex";
-    loadingContainer.style.alignItems = "center";
-    loadingContainer.style.justifyContent = "center";
-    loadingContainer.style.minHeight = "200px";
 
-    const waveIcon = loadingContainer.createEl("div");
-    waveIcon.style.width = "64px";
-    waveIcon.style.height = "64px";
-    waveIcon.style.display = "flex";
-    waveIcon.style.alignItems = "center";
-    waveIcon.style.justifyContent = "center";
+    const waveIcon = loadingContainer.createEl("div", { cls: "flow-gtd-loading-icon" });
     setIcon(waveIcon, "waves");
   }
 
@@ -893,13 +862,6 @@ export class FocusView extends RefreshingView {
 
   private renderClearNotification(container: HTMLElement) {
     const notificationEl = container.createDiv({ cls: "flow-gtd-focus-notification" });
-    notificationEl.style.padding = "12px";
-    notificationEl.style.marginBottom = "12px";
-    notificationEl.style.backgroundColor = "var(--background-secondary)";
-    notificationEl.style.borderRadius = "4px";
-    notificationEl.style.display = "flex";
-    notificationEl.style.justifyContent = "space-between";
-    notificationEl.style.alignItems = "center";
 
     const messageSpan = notificationEl.createSpan();
     messageSpan.setText("Your focus was automatically cleared. ");
@@ -908,8 +870,6 @@ export class FocusView extends RefreshingView {
       text: "View archived items",
       cls: "flow-gtd-focus-archive-link",
     });
-    archiveLink.style.cursor = "pointer";
-    archiveLink.style.textDecoration = "underline";
     archiveLink.addEventListener("click", (e) => {
       e.preventDefault();
       runAsync(this.openFile(this.settings.focusArchiveFile), "Failed to open focus archive");
@@ -919,10 +879,6 @@ export class FocusView extends RefreshingView {
       text: "×",
       cls: "flow-gtd-focus-dismiss-btn",
     });
-    dismissBtn.style.fontSize = "20px";
-    dismissBtn.style.cursor = "pointer";
-    dismissBtn.style.border = "none";
-    dismissBtn.style.background = "transparent";
     dismissBtn.title = "Dismiss";
     dismissBtn.addEventListener(
       "click",

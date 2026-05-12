@@ -73,6 +73,17 @@
   font-weight: 600;
 }
 
+.flow-gtd-someday-project-title,
+.flow-gtd-someday-file-link,
+.flow-gtd-someday-item-text,
+.flow-gtd-sphere-project-link,
+.flow-gtd-sphere-action-item,
+.flow-gtd-focus-file-link,
+.flow-gtd-waiting-for-file-link,
+.flow-gtd-waiting-for-item-text {
+  cursor: pointer;
+}
+
 .flow-add-to-inbox-input {
   width: 100%;
   padding: 8px;
@@ -1723,11 +1734,84 @@ select.flow-gtd-inline-select option,
   color: var(--text-accent);
 }
 
+.flow-gtd-focus-item-text.is-waiting {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.flow-gtd-focus-item-text.is-completed {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.flow-gtd-focus-parent-context {
+  font-size: 0.85em;
+  opacity: 0.7;
+  font-weight: normal;
+}
+
+.flow-gtd-focus-waiting-indicator {
+  margin-right: 8px;
+}
+
 .flow-gtd-focus-project-name {
   display: block;
   font-size: 0.85em;
   opacity: 0.7;
   margin-bottom: 2px;
+}
+
+.flow-gtd-focus-loading {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.flow-gtd-loading-state {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.flow-gtd-loading-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flow-gtd-loading-dots {
+  margin-top: 16px;
+}
+
+.flow-gtd-focus-notification {
+  padding: 12px;
+  margin-bottom: 12px;
+  background-color: var(--background-secondary);
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flow-gtd-focus-archive-link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.flow-gtd-focus-dismiss-btn {
+  font-size: 20px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
 }
 
 /* Pinned item content wrapper */

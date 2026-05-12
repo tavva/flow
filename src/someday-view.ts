@@ -319,7 +319,6 @@ export class SomedayView extends RefreshingView {
 
     const titleSpan = projectEl.createSpan({ cls: "flow-gtd-someday-project-title" });
     titleSpan.setText(somedayProject.project.title);
-    titleSpan.style.cursor = "pointer";
     titleSpan.addEventListener("click", () => {
       runAsync(this.openFile(somedayProject.project.file), "Failed to open someday project");
     });
@@ -365,7 +364,6 @@ export class SomedayView extends RefreshingView {
         text: items[0].fileName,
         cls: "flow-gtd-someday-file-link",
       });
-      fileLink.style.cursor = "pointer";
       fileLink.addEventListener("click", (e) => {
         e.preventDefault();
         runAsync(this.openFile(filePath), "Failed to open someday source file");
@@ -384,7 +382,6 @@ export class SomedayView extends RefreshingView {
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-someday-item-text" });
     textSpan.setText(item.text);
-    textSpan.style.cursor = "pointer";
     textSpan.addEventListener("click", () => {
       runAsync(this.openFile(item.file, item.lineNumber), "Failed to open someday item");
     });

@@ -103,24 +103,11 @@ export class SphereView extends ItemView {
     container.empty();
 
     const loadingContainer = container.createDiv("flow-gtd-loading-state");
-    loadingContainer.style.textAlign = "center";
-    loadingContainer.style.padding = "48px 24px";
-    loadingContainer.style.display = "flex";
-    loadingContainer.style.flexDirection = "column";
-    loadingContainer.style.alignItems = "center";
-    loadingContainer.style.justifyContent = "center";
-    loadingContainer.style.minHeight = "200px";
 
-    const waveIcon = loadingContainer.createEl("div");
-    waveIcon.style.width = "64px";
-    waveIcon.style.height = "64px";
-    waveIcon.style.display = "flex";
-    waveIcon.style.alignItems = "center";
-    waveIcon.style.justifyContent = "center";
+    const waveIcon = loadingContainer.createEl("div", { cls: "flow-gtd-loading-icon" });
     setIcon(waveIcon, "waves");
 
-    const animatedSvg = loadingContainer.createEl("div");
-    animatedSvg.style.marginTop = "16px";
+    const animatedSvg = loadingContainer.createEl("div", { cls: "flow-gtd-loading-dots" });
     animatedSvg.appendChild(createLoadingDotsSpinner(animatedSvg));
   }
 
@@ -571,7 +558,6 @@ export class SphereView extends ItemView {
         text: project.title,
         cls: "flow-gtd-sphere-project-link",
       });
-      link.style.cursor = "pointer";
       link.addEventListener("click", (e) => {
         e.preventDefault();
         runAsync(this.openProjectFile(project.file), "Failed to open sphere project file");
@@ -652,7 +638,6 @@ export class SphereView extends ItemView {
         text: project.title,
         cls: "flow-gtd-sphere-project-title flow-gtd-sphere-project-link",
       });
-      titleLink.style.cursor = "pointer";
       titleLink.addEventListener("click", (e) => {
         e.preventDefault();
         runAsync(this.openProjectFile(project.file), "Failed to open sphere project file");
@@ -775,7 +760,7 @@ export class SphereView extends ItemView {
     item.setAttribute("data-focus-file", file);
     item.setAttribute("data-focus-action", action);
     await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
-    item.style.cursor = "pointer";
+    item.classList.add("flow-gtd-sphere-action-item");
 
     // Check if this action is in the focus and add CSS class if so
     const focusItems = await loadFocusItems(this.app.vault);

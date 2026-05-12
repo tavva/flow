@@ -102,9 +102,9 @@ Already handled before this plan:
 - [x] Replace `.modal:has(...)` selectors by adding Flow-specific classes to modal containers during `onOpen` and removing them during `onClose`.
 - [x] Remove avoidable `!important` rules by increasing selector specificity or moving rules under Flow-owned container classes.
 - [x] Move high-volume inline styles out of `src/inbox-modal-views.ts` into `styles.css` first.
-- [ ] Repeat for `new-project-modal`, `focus-view`, `sphere-view`, `waiting-for-view`, `add-to-inbox-modal`, and `new-person-modal`.
-  - 2026-05-12: Static styles are moved for inbox loading/project wrappers, new project/person modal buttons and errors, add-to-inbox controls, and keyboard modal sizing. Remaining inline styles are mostly dynamic visibility or the larger focus/sphere rendering cleanup.
-- [ ] Keep dynamic values as CSS variables via `setCssProps` or narrow inline assignment only where values are genuinely data-driven.
+- [x] Repeat for `new-project-modal`, `focus-view`, `sphere-view`, `waiting-for-view`, `add-to-inbox-modal`, and `new-person-modal`.
+- [x] Keep dynamic values as CSS variables via `setCssProps` or narrow inline assignment only where values are genuinely data-driven.
+  - 2026-05-12: Remaining inline styles are narrow dynamic visibility controls (`display`) or hierarchy depth sizing in `sphere-view`; static layout, cursor, loading, modal, notification, and error styles now live in `styles.css`.
 - [ ] Run visual/manual Obsidian checks for inbox processing, new project/person modals, focus view, sphere view, waiting-for view, and keyboard shortcuts modal.
 
 ## Task 6: Type And Lint Hygiene

@@ -1686,6 +1686,7 @@ describe("FocusView", () => {
           return mockIndicatorSpan;
         } else {
           // Second call: text span
+          if (opts?.cls) mockTextSpan.className = opts.cls;
           mockLi.appendChild(mockTextSpan);
           return mockTextSpan;
         }
@@ -1697,8 +1698,7 @@ describe("FocusView", () => {
       expect(itemEl).toBeTruthy();
 
       const textEl = itemEl?.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
-      expect(textEl?.style.textDecoration).toBe("line-through");
-      expect(textEl?.style.opacity).toBe("0.6");
+      expect(textEl?.classList.contains("is-completed")).toBe(true);
 
       // Should have checkmark indicator
       const indicator = itemEl?.querySelector(".flow-gtd-focus-completed-indicator");
