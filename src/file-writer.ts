@@ -5,6 +5,18 @@ import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "
 import { EditableItem } from "./inbox-types";
 import { sanitizeFileName } from "./validation";
 
+interface TemplaterPlugin {
+  templater?: {
+    overwrite_file_commands?: (file: TFile) => Promise<void>;
+  };
+}
+
+interface AppWithPlugins {
+  plugins?: {
+    plugins?: Record<string, TemplaterPlugin | undefined>;
+  };
+}
+
 export class FileWriter {
   constructor(
     private app: App,
@@ -327,7 +339,7 @@ export class FileWriter {
 
     if (!templateFile || !(templateFile instanceof TFile)) {
       // Fallback template if template file doesn't exist
-      return this.buildPersonContentFallback(personName);
+      return this.buildPersonContentFallback();
     }
 
     let templateContent = await this.app.vault.read(templateFile);
@@ -361,7 +373,7 @@ export class FileWriter {
     return templateContent;
   }
 
-  private buildPersonContentFallback(personName: string): string {
+  private buildPersonContentFallback(): string {
     const now = new Date();
     const dateTime = this.formatDateTime(now);
 
@@ -443,7 +455,7 @@ tags:
    */
   private async processWithTemplater(file: TFile): Promise<void> {
     try {
-      const templaterPlugin = (this.app as any).plugins?.plugins?.["templater-obsidian"];
+      const templaterPlugin = (this.app as AppWithPlugins).plugins?.plugins?.["templater-obsidian"];
       if (templaterPlugin?.templater?.overwrite_file_commands) {
         await templaterPlugin.templater.overwrite_file_commands(file);
       }
@@ -490,7 +502,6 @@ tags:
 
     // Parse template variables
     const now = new Date();
-    const dateTime = this.formatDateTime(now);
     const date = this.formatDate(now);
     const time = this.formatTime(now);
     const sphereTagsForTemplate =
@@ -609,7 +620,6 @@ tags:
   ): string {
     const now = new Date();
     const dateTime = this.formatDateTime(now);
-    const title = result.projectOutcome || originalItem;
     const description = this.formatDescription(originalItem, sourceNoteLink, result.description);
 
     // Format sphere tags for YAML list format
@@ -831,22 +841,6 @@ ${description}
 
     const dueDateSuffix = dueDate ? ` 📅 ${dueDate}` : "";
     newContent += `\n${sectionHeading}\n${checkbox} ${actionText}${dueDateSuffix}\n`;
-
-    return newContent;
-  }
-
-  /**
-   * Create a new section with an item when section doesn't exist
-   */
-  private createSectionWithItem(content: string, sectionHeading: string, item: string): string {
-    // Add section at the end of the file
-    let newContent = content.trim();
-
-    if (!newContent.endsWith("\n")) {
-      newContent += "\n";
-    }
-
-    newContent += `\n${sectionHeading}\n- ${item}\n`;
 
     return newContent;
   }

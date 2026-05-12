@@ -3,6 +3,10 @@
 
 import { AbstractInputSuggest, App } from "obsidian";
 
+interface MetadataCacheWithTags {
+  getTags(): Record<string, number> | null | undefined;
+}
+
 /**
  * Finds a #tag fragment at the given cursor position in text.
  * Returns the fragment's start/end indices and the fragment string,
@@ -69,7 +73,7 @@ export class TagSuggest extends AbstractInputSuggest<string> {
       return [];
     }
 
-    const allTags = (this.app.metadataCache as any).getTags() as Record<string, number>;
+    const allTags = (this.app.metadataCache as unknown as MetadataCacheWithTags).getTags();
     if (!allTags) {
       return [];
     }

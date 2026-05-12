@@ -38,7 +38,7 @@ describe("GTDContextScanner", () => {
 - Regular text line
 - [ ] Send email to team`;
 
-      const mockFile = { path: "Next actions.md" } as TFile;
+      const mockFile = new TFile("Next actions.md", "Next actions");
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(content);
 
@@ -65,7 +65,7 @@ describe("GTDContextScanner", () => {
 Just some regular text
 No checkboxes here`;
 
-      const mockFile = { path: "Next actions.md" } as TFile;
+      const mockFile = new TFile("Next actions.md", "Next actions");
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(content);
 
@@ -88,7 +88,7 @@ Some paragraph text.
 
 - Start a podcast`;
 
-      const mockFile = { path: "Someday.md" } as TFile;
+      const mockFile = new TFile("Someday.md", "Someday");
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(content);
 
@@ -118,7 +118,7 @@ Some paragraph text.
 - [ ] Checkbox item
 - [x] Completed item`;
 
-      const mockFile = { path: "Someday.md" } as TFile;
+      const mockFile = new TFile("Someday.md", "Someday");
       (mockVault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
       (mockVault.read as jest.Mock).mockResolvedValue(content);
 
@@ -232,7 +232,7 @@ Some paragraph text.
 
       // Need to fix the readFile mock
       const mockGetAbstractFileByPath = jest.fn((path: string) => {
-        return { path } as TFile;
+        return new TFile(path, path.replace(/\.md$/, ""));
       });
       mockVault.getAbstractFileByPath = mockGetAbstractFileByPath;
 

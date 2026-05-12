@@ -104,16 +104,13 @@ export async function archiveClearedTasks(
   // Check if archive file exists
   const existingFile = vault.getAbstractFileByPath(archiveFilePath);
 
-  if (existingFile && existingFile instanceof TFile) {
+  if (existingFile instanceof TFile) {
     // File exists, prepend to it
     const existingContent = await vault.read(existingFile);
     const updatedContent = newContent + existingContent;
     await vault.modify(existingFile, updatedContent);
   } else if (existingFile) {
-    // File exists but we need to handle as TFile (for testing)
-    const existingContent = await vault.read(existingFile as TFile);
-    const updatedContent = newContent + existingContent;
-    await vault.modify(existingFile as TFile, updatedContent);
+    throw new Error(`Archive path exists but is not a file: ${archiveFilePath}`);
   } else {
     // File doesn't exist, create it
     await vault.create(archiveFilePath, newContent);

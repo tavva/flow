@@ -7,9 +7,19 @@ export interface DataviewApi {
   pages(): {
     file: {
       tasks: {
-        where(predicate: (task: any) => boolean): Iterable<any>;
+        where(predicate: (task: DataviewTask) => boolean): Iterable<DataviewTask>;
       };
     };
+  };
+}
+
+export interface DataviewTask {
+  status: string;
+  path: string;
+  line: number;
+  text: string;
+  link: {
+    path: string;
   };
 }
 

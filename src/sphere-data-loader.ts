@@ -245,7 +245,7 @@ export class SphereDataLoader {
 
       let belongsToSphere = false;
 
-      rawText = rawText.replace(/#sphere\/([^\s]+)/gi, (fullMatch, captured) => {
+      rawText = rawText.replace(/#sphere\/([^\s]+)/gi, (_fullMatch, captured) => {
         if (this.normalizeSphereValue(String(captured)) === normalizedSphere) {
           belongsToSphere = true;
         }

@@ -1,7 +1,8 @@
 // ABOUTME: Scans vault for GTD context files (next actions, someday, inbox).
 // ABOUTME: Provides comprehensive GTD system state to the CLI coach.
 
-import type { App, TFile } from "obsidian";
+import { TFile } from "obsidian";
+import type { App } from "obsidian";
 import { PluginSettings } from "./types";
 import { FileNotFoundError } from "./errors";
 
@@ -83,10 +84,10 @@ export class GTDContextScanner {
 
   private async readFile(path: string): Promise<string> {
     const file = this.app.vault.getAbstractFileByPath(path);
-    if (!file) {
+    if (!(file instanceof TFile)) {
       throw new FileNotFoundError(path);
     }
-    return await this.app.vault.read(file as TFile);
+    return await this.app.vault.read(file);
   }
 
   private extractCheckboxItems(content: string): string[] {

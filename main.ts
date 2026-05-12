@@ -1,4 +1,4 @@
-import { App, Plugin, Notice, WorkspaceLeaf, MarkdownView } from "obsidian";
+import { Plugin, Notice, MarkdownView } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
@@ -23,6 +23,14 @@ type InboxCommandConfig = {
   id: string;
   name: string;
 };
+
+interface RefreshableView {
+  onOpen(): Promise<void> | void;
+}
+
+function hasOnOpen(view: unknown): view is RefreshableView {
+  return typeof (view as { onOpen?: unknown } | null)?.onOpen === "function";
+}
 
 export default class FlowGTDCoachPlugin extends Plugin {
   settings: PluginSettings;
@@ -55,7 +63,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Register the sphere view
     this.registerView(SPHERE_VIEW_TYPE, (leaf) => {
       // Check if there's saved state for this leaf
-      const state = (leaf as any).getViewState?.()?.state;
+      const state = leaf.getViewState().state as { sphere?: string } | undefined;
       const sphere = state?.sphere || this.settings.spheres[0] || "personal";
 
       return new SphereView(leaf, sphere, this.settings, this.saveSettings.bind(this));
@@ -199,12 +207,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Register focus editor menu (right-click context menu)
     this.registerEvent(
-      registerFocusEditorMenu(
-        this.app,
-        this.settings,
-        this.saveSettings.bind(this),
-        this.refreshFocusView.bind(this)
-      )
+      registerFocusEditorMenu(this.app, this.settings, this.refreshFocusView.bind(this))
     );
 
     // Initialize project cover display
@@ -531,8 +534,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     // Refresh if view already existed
-    if (existingView && "onOpen" in existingView) {
-      await (existingView as any).onOpen();
+    if (hasOnOpen(existingView)) {
+      await existingView.onOpen();
     }
   }
 
@@ -578,8 +581,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     if (leaves.length > 0) {
       for (const leaf of leaves) {
-        if (leaf.view && "onOpen" in leaf.view) {
-          await (leaf.view as any).onOpen();
+        if (hasOnOpen(leaf.view)) {
+          await leaf.view.onOpen();
         }
       }
     }

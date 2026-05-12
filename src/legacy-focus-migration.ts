@@ -1,7 +1,7 @@
 // ABOUTME: Migration for users upgrading from #flow-planned tags to JSON focus storage.
 // ABOUTME: Contains scanner, migration logic, tag removal, and modals. Delete when migration complete.
 
-import { App, Modal, Setting, TFile, Vault } from "obsidian";
+import { App, Modal, TFile, Vault } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";

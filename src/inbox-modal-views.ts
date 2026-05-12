@@ -19,7 +19,7 @@ export interface InboxViewOptions {
 
 export function renderInboxView(
   contentEl: HTMLElement,
-  state: InboxModalState,
+  _state: InboxModalState,
   options: InboxViewOptions = {}
 ) {
   const { isLoading = true } = options;
@@ -396,7 +396,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           e.preventDefault();
           e.stopImmediatePropagation();
           item.waitingFor![index] = !item.waitingFor![index];
-          (item as any).pendingFocusActionIndex = index;
+          item.pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
@@ -409,7 +409,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           if (item.addToFocus![index]) {
             item.markAsDone![index] = false;
           }
-          (item as any).pendingFocusActionIndex = index;
+          item.pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
@@ -422,7 +422,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
           if (item.markAsDone![index]) {
             item.addToFocus![index] = false;
           }
-          (item as any).pendingFocusActionIndex = index;
+          item.pendingFocusActionIndex = index;
           state.queueRender("editable");
           return;
         }
@@ -536,7 +536,7 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
     item.markAsDone!.push(false);
     item.addToFocus!.push(false);
     // Mark which action to focus after render
-    (item as any).pendingFocusActionIndex = currentActions.length - 1;
+    item.pendingFocusActionIndex = currentActions.length - 1;
     state.queueRender("editable");
   };
 
@@ -559,9 +559,9 @@ function renderActionsSection(container: HTMLElement, item: EditableItem, state:
   });
 
   // Focus pending action input after render
-  const pendingIndex = (item as any).pendingFocusActionIndex;
+  const pendingIndex = item.pendingFocusActionIndex;
   if (pendingIndex !== undefined) {
-    delete (item as any).pendingFocusActionIndex;
+    delete item.pendingFocusActionIndex;
     const inputs = actionsList.querySelectorAll(".flow-inbox-action-input");
     const targetInput = inputs[pendingIndex] as HTMLInputElement | undefined;
     if (targetInput) {

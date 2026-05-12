@@ -9,6 +9,7 @@ import {
   Menu,
   setIcon,
   EventRef,
+  ViewStateResult,
 } from "obsidian";
 import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
@@ -27,6 +28,21 @@ import { runAsync, wrapAsyncEvent } from "./async-utils";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
+interface FlowWorkspaceEvents {
+  on(
+    eventType: "flow:action-completed" | "flow:action-waiting",
+    callback: (detail: { file: string; action: string }) => void
+  ): EventRef;
+}
+
+interface RefreshableView {
+  onOpen(): Promise<void> | void;
+}
+
+function hasOnOpen(view: unknown): view is RefreshableView {
+  return typeof (view as { onOpen?: unknown } | null)?.onOpen === "function";
+}
+
 export class SphereView extends ItemView {
   private dataLoader: SphereDataLoader | null = null;
   private readonly lineFinder: ActionLineFinder;
@@ -34,7 +50,6 @@ export class SphereView extends ItemView {
   private sphere: string;
   private settings: PluginSettings;
   private rightPaneLeaf: WorkspaceLeaf | null = null;
-  private saveSettings: () => Promise<void>;
   private searchQuery: string = "";
   private refreshInProgress: boolean = false;
   private showNextActions: boolean = true;
@@ -48,14 +63,13 @@ export class SphereView extends ItemView {
     leaf: WorkspaceLeaf,
     sphere: string,
     settings: PluginSettings,
-    saveSettings: () => Promise<void>
+    _saveSettings: () => Promise<void>
   ) {
     super(leaf);
     this.sphere = sphere;
     this.settings = settings;
     this.lineFinder = new ActionLineFinder(this.app);
     this.fileWriter = new FileWriter(this.app, settings);
-    this.saveSettings = saveSettings;
   }
 
   private getDataLoader(): SphereDataLoader {
@@ -144,7 +158,7 @@ export class SphereView extends ItemView {
       showNextActions?: boolean;
       selectedContexts?: string[];
     },
-    result: any
+    result: ViewStateResult
   ) {
     if (state?.searchQuery !== undefined) {
       this.searchQuery = state.searchQuery;
@@ -164,10 +178,9 @@ export class SphereView extends ItemView {
   }
 
   // Method to update the sphere and refresh the view
-  async setSphere(sphere: string, settings: PluginSettings, saveSettings: () => Promise<void>) {
+  async setSphere(sphere: string, settings: PluginSettings, _saveSettings: () => Promise<void>) {
     this.sphere = sphere;
     this.settings = settings;
-    this.saveSettings = saveSettings;
     this.dataLoader = new SphereDataLoader(this.app, sphere, settings);
     await this.onOpen();
   }
@@ -195,7 +208,9 @@ export class SphereView extends ItemView {
     }
     this.workspaceEventRefs = [];
 
-    const completedRef = (this.app.workspace as any).on(
+    const flowWorkspace = this.app.workspace as unknown as FlowWorkspaceEvents;
+
+    const completedRef = flowWorkspace.on(
       "flow:action-completed",
       (detail: { file: string; action: string }) => {
         this.removeActionFromDom(detail.file, detail.action);
@@ -203,7 +218,7 @@ export class SphereView extends ItemView {
     );
     this.workspaceEventRefs.push(completedRef);
 
-    const waitingRef = (this.app.workspace as any).on(
+    const waitingRef = flowWorkspace.on(
       "flow:action-waiting",
       (detail: { file: string; action: string }) => {
         runAsync(
@@ -693,7 +708,7 @@ export class SphereView extends ItemView {
           list.classList.add("flow-gtd-sphere-actions-hidden");
         }
         // Render all action items (async operations will complete in background)
-        project.nextActions.forEach((action, index) => {
+        project.nextActions.forEach((action) => {
           runAsync(
             this.renderActionItem(list, action, project.file, this.sphere, false),
             "Failed to render sphere action item"
@@ -729,7 +744,7 @@ export class SphereView extends ItemView {
     const nextActionsFile = this.settings.nextActionsFilePath?.trim() || "Next actions.md";
 
     // Render all action items (async operations will complete in background)
-    actions.forEach((action, index) => {
+    actions.forEach((action) => {
       runAsync(
         this.renderActionItem(list, action, nextActionsFile, this.sphere, true),
         "Failed to render general next action item"
@@ -985,8 +1000,8 @@ export class SphereView extends ItemView {
 
     if (leaves.length > 0) {
       for (const leaf of leaves) {
-        if (leaf.view && "onOpen" in leaf.view) {
-          await (leaf.view as any).onOpen();
+        if (hasOnOpen(leaf.view)) {
+          await leaf.view.onOpen();
         }
       }
     }

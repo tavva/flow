@@ -59,7 +59,6 @@ export function isActionOnFocus(filePath: string, lineNumber: number, focus: Foc
 export function registerFocusEditorMenu(
   app: App,
   settings: PluginSettings,
-  saveSettings: () => Promise<void>,
   refreshFocusView: () => Promise<void>
 ) {
   return app.workspace.on("editor-menu", (menu: Menu, editor: Editor, view: MarkdownView) => {

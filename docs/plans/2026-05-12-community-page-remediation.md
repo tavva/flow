@@ -109,11 +109,12 @@ Already handled before this plan:
 
 ## Task 6: Type And Lint Hygiene
 
-- [ ] Remove stale scan findings that no longer exist after `1.3.1` before editing.
-- [ ] Replace `any` in new and touched code with local interfaces first, especially Dataview task access and workspace event payloads.
-- [ ] Remove unused imports/variables reported by the scanner.
-- [ ] Replace unsafe `TFile` / `TFolder` casts with `instanceof` checks where practical.
-- [ ] Avoid broad refactors outside files already touched by scanner-driven work.
+- [x] Remove stale scan findings that no longer exist after `1.3.1` before editing.
+- [x] Replace `any` in new and touched code with local interfaces first, especially Dataview task access and workspace event payloads.
+- [x] Remove unused imports/variables reported by the scanner.
+- [x] Replace unsafe `TFile` / `TFolder` casts with `instanceof` checks where practical.
+- [x] Avoid broad refactors outside files already touched by scanner-driven work.
+  - 2026-05-12: Strict TypeScript check with `--noUnusedLocals --noUnusedParameters` passes. Source grep no longer finds live `any`, `as TFile`, or `as TFolder` usages; remaining matches are plain-English comments containing "any". Added local interfaces for Dataview tasks, Flow workspace events, editor-bearing views, Templater access, internal search, and tag cache access.
 
 ## Task 7: Release Assets And Artifact Attestations
 

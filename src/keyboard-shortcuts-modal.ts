@@ -84,9 +84,7 @@ export class KeyboardShortcutsModal extends Modal {
       groupEl.createEl("h3", { text: group.title, cls: "flow-shortcuts-group-title" });
 
       const list = groupEl.createDiv({ cls: "flow-shortcuts-list" });
-      for (const shortcut of this.renderShortcutGroup(list, group.shortcuts)) {
-        // Rendering handled in helper
-      }
+      this.renderShortcutGroup(list, group.shortcuts);
     }
 
     const footer = contentEl.createDiv({ cls: "flow-shortcuts-footer" });
@@ -97,16 +95,12 @@ export class KeyboardShortcutsModal extends Modal {
     footerContent.createSpan({ text: " to close", cls: "flow-shortcuts-footer-text" });
   }
 
-  private *renderShortcutGroup(
-    container: HTMLElement,
-    shortcuts: ShortcutDefinition[]
-  ): Generator<void> {
+  private renderShortcutGroup(container: HTMLElement, shortcuts: ShortcutDefinition[]): void {
     for (const shortcut of shortcuts) {
       const row = container.createDiv({ cls: "flow-shortcuts-row" });
       const keysEl = row.createDiv({ cls: "flow-shortcuts-keys" });
       this.renderKeys(keysEl, shortcut.keys);
       row.createDiv({ text: shortcut.description, cls: "flow-shortcuts-desc" });
-      yield;
     }
   }
 

@@ -23,16 +23,14 @@ interface NewProjectData {
 
 export class NewProjectModal extends Modal {
   private settings: PluginSettings;
-  private saveSettings: () => Promise<void>;
   private scanner: FlowProjectScanner;
   private fileWriter: FileWriter;
   private existingProjects: FlowProject[] = [];
   private data: NewProjectData;
 
-  constructor(app: App, settings: PluginSettings, saveSettings: () => Promise<void>) {
+  constructor(app: App, settings: PluginSettings, _saveSettings: () => Promise<void>) {
     super(app);
     this.settings = settings;
-    this.saveSettings = saveSettings;
     this.scanner = new FlowProjectScanner(app);
     this.fileWriter = new FileWriter(app, settings);
     this.data = {

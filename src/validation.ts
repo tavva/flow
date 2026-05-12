@@ -3,6 +3,12 @@
  */
 import { VALID_PROJECT_STATUSES } from "./types";
 
+type ProjectStatus = (typeof VALID_PROJECT_STATUSES)[number];
+
+function isProjectStatus(status: string): status is ProjectStatus {
+  return (VALID_PROJECT_STATUSES as readonly string[]).includes(status);
+}
+
 /**
  * Validates if a priority value is within acceptable range
  */
@@ -26,7 +32,7 @@ export function validateStatus(status: string): { valid: boolean; error?: string
     return { valid: false, error: "Status cannot be empty" };
   }
 
-  if (!VALID_PROJECT_STATUSES.includes(status.toLowerCase() as any)) {
+  if (!isProjectStatus(status.toLowerCase())) {
     return {
       valid: false,
       error: `Status must be one of: ${VALID_PROJECT_STATUSES.join(", ")}`,

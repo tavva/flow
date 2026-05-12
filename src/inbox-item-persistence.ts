@@ -4,7 +4,7 @@ import { GTDResponseValidationError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
-import { validateReminderDate, validateInboxItem, validateNextAction } from "./validation";
+import { validateReminderDate, validateInboxItem } from "./validation";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { generateCoverImage } from "./cover-image-generator";
 

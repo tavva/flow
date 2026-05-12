@@ -21,6 +21,7 @@ export interface EditableItem {
   dueDate?: string; // Optional date in YYYY-MM-DD format (due date, reminder, or follow-up depending on context)
   isDateSectionExpanded?: boolean; // Whether the date section UI is expanded
   expandedActionIndex?: number; // Index of action with expanded controls (-1 or undefined = none)
+  pendingFocusActionIndex?: number; // Index to focus after adding or changing action controls
   sourceNoteLink?: string; // Wikilink to archived source note for traceability (e.g., "[[note-name|source]]")
   isExpanded?: boolean; // Whether the item's content is expanded in accordion view
 }

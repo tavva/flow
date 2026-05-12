@@ -12,13 +12,11 @@ interface NewPersonData {
 }
 
 export class NewPersonModal extends Modal {
-  private settings: PluginSettings;
   private fileWriter: FileWriter;
   private data: NewPersonData;
 
   constructor(app: App, settings: PluginSettings) {
     super(app);
-    this.settings = settings;
     this.fileWriter = new FileWriter(app, settings);
     this.data = {
       name: "",

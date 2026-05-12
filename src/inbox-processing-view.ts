@@ -21,12 +21,10 @@ export class InboxProcessingView extends ItemView {
   private renderTimeout?: TimerHandle;
   private pendingTarget: RenderTarget = "inbox";
   private pendingFocus: string | null = null;
-  private saveSettings: () => Promise<void>;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
-    this.saveSettings = saveSettings;
     const controller = new InboxProcessingController(this.app, settings, {}, saveSettings);
     this.state = new InboxModalState(this.app, controller, settings, (target, options) =>
       this.requestRender(target, options?.immediate === true)

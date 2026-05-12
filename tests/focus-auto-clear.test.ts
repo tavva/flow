@@ -167,7 +167,7 @@ describe("archiveClearedTasks", () => {
     const clearTime = new Date("2025-10-15T03:00:00");
     const existingContent = "## Previous content\n\n- [ ] Old task";
 
-    const mockFile = { path: archiveFilePath } as TFile;
+    const mockFile = new TFile(archiveFilePath, "Focus Archive");
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
     mockVault.read.mockResolvedValue(existingContent);
 

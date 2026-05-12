@@ -2,7 +2,7 @@
 // ABOUTME: Monitors file opens and metadata changes to inject/update cover images in markdown views
 
 import { App, MarkdownView, TFile } from "obsidian";
-import { FlowProject, PluginSettings } from "./types";
+import { PluginSettings } from "./types";
 import { createElementForOwner } from "./obsidian-platform";
 
 const COVER_IMAGE_CLASS = "flow-project-cover-image-float";
@@ -67,17 +67,13 @@ export class ProjectCoverDisplay {
     }
 
     // Render the cover image
-    await this.renderCoverImage(activeView, coverImage, file);
+    await this.renderCoverImage(activeView, coverImage);
   }
 
   /**
    * Render the cover image in the markdown view
    */
-  private async renderCoverImage(
-    view: MarkdownView,
-    coverImagePath: string,
-    file: TFile
-  ): Promise<void> {
+  private async renderCoverImage(view: MarkdownView, coverImagePath: string): Promise<void> {
     const container = view.contentEl;
 
     if (!container) {

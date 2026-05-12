@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying all someday items and paused/someday projects aggregated from across the vault.
 // ABOUTME: Allows opening files and viewing content with sphere filtering.
 
-import { WorkspaceLeaf, TFile } from "obsidian";
+import { WorkspaceLeaf, TFile, ViewStateResult, Editor } from "obsidian";
 import { SomedayScanner, SomedayItem, SomedayProject, SomedayData } from "./someday-scanner";
 import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
@@ -14,20 +14,21 @@ interface GroupedItems {
   [filePath: string]: SomedayItem[];
 }
 
+interface ViewWithEditor {
+  editor?: Editor;
+}
+
 export class SomedayView extends RefreshingView {
   private settings: PluginSettings;
   private scanner: SomedayScanner;
-  private rightPaneLeaf: WorkspaceLeaf | null = null;
-  private saveSettings: () => Promise<void>;
   private selectedSpheres: string[] = [];
   private selectedContexts: string[] = [];
   private stateRestored = false;
 
-  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, _saveSettings: () => Promise<void>) {
     super(leaf, 15000); // 15 second debounce
     this.settings = settings;
     this.scanner = new SomedayScanner(this.app, settings);
-    this.saveSettings = saveSettings;
   }
 
   getViewType(): string {
@@ -51,7 +52,10 @@ export class SomedayView extends RefreshingView {
   }
 
   // Restore state when Obsidian reloads
-  async setState(state: { selectedSpheres?: string[]; selectedContexts?: string[] }, result: any) {
+  async setState(
+    state: { selectedSpheres?: string[]; selectedContexts?: string[] },
+    result: ViewStateResult
+  ) {
     if (state?.selectedSpheres !== undefined) {
       this.selectedSpheres = state.selectedSpheres;
       this.stateRestored = true;
@@ -475,12 +479,11 @@ export class SomedayView extends RefreshingView {
       // Always get a fresh leaf - the cached leaf may have been closed or detached
       const leaf = this.app.workspace.getLeaf("split", "vertical");
       await leaf.openFile(file);
-      this.rightPaneLeaf = leaf;
 
       if (lineNumber !== undefined) {
         const view = leaf.view;
         if (view && "editor" in view) {
-          const editor = (view as any).editor;
+          const editor = (view as ViewWithEditor).editor;
           if (editor) {
             editor.setCursor({ line: lineNumber - 1, ch: 0 });
             editor.scrollIntoView(

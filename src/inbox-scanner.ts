@@ -33,11 +33,9 @@ export class InboxScanner {
 
   private async getLineItems(): Promise<InboxItem[]> {
     const items: InboxItem[] = [];
-    const folder = this.app.vault.getAbstractFileByPath(
-      this.settings.inboxFilesFolderPath
-    ) as TFolder;
+    const folder = this.app.vault.getAbstractFileByPath(this.settings.inboxFilesFolderPath);
 
-    if (!folder) {
+    if (!(folder instanceof TFolder)) {
       return items;
     }
 
@@ -67,9 +65,9 @@ export class InboxScanner {
 
   private async getNoteItems(): Promise<InboxItem[]> {
     const items: InboxItem[] = [];
-    const folder = this.app.vault.getAbstractFileByPath(this.settings.inboxFolderPath) as TFolder;
+    const folder = this.app.vault.getAbstractFileByPath(this.settings.inboxFolderPath);
 
-    if (!folder) {
+    if (!(folder instanceof TFolder)) {
       return items;
     }
 

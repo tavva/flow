@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying all waiting-for items aggregated from across the vault.
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
-import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
+import { WorkspaceLeaf, TFile, ViewStateResult, Editor } from "obsidian";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 import { WaitingForValidator } from "./waiting-for-validator";
 import { PluginSettings } from "./types";
@@ -16,23 +16,24 @@ interface GroupedItems {
   [filePath: string]: WaitingForItem[];
 }
 
+interface ViewWithEditor {
+  editor?: Editor;
+}
+
 export class WaitingForView extends RefreshingView {
   private settings: PluginSettings;
   private scanner: WaitingForScanner;
   private validator: WaitingForValidator;
-  private rightPaneLeaf: WorkspaceLeaf | null = null;
   private hasDataview: boolean = false;
-  private saveSettings: () => Promise<void>;
   private selectedSpheres: string[] = [];
   private selectedContexts: string[] = [];
   private stateRestored = false;
 
-  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
+  constructor(leaf: WorkspaceLeaf, settings: PluginSettings, _saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
     this.scanner = new WaitingForScanner(this.app, settings);
     this.validator = new WaitingForValidator(this.app);
-    this.saveSettings = saveSettings;
 
     // Check if Dataview is available for fast refreshes
     try {
@@ -67,7 +68,10 @@ export class WaitingForView extends RefreshingView {
   }
 
   // Restore state when Obsidian reloads
-  async setState(state: { selectedSpheres?: string[]; selectedContexts?: string[] }, result: any) {
+  async setState(
+    state: { selectedSpheres?: string[]; selectedContexts?: string[] },
+    result: ViewStateResult
+  ) {
     if (state?.selectedSpheres !== undefined) {
       this.selectedSpheres = state.selectedSpheres;
       this.stateRestored = true;
@@ -403,12 +407,11 @@ export class WaitingForView extends RefreshingView {
       // Always get a fresh leaf - the cached leaf may have been closed or detached
       const leaf = this.app.workspace.getLeaf("split", "vertical");
       await leaf.openFile(file);
-      this.rightPaneLeaf = leaf;
 
       if (lineNumber !== undefined) {
         const view = leaf.view;
         if (view && "editor" in view) {
-          const editor = (view as any).editor;
+          const editor = (view as ViewWithEditor).editor;
           if (editor) {
             editor.setCursor({ line: lineNumber - 1, ch: 0 });
             editor.scrollIntoView(

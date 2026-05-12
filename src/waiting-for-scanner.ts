@@ -3,7 +3,7 @@
 
 import { App, TFile } from "obsidian";
 import { extractContexts } from "./context-tags";
-import { getDataviewApi } from "./dataview-api";
+import { DataviewApi, getDataviewApi } from "./dataview-api";
 import { PluginSettings } from "./types";
 
 export interface WaitingForItem {
@@ -68,11 +68,11 @@ export class WaitingForScanner {
     return this.scanManually();
   }
 
-  private async scanWithDataview(dv: any): Promise<WaitingForItem[]> {
+  private async scanWithDataview(dv: DataviewApi): Promise<WaitingForItem[]> {
     const items: WaitingForItem[] = [];
 
     // Query all tasks with status 'w' (case insensitive)
-    const tasks = dv.pages().file.tasks.where((t: any) => {
+    const tasks = dv.pages().file.tasks.where((t) => {
       return t.status.toLowerCase() === "w";
     });
 

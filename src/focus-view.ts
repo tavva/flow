@@ -1,9 +1,9 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer } from "obsidian";
+import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer, ViewStateResult, Editor } from "obsidian";
 import { FocusItem, PluginSettings, FlowProject } from "./types";
-import { FocusValidator, ValidationResult } from "./focus-validator";
+import { FocusValidator } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
@@ -17,6 +17,32 @@ export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 interface GroupedFocusItems {
   projectActions: { [filePath: string]: FocusItem[] };
   generalActions: { [sphere: string]: FocusItem[] };
+}
+
+interface ViewWithEditor {
+  editor?: Editor;
+}
+
+interface GlobalSearchPlugin {
+  instance?: {
+    openGlobalSearch?: (query: string) => void;
+  };
+}
+
+interface AppWithInternalPlugins {
+  internalPlugins?: {
+    getPluginById?: (id: string) => GlobalSearchPlugin | undefined;
+  };
+}
+
+interface FlowWorkspaceTrigger {
+  trigger(
+    eventType: "flow:action-completed" | "flow:action-waiting",
+    detail: {
+      file: string;
+      action: string;
+    }
+  ): void;
 }
 
 export class FocusView extends RefreshingView {
@@ -77,7 +103,7 @@ export class FocusView extends RefreshingView {
   }
 
   // Restore state when Obsidian reloads
-  async setState(state: { selectedContexts?: string[] }, result: any) {
+  async setState(state: { selectedContexts?: string[] }, result: ViewStateResult) {
     if (state?.selectedContexts !== undefined) {
       this.selectedContexts = state.selectedContexts;
     }
@@ -922,7 +948,9 @@ export class FocusView extends RefreshingView {
       e.preventDefault();
       const tag = tagLink.textContent;
       if (tag) {
-        const searchPlugin = (this.app as any).internalPlugins?.getPluginById?.("global-search");
+        const searchPlugin = (this.app as AppWithInternalPlugins).internalPlugins?.getPluginById?.(
+          "global-search"
+        );
         searchPlugin?.instance?.openGlobalSearch?.(`tag:${tag}`);
       }
       return;
@@ -960,7 +988,7 @@ export class FocusView extends RefreshingView {
       if (lineNumber !== undefined) {
         const view = leaf.view;
         if (view && "editor" in view) {
-          const editor = (view as any).editor;
+          const editor = (view as ViewWithEditor).editor;
           if (editor) {
             editor.setCursor({ line: lineNumber - 1, ch: 0 });
             editor.scrollIntoView(
@@ -1010,7 +1038,7 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].completedAt = Date.now();
         await this.saveFocus();
-        (this.app.workspace as any).trigger("flow:action-completed", {
+        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
           file: item.file,
           action: item.text,
         });
@@ -1049,7 +1077,7 @@ export class FocusView extends RefreshingView {
       if (focusIndex !== -1) {
         this.focusItems[focusIndex].lineContent = updatedLine;
         await this.saveFocus();
-        (this.app.workspace as any).trigger("flow:action-waiting", {
+        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
           file: item.file,
           action: item.text,
         });
