@@ -42,7 +42,6 @@
     "jest": "^29.7.0",
     "jsdom": "^27.0.1",
     "obsidian": "latest",
-    "obsidian-dataview": "^0.5.68",
     "prettier": "^3.6.2",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
@@ -51,7 +50,6 @@
     "typescript": "^5.3.3"
   },
   "overrides": {
-    "svelte": "^4.2.19",
     "handlebars": "4.7.9",
     "flatted": "3.4.2",
     "picomatch": "2.3.2",
@@ -60,7 +58,6 @@
     }
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
     "@types/uuid": "^10.0.0",
     "gray-matter": "^4.0.3",
     "marked": "^15.0.12",

@@ -2,11 +2,11 @@
 // ABOUTME: Allows marking items complete or converting back to regular actions.
 
 import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
-import { getAPI } from "obsidian-dataview";
 import { WaitingForScanner, WaitingForItem } from "./waiting-for-scanner";
 import { WaitingForValidator } from "./waiting-for-validator";
 import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
+import { getDataviewApi } from "./dataview-api";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -34,7 +34,7 @@ export class WaitingForView extends RefreshingView {
 
     // Check if Dataview is available for fast refreshes
     try {
-      this.hasDataview = !!getAPI(this.app);
+      this.hasDataview = !!getDataviewApi(this.app);
     } catch {
       this.hasDataview = false;
     }

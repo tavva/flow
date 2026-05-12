@@ -2,8 +2,8 @@
 // ABOUTME: Returns array of waiting-for items with file location and line numbers for editing.
 
 import { App, TFile } from "obsidian";
-import { getAPI } from "obsidian-dataview";
 import { extractContexts } from "./context-tags";
+import { getDataviewApi } from "./dataview-api";
 import { PluginSettings } from "./types";
 
 export interface WaitingForItem {
@@ -56,7 +56,7 @@ export class WaitingForScanner {
   async scanWaitingForItems(): Promise<WaitingForItem[]> {
     // Try to use Dataview if available (much faster)
     try {
-      const dv = getAPI(this.app);
+      const dv = getDataviewApi(this.app);
       if (dv) {
         return await this.scanWithDataview(dv);
       }

@@ -2,7 +2,6 @@
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
 import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer } from "obsidian";
-import { getAPI } from "obsidian-dataview";
 import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator, ValidationResult } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
@@ -10,6 +9,7 @@ import { getProjectDisplayName } from "./project-hierarchy";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { RefreshingView } from "./refreshing-view";
 import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
+import { getDataviewApi } from "./dataview-api";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -39,7 +39,7 @@ export class FocusView extends RefreshingView {
 
     // Check if Dataview is available for fast refreshes
     try {
-      this.hasDataview = !!getAPI(this.app);
+      this.hasDataview = !!getDataviewApi(this.app);
     } catch {
       this.hasDataview = false;
     }
