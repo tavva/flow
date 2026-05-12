@@ -6,6 +6,7 @@ import { SomedayScanner, SomedayItem, SomedayProject, SomedayData } from "./some
 import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
 import { setActiveTimeout } from "./obsidian-platform";
+import { runAsync, wrapAsyncEvent } from "./async-utils";
 
 export const SOMEDAY_VIEW_TYPE = "flow-gtd-someday-view";
 
@@ -142,14 +143,17 @@ export class SomedayView extends RefreshingView {
         button.addClass("selected");
       }
 
-      button.addEventListener("click", async () => {
-        this.toggleSphereFilter(sphere);
-        // Re-render the entire view
-        const data = await this.scanner.scanSomedayData();
-        const viewContainer = this.contentEl;
-        viewContainer.empty();
-        this.renderContent(viewContainer as HTMLElement, data);
-      });
+      button.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          this.toggleSphereFilter(sphere);
+          // Re-render the entire view
+          const data = await this.scanner.scanSomedayData();
+          const viewContainer = this.contentEl;
+          viewContainer.empty();
+          this.renderContent(viewContainer as HTMLElement, data);
+        }, "Failed to filter someday view by sphere")
+      );
     });
   }
 
@@ -232,13 +236,16 @@ export class SomedayView extends RefreshingView {
         button.addClass("selected");
       }
 
-      button.addEventListener("click", async () => {
-        this.toggleContextFilter(context);
-        const data = await this.scanner.scanSomedayData();
-        const viewContainer = this.contentEl;
-        viewContainer.empty();
-        this.renderContent(viewContainer as HTMLElement, data);
-      });
+      button.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          this.toggleContextFilter(context);
+          const data = await this.scanner.scanSomedayData();
+          const viewContainer = this.contentEl;
+          viewContainer.empty();
+          this.renderContent(viewContainer as HTMLElement, data);
+        }, "Failed to filter someday view by context")
+      );
     });
   }
 
@@ -314,7 +321,7 @@ export class SomedayView extends RefreshingView {
     titleSpan.setText(somedayProject.project.title);
     titleSpan.style.cursor = "pointer";
     titleSpan.addEventListener("click", () => {
-      this.openFile(somedayProject.project.file);
+      runAsync(this.openFile(somedayProject.project.file), "Failed to open someday project");
     });
 
     // Show status badge
@@ -361,7 +368,7 @@ export class SomedayView extends RefreshingView {
       fileLink.style.cursor = "pointer";
       fileLink.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openFile(filePath);
+        runAsync(this.openFile(filePath), "Failed to open someday source file");
       });
 
       const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-someday-items" });
@@ -379,7 +386,7 @@ export class SomedayView extends RefreshingView {
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
     textSpan.addEventListener("click", () => {
-      this.openFile(item.file, item.lineNumber);
+      runAsync(this.openFile(item.file, item.lineNumber), "Failed to open someday item");
     });
 
     // Add "Move to Next Actions" button
@@ -388,10 +395,13 @@ export class SomedayView extends RefreshingView {
       text: "→ Next Actions",
     });
     moveButton.setAttribute("type", "button");
-    moveButton.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await this.moveToNextActions(item);
-    });
+    moveButton.addEventListener(
+      "click",
+      wrapAsyncEvent(async (e) => {
+        e.stopPropagation();
+        await this.moveToNextActions(item);
+      }, "Failed to move someday item to next actions")
+    );
   }
 
   private async moveToNextActions(item: SomedayItem): Promise<void> {

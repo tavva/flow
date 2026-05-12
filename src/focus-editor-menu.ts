@@ -6,6 +6,7 @@ import { FocusItem, PluginSettings } from "./types";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
+import { runAsync } from "./async-utils";
 
 /**
  * Determine the sphere for an action based on file context and inline tags
@@ -115,27 +116,42 @@ export function registerFocusEditorMenu(
       item
         .setTitle("Toggle Focus")
         .setIcon("list-checks")
-        .onClick(async () => {
-          const focusItems = await loadFocusItems(app.vault);
-          const onFocus = isActionOnFocus(filePath, lineNumber, focusItems);
-
-          if (onFocus) {
-            await removeFromFocus(app, filePath, lineNumber, focusItems, refreshFocusView);
-          } else {
-            await addToFocus(
+        .onClick(() => {
+          runAsync(
+            toggleFocusFromMenu(
               app,
               filePath,
               lineNumber,
               line,
               sphere,
               settings,
-              focusItems,
               refreshFocusView
-            );
-          }
+            ),
+            "Failed to toggle focus from editor menu"
+          );
         });
     });
   });
+}
+
+async function toggleFocusFromMenu(
+  app: App,
+  filePath: string,
+  lineNumber: number,
+  line: string,
+  sphere: string,
+  settings: PluginSettings,
+  refreshFocusView: () => Promise<void>
+): Promise<void> {
+  const focusItems = await loadFocusItems(app.vault);
+  const onFocus = isActionOnFocus(filePath, lineNumber, focusItems);
+
+  if (onFocus) {
+    await removeFromFocus(app, filePath, lineNumber, focusItems, refreshFocusView);
+    return;
+  }
+
+  await addToFocus(app, filePath, lineNumber, line, sphere, settings, focusItems, refreshFocusView);
 }
 
 /**

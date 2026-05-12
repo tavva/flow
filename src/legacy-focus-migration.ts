@@ -6,6 +6,7 @@ import { FocusItem, PluginSettings } from "./types";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
+import { wrapAsyncEvent } from "./async-utils";
 
 const LEGACY_TAG = "#flow-planned";
 
@@ -209,10 +210,13 @@ export class LegacyMigrationModal extends Modal {
       text: "Migrate",
       cls: "mod-cta",
     });
-    migrateBtn.addEventListener("click", async () => {
-      this.close();
-      await this.onMigrate();
-    });
+    migrateBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        this.close();
+        await this.onMigrate();
+      }, "Failed to migrate legacy focus items")
+    );
 
     const notNowBtn = buttonContainer.createEl("button", { text: "Not now" });
     notNowBtn.addEventListener("click", () => {
@@ -220,10 +224,13 @@ export class LegacyMigrationModal extends Modal {
     });
 
     const dismissBtn = buttonContainer.createEl("button", { text: "Don't ask again" });
-    dismissBtn.addEventListener("click", async () => {
-      this.close();
-      await this.onDismissForever();
-    });
+    dismissBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        this.close();
+        await this.onDismissForever();
+      }, "Failed to dismiss legacy focus migration")
+    );
   }
 
   onClose() {
@@ -278,10 +285,13 @@ export class TagRemovalModal extends Modal {
       text: "Remove tags",
       cls: "mod-cta",
     });
-    removeBtn.addEventListener("click", async () => {
-      this.close();
-      await this.onRemove();
-    });
+    removeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        this.close();
+        await this.onRemove();
+      }, "Failed to remove legacy focus tags")
+    );
 
     const keepNowBtn = buttonContainer.createEl("button", { text: "Keep for now" });
     keepNowBtn.addEventListener("click", () => {
@@ -289,10 +299,13 @@ export class TagRemovalModal extends Modal {
     });
 
     const keepForeverBtn = buttonContainer.createEl("button", { text: "Keep forever" });
-    keepForeverBtn.addEventListener("click", async () => {
-      this.close();
-      await this.onKeepForever();
-    });
+    keepForeverBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        this.close();
+        await this.onKeepForever();
+      }, "Failed to keep legacy focus tags")
+    );
   }
 
   onClose() {

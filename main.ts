@@ -17,6 +17,7 @@ import { generateCoverImage } from "./src/cover-image-generator";
 import { ProjectCoverDisplay } from "./src/project-cover-display";
 import { checkAndPromptLegacyMigration } from "./src/legacy-focus-migration";
 import { clearActiveInterval, setActiveInterval, TimerHandle } from "./src/obsidian-platform";
+import { runAsync } from "./src/async-utils";
 
 type InboxCommandConfig = {
   id: string;
@@ -33,8 +34,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     await this.loadSettings();
 
     // Check for legacy #flow-planned tags and prompt migration (after workspace is ready)
-    this.app.workspace.onLayoutReady(async () => {
-      await checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this));
+    this.app.workspace.onLayoutReady(() => {
+      runAsync(
+        checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this)),
+        "Failed to check legacy focus migration"
+      );
     });
 
     // Check and clear focus if needed
@@ -42,8 +46,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Set up periodic check (every hour)
     this.autoClearInterval = setActiveInterval(
-      async () => {
-        await this.checkAndClearFocus();
+      () => {
+        runAsync(this.checkAndClearFocus(), "Failed to auto-clear focus");
       },
       60 * 60 * 1000
     ); // 1 hour
@@ -82,7 +86,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Add ribbon icon
     this.addRibbonIcon("inbox", "Flow: Process Inbox", () => {
-      this.openInboxProcessingView();
+      this.openInboxProcessingViewFromCommand();
     });
 
     // Add to inbox ribbon icon
@@ -92,17 +96,17 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Add waiting for ribbon icon
     this.addRibbonIcon("clock", "Open Waiting For view", () => {
-      this.activateWaitingForView();
+      this.activateWaitingForViewFromCommand();
     });
 
     // Add someday ribbon icon
     this.addRibbonIcon("calendar-clock", "Open Someday view", () => {
-      this.activateSomedayView();
+      this.activateSomedayViewFromCommand();
     });
 
     // Add focus ribbon icon
     this.addRibbonIcon("list-checks", "Open Focus", () => {
-      this.activateFocusView();
+      this.activateFocusViewFromCommand();
     });
 
     const inboxCommands: InboxCommandConfig[] = [
@@ -159,7 +163,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       id: "open-waiting-for-view",
       name: "Open waiting for view",
       callback: () => {
-        this.activateWaitingForView();
+        this.activateWaitingForViewFromCommand();
       },
     });
 
@@ -168,7 +172,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       id: "open-someday-view",
       name: "Open someday view",
       callback: () => {
-        this.activateSomedayView();
+        this.activateSomedayViewFromCommand();
       },
     });
 
@@ -177,7 +181,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       id: "open-focus",
       name: "Open focus",
       callback: () => {
-        this.activateFocusView();
+        this.activateFocusViewFromCommand();
       },
     });
 
@@ -185,36 +189,11 @@ export default class FlowGTDCoachPlugin extends Plugin {
     this.addCommand({
       id: "generate-cover-image",
       name: "Generate cover image for current project",
-      callback: async () => {
-        // Check if AI is enabled (cover image generation requires AI)
-        if (!this.settings.aiEnabled) {
-          new Notice(
-            "AI features are disabled. Please enable AI in the plugin settings to use this feature."
-          );
-          return;
-        }
-
-        // Check if API key is configured
-        if (!this.hasRequiredApiKey()) {
-          new Notice(this.getMissingApiKeyMessage());
-          return;
-        }
-
-        const activeFile = this.app.workspace.getActiveFile();
-
-        if (!activeFile) {
-          new Notice("No active file. Please open a project file.");
-          return;
-        }
-
-        try {
-          new Notice("Generating cover image...");
-          const result = await generateCoverImage(this.app.vault, activeFile, this.settings);
-          new Notice(`Cover image generated successfully: ${result.imagePath}`);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          new Notice(`Failed to generate cover image: ${errorMessage}`);
-        }
+      callback: () => {
+        runAsync(
+          this.generateCoverImageForActiveProject(),
+          "Failed to run cover image generation command"
+        );
       },
     });
 
@@ -236,7 +215,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
       this.app.workspace.on("file-open", (file) => {
         if (file && this.projectCoverDisplay) {
           const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-          this.projectCoverDisplay.processFile(file, view || undefined);
+          runAsync(
+            this.projectCoverDisplay.processFile(file, view || undefined),
+            "Failed to process project cover image"
+          );
         }
       })
     );
@@ -248,7 +230,13 @@ export default class FlowGTDCoachPlugin extends Plugin {
           this.app.workspace.iterateRootLeaves((leaf) => {
             const view = leaf.view;
             if (view instanceof MarkdownView && view.file === file) {
-              this.projectCoverDisplay?.processFile(file, view);
+              const projectCoverDisplay = this.projectCoverDisplay;
+              if (projectCoverDisplay) {
+                runAsync(
+                  projectCoverDisplay.processFile(file, view),
+                  "Failed to refresh project cover image"
+                );
+              }
             }
           });
         }
@@ -300,7 +288,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
       id: config.id,
       name: config.name,
       callback: () => {
-        this.openInboxProcessingView();
+        this.openInboxProcessingViewFromCommand();
       },
     });
   }
@@ -321,10 +309,30 @@ export default class FlowGTDCoachPlugin extends Plugin {
         id: commandId,
         name: `Open ${this.getDisplaySphereName(sphere)} sphere`,
         callback: () => {
-          this.openSphereView(sphere);
+          this.openSphereViewFromCommand(sphere);
         },
       });
     });
+  }
+
+  private openInboxProcessingViewFromCommand(): void {
+    runAsync(this.openInboxProcessingView(), "Failed to open inbox processing view");
+  }
+
+  private openSphereViewFromCommand(sphere: string): void {
+    runAsync(this.openSphereView(sphere), `Failed to open ${sphere} sphere view`);
+  }
+
+  private activateWaitingForViewFromCommand(): void {
+    runAsync(this.activateWaitingForView(), "Failed to open waiting for view");
+  }
+
+  private activateSomedayViewFromCommand(): void {
+    runAsync(this.activateSomedayView(), "Failed to open someday view");
+  }
+
+  private activateFocusViewFromCommand(): void {
+    runAsync(this.activateFocusView(), "Failed to open focus view");
   }
 
   updateSphereCommands() {
@@ -413,6 +421,38 @@ export default class FlowGTDCoachPlugin extends Plugin {
       return "AI features are disabled. Please enable AI in the plugin settings to use this feature.";
     }
     return "Please set your API key in the plugin settings first";
+  }
+
+  private async generateCoverImageForActiveProject(): Promise<void> {
+    // Check if AI is enabled (cover image generation requires AI)
+    if (!this.settings.aiEnabled) {
+      new Notice(
+        "AI features are disabled. Please enable AI in the plugin settings to use this feature."
+      );
+      return;
+    }
+
+    // Check if API key is configured
+    if (!this.hasRequiredApiKey()) {
+      new Notice(this.getMissingApiKeyMessage());
+      return;
+    }
+
+    const activeFile = this.app.workspace.getActiveFile();
+
+    if (!activeFile) {
+      new Notice("No active file. Please open a project file.");
+      return;
+    }
+
+    try {
+      new Notice("Generating cover image...");
+      const result = await generateCoverImage(this.app.vault, activeFile, this.settings);
+      new Notice(`Cover image generated successfully: ${result.imagePath}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      new Notice(`Failed to generate cover image: ${errorMessage}`);
+    }
   }
 
   private openNewProjectModal() {

@@ -23,6 +23,7 @@ import {
   setActiveTimeout,
   TimerHandle,
 } from "./obsidian-platform";
+import { runAsync, wrapAsyncEvent } from "./async-utils";
 
 export const SPHERE_VIEW_TYPE = "flow-gtd-sphere-view";
 
@@ -194,7 +195,7 @@ export class SphereView extends ItemView {
           this.suppressFocusRefresh = false;
           return;
         }
-        void this.refreshFocusHighlighting();
+        runAsync(this.refreshFocusHighlighting(), "Failed to refresh focus highlighting");
       } else if (this.isRelevantFile(file)) {
         this.scheduleAutoRefresh();
       }
@@ -218,7 +219,10 @@ export class SphereView extends ItemView {
     const waitingRef = (this.app.workspace as any).on(
       "flow:action-waiting",
       (detail: { file: string; action: string }) => {
-        void this.markActionWaitingInDom(detail.file, detail.action);
+        runAsync(
+          this.markActionWaitingInDom(detail.file, detail.action),
+          "Failed to mark action waiting in sphere view"
+        );
       }
     );
     this.workspaceEventRefs.push(waitingRef);
@@ -305,7 +309,7 @@ export class SphereView extends ItemView {
     this.scheduledRefreshTimeout = setActiveTimeout(
       () => {
         this.scheduledRefreshTimeout = null;
-        void this.refresh();
+        runAsync(this.refresh(), "Failed to auto-refresh sphere view");
       },
       500,
       this.contentEl
@@ -406,7 +410,7 @@ export class SphereView extends ItemView {
 
       button.addEventListener("click", () => {
         this.toggleContextFilter(context);
-        void this.refresh();
+        runAsync(this.refresh(), "Failed to refresh context filter");
       });
     });
   }
@@ -570,7 +574,7 @@ export class SphereView extends ItemView {
       link.style.cursor = "pointer";
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openProjectFile(project.file);
+        runAsync(this.openProjectFile(project.file), "Failed to open sphere project file");
       });
     });
   }
@@ -651,7 +655,7 @@ export class SphereView extends ItemView {
       titleLink.style.cursor = "pointer";
       titleLink.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openProjectFile(project.file);
+        runAsync(this.openProjectFile(project.file), "Failed to open sphere project file");
       });
 
       // Context menu for toggling current status
@@ -663,8 +667,11 @@ export class SphereView extends ItemView {
             item
               .setTitle("Remove from current")
               .setIcon("x")
-              .onClick(async () => {
-                await this.toggleProjectCurrent(project, false);
+              .onClick(() => {
+                runAsync(
+                  this.toggleProjectCurrent(project, false),
+                  "Failed to remove project from current"
+                );
               });
           });
         } else {
@@ -672,8 +679,11 @@ export class SphereView extends ItemView {
             item
               .setTitle("Mark as current")
               .setIcon("star")
-              .onClick(async () => {
-                await this.toggleProjectCurrent(project, true);
+              .onClick(() => {
+                runAsync(
+                  this.toggleProjectCurrent(project, true),
+                  "Failed to mark project current"
+                );
               });
           });
         }
@@ -699,7 +709,10 @@ export class SphereView extends ItemView {
         }
         // Render all action items (async operations will complete in background)
         project.nextActions.forEach((action, index) => {
-          void this.renderActionItem(list, action, project.file, this.sphere, false);
+          runAsync(
+            this.renderActionItem(list, action, project.file, this.sphere, false),
+            "Failed to render sphere action item"
+          );
         });
       } else {
         this.renderEmptyMessage(content, "No next actions captured yet.");
@@ -732,7 +745,10 @@ export class SphereView extends ItemView {
 
     // Render all action items (async operations will complete in background)
     actions.forEach((action, index) => {
-      void this.renderActionItem(list, action, nextActionsFile, this.sphere, true);
+      runAsync(
+        this.renderActionItem(list, action, nextActionsFile, this.sphere, true),
+        "Failed to render general next action item"
+      );
     });
   }
 
@@ -770,34 +786,37 @@ export class SphereView extends ItemView {
       item.addClass("sphere-action-in-focus");
     }
 
-    item.addEventListener("click", async (e) => {
-      // Capture element reference before any async operations
-      const clickedElement = e.currentTarget as HTMLElement;
+    item.addEventListener(
+      "click",
+      wrapAsyncEvent(async (e) => {
+        // Capture element reference before any async operations
+        const clickedElement = e.currentTarget as HTMLElement;
 
-      // Use the line result we already have, or find it again if needed
-      const finalLineResult = lineResult.found
-        ? lineResult
-        : await this.lineFinder.findActionLine(file, action);
+        // Use the line result we already have, or find it again if needed
+        const finalLineResult = lineResult.found
+          ? lineResult
+          : await this.lineFinder.findActionLine(file, action);
 
-      if (!finalLineResult.found) {
-        console.error("Could not find line for action:", action);
-        return;
-      }
+        if (!finalLineResult.found) {
+          console.error("Could not find line for action:", action);
+          return;
+        }
 
-      if (await this.isOnFocus(file, finalLineResult.lineNumber!)) {
-        await this.removeFromFocus(file, finalLineResult.lineNumber!, clickedElement);
-      } else {
-        await this.addToFocus(
-          action,
-          file,
-          finalLineResult.lineNumber!,
-          finalLineResult.lineContent!,
-          sphere,
-          isGeneral,
-          clickedElement
-        );
-      }
-    });
+        if (await this.isOnFocus(file, finalLineResult.lineNumber!)) {
+          await this.removeFromFocus(file, finalLineResult.lineNumber!, clickedElement);
+        } else {
+          await this.addToFocus(
+            action,
+            file,
+            finalLineResult.lineNumber!,
+            finalLineResult.lineContent!,
+            sphere,
+            isGeneral,
+            clickedElement
+          );
+        }
+      }, "Failed to toggle sphere action focus")
+    );
   }
 
   private renderPriorityDropdown(
@@ -830,16 +849,19 @@ export class SphereView extends ItemView {
     }
 
     // Handle change event - save to file
-    select.addEventListener("change", async (e) => {
-      const newPriority = parseInt((e.target as HTMLSelectElement).value, 10);
-      try {
-        await this.fileWriter.updateProjectPriority(project, newPriority);
-        // Update the label text immediately for responsiveness
-        label.setText(`Priority ${newPriority}`);
-      } catch (error) {
-        console.error("Failed to update project priority", error);
-      }
-    });
+    select.addEventListener(
+      "change",
+      wrapAsyncEvent(async (e) => {
+        const newPriority = parseInt((e.target as HTMLSelectElement).value, 10);
+        try {
+          await this.fileWriter.updateProjectPriority(project, newPriority);
+          // Update the label text immediately for responsiveness
+          label.setText(`Priority ${newPriority}`);
+        } catch (error) {
+          console.error("Failed to update project priority", error);
+        }
+      }, "Failed to update project priority")
+    );
   }
 
   private createSection(container: HTMLElement, title: string): HTMLElement {

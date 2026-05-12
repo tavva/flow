@@ -8,6 +8,7 @@ import { PluginSettings } from "./types";
 import { RefreshingView } from "./refreshing-view";
 import { getDataviewApi } from "./dataview-api";
 import { setActiveTimeout } from "./obsidian-platform";
+import { runAsync, wrapAsyncEvent } from "./async-utils";
 
 export const WAITING_FOR_VIEW_TYPE = "flow-gtd-waiting-for-view";
 
@@ -166,14 +167,17 @@ export class WaitingForView extends RefreshingView {
         button.addClass("selected");
       }
 
-      button.addEventListener("click", async () => {
-        this.toggleSphereFilter(sphere);
-        // Re-render the entire view
-        const items = await this.scanner.scanWaitingForItems();
-        const viewContainer = this.contentEl;
-        viewContainer.empty();
-        this.renderContent(viewContainer as HTMLElement, items);
-      });
+      button.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          this.toggleSphereFilter(sphere);
+          // Re-render the entire view
+          const items = await this.scanner.scanWaitingForItems();
+          const viewContainer = this.contentEl;
+          viewContainer.empty();
+          this.renderContent(viewContainer as HTMLElement, items);
+        }, "Failed to filter waiting-for view by sphere")
+      );
     });
   }
 
@@ -238,13 +242,16 @@ export class WaitingForView extends RefreshingView {
         button.addClass("selected");
       }
 
-      button.addEventListener("click", async () => {
-        this.toggleContextFilter(context);
-        const refreshedItems = await this.scanner.scanWaitingForItems();
-        const viewContainer = this.contentEl;
-        viewContainer.empty();
-        this.renderContent(viewContainer as HTMLElement, refreshedItems);
-      });
+      button.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          this.toggleContextFilter(context);
+          const refreshedItems = await this.scanner.scanWaitingForItems();
+          const viewContainer = this.contentEl;
+          viewContainer.empty();
+          this.renderContent(viewContainer as HTMLElement, refreshedItems);
+        }, "Failed to filter waiting-for view by context")
+      );
     });
   }
 
@@ -317,7 +324,7 @@ export class WaitingForView extends RefreshingView {
       fileLink.style.cursor = "pointer";
       fileLink.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openFile(filePath);
+        runAsync(this.openFile(filePath), "Failed to open waiting-for source file");
       });
 
       const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-waiting-for-items" });
@@ -335,7 +342,7 @@ export class WaitingForView extends RefreshingView {
     textSpan.setText(item.text);
     textSpan.style.cursor = "pointer";
     textSpan.addEventListener("click", () => {
-      this.openFile(item.file, item.lineNumber);
+      runAsync(this.openFile(item.file, item.lineNumber), "Failed to open waiting-for item");
     });
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-waiting-for-item-actions" });
@@ -345,20 +352,26 @@ export class WaitingForView extends RefreshingView {
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
-    completeBtn.addEventListener("click", async () => {
-      await this.toggleItemComplete(item);
-      this.removeItemAndCleanup(itemEl, container, fileSection);
-    });
+    completeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.toggleItemComplete(item);
+        this.removeItemAndCleanup(itemEl, container, fileSection);
+      }, "Failed to complete waiting-for item")
+    );
 
     const convertBtn = actionsSpan.createEl("button", {
       cls: "flow-gtd-waiting-for-action-btn",
       text: "▶",
     });
     convertBtn.title = "Convert back to regular action";
-    convertBtn.addEventListener("click", async () => {
-      await this.convertToAction(item);
-      this.removeItemAndCleanup(itemEl, container, fileSection);
-    });
+    convertBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.convertToAction(item);
+        this.removeItemAndCleanup(itemEl, container, fileSection);
+      }, "Failed to convert waiting-for item")
+    );
   }
 
   private removeItemAndCleanup(

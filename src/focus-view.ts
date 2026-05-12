@@ -10,6 +10,7 @@ import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { RefreshingView } from "./refreshing-view";
 import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
 import { getDataviewApi } from "./dataview-api";
+import { runAsync, wrapAsyncEvent } from "./async-utils";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -302,10 +303,13 @@ export class FocusView extends RefreshingView {
         button.addClass("selected");
       }
 
-      button.addEventListener("click", async () => {
-        this.toggleContextFilter(context);
-        await this.onOpen();
-      });
+      button.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          this.toggleContextFilter(context);
+          await this.onOpen();
+        }, "Failed to filter focus items by context")
+      );
     });
   }
 
@@ -367,7 +371,7 @@ export class FocusView extends RefreshingView {
         cls: "flow-gtd-focus-items flow-gtd-focus-pinned-items",
       });
       pinnedItems.forEach((item) => {
-        void this.renderPinnedItem(pinnedList, item);
+        runAsync(this.renderPinnedItem(pinnedList, item), "Failed to render pinned focus item");
       });
     }
 
@@ -427,11 +431,15 @@ export class FocusView extends RefreshingView {
 
     header.createSpan({ text: ` Completed Today (${completedItems.length})` });
 
-    header.addEventListener("click", async () => {
-      this.settings.completedTodaySectionCollapsed = !this.settings.completedTodaySectionCollapsed;
-      await this.saveSettings();
-      await this.onOpen(); // Re-render
-    });
+    header.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        this.settings.completedTodaySectionCollapsed =
+          !this.settings.completedTodaySectionCollapsed;
+        await this.saveSettings();
+        await this.onOpen(); // Re-render
+      }, "Failed to toggle completed focus section")
+    );
 
     // Content (hidden if collapsed)
     if (!this.settings.completedTodaySectionCollapsed) {
@@ -472,7 +480,7 @@ export class FocusView extends RefreshingView {
     fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
       e.preventDefault();
-      this.openFile(filePath);
+      runAsync(this.openFile(filePath), "Failed to open focus source file");
     });
 
     // Add parent project context if it exists
@@ -488,7 +496,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      void this.renderCompletedItem(itemsList, item);
+      runAsync(this.renderCompletedItem(itemsList, item), "Failed to render completed focus item");
     });
   }
 
@@ -502,7 +510,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      void this.renderCompletedItem(itemsList, item);
+      runAsync(this.renderCompletedItem(itemsList, item), "Failed to render completed focus item");
     });
   }
 
@@ -521,7 +529,7 @@ export class FocusView extends RefreshingView {
     fileLink.style.cursor = "pointer";
     fileLink.addEventListener("click", (e) => {
       e.preventDefault();
-      this.openFile(filePath);
+      runAsync(this.openFile(filePath), "Failed to open focus source file");
     });
 
     // Add parent project context if it exists
@@ -537,7 +545,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      void this.renderItem(itemsList, item);
+      runAsync(this.renderItem(itemsList, item), "Failed to render focus item");
     });
   }
 
@@ -551,7 +559,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      void this.renderItem(itemsList, item);
+      runAsync(this.renderItem(itemsList, item), "Failed to render focus item");
     });
   }
 
@@ -592,9 +600,12 @@ export class FocusView extends RefreshingView {
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
-    completeBtn.addEventListener("click", async () => {
-      await this.markItemComplete(item);
-    });
+    completeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.markItemComplete(item);
+      }, "Failed to complete focus item")
+    );
 
     // Three-dot menu button (mobile only, hidden on desktop via CSS)
     const menuBtn = actionsSpan.createEl("button", {
@@ -617,9 +628,12 @@ export class FocusView extends RefreshingView {
         text: "📌",
       });
       pinBtn.title = "Pin to top";
-      pinBtn.addEventListener("click", async () => {
-        await this.pinItem(item);
-      });
+      pinBtn.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          await this.pinItem(item);
+        }, "Failed to pin focus item")
+      );
     }
 
     // Only show "Convert to waiting for" button for non-waiting items
@@ -629,9 +643,12 @@ export class FocusView extends RefreshingView {
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
-      waitingBtn.addEventListener("click", async () => {
-        await this.convertToWaitingFor(item);
-      });
+      waitingBtn.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          await this.convertToWaitingFor(item);
+        }, "Failed to convert focus item to waiting")
+      );
     }
 
     const removeBtn = secondaryActions.createEl("button", {
@@ -639,9 +656,12 @@ export class FocusView extends RefreshingView {
       text: "🗑️",
     });
     removeBtn.title = "Remove from focus";
-    removeBtn.addEventListener("click", async () => {
-      await this.removeFromFocus(item);
-    });
+    removeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.removeFromFocus(item);
+      }, "Failed to remove focus item")
+    );
   }
 
   private async renderPinnedItem(container: HTMLElement, item: FocusItem) {
@@ -708,9 +728,12 @@ export class FocusView extends RefreshingView {
       text: "✓",
     });
     completeBtn.title = "Mark as complete";
-    completeBtn.addEventListener("click", async () => {
-      await this.markItemComplete(item);
-    });
+    completeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.markItemComplete(item);
+      }, "Failed to complete pinned focus item")
+    );
 
     // Three-dot menu button (mobile only, hidden on desktop via CSS)
     const menuBtn = actionsSpan.createEl("button", {
@@ -732,9 +755,12 @@ export class FocusView extends RefreshingView {
       text: "⬇️",
     });
     unpinBtn.title = "Unpin from top";
-    unpinBtn.addEventListener("click", async () => {
-      await this.unpinItem(item);
-    });
+    unpinBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.unpinItem(item);
+      }, "Failed to unpin focus item")
+    );
 
     // Only show "Convert to waiting for" button for non-waiting items
     if (!isWaitingFor) {
@@ -743,9 +769,12 @@ export class FocusView extends RefreshingView {
         text: "🕐",
       });
       waitingBtn.title = "Convert to waiting for";
-      waitingBtn.addEventListener("click", async () => {
-        await this.convertToWaitingFor(item);
-      });
+      waitingBtn.addEventListener(
+        "click",
+        wrapAsyncEvent(async () => {
+          await this.convertToWaitingFor(item);
+        }, "Failed to convert pinned focus item to waiting")
+      );
     }
 
     const removeBtn = secondaryActions.createEl("button", {
@@ -753,9 +782,12 @@ export class FocusView extends RefreshingView {
       text: "🗑️",
     });
     removeBtn.title = "Remove from focus";
-    removeBtn.addEventListener("click", async () => {
-      await this.removeFromFocus(item);
-    });
+    removeBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.removeFromFocus(item);
+      }, "Failed to remove pinned focus item")
+    );
   }
 
   private async renderCompletedItem(container: HTMLElement, item: FocusItem) {
@@ -828,7 +860,7 @@ export class FocusView extends RefreshingView {
       });
       projectLink.addEventListener("click", (e) => {
         e.preventDefault();
-        this.openFile(project.file);
+        runAsync(this.openFile(project.file), "Failed to open current project file");
       });
     }
   }
@@ -880,7 +912,7 @@ export class FocusView extends RefreshingView {
     archiveLink.style.textDecoration = "underline";
     archiveLink.addEventListener("click", (e) => {
       e.preventDefault();
-      this.openFile(this.settings.focusArchiveFile);
+      runAsync(this.openFile(this.settings.focusArchiveFile), "Failed to open focus archive");
     });
 
     const dismissBtn = notificationEl.createEl("button", {
@@ -892,10 +924,13 @@ export class FocusView extends RefreshingView {
     dismissBtn.style.border = "none";
     dismissBtn.style.background = "transparent";
     dismissBtn.title = "Dismiss";
-    dismissBtn.addEventListener("click", async () => {
-      await this.dismissClearNotification();
-      notificationEl.remove();
-    });
+    dismissBtn.addEventListener(
+      "click",
+      wrapAsyncEvent(async () => {
+        await this.dismissClearNotification();
+        notificationEl.remove();
+      }, "Failed to dismiss focus clear notification")
+    );
   }
 
   private isLeafAttached(leaf: WorkspaceLeaf): boolean {
@@ -910,7 +945,7 @@ export class FocusView extends RefreshingView {
   private handleRenderedTextClick(e: MouseEvent, item: FocusItem): void {
     const target = e.target;
     if (!(target instanceof HTMLElement)) {
-      this.openFile(item.file, item.lineNumber);
+      runAsync(this.openFile(item.file, item.lineNumber), "Failed to open rendered focus item");
       return;
     }
 
@@ -943,7 +978,7 @@ export class FocusView extends RefreshingView {
     }
 
     // Default: navigate to source file
-    this.openFile(item.file, item.lineNumber);
+    runAsync(this.openFile(item.file, item.lineNumber), "Failed to open rendered focus item");
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {

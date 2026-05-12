@@ -3,6 +3,7 @@
 
 import { EventRef, ItemView, TFile, WorkspaceLeaf } from "obsidian";
 import { clearActiveTimeout, setActiveTimeout, TimerHandle } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 export abstract class RefreshingView extends ItemView {
   private modifyEventRef: EventRef | null = null;
@@ -60,23 +61,27 @@ export abstract class RefreshingView extends ItemView {
     }
 
     this.refreshTimeout = setActiveTimeout(
-      async () => {
+      () => {
         this.refreshTimeout = null;
 
         if (this.isRefreshing) {
           return;
         }
 
-        this.isRefreshing = true;
-        try {
-          await this.performRefresh();
-        } finally {
-          this.isRefreshing = false;
-        }
+        runAsync(this.performScheduledRefresh(), "Failed to refresh view");
       },
       this.getDebounceTime(),
       this.contentEl
     );
+  }
+
+  private async performScheduledRefresh(): Promise<void> {
+    this.isRefreshing = true;
+    try {
+      await this.performRefresh();
+    } finally {
+      this.isRefreshing = false;
+    }
   }
 
   /**

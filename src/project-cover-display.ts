@@ -162,12 +162,16 @@ export class ProjectCoverDisplay {
    * Process all open markdown views
    */
   async processAllViews(): Promise<void> {
+    const pendingUpdates: Promise<void>[] = [];
+
     this.app.workspace.iterateRootLeaves((leaf) => {
       const view = leaf.view;
       if (view instanceof MarkdownView) {
-        this.processFile(view.file, view);
+        pendingUpdates.push(this.processFile(view.file, view));
       }
     });
+
+    await Promise.all(pendingUpdates);
   }
 
   /**

@@ -3,6 +3,7 @@ import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS } from "./types";
 import { FolderPathSuggest, FilePathSuggest } from "./suggesters";
 import { openInActiveWindow } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
@@ -31,9 +32,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           .setLimits(1, 5, 1)
           .setValue(this.plugin.settings.defaultPriority)
           .setDynamicTooltip()
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.defaultPriority = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -51,9 +52,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
             completed: "Completed",
           })
           .setValue(this.plugin.settings.defaultStatus)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.defaultStatus = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -64,9 +65,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         "Automatically generate a cover image when creating new projects during inbox processing"
       )
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange(async (value) => {
+        toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange((value) => {
           this.plugin.settings.autoCreateCoverImage = value;
-          await this.plugin.saveSettings();
+          this.saveSettingsAfterChange();
         })
       );
 
@@ -74,9 +75,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       .setName("Display cover images on project notes")
       .setDesc("Show cover images on project notes")
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.displayCoverImages).onChange(async (value) => {
+        toggle.setValue(this.plugin.settings.displayCoverImages).onChange((value) => {
           this.plugin.settings.displayCoverImages = value;
-          await this.plugin.saveSettings();
+          this.saveSettingsAfterChange();
         })
       );
 
@@ -94,9 +95,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Flow Inbox Files")
           .setValue(this.plugin.settings.inboxFilesFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.inboxFilesFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -109,9 +110,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Flow Inbox Folder")
           .setValue(this.plugin.settings.inboxFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.inboxFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -124,9 +125,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Processed Inbox Folder Notes")
           .setValue(this.plugin.settings.processedInboxFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.processedInboxFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -145,9 +146,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Next actions.md")
           .setValue(this.plugin.settings.nextActionsFilePath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.nextActionsFilePath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
@@ -160,9 +161,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Someday.md")
           .setValue(this.plugin.settings.somedayFilePath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.somedayFilePath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
@@ -175,9 +176,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Projects")
           .setValue(this.plugin.settings.projectsFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.projectsFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -192,9 +193,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Templates/Project.md")
           .setValue(this.plugin.settings.projectTemplateFilePath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.projectTemplateFilePath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
@@ -207,9 +208,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("People")
           .setValue(this.plugin.settings.personsFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.personsFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -224,9 +225,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Templates/Person.md")
           .setValue(this.plugin.settings.personTemplateFilePath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.personTemplateFilePath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
@@ -241,9 +242,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Inbox.md")
           .setValue(this.plugin.settings.defaultInboxFile)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.defaultInboxFile = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -255,9 +256,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Assets/flow-project-cover-images")
           .setValue(this.plugin.settings.coverImagesFolderPath)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.coverImagesFolderPath = value;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FolderPathSuggest(this.app, text.inputEl);
       });
@@ -275,12 +276,12 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("personal, work, health")
           .setValue(this.plugin.settings.spheres.join(", "))
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.spheres = value
               .split(",")
               .map((s) => s.trim())
               .filter((s) => s.length > 0);
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
             this.plugin.updateSphereCommands();
           })
       );
@@ -295,9 +296,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("context")
           .setValue(this.plugin.settings.contextTagPrefix)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.contextTagPrefix = value.trim() || "context";
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -316,7 +317,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("03:00")
           .setValue(this.plugin.settings.focusAutoClearTime)
-          .onChange(async (value) => {
+          .onChange((value) => {
             const trimmed = value.trim();
             // Validate format if not empty
             if (trimmed && !/^\d{1,2}:\d{2}$/.test(trimmed)) {
@@ -324,7 +325,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
               return;
             }
             this.plugin.settings.focusAutoClearTime = trimmed;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -337,9 +338,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("Focus Archive.md")
           .setValue(this.plugin.settings.focusArchiveFile)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.focusArchiveFile = value.trim();
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
@@ -358,9 +359,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         "Enable AI-powered cover image generation. When disabled, AI functionality is unavailable."
       )
       .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.aiEnabled).onChange(async (value) => {
+        toggle.setValue(this.plugin.settings.aiEnabled).onChange((value) => {
           this.plugin.settings.aiEnabled = value;
-          await this.plugin.saveSettings();
+          this.saveSettingsAfterChange();
           aiSettingsContainer.style.display = value ? "" : "none";
         })
       );
@@ -372,9 +373,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder("sk-or-v1-...")
           .setValue(this.plugin.settings.openrouterApiKey)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.openrouterApiKey = value.trim();
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           });
         text.inputEl.type = "password";
       })
@@ -391,10 +392,10 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder(DEFAULT_SETTINGS.openrouterBaseUrl)
           .setValue(this.plugin.settings.openrouterBaseUrl)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.openrouterBaseUrl =
               value.trim() || DEFAULT_SETTINGS.openrouterBaseUrl;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -405,10 +406,10 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         text
           .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
           .setValue(this.plugin.settings.openrouterImageModel)
-          .onChange(async (value) => {
+          .onChange((value) => {
             this.plugin.settings.openrouterImageModel =
               value.trim() || DEFAULT_SETTINGS.openrouterImageModel;
-            await this.plugin.saveSettings();
+            this.saveSettingsAfterChange();
           })
       );
 
@@ -424,5 +425,9 @@ export class FlowGTDSettingTab extends PluginSettingTab {
 
     // Set initial visibility
     aiSettingsContainer.style.display = this.plugin.settings.aiEnabled ? "" : "none";
+  }
+
+  private saveSettingsAfterChange(): void {
+    runAsync(this.plugin.saveSettings(), "Failed to save Flow settings");
   }
 }

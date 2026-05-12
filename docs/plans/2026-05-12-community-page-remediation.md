@@ -91,10 +91,11 @@ Already handled before this plan:
 
 ## Task 4: Async Handling
 
-- [ ] Review every community-reported unhandled promise location in current `main`.
-- [ ] For intentional fire-and-forget calls, prefix with `void` and attach `.catch` where user-facing errors should be noticed.
-- [ ] Await save/write/refresh calls where ordering matters.
-- [ ] Add regression tests for any changed sequencing that affects persistence or UI refresh behavior.
+- [x] Review every community-reported unhandled promise location in current `main`.
+- [x] For intentional fire-and-forget calls, prefix with `void` and attach `.catch` where user-facing errors should be noticed.
+- [x] Await save/write/refresh calls where ordering matters.
+- [x] Add regression tests for any changed sequencing that affects persistence or UI refresh behavior.
+  - 2026-05-12: Added `src/async-utils.ts`; routed host callbacks, settings saves, menu actions, DOM events, scheduled refreshes, cover image processing, and intentional background renders through explicit rejection handling. `ProjectCoverDisplay.processAllViews()` now awaits all file updates.
 
 ## Task 5: CSS And Inline Style Cleanup
 
