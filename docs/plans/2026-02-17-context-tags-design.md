@@ -21,8 +21,9 @@ pattern:
 
 ### Scope
 
-- **Action lines only.** No project-level defaults, no tags on projects or
-  someday items.
+- **Action lines only.** No project-level defaults; context tags are not
+  inherited from project frontmatter. Context tags on action lines in all
+  four views (including Someday.md) are extracted and filterable.
 - **Not stripped from display text.** Unlike `#sphere/X`, context tags remain
   visible — they convey useful information at a glance.
 - **No predefined list.** Contexts are discovered dynamically from whatever
@@ -74,6 +75,5 @@ Follows the existing sphere filter pattern from WaitingForView/SomedayView.
 
 ### Out of Scope
 
-- Autocomplete for context tags in inbox modal (follow-up)
 - AI-suggested context tags
 - Context tags on non-action items

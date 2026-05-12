@@ -106,6 +106,21 @@ describe("ActionLineFinder", () => {
     expect(result2.lineNumber).toBe(3);
   });
 
+  it("should find action when sphere tag was stripped but other tags remain", async () => {
+    const mockFile = new TFile();
+    mockVault.getAbstractFileByPath.mockReturnValue(mockFile);
+    mockVault.read.mockResolvedValue(
+      "- [ ] Restaurants to go to #sphere/personal #ctx/test\n- [ ] Another action\n"
+    );
+
+    // The sphere view strips #sphere/X tags, so the action text won't have it
+    const result = await finder.findActionLine("Next actions.md", "Restaurants to go to #ctx/test");
+
+    expect(result.found).toBe(true);
+    expect(result.lineNumber).toBe(1);
+    expect(result.lineContent).toBe("- [ ] Restaurants to go to #sphere/personal #ctx/test");
+  });
+
   it("should return first match when action appears multiple times", async () => {
     const mockFile = new TFile();
     mockVault.getAbstractFileByPath.mockReturnValue(mockFile);

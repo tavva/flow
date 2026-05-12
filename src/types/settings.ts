@@ -1,16 +1,10 @@
 // ABOUTME: Plugin settings and configuration types
 // ABOUTME: Contains PluginSettings interface and default values
 
-export type LLMProvider = "anthropic" | "openai-compatible";
-
 export interface PluginSettings {
   aiEnabled: boolean; // Master toggle for all AI functionality
-  llmProvider: LLMProvider;
-  anthropicApiKey: string;
-  anthropicModel: string;
-  openaiApiKey: string;
-  openaiBaseUrl: string;
-  openaiModel: string;
+  openrouterApiKey: string;
+  openrouterBaseUrl: string;
   openrouterImageModel: string;
   defaultPriority: number;
   defaultStatus: string;
@@ -27,6 +21,7 @@ export interface PluginSettings {
   coverImagesFolderPath: string; // Folder path for generated project cover images
   autoCreateCoverImage: boolean; // Automatically create cover images for new projects
   displayCoverImages: boolean; // Display cover images on project notes
+  contextTagPrefix: string; // Prefix for GTD context tags (e.g. #context/home)
   spheres: string[];
   focusAutoClearTime: string; // Empty string for off, or time in HH:MM format (e.g., "03:00")
   focusArchiveFile: string; // Path to archive file for cleared tasks
@@ -40,13 +35,9 @@ export interface PluginSettings {
 
 export const DEFAULT_SETTINGS: PluginSettings = {
   aiEnabled: false, // Disabled by default
-  llmProvider: "openai-compatible",
-  openaiApiKey: "",
-  openaiBaseUrl: "https://openrouter.ai/api/v1",
-  openaiModel: "google/gemini-2.5-flash",
+  openrouterApiKey: "",
+  openrouterBaseUrl: "https://openrouter.ai/api/v1",
   openrouterImageModel: "google/gemini-2.5-flash-image",
-  anthropicApiKey: "",
-  anthropicModel: "claude-haiku-4-5",
   defaultPriority: 2,
   defaultStatus: "live",
   inboxFilesFolderPath: "Flow Inbox Files",
@@ -62,6 +53,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   coverImagesFolderPath: "Assets/flow-project-cover-images",
   autoCreateCoverImage: false,
   displayCoverImages: true,
+  contextTagPrefix: "context",
   spheres: ["personal", "work"],
   focusAutoClearTime: "03:00",
   focusArchiveFile: "Focus Archive.md",

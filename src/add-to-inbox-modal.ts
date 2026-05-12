@@ -3,11 +3,13 @@
 
 import { App, Modal, TFile, normalizePath } from "obsidian";
 import { PluginSettings } from "./types";
+import { TagSuggest } from "./tag-suggest";
 
 export class AddToInboxModal extends Modal {
   private settings: PluginSettings;
-  private inputValue: string = "";
+  private inputEl: HTMLInputElement | null = null;
   private warningEl: HTMLElement | null = null;
+  private tagSuggest: TagSuggest | null = null;
 
   constructor(app: App, settings: PluginSettings) {
     super(app);
@@ -21,22 +23,21 @@ export class AddToInboxModal extends Modal {
 
     contentEl.createEl("h2", { text: "Capture to inbox" });
 
-    const inputEl = contentEl.createEl("input", {
+    this.inputEl = contentEl.createEl("input", {
       type: "text",
       placeholder: "What do you want to capture?",
     });
-    inputEl.style.width = "100%";
-    inputEl.style.padding = "8px";
-    inputEl.style.marginBottom = "12px";
+    this.inputEl.style.width = "100%";
+    this.inputEl.style.padding = "8px";
+    this.inputEl.style.marginBottom = "12px";
 
-    inputEl.addEventListener("input", (e) => {
-      this.inputValue = (e.target as HTMLInputElement).value;
+    this.inputEl.addEventListener("input", () => {
       if (this.warningEl) {
         this.warningEl.textContent = "";
       }
     });
 
-    inputEl.addEventListener("keydown", (e) => {
+    this.inputEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         this.submit();
@@ -61,17 +62,23 @@ export class AddToInboxModal extends Modal {
     });
     captureButton.addEventListener("click", () => this.submit());
 
+    // Attach tag autocomplete
+    this.tagSuggest?.close();
+    this.tagSuggest = new TagSuggest(this.app, this.inputEl);
+
     // Focus the input
-    inputEl.focus();
+    this.inputEl.focus();
   }
 
   onClose() {
+    this.tagSuggest?.close();
+    this.tagSuggest = null;
     const { contentEl } = this;
     contentEl.empty();
   }
 
   private async submit() {
-    const content = this.inputValue.trim();
+    const content = (this.inputEl?.value ?? "").trim();
 
     if (!content) {
       if (this.warningEl) {

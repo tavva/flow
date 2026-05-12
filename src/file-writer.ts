@@ -61,27 +61,6 @@ export class FileWriter {
     return file;
   }
 
-  /**
-   * Create a new person note file
-   */
-  async createPerson(name: string): Promise<TFile> {
-    const fileName = this.generateFileName(name);
-    const folderPath = normalizePath(this.settings.personsFolderPath);
-    await this.ensureFolderExists(folderPath);
-    const filePath = normalizePath(`${folderPath}/${fileName}.md`);
-
-    const existingFile = this.app.vault.getAbstractFileByPath(filePath);
-    if (existingFile) {
-      throw new ValidationError(`File ${filePath} already exists`);
-    }
-
-    const content = await this.buildPersonContent(name);
-    const file = await this.app.vault.create(filePath, content);
-    await this.processWithTemplater(file);
-
-    return file;
-  }
-
   private async ensureFolderExists(folderPath: string): Promise<void> {
     const normalizedPath = normalizePath(folderPath);
     const existing = this.app.vault.getAbstractFileByPath(normalizedPath);
@@ -307,6 +286,95 @@ export class FileWriter {
     content = this.addActionToSection(content, sectionName, item);
 
     await this.app.vault.modify(file, content);
+  }
+
+  /**
+   * Create a new person note file and add the discussion item
+   */
+  async createPerson(personName: string, discussionItem: string): Promise<PersonNote> {
+    const fileName = this.generateFileName(personName);
+    const folderPath = normalizePath(this.settings.personsFolderPath);
+    await this.ensureFolderExists(folderPath);
+    const filePath = normalizePath(`${folderPath}/${fileName}.md`);
+
+    // Check if file already exists
+    const existingFile = this.app.vault.getAbstractFileByPath(filePath);
+    if (existingFile) {
+      throw new ValidationError(`Person file ${filePath} already exists`);
+    }
+
+    const content = await this.buildPersonContent(personName);
+    const file = await this.app.vault.create(filePath, content);
+    await this.processWithTemplater(file);
+
+    // Create PersonNote structure for the new file
+    const newPerson: PersonNote = {
+      file: file.path,
+      title: personName,
+      tags: ["person"],
+    };
+
+    // Add discussion item to the new person's "Discuss next" section (if provided)
+    if (discussionItem) {
+      await this.addToPersonDiscussNext(newPerson, discussionItem);
+    }
+
+    return newPerson;
+  }
+
+  private async buildPersonContent(personName: string): Promise<string> {
+    const templateFile = this.app.vault.getAbstractFileByPath(this.settings.personTemplateFilePath);
+
+    if (!templateFile || !(templateFile instanceof TFile)) {
+      // Fallback template if template file doesn't exist
+      return this.buildPersonContentFallback(personName);
+    }
+
+    let templateContent = await this.app.vault.read(templateFile);
+
+    // Replace Templater-style date variables with actual values
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+    const date = this.formatDate(now);
+    const time = this.formatTime(now);
+
+    // Replace common Templater date patterns
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']YYYY-MM-DD HH:mm["']\s*\)\s*%>/g,
+      dateTime
+    );
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']YYYY-MM-DD["']\s*\)\s*%>/g,
+      date
+    );
+    templateContent = templateContent.replace(
+      /<%\s*tp\.date\.now\s*\(\s*["']HH:mm["']\s*\)\s*%>/g,
+      time
+    );
+
+    // Replace Flow-style variables
+    templateContent = templateContent.replace(/\{\{\s*name\s*\}\}/g, personName);
+    templateContent = templateContent.replace(/\{\{\s*date\s*\}\}/g, date);
+    templateContent = templateContent.replace(/\{\{\s*time\s*\}\}/g, time);
+    templateContent = templateContent.replace(/\{\{\s*datetime\s*\}\}/g, dateTime);
+
+    return templateContent;
+  }
+
+  private buildPersonContentFallback(personName: string): string {
+    const now = new Date();
+    const dateTime = this.formatDateTime(now);
+
+    return `---
+creation-date: ${dateTime}
+tags:
+  - person
+---
+
+## Discuss next
+
+## Notes
+`;
   }
 
   /**
@@ -631,40 +699,6 @@ ${description}
 ## Notes + resources
 `;
     return content;
-  }
-
-  /**
-   * Build person note content from template or fallback
-   */
-  private async buildPersonContent(name: string): Promise<string> {
-    const templateFile = this.app.vault.getAbstractFileByPath(this.settings.personTemplateFilePath);
-
-    if (!templateFile || !(templateFile instanceof TFile)) {
-      return this.buildPersonContentFallback();
-    }
-
-    let templateContent = await this.app.vault.read(templateFile);
-
-    const now = new Date();
-    const date = this.formatDate(now);
-    const time = this.formatTime(now);
-
-    templateContent = templateContent
-      .replace(/{{\s*date\s*}}/g, date)
-      .replace(/{{\s*time\s*}}/g, time)
-      .replace(/{{\s*name\s*}}/g, name);
-
-    return templateContent;
-  }
-
-  /**
-   * Fallback content when person template file is not available
-   */
-  private buildPersonContentFallback(): string {
-    const now = new Date();
-    const dateTime = this.formatDateTime(now);
-
-    return `---\ncreation-date: ${dateTime}\ntags: person\n---\n\n## Discuss next\n`;
   }
 
   /**

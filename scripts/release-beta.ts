@@ -171,6 +171,41 @@ export function updateManifest(version: string): void {
   writeFileSync(manifestPath, JSON.stringify(manifest, null, "\t") + "\n", "utf-8");
 }
 
+interface PackageJson {
+  name: string;
+  version: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Reads and parses the package.json file
+ * @returns Parsed package.json object
+ */
+export function readPackageJson(): PackageJson {
+  const packagePath = join(process.cwd(), "package.json");
+
+  if (!existsSync(packagePath)) {
+    throw new Error("package.json not found in current directory");
+  }
+
+  const content = readFileSync(packagePath, "utf-8");
+  return JSON.parse(content) as PackageJson;
+}
+
+/**
+ * Updates package.json with new version
+ * @param version - New version string to set
+ */
+export function updatePackageJson(version: string): void {
+  const packagePath = join(process.cwd(), "package.json");
+  const pkg = readPackageJson();
+
+  pkg.version = version;
+
+  // Write with 2-space indentation to match existing format
+  writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + "\n", "utf-8");
+}
+
 /**
  * Verifies that all required build files exist
  * @throws Error if any required files are missing
@@ -198,6 +233,30 @@ export function verifyBuildFiles(): void {
       console.log(`Note: ${file} not found (plugin may not have styles)`);
     }
   }
+}
+
+/**
+ * Gets the version from the main branch's manifest.json
+ * @returns Parsed version from main branch, or null if unable to read
+ */
+export function getMainBranchVersion(): ParsedVersion | null {
+  try {
+    const output = execSync("git show main:manifest.json", { encoding: "utf-8", stdio: "pipe" });
+    const manifest = JSON.parse(output) as PluginManifest;
+    return parseVersion(manifest.version);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Compares base versions (ignoring beta suffix)
+ * @returns negative if a < b, 0 if equal, positive if a > b
+ */
+export function compareBaseVersions(a: ParsedVersion, b: ParsedVersion): number {
+  if (a.major !== b.major) return a.major - b.major;
+  if (a.minor !== b.minor) return a.minor - b.minor;
+  return a.patch - b.patch;
 }
 
 /**
@@ -355,12 +414,7 @@ export function confirmRelease(version: string): Promise<boolean> {
     console.log(`    --title "Beta v${version}" \\`);
     console.log("    --prerelease \\");
     console.log(`    ${assets}\n`);
-    console.log(`  gh release create ${version} \\`);
-    console.log("    --repo tavva/flow-release \\");
-    console.log(`    --title "Beta v${version}" \\`);
-    console.log("    --prerelease \\");
-    console.log(`    ${assets}\n`);
-    console.log("  git add manifest.json");
+    console.log("  git add manifest.json package.json");
     console.log(`  git commit -m "Release beta v${version}"`);
     console.log("  git push\n");
 
@@ -432,7 +486,7 @@ export function commitAndPush(version: string): boolean {
   console.log("Committing and pushing changes...\n");
 
   try {
-    execFileSync("git", ["add", "manifest.json"], { stdio: "inherit" });
+    execFileSync("git", ["add", "manifest.json", "package.json"], { stdio: "inherit" });
     execFileSync("git", ["commit", "-m", `Release beta v${version}`], { stdio: "inherit" });
     execFileSync("git", ["push"], { stdio: "inherit" });
     console.log("\n✓ Changes committed and pushed\n");
@@ -441,16 +495,16 @@ export function commitAndPush(version: string): boolean {
     console.error("\nError during git operations");
     console.error(error instanceof Error ? error.message : String(error));
     console.error("Release was created but changes not pushed");
-    console.error("You may need to manually commit and push manifest.json\n");
+    console.error("You may need to manually commit and push manifest.json and package.json\n");
     return false;
   }
 }
 
 /**
- * Reverts manifest.json to its state in git
+ * Reverts manifest.json and package.json to their state in git
  */
-function rollbackManifest(): void {
-  execFileSync("git", ["checkout", "manifest.json"]);
+function rollbackVersionFiles(): void {
+  execFileSync("git", ["checkout", "manifest.json", "package.json"]);
 }
 
 /**
@@ -473,25 +527,43 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Check main branch version to detect if it has caught up
+  const mainVersion = getMainBranchVersion();
+  const mainHasCaughtUp = mainVersion && compareBaseVersions(mainVersion, current) >= 0;
+
   // Determine next version
   let nextVersion: string;
-  if (current.isBeta) {
-    // Auto-increment beta
+  if (current.isBeta && !mainHasCaughtUp) {
+    // Auto-increment beta (main hasn't caught up yet)
     nextVersion = calculateNextVersion(current, "auto");
     console.log(`Auto-incrementing beta: ${manifest.version} → ${nextVersion}\n`);
   } else {
-    // Interactive selection
-    const bumpType = await promptVersionBump(current);
-    nextVersion = calculateNextVersion(current, bumpType);
+    // Interactive selection (either non-beta or main has caught up)
+    if (mainHasCaughtUp && mainVersion) {
+      console.log(
+        `Main branch is at ${mainVersion.major}.${mainVersion.minor}.${mainVersion.patch}`
+      );
+      console.log(
+        `Current beta base ${current.major}.${current.minor}.${current.patch} needs bumping.\n`
+      );
+    }
+    const bumpType = await promptVersionBump(
+      mainVersion && mainHasCaughtUp ? mainVersion : current
+    );
+    nextVersion = calculateNextVersion(
+      mainVersion && mainHasCaughtUp ? mainVersion : current,
+      bumpType
+    );
   }
 
-  // Update manifest
+  // Update version files
   updateManifest(nextVersion);
+  updatePackageJson(nextVersion);
 
   // Build plugin
   if (!buildPlugin()) {
-    console.error("Reverting manifest changes...");
-    rollbackManifest();
+    console.error("Reverting version changes...");
+    rollbackVersionFiles();
     process.exit(1);
   }
 
@@ -500,16 +572,16 @@ async function main(): Promise<void> {
     verifyBuildFiles();
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
-    console.error("Reverting manifest changes...");
-    rollbackManifest();
+    console.error("Reverting version changes...");
+    rollbackVersionFiles();
     process.exit(1);
   }
 
   // Confirm and execute
   const confirmed = await confirmRelease(nextVersion);
   if (!confirmed) {
-    console.log("Release cancelled. Reverting manifest changes...");
-    rollbackManifest();
+    console.log("Release cancelled. Reverting version changes...");
+    rollbackVersionFiles();
     process.exit(0);
   }
 

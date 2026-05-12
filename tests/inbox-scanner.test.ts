@@ -16,12 +16,10 @@ describe("Inbox deletion handling", () => {
   let fileContents: Record<string, string>;
 
   const baseSettings: PluginSettings = {
-    llmProvider: "anthropic",
-    anthropicApiKey: generateDeterministicFakeApiKey("inbox-scanner"),
-    anthropicModel: "claude-sonnet-4-20250514",
-    openaiApiKey: "",
-    openaiBaseUrl: "https://openrouter.ai/api/v1",
-    openaiModel: "openrouter/anthropic/claude-3.5-sonnet",
+    aiEnabled: false,
+    openrouterApiKey: "",
+    openrouterBaseUrl: "https://openrouter.ai/api/v1",
+    openrouterImageModel: "google/gemini-2.5-flash-image",
     defaultPriority: 2,
     defaultStatus: "live",
     inboxFilesFolderPath: "Flow Inbox Files",
@@ -110,7 +108,7 @@ describe("Inbox deletion handling", () => {
   it("tracks per-file deletions when saving multiple processed inbox items", async () => {
     const controller = new InboxProcessingController(app as unknown as App, settings);
     const renderCallback = jest.fn();
-    const state = new InboxModalState(controller, settings, renderCallback);
+    const state = new InboxModalState(app as unknown as App, controller, settings, renderCallback);
 
     const deleteMock = jest.fn().mockResolvedValue(undefined);
 

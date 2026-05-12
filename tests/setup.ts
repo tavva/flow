@@ -11,12 +11,16 @@ if (typeof document === "undefined") {
   (global as any).HTMLInputElement = dom.window.HTMLInputElement;
 }
 
+// Mock requestAnimationFrame for tests (not provided by JSDOM)
+(global as any).requestAnimationFrame = (callback: FrameRequestCallback): number => {
+  return setTimeout(() => callback(Date.now()), 0) as unknown as number;
+};
+
 // Mock obsidian module globally
 jest.mock("obsidian");
 
 // Import the mocked classes and make them globally available
 import { TFile } from "obsidian";
-import { resetSharedAnthropicClient } from "../src/anthropic-client";
 
 // Make TFile available globally for instanceof checks
 (global as any).TFile = TFile;
@@ -42,9 +46,8 @@ console.error = (...args: any[]) => {
   originalConsoleError.apply(console, args);
 };
 
-// Ensure all timers and API clients are cleaned up after each test
+// Ensure all timers are cleaned up after each test
 afterEach(() => {
   jest.useRealTimers();
   jest.clearAllTimers();
-  resetSharedAnthropicClient();
 });

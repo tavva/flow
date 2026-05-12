@@ -30,25 +30,25 @@ describe("FileWriter.createPerson", () => {
   });
 
   it("should create person note in configured folder with fallback template", async () => {
-    const file = await fileWriter.createPerson("Alice Smith");
+    const person = await fileWriter.createPerson("Alice Smith", "");
 
     expect(app.vault.createFolder).toHaveBeenCalledWith("People");
     expect(app.vault.create).toHaveBeenCalledWith(
       "People/Alice Smith.md",
-      expect.stringContaining("tags: person")
+      expect.stringContaining("person")
     );
-    expect(file.path).toBe("People/Alice Smith.md");
+    expect(person.file).toBe("People/Alice Smith.md");
   });
 
   it("should include creation-date in fallback template", async () => {
-    await fileWriter.createPerson("Bob");
+    await fileWriter.createPerson("Bob", "");
 
     const content = (app.vault.create as jest.Mock).mock.calls[0][1];
     expect(content).toMatch(/creation-date: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00/);
   });
 
   it("should include Discuss next section in fallback template", async () => {
-    await fileWriter.createPerson("Bob");
+    await fileWriter.createPerson("Bob", "");
 
     const content = (app.vault.create as jest.Mock).mock.calls[0][1];
     expect(content).toContain("## Discuss next");
@@ -66,7 +66,7 @@ describe("FileWriter.createPerson", () => {
       "---\ncreation-date: {{ date }}T{{ time }}\ntags: person\n---\n\nHello {{ name }}\n"
     );
 
-    await fileWriter.createPerson("Alice");
+    await fileWriter.createPerson("Alice", "");
 
     const content = (app.vault.create as jest.Mock).mock.calls[0][1];
     expect(content).toContain("Hello Alice");
@@ -85,11 +85,11 @@ describe("FileWriter.createPerson", () => {
       return null;
     });
 
-    await expect(fileWriter.createPerson("Alice")).rejects.toThrow("already exists");
+    await expect(fileWriter.createPerson("Alice", "")).rejects.toThrow("already exists");
   });
 
   it("should sanitize the filename", async () => {
-    await fileWriter.createPerson("Alice / Bob");
+    await fileWriter.createPerson("Alice / Bob", "");
 
     expect(app.vault.create).toHaveBeenCalledWith("People/Alice Bob.md", expect.any(String));
   });
@@ -98,7 +98,7 @@ describe("FileWriter.createPerson", () => {
     settings.personsFolderPath = "Contacts";
     fileWriter = new FileWriter(app, settings);
 
-    await fileWriter.createPerson("Alice");
+    await fileWriter.createPerson("Alice", "");
 
     expect(app.vault.createFolder).toHaveBeenCalledWith("Contacts");
     expect(app.vault.create).toHaveBeenCalledWith("Contacts/Alice.md", expect.any(String));

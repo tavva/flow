@@ -1,5 +1,5 @@
-// ABOUTME: Modal for creating a person note with name input.
-// ABOUTME: Uses FileWriter.createPerson to scaffold the note and opens it afterwards.
+// ABOUTME: Modal for creating a new person note with name and optional first discussion item.
+// ABOUTME: Provides a simple interface for quick person creation outside the inbox flow.
 
 import { App, Modal, Setting } from "obsidian";
 import { PluginSettings } from "./types";
@@ -8,6 +8,7 @@ import { sanitizeFileName } from "./validation";
 
 interface NewPersonData {
   name: string;
+  discussionItem: string;
 }
 
 export class NewPersonModal extends Modal {
@@ -21,13 +22,15 @@ export class NewPersonModal extends Modal {
     this.fileWriter = new FileWriter(app, settings);
     this.data = {
       name: "",
+      discussionItem: "",
     };
   }
 
-  async onOpen() {
+  onOpen() {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("flow-gtd-new-person-modal");
+
     this.render();
   }
 
@@ -40,31 +43,49 @@ export class NewPersonModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl("h2", { text: "Create Person" });
+    contentEl.createEl("h2", { text: "Create New Person" });
 
+    // Person name
+    let nameInput: HTMLInputElement | null = null;
     new Setting(contentEl)
       .setName("Name")
       .setDesc("The person's name")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Enter name...")
           .setValue(this.data.name)
           .onChange((value) => {
             this.data.name = value;
+          });
+        nameInput = text.inputEl;
+      });
+
+    // Focus the name input after the modal is fully rendered
+    requestAnimationFrame(() => {
+      nameInput?.focus();
+    });
+
+    // First discussion item (optional)
+    new Setting(contentEl)
+      .setName("First discussion item")
+      .setDesc("Optional topic to discuss with this person")
+      .addText((text) =>
+        text
+          .setPlaceholder("Enter discussion item...")
+          .setValue(this.data.discussionItem)
+          .onChange((value) => {
+            this.data.discussionItem = value;
           })
       );
 
-    const buttonContainer = contentEl.createDiv({
-      cls: "flow-gtd-modal-buttons",
-    });
+    // Action buttons
+    const buttonContainer = contentEl.createDiv({ cls: "flow-gtd-modal-buttons" });
     buttonContainer.style.display = "flex";
     buttonContainer.style.justifyContent = "flex-end";
     buttonContainer.style.gap = "8px";
     buttonContainer.style.marginTop = "16px";
 
-    const cancelButton = buttonContainer.createEl("button", {
-      text: "Cancel",
-    });
+    const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
     cancelButton.addEventListener("click", () => this.close());
 
     const createButton = buttonContainer.createEl("button", {
@@ -83,17 +104,23 @@ export class NewPersonModal extends Modal {
     const sanitizedName = sanitizeFileName(this.data.name.trim());
     if (sanitizedName.length === 0) {
       this.showError(
-        "Name contains only invalid characters. Please use letters, numbers, or spaces."
+        "Person name contains only invalid characters. Please use letters, numbers, or spaces."
       );
       return;
     }
 
     try {
-      const file = await this.fileWriter.createPerson(this.data.name.trim());
+      const discussionItem = this.data.discussionItem.trim();
+      const person = await this.fileWriter.createPerson(this.data.name.trim(), discussionItem);
+
       this.close();
 
-      const leaf = this.app.workspace.getLeaf(false);
-      await leaf.openFile(file);
+      // Open the newly created person file
+      const file = this.app.vault.getAbstractFileByPath(person.file);
+      if (file) {
+        const leaf = this.app.workspace.getLeaf(false);
+        await leaf.openFile(file as import("obsidian").TFile);
+      }
     } catch (error) {
       console.error("Failed to create person:", error);
       this.showError(

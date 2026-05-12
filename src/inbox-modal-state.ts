@@ -1,4 +1,7 @@
-import { Notice } from "obsidian";
+// ABOUTME: Manages UI state for inbox processing including item selection, expansion, and persistence.
+// ABOUTME: Coordinates between the processing controller and the render views.
+
+import { App, Notice } from "obsidian";
 import { FlowProject, PersonNote, PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { EditableItem } from "./inbox-types";
@@ -20,6 +23,7 @@ export class InboxModalState {
   private uniqueIdCounter = 0;
 
   constructor(
+    public readonly app: App,
     private readonly controller: InboxProcessingController,
     private readonly settings: PluginSettings,
     private readonly requestRender: RenderCallback
@@ -111,7 +115,9 @@ export class InboxModalState {
       }
 
       // If we created a new project, refresh the project list so subsequent items can see it
+      // Small delay to let Obsidian's metadata cache update after file creation
       if (item.selectedAction === "create-project") {
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await this.loadReferenceData();
       }
 
@@ -126,6 +132,15 @@ export class InboxModalState {
         new Notice(`Error saving item: ${message}`);
       }
       console.error(error);
+    }
+  }
+
+  confirmAndDiscardItem(item: EditableItem) {
+    const confirmed = confirm(
+      "Are you sure you want to discard this item? This action cannot be undone."
+    );
+    if (confirmed) {
+      this.discardItem(item);
     }
   }
 

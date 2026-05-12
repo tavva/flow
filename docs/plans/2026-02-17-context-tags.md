@@ -10,7 +10,7 @@
 
 ---
 
-### Task 1: Context tag extraction utility
+## Task 1: Context tag extraction utility
 
 **Files:**
 - Create: `src/context-tags.ts`
@@ -102,14 +102,14 @@ Expected: PASS
 
 **Step 5: Commit**
 
-```
+```bash
 git add src/context-tags.ts tests/context-tags.test.ts
 git commit -m "Add context tag extraction utility"
 ```
 
 ---
 
-### Task 2: Add contexts to WaitingForItem
+## Task 2: Add contexts to WaitingForItem
 
 **Files:**
 - Modify: `src/waiting-for-scanner.ts` (WaitingForItem interface + extractContexts calls)
@@ -197,14 +197,14 @@ Expected: Some tests may fail if they assert on WaitingForItem shape without `co
 
 **Step 6: Commit**
 
-```
+```bash
 git add src/waiting-for-scanner.ts tests/waiting-for-scanner.test.ts
 git commit -m "Add context tag extraction to WaitingForScanner"
 ```
 
 ---
 
-### Task 3: Add contexts to SomedayItem
+## Task 3: Add contexts to SomedayItem
 
 **Files:**
 - Modify: `src/someday-scanner.ts` (SomedayItem interface + extractContexts calls)
@@ -243,14 +243,14 @@ Run: `npm test`
 
 **Step 6: Commit**
 
-```
+```bash
 git add src/someday-scanner.ts tests/someday-scanner.test.ts
 git commit -m "Add context tag extraction to SomedayScanner"
 ```
 
 ---
 
-### Task 4: Add contexts to FocusItem and persistence
+## Task 4: Add contexts to FocusItem and persistence
 
 **Files:**
 - Modify: `src/types/domain.ts` (FocusItem interface)
@@ -342,14 +342,14 @@ Expected: PASS (FocusItem has optional `contexts` so existing code won't break)
 
 **Step 6: Commit**
 
-```
+```bash
 git add src/types/domain.ts src/focus-persistence.ts tests/focus-persistence.test.ts
 git commit -m "Add contexts field to FocusItem with backwards-compatible persistence"
 ```
 
 ---
 
-### Task 5: Populate contexts when adding to focus from SphereView
+## Task 5: Populate contexts when adding to focus from SphereView
 
 **Files:**
 - Modify: `src/sphere-view.ts` (addToFocus method)
@@ -370,14 +370,14 @@ Expected: PASS
 
 **Step 3: Commit**
 
-```
+```bash
 git add src/sphere-view.ts
 git commit -m "Populate context tags when adding actions to focus"
 ```
 
 ---
 
-### Task 6: Context filter UI for WaitingForView
+## Task 6: Context filter UI for WaitingForView
 
 **Files:**
 - Modify: `src/waiting-for-view.ts`
@@ -435,14 +435,14 @@ Expected: PASS
 
 **Step 8: Commit**
 
-```
+```bash
 git add src/waiting-for-view.ts
 git commit -m "Add context tag filter to WaitingForView"
 ```
 
 ---
 
-### Task 7: Context filter UI for SomedayView
+## Task 7: Context filter UI for SomedayView
 
 **Files:**
 - Modify: `src/someday-view.ts`
@@ -466,14 +466,14 @@ Expected: PASS
 
 **Step 8: Commit**
 
-```
+```bash
 git add src/someday-view.ts
 git commit -m "Add context tag filter to SomedayView"
 ```
 
 ---
 
-### Task 8: Context filter UI for FocusView
+## Task 8: Context filter UI for FocusView
 
 **Files:**
 - Modify: `src/focus-view.ts`
@@ -533,14 +533,14 @@ Expected: PASS
 
 **Step 7: Commit**
 
-```
+```bash
 git add src/focus-view.ts
 git commit -m "Add context tag filter to FocusView"
 ```
 
 ---
 
-### Task 9: Context filter for SphereView
+## Task 9: Context filter for SphereView
 
 **Files:**
 - Modify: `src/sphere-data-loader.ts` (add context filtering to `filterData`)
@@ -746,14 +746,14 @@ Expected: PASS
 
 **Step 7: Commit**
 
-```
+```bash
 git add src/sphere-data-loader.ts src/sphere-view.ts tests/sphere-data-loader.test.ts
 git commit -m "Add context tag filter to SphereView"
 ```
 
 ---
 
-### Task 10: CSS for context filter buttons
+## Task 10: CSS for context filter buttons
 
 **Files:**
 - Modify: `styles.css` (add styles for context filter buttons)
@@ -762,18 +762,18 @@ Add CSS for `.flow-gtd-context-buttons` and `.flow-gtd-context-button` classes. 
 
 **Commit**
 
-```
+```bash
 git add styles.css
 git commit -m "Add CSS for context filter buttons"
 ```
 
 ---
 
-### Task 11: Final verification
+## Task 11: Final verification
 
 **Step 1: Run all checks**
 
-```
+```bash
 npm run format
 npm run build
 npm test

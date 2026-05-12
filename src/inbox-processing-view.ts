@@ -5,6 +5,7 @@ import { PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { InboxModalState, RenderTarget } from "./inbox-modal-state";
 import { renderInboxView, renderEditableItemsView } from "./inbox-modal-views";
+import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal";
 
 export const INBOX_PROCESSING_VIEW_TYPE = "flow-gtd-inbox-processing";
 
@@ -21,7 +22,7 @@ export class InboxProcessingView extends ItemView {
     this.settings = settings;
     this.saveSettings = saveSettings;
     const controller = new InboxProcessingController(this.app, settings, {}, saveSettings);
-    this.state = new InboxModalState(controller, settings, (target, options) =>
+    this.state = new InboxModalState(this.app, controller, settings, (target, options) =>
       this.requestRender(target, options?.immediate === true)
     );
   }
@@ -84,7 +85,10 @@ export class InboxProcessingView extends ItemView {
     }
 
     if (target === "editable") {
-      renderEditableItemsView(container, this.state, { onClose: () => this.handleClose() });
+      renderEditableItemsView(container, this.state, {
+        onClose: () => this.handleClose(),
+        onShowHelp: () => new KeyboardShortcutsModal(this.app).open(),
+      });
 
       if (this.pendingFocus) {
         const selector = this.pendingFocus;
@@ -122,9 +126,10 @@ export class InboxProcessingView extends ItemView {
 
     const target = event.target as HTMLElement;
     const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
+    const currentIndex = this.state.editableItems.findIndex((item) => item.isExpanded);
 
-    // Ctrl+Q (or Cmd+Q on Mac) blurs the input without closing the view
-    if (event.key === "q" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+Shift+Q blurs the input without closing the view
+    if (event.key.toLowerCase() === "q" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
         target.blur();
         event.preventDefault();
@@ -133,8 +138,8 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+Enter (or Cmd+Enter on Mac) saves the current item
-    if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    // Ctrl+Shift+Enter saves the current item
+    if (event.key === "Enter" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (expandedItem) {
         this.state.saveAndRemoveItem(expandedItem);
         event.preventDefault();
@@ -143,17 +148,29 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+1, Ctrl+2, etc. to toggle sphere selection
-    if ((event.ctrlKey || event.metaKey) && /^[1-9]$/.test(event.key)) {
+    // Arrow keys for navigation (when not in input)
+    if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+      if (event.key === "ArrowLeft" && currentIndex > 0) {
+        this.navigateToItem(currentIndex - 1);
+        event.preventDefault();
+        return;
+      }
+      if (event.key === "ArrowRight" && currentIndex < this.state.editableItems.length - 1) {
+        this.navigateToItem(currentIndex + 1);
+        event.preventDefault();
+        return;
+      }
+    }
+
+    // Ctrl+Shift+1, Ctrl+Shift+2, etc. to toggle sphere selection
+    if (event.ctrlKey && event.shiftKey && !event.metaKey && /^[1-9]$/.test(event.key)) {
       if (expandedItem) {
         const spheres = this.settings.spheres;
         const sphereIndex = parseInt(event.key) - 1;
 
-        // Check if this action type shows sphere selector
-        const showsSphereSelector =
-          expandedItem.selectedAction !== "add-to-project" &&
-          expandedItem.selectedAction !== "reference" &&
-          expandedItem.selectedAction !== "trash";
+        // Check if this action type shows sphere selector (next or someday)
+        const simplified = this.getSimplifiedAction(expandedItem);
+        const showsSphereSelector = simplified === "next" || simplified === "someday";
 
         if (showsSphereSelector && sphereIndex >= 0 && sphereIndex < spheres.length) {
           const sphere = spheres[sphereIndex];
@@ -170,110 +187,112 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    // Ctrl+J to toggle "Add to focus" checkbox
-    if (event.key === "j" && (event.ctrlKey || event.metaKey)) {
-      if (expandedItem) {
-        // Check if this action type shows focus checkbox
-        const showsFocusCheckbox =
-          expandedItem.selectedAction === "create-project" ||
-          expandedItem.selectedAction === "add-to-project" ||
-          expandedItem.selectedAction === "next-actions-file";
-
-        if (showsFocusCheckbox) {
-          expandedItem.addToFocus = !expandedItem.addToFocus;
-          // Mutual exclusion with markAsDone
-          if (expandedItem.addToFocus && expandedItem.markAsDone && expandedItem.markAsDone[0]) {
-            expandedItem.markAsDone[0] = false;
-          }
-          this.state.queueRender("editable");
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }
-      return;
-    }
-
-    // Ctrl+D to toggle "Mark as done" checkbox
-    if (event.key === "d" && (event.ctrlKey || event.metaKey)) {
-      if (expandedItem) {
-        // Check if this action type shows focus checkbox (same as above)
-        const showsFocusCheckbox =
-          expandedItem.selectedAction === "create-project" ||
-          expandedItem.selectedAction === "add-to-project" ||
-          expandedItem.selectedAction === "next-actions-file";
-
-        if (showsFocusCheckbox) {
-          // Initialize markAsDone array if not exists
-          if (!expandedItem.markAsDone) {
-            expandedItem.markAsDone = [];
-          }
-          expandedItem.markAsDone[0] = !expandedItem.markAsDone[0];
-          // Mutual exclusion with addToFocus
-          if (expandedItem.markAsDone[0] && expandedItem.addToFocus) {
-            expandedItem.addToFocus = false;
-          }
-          this.state.queueRender("editable");
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }
-      return;
-    }
-
-    // Ctrl+T to toggle date section
-    if (event.key === "t" && (event.ctrlKey || event.metaKey)) {
-      if (expandedItem) {
-        // Check if this action type shows date section (all except reference and trash)
-        const showsDateSection =
-          expandedItem.selectedAction !== "reference" && expandedItem.selectedAction !== "trash";
-
-        if (showsDateSection) {
-          expandedItem.isDateSectionExpanded = !expandedItem.isDateSectionExpanded;
-          this.state.queueRender("editable");
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }
-      return;
-    }
-
     if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
       return;
     }
 
     if (!expandedItem) return;
 
-    let action: string | undefined;
-    switch (event.key.toLowerCase()) {
-      case "c":
-        action = "create-project";
-        this.pendingFocus = ".flow-gtd-project-input";
-        break;
-      case "a":
-        action = "add-to-project";
-        this.pendingFocus = ".flow-gtd-project-search";
-        break;
-      case "r":
-        action = "reference";
-        break;
-      case "n":
-        action = "next-actions-file";
-        break;
-      case "s":
-        action = "someday-file";
-        break;
-      case "p":
-        action = "person";
-        break;
-      case "t":
-        action = "trash";
-        break;
+    // Enter focuses the first action input
+    if (event.key === "Enter") {
+      const container = this.contentEl;
+      const firstActionInput = container?.querySelector(
+        ".flow-inbox-action-input"
+      ) as HTMLInputElement;
+      if (firstActionInput) {
+        firstActionInput.focus();
+        event.preventDefault();
+      }
+      return;
     }
 
-    if (action) {
-      expandedItem.selectedAction = action as any;
-      this.state.queueRender("editable");
+    // Show keyboard shortcuts help
+    if (event.key === "?") {
+      new KeyboardShortcutsModal(this.app).open();
       event.preventDefault();
+      return;
+    }
+
+    // Number keys 1-9 to toggle sphere selection (when not in input)
+    if (/^[1-9]$/.test(event.key)) {
+      const spheres = this.settings.spheres;
+      const sphereIndex = parseInt(event.key) - 1;
+
+      const simplified = this.getSimplifiedAction(expandedItem);
+      const showsSphereSelector = simplified === "next" || simplified === "someday";
+
+      if (showsSphereSelector && sphereIndex >= 0 && sphereIndex < spheres.length) {
+        const sphere = spheres[sphereIndex];
+        if (expandedItem.selectedSpheres.includes(sphere)) {
+          expandedItem.selectedSpheres = expandedItem.selectedSpheres.filter((s) => s !== sphere);
+        } else {
+          expandedItem.selectedSpheres.push(sphere);
+        }
+        this.state.queueRender("editable");
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      return;
+    }
+
+    // Quick type switching with single keys
+    switch (event.key.toLowerCase()) {
+      case "n":
+        expandedItem.selectedAction = "next-actions-file";
+        this.state.queueRender("editable");
+        event.preventDefault();
+        break;
+      case "s":
+        expandedItem.selectedAction = "someday-file";
+        this.state.queueRender("editable");
+        event.preventDefault();
+        break;
+      case "r":
+        expandedItem.selectedAction = "reference";
+        this.state.queueRender("editable");
+        event.preventDefault();
+        break;
+      case "d":
+        this.state.confirmAndDiscardItem(expandedItem);
+        event.preventDefault();
+        break;
+      case "p": {
+        const projectInput = this.containerEl.querySelector(
+          ".flow-inbox-project-input"
+        ) as HTMLInputElement;
+        if (projectInput) {
+          projectInput.focus();
+        }
+        event.preventDefault();
+        break;
+      }
     }
   };
+
+  private navigateToItem(targetIndex: number) {
+    this.state.editableItems.forEach((item, i) => {
+      item.isExpanded = i === targetIndex;
+    });
+    this.state.queueRender("editable");
+  }
+
+  private getSimplifiedAction(
+    item: { selectedAction: string } | undefined
+  ): "next" | "someday" | "reference" {
+    if (!item) return "next";
+    switch (item.selectedAction) {
+      case "create-project":
+      case "add-to-project":
+      case "next-actions-file":
+      case "person":
+        return "next";
+      case "someday-file":
+        return "someday";
+      case "reference":
+      case "trash":
+        return "reference";
+      default:
+        return "next";
+    }
+  }
 }

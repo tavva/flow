@@ -277,7 +277,7 @@ describe("InboxItemPersistenceService", () => {
       selectedAction: "next-actions-file",
       selectedSpheres: ["personal"],
       editedName: "Call dentist",
-      addToFocus: true,
+      addToFocus: [true],
       markAsDone: [true],
     };
 
@@ -320,8 +320,8 @@ describe("InboxItemPersistenceService", () => {
 
       mockSettings = {
         autoCreateCoverImage: true,
-        openaiApiKey: "test-key",
-        openaiBaseUrl: "https://openrouter.ai/api/v1",
+        openrouterApiKey: "test-key",
+        openrouterBaseUrl: "https://openrouter.ai/api/v1",
         openrouterImageModel: "google/gemini-2.5-flash-image",
         coverImagesFolderPath: "Assets/flow-project-cover-images",
       };

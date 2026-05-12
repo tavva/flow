@@ -835,6 +835,51 @@ select.flow-gtd-inline-select option,
   color: var(--background-primary);
 }
 
+/* Context filter buttons */
+.flow-gtd-context-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.flow-gtd-context-button {
+  padding: 4px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.flow-gtd-context-button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.flow-gtd-context-button.selected {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.theme-dark .flow-gtd-context-button {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-dark .flow-gtd-context-button:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.theme-dark .flow-gtd-context-button.selected {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
 /* Action button groups */
 .flow-gtd-action-groups {
   display: flex;
@@ -2022,5 +2067,924 @@ select.flow-gtd-inline-select option,
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   New Inbox Processing View Styles
+   ============================================ */
+
+.flow-inbox-redesign {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 0.75rem;
+}
+
+/* Navigation header */
+.flow-inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-header .flow-inbox-count {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.flow-inbox-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flow-inbox-help-hint {
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.flow-inbox-help-hint:hover {
+  opacity: 1;
+  color: var(--text-muted);
+}
+
+.flow-inbox-arrows {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.flow-inbox-arrow-btn {
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-arrow-btn:hover:not(:disabled) {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.flow-inbox-arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Original item box */
+.flow-inbox-original {
+  border-left: 3px solid var(--text-accent);
+  padding: 0.25rem 0 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-original-label {
+  color: var(--text-muted);
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.125rem;
+}
+
+.flow-inbox-original h1 {
+  color: var(--text-normal);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Type selector tabs */
+.flow-inbox-type-selector {
+  display: flex;
+  border-radius: 0.5rem;
+  background: var(--background-secondary);
+  padding: 0.1875rem;
+  gap: 0.1875rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-type-btn {
+  flex: 1;
+  padding: 0.4375rem;
+  border-radius: 0.375rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-type-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-type-btn.selected {
+  background: var(--interactive-accent);
+  color: white;
+}
+
+/* Actions section */
+.flow-inbox-actions-section {
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.flow-inbox-section-header .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.flow-inbox-action-count {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  background: var(--background-secondary-alt);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.1875rem;
+}
+
+.flow-inbox-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Individual action item */
+.flow-inbox-action-item {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  animation: flow-inbox-slideIn 0.15s ease-out;
+}
+
+@keyframes flow-inbox-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flow-inbox-action-item.expanded {
+  border-color: var(--interactive-accent);
+}
+
+.flow-inbox-action-item.done {
+  opacity: 0.5;
+}
+
+.flow-inbox-action-item.done .flow-inbox-action-input {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.flow-inbox-action-item.waiting {
+  border-left: 2px solid var(--color-yellow);
+}
+
+.flow-inbox-action-item.focused {
+  border-left: 2px solid var(--color-blue);
+}
+
+/* Top row: input + status icons + remove button */
+.flow-inbox-action-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.flow-inbox-action-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+  outline: none;
+  min-width: 0;
+}
+
+.flow-inbox-action-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Status icons (shown when collapsed with active states) */
+.flow-inbox-action-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.flow-inbox-action-status .status-focus {
+  color: var(--color-blue);
+}
+
+/* Hide status icons when expanded */
+.flow-inbox-action-item.expanded .flow-inbox-action-status {
+  display: none;
+}
+
+/* Action control buttons (waiting, focus, done) */
+.flow-inbox-action-controls {
+  display: none;
+  gap: 0.375rem;
+}
+
+/* Show controls when expanded or on the last action (always visible) */
+.flow-inbox-action-item.expanded .flow-inbox-action-controls,
+.flow-inbox-action-item:last-of-type .flow-inbox-action-controls {
+  display: flex;
+}
+
+/* Hide status icons on the last action (controls are always visible) */
+.flow-inbox-action-item:last-of-type .flow-inbox-action-status {
+  display: none;
+}
+
+.flow-inbox-action-ctrl {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  background: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-action-ctrl:hover {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-action-ctrl.active {
+  border-color: transparent;
+}
+
+.flow-inbox-action-ctrl.active.waiting-btn {
+  background: color-mix(in srgb, var(--color-yellow) 20%, transparent);
+  color: var(--color-yellow);
+}
+
+.flow-inbox-action-ctrl.active.focus-btn {
+  background: color-mix(in srgb, var(--color-blue) 20%, transparent);
+  color: var(--color-blue);
+}
+
+.flow-inbox-action-ctrl.active.done-btn {
+  background: color-mix(in srgb, var(--color-green) 20%, transparent);
+  color: var(--color-green);
+}
+
+.flow-inbox-action-ctrl .btn-icon {
+  font-size: 0.875rem;
+}
+
+.flow-inbox-action-ctrl .btn-label {
+  font-weight: 500;
+}
+
+.flow-inbox-remove-action {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.125rem 0.25rem;
+  opacity: 0.4;
+  line-height: 1;
+  transition: opacity 0.15s ease;
+}
+
+.flow-inbox-remove-action:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.flow-inbox-remove-action:disabled {
+  cursor: not-allowed;
+}
+
+/* Add action button */
+.flow-inbox-add-action-btn {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px dashed var(--background-modifier-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-top: 0.375rem;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-add-action-btn:hover:not(:disabled) {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.flow-inbox-add-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Project section */
+.flow-inbox-project-section {
+  margin-bottom: 0.625rem;
+}
+
+.flow-inbox-project-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+.flow-inbox-project-row .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-project-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+}
+
+.flow-inbox-project-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.flow-inbox-project-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Project dropdown list */
+.flow-inbox-project-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-inbox-project-dropdown-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-normal);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.flow-inbox-project-dropdown-item:hover,
+.flow-inbox-project-dropdown-item.highlighted {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-project-dropdown-item:focus {
+  background: var(--background-modifier-hover);
+  outline: none;
+  box-shadow: none;
+}
+
+.flow-inbox-project-dropdown-item.selected {
+  background: var(--background-modifier-hover);
+  font-weight: 600;
+}
+
+.flow-inbox-project-dropdown-item.create-new {
+  color: var(--text-accent);
+  font-weight: 500;
+  margin-top: 0.25rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Sphere toggle */
+.flow-inbox-sphere-section {
+  margin-bottom: 0.625rem;
+}
+
+.flow-inbox-sphere-toggle {
+  display: flex;
+  gap: 2px;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  padding: 2px;
+}
+
+.flow-inbox-sphere-btn {
+  flex: 1;
+  padding: 0.375rem;
+  border-radius: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-sphere-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-sphere-btn.selected {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* Priority section */
+.flow-inbox-priority-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-priority-section .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-priority-toggle {
+  display: flex;
+  gap: 2px;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  padding: 2px;
+}
+
+.flow-inbox-priority-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-priority-btn:hover:not(.selected) {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-priority-btn.selected {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+/* Parent project section */
+.flow-inbox-parent-project-section {
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-parent-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.flow-inbox-parent-toggle-row label {
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.flow-inbox-subproject-toggle {
+  cursor: pointer;
+}
+
+.flow-inbox-parent-selector {
+  margin-top: 0.5rem;
+}
+
+.flow-inbox-parent-project-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 0.8125rem;
+}
+
+.flow-inbox-parent-project-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.flow-inbox-parent-project-input::placeholder {
+  color: var(--text-muted);
+}
+
+.flow-inbox-parent-project-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 0.375rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.flow-inbox-parent-project-dropdown-item {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--text-normal);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background 0.1s ease;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.flow-inbox-parent-project-dropdown-item:hover,
+.flow-inbox-parent-project-dropdown-item.highlighted {
+  background: var(--background-modifier-hover);
+}
+
+.flow-inbox-parent-project-dropdown-item:focus {
+  background: var(--background-modifier-hover);
+  outline: none;
+  box-shadow: none;
+}
+
+.flow-inbox-parent-project-dropdown-item.selected {
+  background: var(--background-modifier-hover);
+  font-weight: 600;
+}
+
+/* Due date section */
+.flow-inbox-due-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.flow-inbox-due-section .label {
+  color: var(--text-muted);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.flow-inbox-due-input {
+  flex: 1;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.375rem;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.flow-inbox-due-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+/* Bottom bar */
+.flow-inbox-bottom-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--background-secondary-alt);
+}
+
+.flow-inbox-delete-btn {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  background: var(--background-secondary);
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-delete-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--color-red);
+}
+
+.flow-inbox-save-btn {
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background: var(--interactive-accent);
+  border: none;
+  color: white;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.flow-inbox-save-btn:hover {
+  opacity: 0.9;
+}
+
+.flow-inbox-save-btn.delete-mode {
+  background: var(--color-red);
+}
+
+.flow-inbox-action-summary {
+  font-weight: 400;
+  opacity: 0.85;
+  font-size: 0.75rem;
+}
+
+/* Empty state */
+.flow-inbox-empty-state {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.flow-inbox-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.flow-inbox-empty-title {
+  margin-bottom: 8px;
+}
+
+.flow-inbox-empty-description {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Completion state */
+.flow-inbox-completion {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.flow-inbox-completion h3 {
+  margin-bottom: 12px;
+}
+
+.flow-inbox-completion p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* ============================================
+   Keyboard Shortcuts Modal
+   ============================================ */
+
+.flow-keyboard-shortcuts-modal {
+  padding: 0;
+}
+
+.modal:has(.flow-keyboard-shortcuts-modal) {
+  width: auto !important;
+  max-width: 420px !important;
+  min-width: 320px !important;
+}
+
+.modal:has(.flow-keyboard-shortcuts-modal) .modal-content {
+  padding: 0;
+}
+
+.flow-shortcuts-header {
+  padding: 20px 24px 0;
+}
+
+.flow-shortcuts-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-normal);
+}
+
+.flow-shortcuts-content {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.flow-shortcuts-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-shortcuts-group-title {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.flow-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flow-shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.flow-shortcuts-keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.flow-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  font-family: var(--font-interface);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-normal);
+  background: linear-gradient(
+    180deg,
+    var(--background-primary) 0%,
+    var(--background-secondary) 100%
+  );
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow:
+    0 1px 0 1px var(--background-modifier-border),
+    0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.theme-dark .flow-shortcut-key {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  box-shadow:
+    0 1px 0 1px rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.flow-shortcuts-separator {
+  color: var(--text-faint);
+  font-size: 11px;
+  padding: 0 2px;
+}
+
+.flow-shortcuts-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.flow-shortcuts-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.flow-shortcuts-footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.flow-shortcuts-footer-text {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.flow-shortcuts-footer .flow-shortcut-key {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
+/* ============================================
+   Inbox Processing Desktop Overrides
+   ============================================ */
+
+@media (min-width: 768px) {
+  .flow-inbox-redesign {
+    max-width: 36rem;
+    padding: 1.25rem;
+  }
+
+  .flow-inbox-original {
+    padding: 0.375rem 0 0.375rem 1rem;
+  }
+
+  .flow-inbox-actions-section {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .flow-inbox-project-section {
+    margin-top: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .flow-inbox-bottom-bar {
+    padding-top: 1.5rem;
+    margin-top: 1.25rem;
   }
 }

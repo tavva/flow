@@ -17,7 +17,7 @@ describe("InboxProcessingView", () => {
 
   const testSettings = {
     ...DEFAULT_SETTINGS,
-    openaiApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
+    openrouterApiKey: generateDeterministicFakeApiKey("inbox-processing-view"),
   };
 
   let mockSaveSettings: jest.Mock;
@@ -475,23 +475,15 @@ describe("InboxProcessingView", () => {
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
 
-      // Test 'c' -> create-project
+      // Test 'n' -> next-actions-file
       handleKeyDown({
-        key: "c",
+        key: "n",
         target: document.body,
         preventDefault: preventDefaultSpy,
       } as any);
-      expect(item.selectedAction).toBe("create-project");
+      expect(item.selectedAction).toBe("next-actions-file");
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
       expect(preventDefaultSpy).toHaveBeenCalled();
-
-      // Test 'a' -> add-to-project
-      handleKeyDown({
-        key: "a",
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-      } as any);
-      expect(item.selectedAction).toBe("add-to-project");
 
       // Test 'r' -> reference
       handleKeyDown({
@@ -501,14 +493,6 @@ describe("InboxProcessingView", () => {
       } as any);
       expect(item.selectedAction).toBe("reference");
 
-      // Test 'n' -> next-actions-file
-      handleKeyDown({
-        key: "n",
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-      } as any);
-      expect(item.selectedAction).toBe("next-actions-file");
-
       // Test 's' -> someday-file
       handleKeyDown({
         key: "s",
@@ -516,22 +500,6 @@ describe("InboxProcessingView", () => {
         preventDefault: preventDefaultSpy,
       } as any);
       expect(item.selectedAction).toBe("someday-file");
-
-      // Test 'p' -> person
-      handleKeyDown({
-        key: "p",
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-      } as any);
-      expect(item.selectedAction).toBe("person");
-
-      // Test 't' -> trash
-      handleKeyDown({
-        key: "t",
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-      } as any);
-      expect(item.selectedAction).toBe("trash");
     });
 
     test("ignores unknown keys", () => {
@@ -549,7 +517,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+Q blurs input focus", () => {
+    test("Ctrl+Shift+Q blurs input focus", () => {
       const blurSpy = jest.fn();
       const preventDefaultSpy = jest.fn();
       const stopPropagationSpy = jest.fn();
@@ -561,6 +529,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "q",
         ctrlKey: true,
+        shiftKey: true,
         target: inputEl,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -571,29 +540,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+Q blurs input focus (Mac)", () => {
-      const blurSpy = jest.fn();
-      const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
-      const inputEl = {
-        tagName: "INPUT",
-        blur: blurSpy,
-      };
-
-      handleKeyDown({
-        key: "q",
-        metaKey: true,
-        target: inputEl,
-        preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
-      } as any);
-
-      expect(blurSpy).toHaveBeenCalled();
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
-
-    test("Ctrl+Enter saves the current item", () => {
+    test("Ctrl+Shift+Enter saves the current item", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
@@ -610,6 +557,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "Enter",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -620,63 +568,74 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+Enter saves the current item (Mac)", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        selectedSpheres: ["personal"],
-        original: "test item",
-      } as any;
-      (view as any).state.editableItems = [item];
-      const saveAndRemoveItemSpy = jest
-        .spyOn((view as any).state, "saveAndRemoveItem")
-        .mockResolvedValue(undefined);
+    test("arrow keys navigate between items", () => {
+      const items = [
+        { isExpanded: false, selectedAction: "next-actions-file" },
+        { isExpanded: true, selectedAction: "next-actions-file" },
+        { isExpanded: false, selectedAction: "next-actions-file" },
+      ] as any[];
+      (view as any).state.editableItems = items;
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
       const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
 
+      // Right arrow navigates to next item
       handleKeyDown({
-        key: "Enter",
-        metaKey: true,
+        key: "ArrowRight",
         target: document.body,
         preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
       } as any);
-
-      expect(saveAndRemoveItemSpy).toHaveBeenCalledWith(item);
+      expect(items[1].isExpanded).toBe(false);
+      expect(items[2].isExpanded).toBe(true);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
       expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
 
-    test("sets pending focus for Create Project action", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-
+      // Left arrow navigates to previous item
+      queueRenderSpy.mockClear();
       handleKeyDown({
-        key: "c",
+        key: "ArrowLeft",
         target: document.body,
-        preventDefault: jest.fn(),
+        preventDefault: preventDefaultSpy,
       } as any);
-
-      expect(item.selectedAction).toBe("create-project");
-      expect((view as any).pendingFocus).toBe(".flow-gtd-project-input");
+      expect(items[1].isExpanded).toBe(true);
+      expect(items[2].isExpanded).toBe(false);
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("sets pending focus for Add to Project action", () => {
-      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
-      (view as any).state.editableItems = [item];
+    test("arrow keys do not navigate when on first/last item", () => {
+      const items = [
+        { isExpanded: true, selectedAction: "next-actions-file" },
+        { isExpanded: false, selectedAction: "next-actions-file" },
+      ] as any[];
+      (view as any).state.editableItems = items;
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+      const preventDefaultSpy = jest.fn();
+
+      // Left arrow on first item does nothing
+      handleKeyDown({
+        key: "ArrowLeft",
+        target: document.body,
+        preventDefault: preventDefaultSpy,
+      } as any);
+      expect(items[0].isExpanded).toBe(true);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
+    test("arrow keys ignored when typing in input", () => {
+      const items = [
+        { isExpanded: true, selectedAction: "next-actions-file" },
+        { isExpanded: false, selectedAction: "next-actions-file" },
+      ] as any[];
+      (view as any).state.editableItems = items;
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
+      const inputEl = document.createElement("input");
       handleKeyDown({
-        key: "a",
-        target: document.body,
+        key: "ArrowRight",
+        target: inputEl,
         preventDefault: jest.fn(),
       } as any);
-
-      expect(item.selectedAction).toBe("add-to-project");
-      expect((view as any).pendingFocus).toBe(".flow-gtd-project-search");
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(items[0].isExpanded).toBe(true);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
     test("applies focus after render", () => {
@@ -700,7 +659,7 @@ describe("InboxProcessingView", () => {
       jest.useRealTimers();
     });
 
-    test("Ctrl+1 toggles first sphere selection", () => {
+    test("Ctrl+Shift+1 toggles first sphere selection", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -717,6 +676,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
@@ -728,7 +688,7 @@ describe("InboxProcessingView", () => {
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Ctrl+2 toggles second sphere selection", () => {
+    test("Ctrl+Shift+2 toggles second sphere selection", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -743,6 +703,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "2",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -752,31 +713,7 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Cmd+1 toggles first sphere selection (Mac)", () => {
-      const settings = (view as any).settings;
-      settings.spheres = ["work", "personal"];
-
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        selectedSpheres: [] as string[],
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-
-      handleKeyDown({
-        key: "1",
-        metaKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.selectedSpheres).toEqual(["work"]);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+1 deselects already selected sphere", () => {
+    test("Ctrl+Shift+1 deselects already selected sphere", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
@@ -791,6 +728,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -800,13 +738,13 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("sphere shortcuts ignored for add-to-project action", () => {
+    test("sphere shortcuts work for someday-file action", () => {
       const settings = (view as any).settings;
       settings.spheres = ["work", "personal"];
 
       const item = {
         isExpanded: true,
-        selectedAction: "add-to-project",
+        selectedAction: "someday-file",
         selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
@@ -815,13 +753,14 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
       } as any);
 
-      expect(item.selectedSpheres).toEqual([]);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
+      expect(item.selectedSpheres).toEqual(["work"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
     test("sphere shortcuts ignored for reference action", () => {
@@ -839,6 +778,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -863,6 +803,7 @@ describe("InboxProcessingView", () => {
       handleKeyDown({
         key: "1",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -884,10 +825,11 @@ describe("InboxProcessingView", () => {
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+3 when only 2 spheres exist
+      // Try Ctrl+Shift+3 when only 2 spheres exist
       handleKeyDown({
         key: "3",
         ctrlKey: true,
+        shiftKey: true,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
@@ -897,11 +839,14 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+J toggles Add to focus checkbox", () => {
+    test("plain number key toggles sphere when not in input", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
-        addToFocus: false,
+        selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
@@ -909,286 +854,119 @@ describe("InboxProcessingView", () => {
       const stopPropagationSpy = jest.fn();
 
       handleKeyDown({
-        key: "j",
-        ctrlKey: true,
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
         target: document.body,
         preventDefault: preventDefaultSpy,
         stopPropagation: stopPropagationSpy,
       } as any);
 
-      expect(item.addToFocus).toBe(true);
+      expect(item.selectedSpheres).toEqual(["work"]);
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
       expect(preventDefaultSpy).toHaveBeenCalled();
       expect(stopPropagationSpy).toHaveBeenCalled();
     });
 
-    test("Cmd+J toggles Add to focus checkbox (Mac)", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "create-project",
-        addToFocus: false,
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+    test("plain number key deselects already selected sphere", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
 
-      handleKeyDown({
-        key: "j",
-        metaKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.addToFocus).toBe(true);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+J unchecks Mark as done when toggling Add to focus on", () => {
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
-        addToFocus: false,
-        markAsDone: [true],
+        selectedSpheres: ["work"],
       } as any;
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
       handleKeyDown({
-        key: "j",
-        ctrlKey: true,
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
       } as any);
 
-      expect(item.addToFocus).toBe(true);
-      expect(item.markAsDone[0]).toBe(false);
+      expect(item.selectedSpheres).toEqual([]);
       expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
 
-    test("Ctrl+D toggles Mark as done checkbox", () => {
+    test("plain number key is ignored when in input", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
       const item = {
         isExpanded: true,
         selectedAction: "next-actions-file",
-        markAsDone: [false],
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-      const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
-
-      handleKeyDown({
-        key: "d",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
-      } as any);
-
-      expect(item.markAsDone[0]).toBe(true);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
-
-    test("Cmd+D toggles Mark as done checkbox (Mac)", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "create-project",
-        markAsDone: [false],
+        selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
+      const inputEl = document.createElement("input");
       handleKeyDown({
-        key: "d",
-        metaKey: true,
-        target: document.body,
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
+        target: inputEl,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
       } as any);
 
-      expect(item.markAsDone[0]).toBe(true);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
+      expect(item.selectedSpheres).toEqual([]);
+      expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+D initializes markAsDone array if not exists", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+    test("plain number key ignored for reference action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
 
-      handleKeyDown({
-        key: "d",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.markAsDone).toEqual([true]);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+D unchecks Add to focus when toggling Mark as done on", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        addToFocus: true,
-        markAsDone: [false],
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-
-      handleKeyDown({
-        key: "d",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.markAsDone[0]).toBe(true);
-      expect(item.addToFocus).toBe(false);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+T toggles date section expansion", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "next-actions-file",
-        isDateSectionExpanded: false,
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-      const preventDefaultSpy = jest.fn();
-      const stopPropagationSpy = jest.fn();
-
-      handleKeyDown({
-        key: "t",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: preventDefaultSpy,
-        stopPropagation: stopPropagationSpy,
-      } as any);
-
-      expect(item.isDateSectionExpanded).toBe(true);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      expect(stopPropagationSpy).toHaveBeenCalled();
-    });
-
-    test("Cmd+T toggles date section expansion (Mac)", () => {
-      const item = {
-        isExpanded: true,
-        selectedAction: "someday-file",
-        isDateSectionExpanded: true,
-      } as any;
-      (view as any).state.editableItems = [item];
-      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
-
-      handleKeyDown({
-        key: "t",
-        metaKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-
-      expect(item.isDateSectionExpanded).toBe(false);
-      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
-    });
-
-    test("Ctrl+J/D/T ignored for reference action", () => {
       const item = {
         isExpanded: true,
         selectedAction: "reference",
-        addToFocus: false,
-        markAsDone: [false],
-        isDateSectionExpanded: false,
+        selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+J
       handleKeyDown({
-        key: "j",
-        ctrlKey: true,
+        key: "1",
+        ctrlKey: false,
+        shiftKey: false,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
       } as any);
-      expect(item.addToFocus).toBe(false);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
 
-      // Try Ctrl+D
-      handleKeyDown({
-        key: "d",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-      expect(item.markAsDone[0]).toBe(false);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
-
-      // Try Ctrl+T
-      handleKeyDown({
-        key: "t",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-      expect(item.isDateSectionExpanded).toBe(false);
+      expect(item.selectedSpheres).toEqual([]);
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
-    test("Ctrl+J/D/T ignored for trash action", () => {
+    test("plain number key works for someday-file action", () => {
+      const settings = (view as any).settings;
+      settings.spheres = ["work", "personal"];
+
       const item = {
         isExpanded: true,
-        selectedAction: "trash",
-        addToFocus: false,
-        markAsDone: [false],
-        isDateSectionExpanded: false,
+        selectedAction: "someday-file",
+        selectedSpheres: [] as string[],
       } as any;
       (view as any).state.editableItems = [item];
       const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
 
-      // Try Ctrl+J
       handleKeyDown({
-        key: "j",
-        ctrlKey: true,
+        key: "2",
+        ctrlKey: false,
+        shiftKey: false,
         target: document.body,
         preventDefault: jest.fn(),
         stopPropagation: jest.fn(),
       } as any);
-      expect(item.addToFocus).toBe(false);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
 
-      // Try Ctrl+D
-      handleKeyDown({
-        key: "d",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-      expect(item.markAsDone[0]).toBe(false);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
-
-      // Try Ctrl+T
-      handleKeyDown({
-        key: "t",
-        ctrlKey: true,
-        target: document.body,
-        preventDefault: jest.fn(),
-        stopPropagation: jest.fn(),
-      } as any);
-      expect(item.isDateSectionExpanded).toBe(false);
-      expect(queueRenderSpy).not.toHaveBeenCalled();
+      expect(item.selectedSpheres).toEqual(["personal"]);
+      expect(queueRenderSpy).toHaveBeenCalledWith("editable");
     });
   });
 });

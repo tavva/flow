@@ -1,7 +1,7 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { WorkspaceLeaf, TFile, setIcon } from "obsidian";
+import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer } from "obsidian";
 import { getAPI } from "obsidian-dataview";
 import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator, ValidationResult } from "./focus-validator";
@@ -28,6 +28,7 @@ export class FocusView extends RefreshingView {
   private allProjects: FlowProject[] = [];
   private draggedItem: FocusItem | null = null;
   private focusItems: FocusItem[] = [];
+  private selectedContexts: string[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -65,6 +66,21 @@ export class FocusView extends RefreshingView {
   private getCompletedTodayItems(): FocusItem[] {
     const midnight = this.getMidnightTimestamp();
     return this.focusItems.filter((item) => item.completedAt && item.completedAt >= midnight);
+  }
+
+  // Save state for persistence across Obsidian reloads
+  getState() {
+    return {
+      selectedContexts: this.selectedContexts,
+    };
+  }
+
+  // Restore state when Obsidian reloads
+  async setState(state: { selectedContexts?: string[] }, result: any) {
+    if (state?.selectedContexts !== undefined) {
+      this.selectedContexts = state.selectedContexts;
+    }
+    await super.setState(state, result);
   }
 
   getViewType(): string {
@@ -126,15 +142,21 @@ export class FocusView extends RefreshingView {
       this.renderClearNotification(container as HTMLElement);
     }
 
+    // Render context filter buttons (using all items so all contexts are discoverable)
+    this.renderContextFilter(container as HTMLElement, this.focusItems);
+
     // Show current projects box
     this.renderCurrentProjectsBox(container as HTMLElement);
 
-    if (this.focusItems.length === 0) {
+    // Apply context filter
+    const filteredItems = this.filterItemsByContext(this.focusItems);
+
+    if (filteredItems.length === 0) {
       this.renderEmptyMessage(container as HTMLElement);
       return;
     }
 
-    this.renderGroupedItems(container as HTMLElement, this.focusItems);
+    this.renderGroupedItems(container as HTMLElement, filteredItems);
   }
 
   private async loadFocus(): Promise<void> {
@@ -227,17 +249,83 @@ export class FocusView extends RefreshingView {
         this.renderClearNotification(container as HTMLElement);
       }
 
+      // Render context filter buttons (using all items so all contexts are discoverable)
+      this.renderContextFilter(container as HTMLElement, validatedItems);
+
       // Show current projects box
       this.renderCurrentProjectsBox(container as HTMLElement);
 
-      if (validatedItems.length === 0) {
+      // Apply context filter
+      const filteredItems = this.filterItemsByContext(validatedItems);
+
+      if (filteredItems.length === 0) {
         this.renderEmptyMessage(container as HTMLElement);
       } else {
-        this.renderGroupedItems(container as HTMLElement, validatedItems);
+        this.renderGroupedItems(container as HTMLElement, filteredItems);
       }
     } catch (error) {
       console.error("Failed to refresh focus view", error);
     }
+  }
+
+  private discoverContexts(items: FocusItem[]): string[] {
+    const contexts = new Set<string>();
+    for (const item of items) {
+      for (const context of item.contexts || []) {
+        contexts.add(context);
+      }
+    }
+    return Array.from(contexts).sort();
+  }
+
+  private renderContextFilter(container: HTMLElement, items: FocusItem[]) {
+    const availableContexts = this.discoverContexts(items);
+
+    // Prune stale selections that no longer have matching items
+    this.selectedContexts = this.selectedContexts.filter((c) => availableContexts.includes(c));
+
+    if (availableContexts.length === 0) {
+      return;
+    }
+
+    const filterContainer = container.createDiv({ cls: "flow-gtd-context-buttons" });
+
+    availableContexts.forEach((context) => {
+      const isSelected = this.selectedContexts.includes(context);
+      const button = filterContainer.createEl("button", {
+        cls: "flow-gtd-context-button",
+      });
+      button.setAttribute("type", "button");
+      button.setText(context);
+
+      if (isSelected) {
+        button.addClass("selected");
+      }
+
+      button.addEventListener("click", async () => {
+        this.toggleContextFilter(context);
+        await this.onOpen();
+      });
+    });
+  }
+
+  private toggleContextFilter(context: string) {
+    const index = this.selectedContexts.indexOf(context);
+    if (index === -1) {
+      this.selectedContexts.push(context);
+    } else {
+      this.selectedContexts.splice(index, 1);
+    }
+  }
+
+  private filterItemsByContext(items: FocusItem[]): FocusItem[] {
+    if (this.selectedContexts.length === 0) {
+      return items;
+    }
+
+    return items.filter((item) => {
+      return (item.contexts || []).some((c) => this.selectedContexts.includes(c));
+    });
   }
 
   private groupItems(items: FocusItem[]): GroupedFocusItems {
@@ -279,7 +367,7 @@ export class FocusView extends RefreshingView {
         cls: "flow-gtd-focus-items flow-gtd-focus-pinned-items",
       });
       pinnedItems.forEach((item) => {
-        this.renderPinnedItem(pinnedList, item);
+        void this.renderPinnedItem(pinnedList, item);
       });
     }
 
@@ -317,11 +405,11 @@ export class FocusView extends RefreshingView {
     }
 
     // Completed Today section (at the end)
-    this.renderCompletedTodaySection(container);
+    const completedToday = this.filterItemsByContext(this.getCompletedTodayItems());
+    this.renderCompletedTodaySection(container, completedToday);
   }
 
-  private renderCompletedTodaySection(container: HTMLElement): void {
-    const completedItems = this.getCompletedTodayItems();
+  private renderCompletedTodaySection(container: HTMLElement, completedItems: FocusItem[]): void {
     if (completedItems.length === 0) return;
 
     const section = container.createDiv({ cls: "flow-gtd-focus-section" });
@@ -400,7 +488,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderCompletedItem(itemsList, item);
+      void this.renderCompletedItem(itemsList, item);
     });
   }
 
@@ -414,7 +502,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderCompletedItem(itemsList, item);
+      void this.renderCompletedItem(itemsList, item);
     });
   }
 
@@ -449,7 +537,7 @@ export class FocusView extends RefreshingView {
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderItem(itemsList, item);
+      void this.renderItem(itemsList, item);
     });
   }
 
@@ -463,11 +551,11 @@ export class FocusView extends RefreshingView {
 
     const itemsList = sphereSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
-      this.renderItem(itemsList, item);
+      void this.renderItem(itemsList, item);
     });
   }
 
-  private renderItem(container: HTMLElement, item: FocusItem) {
+  private async renderItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
     // Check if this is a waiting-for item
@@ -484,7 +572,7 @@ export class FocusView extends RefreshingView {
     }
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
 
     // Gray out waiting-for items
@@ -493,8 +581,8 @@ export class FocusView extends RefreshingView {
       textSpan.style.fontStyle = "italic";
     }
 
-    textSpan.addEventListener("click", () => {
-      this.openFile(item.file, item.lineNumber);
+    textSpan.addEventListener("click", (e) => {
+      this.handleRenderedTextClick(e, item);
     });
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
@@ -556,7 +644,7 @@ export class FocusView extends RefreshingView {
     });
   }
 
-  private renderPinnedItem(container: HTMLElement, item: FocusItem) {
+  private async renderPinnedItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", {
       cls: "flow-gtd-focus-item flow-gtd-focus-pinned-item",
       attr: { draggable: "true" },
@@ -600,7 +688,7 @@ export class FocusView extends RefreshingView {
     }
 
     const textSpan = actionRow.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
 
     // Gray out waiting-for items
@@ -609,8 +697,8 @@ export class FocusView extends RefreshingView {
       textSpan.style.fontStyle = "italic";
     }
 
-    textSpan.addEventListener("click", () => {
-      this.openFile(item.file, item.lineNumber);
+    textSpan.addEventListener("click", (e) => {
+      this.handleRenderedTextClick(e, item);
     });
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
@@ -670,7 +758,7 @@ export class FocusView extends RefreshingView {
     });
   }
 
-  private renderCompletedItem(container: HTMLElement, item: FocusItem) {
+  private async renderCompletedItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", {
       cls: "flow-gtd-focus-item flow-gtd-focus-completed",
     });
@@ -682,13 +770,13 @@ export class FocusView extends RefreshingView {
     });
 
     const textSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-text" });
-    textSpan.setText(item.text);
+    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
     textSpan.style.cursor = "pointer";
     textSpan.style.textDecoration = "line-through";
     textSpan.style.opacity = "0.6";
 
-    textSpan.addEventListener("click", () => {
-      this.openFile(item.file, item.lineNumber);
+    textSpan.addEventListener("click", (e) => {
+      this.handleRenderedTextClick(e, item);
     });
 
     // No action buttons for completed items
@@ -817,6 +905,45 @@ export class FocusView extends RefreshingView {
       // If getRoot() throws, treat leaf as detached
       return false;
     }
+  }
+
+  private handleRenderedTextClick(e: MouseEvent, item: FocusItem): void {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) {
+      this.openFile(item.file, item.lineNumber);
+      return;
+    }
+
+    // Handle clicks on internal links (wikilinks)
+    const internalLink = target.closest("a.internal-link") as HTMLElement | null;
+    if (internalLink) {
+      e.preventDefault();
+      const href = internalLink.getAttribute("data-href");
+      if (href) {
+        this.app.workspace.openLinkText(href, item.file);
+      }
+      return;
+    }
+
+    // Handle clicks on tags
+    const tagLink = target.closest("a.tag") as HTMLElement | null;
+    if (tagLink) {
+      e.preventDefault();
+      const tag = tagLink.textContent;
+      if (tag) {
+        const searchPlugin = (this.app as any).internalPlugins?.getPluginById?.("global-search");
+        searchPlugin?.instance?.openGlobalSearch?.(`tag:${tag}`);
+      }
+      return;
+    }
+
+    // Handle clicks on any other link (e.g. external URLs)
+    if (target.closest("a")) {
+      return;
+    }
+
+    // Default: navigate to source file
+    this.openFile(item.file, item.lineNumber);
   }
 
   private async openFile(filePath: string, lineNumber?: number): Promise<void> {

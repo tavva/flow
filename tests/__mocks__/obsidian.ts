@@ -37,6 +37,7 @@ export class Vault {
 
 export class MetadataCache {
   getFileCache = jest.fn();
+  getTags = jest.fn().mockReturnValue({});
   on = jest.fn(() => ({ unload: jest.fn() }));
   offref = jest.fn();
 }
@@ -500,3 +501,23 @@ export class MarkdownRenderer {
     element.innerHTML = markdown;
   }
 }
+
+export class AbstractInputSuggest<T> {
+  protected app: App;
+
+  constructor(app: App, inputEl: HTMLElement) {
+    this.app = app;
+  }
+
+  setValue(value: string): void {}
+  close(): void {}
+}
+
+export const Platform = {
+  isMacOS: false,
+  isWin: false,
+  isLinux: true,
+  isMobile: false,
+  isDesktop: true,
+  isDesktopApp: true,
+};

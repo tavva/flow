@@ -36,7 +36,13 @@ function isLegacyFormat(content: string): boolean {
  */
 function parseLegacyFormat(content: string): FocusItem[] {
   const data: LegacyFocusFileFormat = JSON.parse(content);
-  return data.items || [];
+  const items = data.items || [];
+  for (const item of items) {
+    if (!item.contexts) {
+      item.contexts = [];
+    }
+  }
+  return items;
 }
 
 /**
@@ -51,7 +57,11 @@ function parseJsonlFormat(content: string): FocusItem[] {
     if (!trimmed) continue;
 
     try {
-      items.push(JSON.parse(trimmed));
+      const item: FocusItem = JSON.parse(trimmed);
+      if (!item.contexts) {
+        item.contexts = [];
+      }
+      items.push(item);
     } catch {
       console.warn("Skipping invalid line in focus file:", trimmed.substring(0, 50));
     }

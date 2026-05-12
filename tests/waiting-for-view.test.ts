@@ -40,7 +40,10 @@ describe("WaitingForView", () => {
     view = new WaitingForView(mockLeaf as WorkspaceLeaf, mockSettings, mockSaveSettings);
     (view as any).app = mockApp;
 
-    mockScanner = new WaitingForScanner(mockApp as any) as jest.Mocked<WaitingForScanner>;
+    mockScanner = new WaitingForScanner(
+      mockApp as any,
+      mockSettings
+    ) as jest.Mocked<WaitingForScanner>;
     (view as any).scanner = mockScanner;
 
     // Also replace the validator with one that uses the mock app

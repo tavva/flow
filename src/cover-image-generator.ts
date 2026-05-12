@@ -60,8 +60,8 @@ export async function generateCoverImage(
   // Generate image via OpenRouter
   const imageData = await callOpenRouterImageAPI(
     projectFile.basename,
-    settings.openaiApiKey,
-    settings.openaiBaseUrl,
+    settings.openrouterApiKey,
+    settings.openrouterBaseUrl,
     settings.openrouterImageModel
   );
 

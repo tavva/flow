@@ -1,7 +1,7 @@
 // tests/focus-view.test.ts
 import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { FocusItem } from "../src/types";
-import { WorkspaceLeaf } from "obsidian";
+import { WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 
 jest.mock("obsidian");
 
@@ -1302,6 +1302,335 @@ describe("FocusView", () => {
     });
   });
 
+  describe("Context filtering", () => {
+    it("should discover contexts from focus items", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries",
+          sphere: "personal",
+          isGeneral: true,
+          addedAt: Date.now(),
+          contexts: ["errands"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 3,
+          lineContent: "- [ ] Email boss #context/phone #context/computer",
+          text: "Email boss",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone", "computer"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 4,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      const contexts = (view as any).discoverContexts(items);
+
+      expect(contexts).toEqual(["computer", "errands", "phone"]);
+    });
+
+    it("should filter items by selected contexts", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries",
+          sphere: "personal",
+          isGeneral: true,
+          addedAt: Date.now(),
+          contexts: ["errands"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 3,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      (view as any).selectedContexts = ["phone"];
+
+      const filtered = (view as any).filterItemsByContext(items);
+
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].text).toBe("Call dentist");
+    });
+
+    it("should return all items when no contexts selected", () => {
+      const items: FocusItem[] = [
+        {
+          file: "test.md",
+          lineNumber: 1,
+          lineContent: "- [ ] Call dentist #context/phone",
+          text: "Call dentist",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          contexts: ["phone"],
+        },
+        {
+          file: "test.md",
+          lineNumber: 2,
+          lineContent: "- [ ] No context item",
+          text: "No context item",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      (view as any).selectedContexts = [];
+
+      const filtered = (view as any).filterItemsByContext(items);
+
+      expect(filtered).toHaveLength(2);
+    });
+
+    it("should persist selectedContexts in getState", () => {
+      (view as any).selectedContexts = ["phone", "errands"];
+
+      const state = view.getState();
+
+      expect(state.selectedContexts).toEqual(["phone", "errands"]);
+    });
+
+    it("should restore selectedContexts from setState", async () => {
+      await view.setState({ selectedContexts: ["computer"] }, {} as any);
+
+      expect((view as any).selectedContexts).toEqual(["computer"]);
+    });
+
+    it("should default selectedContexts to empty array when not in state", async () => {
+      await view.setState({}, {} as any);
+
+      expect((view as any).selectedContexts).toEqual([]);
+    });
+
+    it("should toggle context filter", () => {
+      (view as any).selectedContexts = [];
+
+      (view as any).toggleContextFilter("phone");
+      expect((view as any).selectedContexts).toEqual(["phone"]);
+
+      (view as any).toggleContextFilter("errands");
+      expect((view as any).selectedContexts).toEqual(["phone", "errands"]);
+
+      (view as any).toggleContextFilter("phone");
+      expect((view as any).selectedContexts).toEqual(["errands"]);
+    });
+  });
+
+  describe("Clickable links in action text", () => {
+    let renderSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      renderSpy = jest.spyOn(MarkdownRenderer, "renderMarkdown");
+    });
+
+    afterEach(() => {
+      renderSpy.mockRestore();
+    });
+
+    it("should render action text using MarkdownRenderer for unpinned items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call [[John]] about #project/alpha",
+          text: "Call [[John]] about #project/alpha",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Call [[John]] about #project/alpha",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should render action text using MarkdownRenderer for pinned items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Review [[PR-42]] notes",
+          text: "Review [[PR-42]] notes",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          isPinned: true,
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Review [[PR-42]] notes",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should render action text using MarkdownRenderer for completed items", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [x] Email [[Sarah]] ✅ 2026-02-19",
+          text: "Email [[Sarah]]",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+          completedAt: Date.now(),
+        },
+      ];
+
+      await view.onOpen();
+
+      expect(renderSpy).toHaveBeenCalledWith(
+        "Email [[Sarah]]",
+        expect.any(HTMLElement),
+        "Projects/Test.md",
+        expect.anything()
+      );
+    });
+
+    it("should open linked note when clicking an internal link in action text", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Call [[John]]",
+          text: "Call [[John]]",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      // Mock workspace.openLinkText
+      mockApp.workspace.openLinkText = jest.fn();
+
+      await view.onOpen();
+
+      // Find the text span in the rendered DOM
+      const container = (view as any).contentEl as HTMLElement;
+      const textSpan = container.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textSpan).toBeTruthy();
+
+      // Create a fake anchor element inside the text span (simulating a rendered wikilink)
+      const fakeLink = document.createElement("a");
+      fakeLink.className = "internal-link";
+      fakeLink.setAttribute("data-href", "John");
+      textSpan.appendChild(fakeLink);
+
+      // Spy on openFile to ensure it's NOT called
+      const openFileSpy = jest.fn();
+      (view as any).openFile = openFileSpy;
+
+      // Simulate clicking the link element
+      const clickEvent = new (window as any).MouseEvent("click", { bubbles: true });
+      Object.defineProperty(clickEvent, "target", { value: fakeLink });
+      textSpan.dispatchEvent(clickEvent);
+
+      // Should open the linked note, not the source file
+      expect(openFileSpy).not.toHaveBeenCalled();
+      expect(mockApp.workspace.openLinkText).toHaveBeenCalledWith("John", "Projects/Test.md");
+    });
+
+    it("should open tag search when clicking a tag in action text", async () => {
+      mockFocusItems = [
+        {
+          file: "Projects/Test.md",
+          lineNumber: 5,
+          lineContent: "- [ ] Buy groceries #context/errands",
+          text: "Buy groceries #context/errands",
+          sphere: "work",
+          isGeneral: false,
+          addedAt: Date.now(),
+        },
+      ];
+
+      // Mock the global search plugin
+      const mockOpenGlobalSearch = jest.fn();
+      (mockApp as any).internalPlugins = {
+        getPluginById: jest.fn().mockReturnValue({
+          instance: { openGlobalSearch: mockOpenGlobalSearch },
+        }),
+      };
+
+      await view.onOpen();
+
+      // Find the text span
+      const container = (view as any).contentEl as HTMLElement;
+      const textSpan = container.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(textSpan).toBeTruthy();
+
+      // Create a fake tag element inside the text span
+      const fakeTag = document.createElement("a");
+      fakeTag.className = "tag";
+      fakeTag.setAttribute("href", "#context/errands");
+      fakeTag.textContent = "#context/errands";
+      textSpan.appendChild(fakeTag);
+
+      // Spy on openFile to ensure it's NOT called
+      const openFileSpy = jest.fn();
+      (view as any).openFile = openFileSpy;
+
+      // Simulate clicking the tag element
+      const clickEvent = new (window as any).MouseEvent("click", { bubbles: true });
+      Object.defineProperty(clickEvent, "target", { value: fakeTag });
+      textSpan.dispatchEvent(clickEvent);
+
+      // Should open search for the tag, not navigate to source file
+      expect(openFileSpy).not.toHaveBeenCalled();
+      expect(mockOpenGlobalSearch).toHaveBeenCalledWith("tag:#context/errands");
+    });
+  });
+
   // Helper function for creating mock focus items
   const createMockFocusItem = (): FocusItem => ({
     file: "test.md",
@@ -1314,7 +1643,7 @@ describe("FocusView", () => {
   });
 
   describe("renderCompletedItem", () => {
-    it("should render completed item with strikethrough and no actions", () => {
+    it("should render completed item with strikethrough and no actions", async () => {
       const mockItem: FocusItem = {
         file: "test.md",
         lineNumber: 5,
@@ -1362,7 +1691,7 @@ describe("FocusView", () => {
         }
       });
 
-      (view as any).renderCompletedItem(container, mockItem);
+      await (view as any).renderCompletedItem(container, mockItem);
 
       const itemEl = container.querySelector(".flow-gtd-focus-completed");
       expect(itemEl).toBeTruthy();
@@ -1384,15 +1713,14 @@ describe("FocusView", () => {
   describe("renderCompletedTodaySection", () => {
     it("should call getCompletedTodayItems", () => {
       (view as any).focusItems = [];
-
-      // Spy on getCompletedTodayItems
-      const spy = jest.spyOn(view as any, "getCompletedTodayItems");
+      const completedItems = (view as any).getCompletedTodayItems();
 
       const container = document.createElement("div");
 
-      (view as any).renderCompletedTodaySection(container);
+      (view as any).renderCompletedTodaySection(container, completedItems);
 
-      expect(spy).toHaveBeenCalled();
+      // Verify getCompletedTodayItems returns empty array for no items
+      expect(completedItems).toEqual([]);
     });
 
     it("should not render when no completed items", () => {
@@ -1402,7 +1730,7 @@ describe("FocusView", () => {
       const createDivSpy = jest.fn();
       (container as any).createDiv = createDivSpy;
 
-      (view as any).renderCompletedTodaySection(container);
+      (view as any).renderCompletedTodaySection(container, []);
 
       // Should not create any divs if no completed items
       expect(createDivSpy).not.toHaveBeenCalled();

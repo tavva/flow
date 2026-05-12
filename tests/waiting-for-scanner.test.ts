@@ -1,5 +1,9 @@
+// ABOUTME: Tests for WaitingForScanner vault scanning and item extraction.
+// ABOUTME: Covers sphere/context extraction, text normalisation, and Dataview integration.
+
 import { WaitingForScanner } from "../src/waiting-for-scanner";
 import { App, TFile, Vault, MetadataCache, CachedMetadata } from "obsidian";
+import { DEFAULT_SETTINGS } from "../src/types";
 
 describe("WaitingForScanner", () => {
   let mockApp: jest.Mocked<App>;
@@ -23,7 +27,7 @@ describe("WaitingForScanner", () => {
       metadataCache: mockMetadataCache,
     } as unknown as jest.Mocked<App>;
 
-    scanner = new WaitingForScanner(mockApp);
+    scanner = new WaitingForScanner(mockApp, DEFAULT_SETTINGS);
   });
 
   test("should scan vault and find waiting-for items", async () => {
@@ -75,6 +79,7 @@ tags: project/work
       lineContent: "- [w] Call John after he returns from holiday",
       text: "Call John after he returns from holiday",
       sphere: "work",
+      contexts: [],
     });
   });
 
@@ -249,5 +254,55 @@ tags:
 
     expect(items).toHaveLength(1);
     expect(items[0].sphere).toBeUndefined();
+  });
+
+  test("should extract context tags from waiting-for items", async () => {
+    const mockFile = Object.create(TFile.prototype);
+    mockFile.path = "Projects/Project A.md";
+    mockFile.basename = "Project A";
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockImplementation((path) => {
+      if (path === "Projects/Project A.md") return mockFile;
+      return null;
+    });
+    mockVault.read.mockResolvedValue(
+      "---\ntags: project/work\n---\n\n## Next actions\n\n- [w] Chase invoice from supplier #context/phone\n"
+    );
+
+    mockMetadataCache.getFileCache.mockReturnValue({
+      frontmatter: { tags: ["project/work"] },
+      listItems: [{ position: { start: { line: 6 } } }],
+    } as any);
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].contexts).toEqual(["phone"]);
+  });
+
+  test("should return empty contexts array when no context tags", async () => {
+    const mockFile = Object.create(TFile.prototype);
+    mockFile.path = "Projects/Project A.md";
+    mockFile.basename = "Project A";
+
+    mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
+    mockVault.getAbstractFileByPath.mockImplementation((path) => {
+      if (path === "Projects/Project A.md") return mockFile;
+      return null;
+    });
+    mockVault.read.mockResolvedValue(
+      "---\ntags: project/work\n---\n\n## Next actions\n\n- [w] Plain waiting item\n"
+    );
+
+    mockMetadataCache.getFileCache.mockReturnValue({
+      frontmatter: { tags: ["project/work"] },
+      listItems: [{ position: { start: { line: 6 } } }],
+    } as any);
+
+    const items = await scanner.scanWaitingForItems();
+
+    expect(items).toHaveLength(1);
+    expect(items[0].contexts).toEqual([]);
   });
 });

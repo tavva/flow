@@ -13,12 +13,10 @@ describe("FileWriter", () => {
   let mockVault: Partial<Vault>;
   let mockFileManager: Partial<FileManager>;
   const mockSettings: PluginSettings = {
-    llmProvider: "anthropic",
-    anthropicApiKey: generateDeterministicFakeApiKey("file-writer"),
-    anthropicModel: "claude-sonnet-4-20250514",
-    openaiApiKey: "",
-    openaiBaseUrl: "https://openrouter.ai/api/v1",
-    openaiModel: "openrouter/anthropic/claude-3.5-sonnet",
+    aiEnabled: false,
+    openrouterApiKey: "",
+    openrouterBaseUrl: "https://openrouter.ai/api/v1",
+    openrouterImageModel: "google/gemini-2.5-flash-image",
     defaultPriority: 2,
     defaultStatus: "live",
     inboxFilesFolderPath: "Flow Inbox Files",
@@ -28,6 +26,8 @@ describe("FileWriter", () => {
     somedayFilePath: "Someday.md",
     projectsFolderPath: "Projects",
     projectTemplateFilePath: "Templates/Project.md",
+    personsFolderPath: "People",
+    personTemplateFilePath: "Templates/Person.md",
     spheres: ["personal", "work"],
   };
 
@@ -1847,6 +1847,78 @@ status: live
         mockFile,
         expect.stringContaining("Test action")
       );
+    });
+  });
+
+  describe("createPerson", () => {
+    it("should create person with empty Discuss next section when discussion item is empty", async () => {
+      const mockFile = new TFile("People/John Doe.md", "John Doe");
+      let fileCreated = false;
+
+      // Mock: template doesn't exist, but after create() the file exists
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Templates/Person.md") return null; // no template
+        if (path === "People/John Doe.md" && fileCreated) return mockFile;
+        return null;
+      });
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);
+      (mockVault.create as jest.Mock).mockImplementation(async () => {
+        fileCreated = true;
+        return mockFile;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(`---
+creation-date: 2025-01-01T12:00:00
+tags:
+  - person
+---
+
+## Discuss next
+
+## Notes
+`);
+
+      // Create person with empty discussion item
+      await fileWriter.createPerson("John Doe", "");
+
+      // Should only create the file once (no modify call for adding discussion item)
+      expect(mockVault.create).toHaveBeenCalledTimes(1);
+      expect(mockVault.modify).not.toHaveBeenCalled();
+    });
+
+    it("should add discussion item when provided", async () => {
+      const mockFile = new TFile("People/Jane Smith.md", "Jane Smith");
+      let fileCreated = false;
+
+      (mockVault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) => {
+        if (path === "Templates/Person.md") return null; // no template
+        if (path === "People/Jane Smith.md" && fileCreated) return mockFile;
+        return null;
+      });
+      (mockVault.getMarkdownFiles as jest.Mock).mockReturnValue([]);
+      (mockVault.create as jest.Mock).mockImplementation(async () => {
+        fileCreated = true;
+        return mockFile;
+      });
+      (mockVault.read as jest.Mock).mockResolvedValue(`---
+creation-date: 2025-01-01T12:00:00
+tags:
+  - person
+---
+
+## Discuss next
+
+## Notes
+`);
+
+      // Create person with a discussion item
+      await fileWriter.createPerson("Jane Smith", "Talk about the project");
+
+      // Should create file then modify to add the discussion item
+      expect(mockVault.create).toHaveBeenCalledTimes(1);
+      expect(mockVault.modify).toHaveBeenCalledTimes(1);
+
+      const [, modifiedContent] = (mockVault.modify as jest.Mock).mock.calls[0];
+      expect(modifiedContent).toContain("- [ ] Talk about the project");
     });
   });
 });

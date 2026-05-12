@@ -55,6 +55,12 @@ export class NewProjectModal extends Modal {
     this.existingProjects = await this.scanner.scanProjects();
 
     this.render();
+
+    // Focus the title input after the modal is fully rendered
+    requestAnimationFrame(() => {
+      const titleInput = contentEl.querySelector<HTMLInputElement>('input[type="text"]');
+      titleInput?.focus();
+    });
   }
 
   onClose() {

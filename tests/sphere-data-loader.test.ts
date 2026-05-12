@@ -411,6 +411,148 @@ describe("SphereDataLoader", () => {
     });
   });
 
+  describe("filterDataByContexts", () => {
+    it("should filter actions by context tag", () => {
+      const loader = new SphereDataLoader(mockApp, "work", {
+        nextActionsFilePath: "Next actions.md",
+        projectTemplateFilePath: "Templates/Project.md",
+      } as any);
+
+      const data: SphereViewData = {
+        projects: [
+          {
+            project: {
+              title: "Project A",
+              file: "a.md",
+              tags: ["project/work"],
+              nextActions: [
+                "Call dentist #context/phone",
+                "Buy supplies #context/errands",
+                "Write report",
+              ],
+            } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: ["Check voicemail #context/phone", "Clean desk"],
+      };
+
+      const result = loader.filterDataByContexts(data, ["phone"]);
+
+      expect(result.projects).toHaveLength(1);
+      expect(result.projects[0].project.nextActions).toEqual(["Call dentist #context/phone"]);
+      expect(result.generalNextActions).toEqual(["Check voicemail #context/phone"]);
+    });
+
+    it("should exclude projects with no matching actions", () => {
+      const loader = new SphereDataLoader(mockApp, "work", {
+        nextActionsFilePath: "Next actions.md",
+        projectTemplateFilePath: "Templates/Project.md",
+      } as any);
+
+      const data: SphereViewData = {
+        projects: [
+          {
+            project: {
+              title: "Project A",
+              file: "a.md",
+              tags: ["project/work"],
+              nextActions: ["Write report", "Review doc"],
+            } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: [],
+      };
+
+      const result = loader.filterDataByContexts(data, ["phone"]);
+
+      expect(result.projects).toHaveLength(0);
+    });
+
+    it("should return all data when no contexts selected", () => {
+      const loader = new SphereDataLoader(mockApp, "work", {
+        nextActionsFilePath: "Next actions.md",
+        projectTemplateFilePath: "Templates/Project.md",
+      } as any);
+
+      const data: SphereViewData = {
+        projects: [
+          {
+            project: {
+              title: "Project A",
+              file: "a.md",
+              tags: ["project/work"],
+              nextActions: ["Task 1", "Task 2"],
+            } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: ["General task"],
+      };
+
+      const result = loader.filterDataByContexts(data, []);
+
+      expect(result.projects).toHaveLength(1);
+      expect(result.projects[0].project.nextActions).toHaveLength(2);
+      expect(result.generalNextActions).toHaveLength(1);
+    });
+  });
+
+  describe("discoverContexts", () => {
+    it("should discover contexts from project actions and general actions", () => {
+      const loader = new SphereDataLoader(mockApp, "work", {} as any);
+
+      const data: SphereViewData = {
+        projects: [
+          {
+            project: {
+              title: "Project A",
+              nextActions: ["Call dentist #context/phone", "Buy supplies #context/errands"],
+            } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: ["Check email #context/computer"],
+      };
+
+      const contexts = loader.discoverContexts(data);
+
+      expect(contexts).toEqual(["computer", "errands", "phone"]);
+    });
+
+    it("should return empty array when no contexts found", () => {
+      const loader = new SphereDataLoader(mockApp, "work", {} as any);
+
+      const data: SphereViewData = {
+        projects: [
+          {
+            project: {
+              title: "Project A",
+              nextActions: ["Write report"],
+            } as FlowProject,
+            priority: 1,
+            depth: 0,
+          },
+        ],
+        projectsNeedingNextActions: [],
+        generalNextActions: ["Clean desk"],
+      };
+
+      const contexts = loader.discoverContexts(data);
+
+      expect(contexts).toEqual([]);
+    });
+  });
+
   describe("normalizePriority", () => {
     it("should return number for valid priority", () => {
       const loader = new SphereDataLoader(mockApp, "work", {} as any);

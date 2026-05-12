@@ -7,10 +7,11 @@ import { DEFAULT_SETTINGS } from "../src/types";
 
 jest.mock("../src/file-writer", () => ({
   FileWriter: jest.fn().mockImplementation(() => ({
-    createPerson: jest.fn().mockImplementation((name: string) => {
+    createPerson: jest.fn().mockImplementation((name: string, _discussionItem: string) => {
       return Promise.resolve({
-        path: `People/${name}.md`,
-        name: `${name}.md`,
+        file: `People/${name}.md`,
+        title: name,
+        tags: ["person"],
       });
     }),
   })),
@@ -73,10 +74,13 @@ describe("NewPersonModal", () => {
 
       const { FileWriter } = require("../src/file-writer");
       const writerInstance = FileWriter.mock.results[0].value;
-      expect(writerInstance.createPerson).toHaveBeenCalledWith("Alice Smith");
+      expect(writerInstance.createPerson).toHaveBeenCalledWith("Alice Smith", "");
     });
 
     it("should open the created file", async () => {
+      const mockFile = { path: "People/Alice.md" };
+      (mockApp.vault.getAbstractFileByPath as jest.Mock).mockReturnValue(mockFile);
+
       await modal.onOpen();
 
       const data = (modal as any).data;
@@ -85,7 +89,7 @@ describe("NewPersonModal", () => {
       await (modal as any).createPerson();
 
       const leaf = (mockApp.workspace.getLeaf as jest.Mock).mock.results[0].value;
-      expect(leaf.openFile).toHaveBeenCalled();
+      expect(leaf.openFile).toHaveBeenCalledWith(mockFile);
     });
 
     it("should close the modal after creation", async () => {
