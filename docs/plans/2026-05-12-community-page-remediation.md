@@ -73,11 +73,12 @@ Already handled before this plan:
 
 ## Task 2: Network And Privacy Scanner Findings
 
-- [ ] Replace `fetch()` in `src/cover-image-generator.ts` with Obsidian `requestUrl`.
-- [ ] Add focused tests for successful OpenRouter image response, HTTP error response, and malformed response using the new request wrapper.
-- [ ] Replace runtime `atob()` with an explicit, tested base64 decoding helper that does not look like obfuscation and works in Obsidian's runtime targets.
-- [ ] Confirm no remaining references to `console.anthropic.com`, old OpenAI-compatible client files, or unused network domains in source or bundled output.
-- [ ] Rebuild and grep `main.js` for unexpected domains.
+- [x] Replace `fetch()` in `src/cover-image-generator.ts` with Obsidian `requestUrl`.
+- [x] Add focused tests for successful OpenRouter image response, HTTP error response, and malformed response using the new request wrapper.
+- [x] Replace runtime `atob()` with an explicit, tested base64 decoding helper that does not look like obfuscation and works in Obsidian's runtime targets.
+- [x] Confirm no remaining references to `console.anthropic.com`, old OpenAI-compatible client files, or unused network domains in source or bundled output.
+- [x] Rebuild and grep `main.js` for unexpected domains.
+  - 2026-05-12: source and bundle grep only found expected OpenRouter references; no `fetch(`, `atob(`, `btoa(`, Anthropic SDK, Svelte, or bundled Dataview references.
 
 ## Task 3: Popout Compatibility
 

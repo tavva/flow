@@ -1,7 +1,7 @@
 // ABOUTME: Generates cover images for projects using OpenRouter image generation
 // ABOUTME: Saves images to vault and updates project frontmatter
 
-import { TFile, Vault } from "obsidian";
+import { requestUrl, TFile, Vault } from "obsidian";
 import { PluginSettings } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { ValidationError, LLMResponseError } from "./errors";
@@ -27,6 +27,8 @@ interface OpenRouterChatResponse {
     message: string;
   };
 }
+
+const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /**
  * Generates a cover image for a project using OpenRouter's image generation API.
@@ -85,10 +87,11 @@ async function callOpenRouterImageAPI(
 ): Promise<ArrayBuffer> {
   const prompt = buildImagePrompt(projectName);
 
-  const response = await fetch(`${baseUrl}/chat/completions`, {
+  const response = await requestUrl({
+    url: `${baseUrl}/chat/completions`,
     method: "POST",
+    contentType: "application/json",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
       "HTTP-Referer": "https://github.com/tavva/flow",
       "X-Title": "Flow: cover generator",
@@ -106,16 +109,17 @@ async function callOpenRouterImageAPI(
         aspect_ratio: "1:1", // Square image for cover
       },
     }),
+    throw: false,
   });
 
-  if (!response.ok) {
-    const errorData = (await response.json()) as OpenRouterChatResponse;
+  if (response.status < 200 || response.status >= 300) {
+    const errorData = response.json as OpenRouterChatResponse;
     throw new LLMResponseError(
-      `Image generation failed: ${errorData.error?.message || response.statusText}`
+      `Image generation failed: ${errorData.error?.message || response.text || `HTTP ${response.status}`}`
     );
   }
 
-  const data = (await response.json()) as OpenRouterChatResponse;
+  const data = response.json as OpenRouterChatResponse;
 
   if (!data.choices || data.choices.length === 0) {
     throw new LLMResponseError("No response from image generation API");
@@ -138,15 +142,52 @@ async function callOpenRouterImageAPI(
  */
 function base64DataUrlToArrayBuffer(dataUrl: string): ArrayBuffer {
   // Extract base64 data from data URL (format: data:image/png;base64,<data>)
-  const base64Data = dataUrl.split(",")[1];
-  const binaryString = atob(base64Data);
-  const bytes = new Uint8Array(binaryString.length);
-
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+  const match = dataUrl.match(/^data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match) {
+    throw new LLMResponseError("Invalid image data URL returned from API");
   }
 
-  return bytes.buffer;
+  return decodeBase64ToArrayBuffer(match[1]);
+}
+
+function decodeBase64ToArrayBuffer(base64Data: string): ArrayBuffer {
+  const normalized = base64Data.replace(/\s/g, "");
+  const paddingStart = normalized.indexOf("=");
+  const paddingCount = paddingStart === -1 ? 0 : normalized.length - paddingStart;
+
+  if (
+    normalized.length === 0 ||
+    normalized.length % 4 === 1 ||
+    paddingCount > 2 ||
+    (paddingStart !== -1 && !/^=+$/.test(normalized.slice(paddingStart)))
+  ) {
+    throw new LLMResponseError("Invalid image data URL returned from API");
+  }
+
+  const bytes: number[] = [];
+  let buffer = 0;
+  let bits = 0;
+
+  for (const char of normalized) {
+    if (char === "=") {
+      break;
+    }
+
+    const value = BASE64_ALPHABET.indexOf(char);
+    if (value === -1) {
+      throw new LLMResponseError("Invalid image data URL returned from API");
+    }
+
+    buffer = (buffer << 6) | value;
+    bits += 6;
+
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((buffer >> bits) & 0xff);
+    }
+  }
+
+  return new Uint8Array(bytes).buffer;
 }
 
 /**
