@@ -30,6 +30,7 @@ export class KeyboardShortcutsModal extends Modal {
 
   onOpen() {
     const { contentEl } = this;
+    this.modalEl.addClass("flow-keyboard-shortcuts-modal-container");
     getWindowForOwner(contentEl).addEventListener("keydown", this.keyHandler, true);
     contentEl.empty();
     contentEl.addClass("flow-keyboard-shortcuts-modal");
@@ -122,6 +123,7 @@ export class KeyboardShortcutsModal extends Modal {
 
   onClose() {
     const { contentEl } = this;
+    this.modalEl.removeClass("flow-keyboard-shortcuts-modal-container");
     getWindowForOwner(contentEl).removeEventListener("keydown", this.keyHandler, true);
     contentEl.empty();
   }

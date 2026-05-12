@@ -2,19 +2,92 @@
 
 .flow-gtd-inbox-modal {
   padding: 20px;
+  width: min(90vw, 1200px);
   max-width: 1200px;
   margin: 0 auto;
-}
-
-/* Override Obsidian's modal width for our inbox modal */
-.modal:has(.flow-gtd-inbox-modal) {
-  width: 90vw !important;
-  max-width: 1200px !important;
 }
 
 .flow-gtd-description {
   color: var(--text-muted);
   margin-bottom: 20px;
+}
+
+.flow-gtd-toggle-label {
+  margin-left: 4px;
+  margin-right: 12px;
+}
+
+.flow-gtd-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.flow-gtd-modal-error {
+  color: var(--text-error);
+  margin-top: 8px;
+  padding: 8px;
+  background-color: var(--background-modifier-error);
+  border-radius: 4px;
+}
+
+.flow-gtd-parent-selector {
+  margin-bottom: 16px;
+}
+
+.flow-gtd-parent-selector-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.flow-gtd-parent-search-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+}
+
+.flow-gtd-parent-project-list {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+}
+
+.flow-gtd-parent-project-empty,
+.flow-gtd-parent-project-item {
+  padding: 8px;
+}
+
+.flow-gtd-parent-project-item {
+  cursor: pointer;
+}
+
+.flow-gtd-parent-project-item:hover,
+.flow-gtd-parent-project-item.selected {
+  background-color: var(--background-modifier-hover);
+}
+
+.flow-gtd-parent-project-item.selected {
+  font-weight: 600;
+}
+
+.flow-add-to-inbox-input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+}
+
+.flow-modal-warning {
+  color: var(--text-error);
+  margin-bottom: 12px;
+}
+
+.flow-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .flow-gtd-mode-toggle {
@@ -688,20 +761,20 @@ select.flow-gtd-inline-select,
   width: 100%;
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
-  background-color: var(--background-primary) !important;
-  color: var(--text-normal) !important;
-  padding: 10px 12px !important;
-  font-size: 14px !important;
-  font-family: var(--font-interface) !important;
-  line-height: 1.5 !important;
-  height: auto !important;
-  min-height: 44px !important;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font-interface);
+  line-height: 1.5;
+  height: auto;
+  min-height: 44px;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
-  -webkit-text-fill-color: var(--text-normal) !important;
-  opacity: 1 !important;
-  box-sizing: border-box !important;
+  -webkit-text-fill-color: var(--text-normal);
+  opacity: 1;
+  box-sizing: border-box;
 }
 
 .flow-gtd-inline-select:focus,
@@ -721,10 +794,10 @@ select.flow-gtd-inline-select option,
 .flow-gtd-action-selector select option,
 .flow-gtd-project-selector select option,
 .flow-gtd-person-selector select option {
-  color: var(--text-normal) !important;
-  background-color: var(--background-primary) !important;
+  color: var(--text-normal);
+  background-color: var(--background-primary);
   padding: 8px;
-  -webkit-text-fill-color: var(--text-normal) !important;
+  -webkit-text-fill-color: var(--text-normal);
 }
 
 /* Dark theme overrides */
@@ -734,8 +807,8 @@ select.flow-gtd-inline-select option,
 .theme-dark .flow-gtd-action-selector select,
 .theme-dark .flow-gtd-project-selector select,
 .theme-dark .flow-gtd-person-selector select {
-  color: var(--text-normal) !important;
-  -webkit-text-fill-color: var(--text-normal) !important;
+  color: var(--text-normal);
+  -webkit-text-fill-color: var(--text-normal);
 }
 
 .theme-dark .flow-gtd-inline-select option,
@@ -744,8 +817,8 @@ select.flow-gtd-inline-select option,
 .theme-dark .flow-gtd-action-selector select option,
 .theme-dark .flow-gtd-project-selector select option,
 .theme-dark .flow-gtd-person-selector select option {
-  color: var(--text-normal) !important;
-  -webkit-text-fill-color: var(--text-normal) !important;
+  color: var(--text-normal);
+  -webkit-text-fill-color: var(--text-normal);
 }
 
 /* Ultra-specific overrides for select visibility */
@@ -754,15 +827,15 @@ select.flow-gtd-inline-select option,
 .flow-gtd-project-selector > div > select,
 .flow-gtd-person-selector > div > select,
 .flow-gtd-project-section select {
-  color: var(--text-normal) !important;
-  -webkit-text-fill-color: var(--text-normal) !important;
-  opacity: 1 !important;
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-  padding: 10px 12px !important;
-  height: auto !important;
-  min-height: 44px !important;
-  box-sizing: border-box !important;
+  color: var(--text-normal);
+  -webkit-text-fill-color: var(--text-normal);
+  opacity: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 12px;
+  height: auto;
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 @media (max-width: 600px) {
@@ -1764,7 +1837,7 @@ select.flow-gtd-inline-select option,
 .flow-gtd-focus-indicator {
   background: var(--background-modifier-success);
   font-weight: 600;
-  border-color: var(--color-green) !important;
+  border-color: var(--color-green);
 }
 
 .flow-gtd-focus-indicator::before {
@@ -1881,7 +1954,7 @@ select.flow-gtd-inline-select option,
 
 /* Sub-project checkbox styling */
 .flow-gtd-subproject-toggle {
-  margin-top: 16px !important;
+  margin-top: 16px;
   padding: 12px;
   background-color: var(--background-secondary);
   border-radius: 8px;
@@ -1890,7 +1963,7 @@ select.flow-gtd-inline-select option,
 
 /* Fix Setting component layout in project section */
 .flow-gtd-project-section .setting-item {
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 0;
@@ -2078,6 +2151,20 @@ select.flow-gtd-inline-select option,
   max-width: 28rem;
   margin: 0 auto;
   padding: 0.75rem;
+}
+
+.flow-inbox-loading-state {
+  text-align: center;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.flow-inbox-loading-text {
+  color: var(--text-muted);
 }
 
 /* Navigation header */
@@ -2449,6 +2536,11 @@ select.flow-gtd-inline-select option,
   font-size: 0.8125rem;
 }
 
+.flow-inbox-project-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
 .flow-inbox-project-input:focus {
   outline: none;
   border-color: var(--interactive-accent);
@@ -2624,6 +2716,7 @@ select.flow-gtd-inline-select option,
 
 .flow-inbox-parent-selector {
   margin-top: 0.5rem;
+  position: relative;
 }
 
 .flow-inbox-parent-project-input {
@@ -2824,13 +2917,13 @@ select.flow-gtd-inline-select option,
   padding: 0;
 }
 
-.modal:has(.flow-keyboard-shortcuts-modal) {
-  width: auto !important;
-  max-width: 420px !important;
-  min-width: 320px !important;
+.flow-keyboard-shortcuts-modal-container {
+  width: auto;
+  max-width: 420px;
+  min-width: 320px;
 }
 
-.modal:has(.flow-keyboard-shortcuts-modal) .modal-content {
+.flow-keyboard-shortcuts-modal-container .modal-content {
   padding: 0;
 }
 

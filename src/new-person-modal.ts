@@ -80,10 +80,6 @@ export class NewPersonModal extends Modal {
 
     // Action buttons
     const buttonContainer = contentEl.createDiv({ cls: "flow-gtd-modal-buttons" });
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.justifyContent = "flex-end";
-    buttonContainer.style.gap = "8px";
-    buttonContainer.style.marginTop = "16px";
 
     const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
     cancelButton.addEventListener("click", () => this.close());
@@ -137,11 +133,6 @@ export class NewPersonModal extends Modal {
     }
 
     const errorEl = contentEl.createDiv({ cls: "flow-gtd-modal-error" });
-    errorEl.style.color = "var(--text-error)";
-    errorEl.style.marginTop = "8px";
-    errorEl.style.padding = "8px";
-    errorEl.style.backgroundColor = "var(--background-modifier-error)";
-    errorEl.style.borderRadius = "4px";
     errorEl.setText(message);
   }
 }

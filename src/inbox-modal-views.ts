@@ -28,17 +28,9 @@ export function renderInboxView(
   contentEl.addClass("flow-gtd-inbox-modal");
 
   if (isLoading) {
-    const loadingContainer = contentEl.createDiv("flow-inbox-redesign");
-    loadingContainer.style.textAlign = "center";
-    loadingContainer.style.padding = "48px 24px";
-    loadingContainer.style.display = "flex";
-    loadingContainer.style.flexDirection = "column";
-    loadingContainer.style.alignItems = "center";
-    loadingContainer.style.justifyContent = "center";
-    loadingContainer.style.minHeight = "200px";
+    const loadingContainer = contentEl.createDiv("flow-inbox-redesign flow-inbox-loading-state");
 
-    const loadingText = loadingContainer.createEl("div");
-    loadingText.style.color = "var(--text-muted)";
+    const loadingText = loadingContainer.createEl("div", { cls: "flow-inbox-loading-text" });
     loadingText.setText("Loading inbox...");
     return;
   }
@@ -596,9 +588,7 @@ function renderProjectPersonSection(
         : "PROJECT/PERSON";
   labelSpan.setText(labelText);
 
-  const inputWrapper = row.createDiv();
-  inputWrapper.style.flex = "1";
-  inputWrapper.style.position = "relative";
+  const inputWrapper = row.createDiv("flow-inbox-project-input-wrapper");
 
   const input = inputWrapper.createEl("input", { cls: "flow-inbox-project-input" });
   input.type = "text";
@@ -909,7 +899,6 @@ function renderParentProjectSection(
   // Parent project selector (only shown when isSubProject is true)
   if (item.isSubProject) {
     const selectorWrapper = section.createDiv("flow-inbox-parent-selector");
-    selectorWrapper.style.position = "relative";
 
     const input = selectorWrapper.createEl("input", { cls: "flow-inbox-parent-project-input" });
     input.type = "text";

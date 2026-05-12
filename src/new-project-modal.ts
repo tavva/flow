@@ -137,8 +137,7 @@ export class NewProjectModal extends Modal {
         // Add label after toggle
         const labelEl = toggle.toggleEl.parentElement?.createSpan({ text: sphere });
         if (labelEl) {
-          labelEl.style.marginLeft = "4px";
-          labelEl.style.marginRight = "12px";
+          labelEl.classList.add("flow-gtd-toggle-label");
         }
       });
     }
@@ -186,10 +185,6 @@ export class NewProjectModal extends Modal {
 
     // Action buttons
     const buttonContainer = contentEl.createDiv({ cls: "flow-gtd-modal-buttons" });
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.justifyContent = "flex-end";
-    buttonContainer.style.gap = "8px";
-    buttonContainer.style.marginTop = "16px";
 
     const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
     cancelButton.addEventListener("click", () => this.close());
@@ -203,27 +198,20 @@ export class NewProjectModal extends Modal {
 
   private renderParentProjectSelector(container: HTMLElement) {
     const selectorContainer = container.createDiv({ cls: "flow-gtd-parent-selector" });
-    selectorContainer.style.marginBottom = "16px";
 
-    const label = selectorContainer.createEl("label", { text: "Parent project" });
-    label.style.display = "block";
-    label.style.marginBottom = "8px";
-    label.style.fontWeight = "600";
+    selectorContainer.createEl("label", {
+      text: "Parent project",
+      cls: "flow-gtd-parent-selector-label",
+    });
 
     const searchInput = selectorContainer.createEl("input", {
+      cls: "flow-gtd-parent-search-input",
       type: "text",
       placeholder: "Search for parent project...",
     });
-    searchInput.style.width = "100%";
-    searchInput.style.padding = "8px";
-    searchInput.style.marginBottom = "8px";
     searchInput.value = this.data.parentProject?.title || "";
 
-    const listContainer = selectorContainer.createDiv();
-    listContainer.style.maxHeight = "150px";
-    listContainer.style.overflowY = "auto";
-    listContainer.style.border = "1px solid var(--background-modifier-border)";
-    listContainer.style.borderRadius = "4px";
+    const listContainer = selectorContainer.createDiv("flow-gtd-parent-project-list");
     listContainer.style.display = "none";
 
     const updateList = (searchTerm: string) => {
@@ -236,8 +224,10 @@ export class NewProjectModal extends Modal {
         : this.existingProjects;
 
       if (filtered.length === 0) {
-        listContainer.createEl("div", { text: "No projects found" });
-        listContainer.style.padding = "8px";
+        listContainer.createEl("div", {
+          text: "No projects found",
+          cls: "flow-gtd-parent-project-empty",
+        });
         listContainer.style.display = "block";
         return;
       }
@@ -246,23 +236,15 @@ export class NewProjectModal extends Modal {
       const sorted = [...filtered].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
 
       sorted.forEach((project) => {
-        const item = listContainer.createEl("div", { text: project.title });
-        item.style.padding = "8px";
-        item.style.cursor = "pointer";
+        const item = listContainer.createEl("div", {
+          text: project.title,
+          cls: "flow-gtd-parent-project-item",
+        });
 
         if (this.data.parentProject?.file === project.file) {
-          item.style.backgroundColor = "var(--background-modifier-hover)";
-          item.style.fontWeight = "600";
+          item.addClass("selected");
         }
 
-        item.addEventListener("mouseenter", () => {
-          item.style.backgroundColor = "var(--background-modifier-hover)";
-        });
-        item.addEventListener("mouseleave", () => {
-          if (this.data.parentProject?.file !== project.file) {
-            item.style.backgroundColor = "";
-          }
-        });
         item.addEventListener("click", () => {
           this.data.parentProject = project;
           searchInput.value = project.title;
@@ -406,11 +388,6 @@ export class NewProjectModal extends Modal {
     }
 
     const errorEl = contentEl.createDiv({ cls: "flow-gtd-modal-error" });
-    errorEl.style.color = "var(--text-error)";
-    errorEl.style.marginTop = "8px";
-    errorEl.style.padding = "8px";
-    errorEl.style.backgroundColor = "var(--background-modifier-error)";
-    errorEl.style.borderRadius = "4px";
     errorEl.setText(message);
   }
 }

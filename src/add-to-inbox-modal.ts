@@ -24,12 +24,10 @@ export class AddToInboxModal extends Modal {
     contentEl.createEl("h2", { text: "Capture to inbox" });
 
     this.inputEl = contentEl.createEl("input", {
+      cls: "flow-add-to-inbox-input",
       type: "text",
       placeholder: "What do you want to capture?",
     });
-    this.inputEl.style.width = "100%";
-    this.inputEl.style.padding = "8px";
-    this.inputEl.style.marginBottom = "12px";
 
     this.inputEl.addEventListener("input", () => {
       if (this.warningEl) {
@@ -45,13 +43,8 @@ export class AddToInboxModal extends Modal {
     });
 
     this.warningEl = contentEl.createDiv({ cls: "flow-modal-warning" });
-    this.warningEl.style.color = "var(--text-error)";
-    this.warningEl.style.marginBottom = "12px";
 
     const buttonContainer = contentEl.createDiv({ cls: "flow-modal-buttons" });
-    buttonContainer.style.display = "flex";
-    buttonContainer.style.justifyContent = "flex-end";
-    buttonContainer.style.gap = "8px";
 
     const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
     cancelButton.addEventListener("click", () => this.close());

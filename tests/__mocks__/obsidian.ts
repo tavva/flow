@@ -91,6 +91,7 @@ function createObsidianElement(tagName: string = "div"): HTMLElement {
     ) => HTMLElement;
     createSpan: (options?: { cls?: string; text?: string }) => HTMLSpanElement;
     addClass: (cls: string) => void;
+    removeClass: (cls: string) => void;
     setText: (text: string) => void;
   };
 
@@ -130,6 +131,10 @@ function createObsidianElement(tagName: string = "div"): HTMLElement {
     this.classList.add(cls);
   };
 
+  el.removeClass = function (cls: string) {
+    this.classList.remove(cls);
+  };
+
   el.setText = function (text: string) {
     this.textContent = text;
   };
@@ -143,10 +148,12 @@ function createObsidianElement(tagName: string = "div"): HTMLElement {
 
 export class Modal {
   app: App;
+  modalEl: HTMLElement;
   contentEl: HTMLElement;
 
   constructor(app: App) {
     this.app = app;
+    this.modalEl = createObsidianElement("div");
     this.contentEl = createObsidianElement("div");
   }
 
