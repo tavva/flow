@@ -67,6 +67,7 @@ Already handled before this plan:
 - [x] Update `manifest.json` description to end with punctuation.
 - [ ] Prepare an `obsidianmd/obsidian-releases` PR removing `(Closed source)` from Flow's `community-plugins.json` description.
   - User reports this was fixed externally; leave open until the raw upstream metadata confirms it.
+  - 2026-05-12 recheck: the community page and raw `obsidianmd/obsidian-releases` metadata still contain `(Closed source)`, so the external fix has not re-indexed or landed upstream yet.
 - [x] Decide GPL flavor: current `LICENSE` text says GPL v3 or later, while `package.json` says `GPL-3.0-only`.
 - [x] Align `LICENSE`, `package.json`, and `README.md` so GitHub detects the license. Recommended: use the full `GPL-3.0-or-later` text if that matches intent.
 - [ ] Verify with `gh repo view tavva/flow --json licenseInfo` after push.
@@ -106,6 +107,7 @@ Already handled before this plan:
 - [x] Keep dynamic values as CSS variables via `setCssProps` or narrow inline assignment only where values are genuinely data-driven.
   - 2026-05-12: Remaining inline styles are narrow dynamic visibility controls (`display`) or hierarchy depth sizing in `sphere-view`; static layout, cursor, loading, modal, notification, and error styles now live in `styles.css`.
 - [ ] Run visual/manual Obsidian checks for inbox processing, new project/person modals, focus view, sphere view, waiting-for view, and keyboard shortcuts modal.
+  - 2026-05-12: Obsidian automation skill is present, but its helper scripts are not installed in this environment and `CLAUDE_PLUGIN_ROOT` is unset. Leave this open for a local Obsidian smoke pass.
 
 ## Task 6: Type And Lint Hygiene
 
@@ -127,10 +129,11 @@ Already handled before this plan:
 
 ## Task 8: Verification And Final Community Recheck
 
-- [ ] Run `npm run format`.
-- [ ] Run `npm run build`.
-- [ ] Run `npm test`.
-- [ ] Run `npm audit --json` and confirm zero vulnerabilities.
-- [ ] Inspect bundled output for removed dependencies/domains.
+- [x] Run `npm run format`.
+- [x] Run `npm run build`.
+- [x] Run `npm test`.
+- [x] Run `npm audit --json` and confirm zero vulnerabilities.
+- [x] Inspect bundled output for removed dependencies/domains.
 - [ ] Create one release after a coherent remediation batch, not after every individual fix.
 - [ ] After the release is indexed, revisit the community page and record the new Health/Review status, issue count, version, license, and description.
+  - 2026-05-12: Local verification passes after Tasks 6-7: `npm run format`, `npm run build`, `npm test` (52 suites, 904 tests), strict TypeScript unused-symbol check, `git diff --check`, and `npm audit --json` with 0 vulnerabilities. Bundle grep found no `fetch(`, `atob(`, `btoa(`, Anthropic, Svelte, OpenAI API, or bundled Dataview package references; expected OpenRouter and optional Dataview API lookup strings remain. Release and post-release community recheck remain pending because this batch has not been released.
