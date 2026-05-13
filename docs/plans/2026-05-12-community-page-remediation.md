@@ -106,8 +106,9 @@ Already handled before this plan:
 - [x] Repeat for `new-project-modal`, `focus-view`, `sphere-view`, `waiting-for-view`, `add-to-inbox-modal`, and `new-person-modal`.
 - [x] Keep dynamic values as CSS variables via `setCssProps` or narrow inline assignment only where values are genuinely data-driven.
   - 2026-05-12: Remaining inline styles are narrow dynamic visibility controls (`display`) or hierarchy depth sizing in `sphere-view`; static layout, cursor, loading, modal, notification, and error styles now live in `styles.css`.
-- [ ] Run visual/manual Obsidian checks for inbox processing, new project/person modals, focus view, sphere view, waiting-for view, and keyboard shortcuts modal.
+- [x] Run visual/manual Obsidian checks for inbox processing, new project/person modals, focus view, sphere view, waiting-for view, and keyboard shortcuts modal.
   - 2026-05-12: Obsidian automation skill is present, but its helper scripts are not installed in this environment and `CLAUDE_PLUGIN_ROOT` is unset. Leave this open for a local Obsidian smoke pass.
+  - 2026-05-13: Pointed `~/Documents/Main/.obsidian/plugins/flow` at the local remediation worktree build while preserving the vault's Flow `data.json`; user confirmed the local build looks good in the vault.
 
 ## Task 6: Type And Lint Hygiene
 
