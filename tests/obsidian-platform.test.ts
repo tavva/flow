@@ -1,6 +1,9 @@
 // ABOUTME: Tests Obsidian active window/document helper behavior.
 // ABOUTME: Verifies popout-aware DOM and timer routing fallbacks.
 
+import { readFileSync } from "fs";
+import { join } from "path";
+
 import {
   clearActiveInterval,
   clearActiveTimeout,
@@ -84,6 +87,19 @@ describe("obsidian-platform", () => {
     expect(clearTimeoutSpy).toHaveBeenCalledWith(12);
     expect(intervalSpy).toHaveBeenCalledWith(callback, 100);
     expect(clearIntervalSpy).toHaveBeenCalledWith(34);
+  });
+
+  it("keeps timer fallbacks window-qualified for popout compatibility", () => {
+    const source = readFileSync(join(process.cwd(), "src", "obsidian-platform.ts"), "utf8");
+    const bareTimerCalls = source
+      .split("\n")
+      .flatMap((line, index) =>
+        /(?<![\w.])(?:setTimeout|clearTimeout|setInterval|clearInterval)\s*\(/.test(line)
+          ? [`${index + 1}: ${line.trim()}`]
+          : []
+      );
+
+    expect(bareTimerCalls).toEqual([]);
   });
 
   it("opens links through the active window", () => {

@@ -101,7 +101,7 @@ export function setActiveTimeout(
 ): TimerHandle {
   return (
     getOptionalActiveWindow(owner)?.setTimeout(callback, delayMs) ??
-    (setTimeout(callback, delayMs) as unknown as TimerHandle)
+    window.setTimeout(callback, delayMs)
   );
 }
 
@@ -112,7 +112,7 @@ export function clearActiveTimeout(handle: TimerHandle, owner?: Node | null): vo
     return;
   }
 
-  clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
+  window.clearTimeout(handle);
 }
 
 export function setActiveInterval(
@@ -122,7 +122,7 @@ export function setActiveInterval(
 ): TimerHandle {
   return (
     getOptionalActiveWindow(owner)?.setInterval(callback, delayMs) ??
-    (setInterval(callback, delayMs) as unknown as TimerHandle)
+    window.setInterval(callback, delayMs)
   );
 }
 
@@ -133,7 +133,7 @@ export function clearActiveInterval(handle: TimerHandle, owner?: Node | null): v
     return;
   }
 
-  clearInterval(handle as unknown as ReturnType<typeof setInterval>);
+  window.clearInterval(handle);
 }
 
 export function requestActiveAnimationFrame(
@@ -147,7 +147,7 @@ export function requestActiveAnimationFrame(
 
   return (
     ownerWindow?.setTimeout(() => callback(Date.now()), 0) ??
-    (setTimeout(() => callback(Date.now()), 0) as unknown as number)
+    window.setTimeout(() => callback(Date.now()), 0)
   );
 }
 
