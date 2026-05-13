@@ -1040,7 +1040,7 @@ describe("SphereView", () => {
       view.app = app;
 
       // Spy on MarkdownRenderer
-      const renderMarkdownSpy = jest.spyOn(MarkdownRenderer, "renderMarkdown");
+      const renderMarkdownSpy = jest.spyOn(MarkdownRenderer, "render");
 
       // Test waiting-for item
       await (view as any).renderActionItem(
@@ -1053,9 +1053,10 @@ describe("SphereView", () => {
 
       // Should have handshake emoji prefix in markdown
       expect(renderMarkdownSpy).toHaveBeenCalledWith(
+        app,
         "🤝 Wait for client response",
         expect.anything(),
-        "",
+        "Projects/Test.md",
         view
       );
 
@@ -1071,7 +1072,13 @@ describe("SphereView", () => {
       );
 
       // Should NOT have handshake emoji prefix
-      expect(renderMarkdownSpy).toHaveBeenCalledWith("Regular action", expect.anything(), "", view);
+      expect(renderMarkdownSpy).toHaveBeenCalledWith(
+        app,
+        "Regular action",
+        expect.anything(),
+        "Projects/Test.md",
+        view
+      );
 
       renderMarkdownSpy.mockRestore();
     });

@@ -8,7 +8,8 @@ import { FlowProjectScanner } from "./flow-scanner";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { ActionLineFinder } from "./action-line-finder";
 import { sanitizeFileName, validateNextAction } from "./validation";
-import { setActiveTimeout } from "./obsidian-platform";
+import { requestActiveAnimationFrame, setActiveTimeout } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 interface NewProjectData {
   title: string;
@@ -56,10 +57,10 @@ export class NewProjectModal extends Modal {
     this.render();
 
     // Focus the title input after the modal is fully rendered
-    requestAnimationFrame(() => {
+    requestActiveAnimationFrame(() => {
       const titleInput = contentEl.querySelector<HTMLInputElement>('input[type="text"]');
       titleInput?.focus();
-    });
+    }, contentEl);
   }
 
   onClose() {
@@ -191,7 +192,9 @@ export class NewProjectModal extends Modal {
       text: "Create Project",
       cls: "mod-cta",
     });
-    createButton.addEventListener("click", () => this.createProject());
+    createButton.addEventListener("click", () => {
+      runAsync(this.createProject(), "Failed to create project");
+    });
   }
 
   private renderParentProjectSelector(container: HTMLElement) {
@@ -210,7 +213,7 @@ export class NewProjectModal extends Modal {
     searchInput.value = this.data.parentProject?.title || "";
 
     const listContainer = selectorContainer.createDiv("flow-gtd-parent-project-list");
-    listContainer.style.display = "none";
+    listContainer.classList.add("flow-hidden");
 
     const updateList = (searchTerm: string) => {
       listContainer.empty();
@@ -226,7 +229,7 @@ export class NewProjectModal extends Modal {
           text: "No projects found",
           cls: "flow-gtd-parent-project-empty",
         });
-        listContainer.style.display = "block";
+        listContainer.classList.remove("flow-hidden");
         return;
       }
 
@@ -246,11 +249,11 @@ export class NewProjectModal extends Modal {
         item.addEventListener("click", () => {
           this.data.parentProject = project;
           searchInput.value = project.title;
-          listContainer.style.display = "none";
+          listContainer.classList.add("flow-hidden");
         });
       });
 
-      listContainer.style.display = "block";
+      listContainer.classList.remove("flow-hidden");
     };
 
     searchInput.addEventListener("input", (e) => {
@@ -264,7 +267,7 @@ export class NewProjectModal extends Modal {
     searchInput.addEventListener("blur", () => {
       setActiveTimeout(
         () => {
-          listContainer.style.display = "none";
+          listContainer.classList.add("flow-hidden");
         },
         200,
         listContainer

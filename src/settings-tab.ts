@@ -362,7 +362,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
         toggle.setValue(this.plugin.settings.aiEnabled).onChange((value) => {
           this.plugin.settings.aiEnabled = value;
           this.saveSettingsAfterChange();
-          aiSettingsContainer.style.display = value ? "" : "none";
+          aiSettingsContainer.classList.toggle("flow-hidden", !value);
         })
       );
 
@@ -424,7 +424,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
     p1.appendText(". Your key is stored locally and never shared.");
 
     // Set initial visibility
-    aiSettingsContainer.style.display = this.plugin.settings.aiEnabled ? "" : "none";
+    aiSettingsContainer.classList.toggle("flow-hidden", !this.plugin.settings.aiEnabled);
   }
 
   private saveSettingsAfterChange(): void {

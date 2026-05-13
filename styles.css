@@ -32,6 +32,10 @@
   border-radius: 4px;
 }
 
+.flow-hidden {
+  display: none;
+}
+
 .flow-gtd-parent-selector {
   margin-bottom: 16px;
 }

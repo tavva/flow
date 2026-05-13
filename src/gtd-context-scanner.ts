@@ -22,7 +22,7 @@ export class GTDContextScanner {
     try {
       const content = await this.readFile(this.settings.nextActionsFilePath);
       return this.extractCheckboxItems(content);
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -31,7 +31,7 @@ export class GTDContextScanner {
     try {
       const content = await this.readFile(this.settings.somedayFilePath);
       return this.extractListItems(content);
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -63,7 +63,7 @@ export class GTDContextScanner {
       }
 
       return inboxItems;
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -109,10 +109,8 @@ export class GTDContextScanner {
     const items: string[] = [];
 
     for (const line of lines) {
-      // Match regular list items: "- item"
-      const regularMatch = line.match(/^- ([^\[].+)$/);
-      if (regularMatch) {
-        items.push(regularMatch[1].trim());
+      if (line.startsWith("- ") && !line.startsWith("- [")) {
+        items.push(line.slice(2).trim());
         continue;
       }
 

@@ -1,7 +1,7 @@
 // ABOUTME: Manages UI state for inbox processing including item selection, expansion, and persistence.
 // ABOUTME: Coordinates between the processing controller and the render views.
 
-import { App, Notice } from "obsidian";
+import { App, Modal, Notice } from "obsidian";
 import { FlowProject, PersonNote, PluginSettings } from "./types";
 import { InboxProcessingController } from "./inbox-processing-controller";
 import { EditableItem } from "./inbox-types";
@@ -9,10 +9,48 @@ import { InboxScanner } from "./inbox-scanner";
 import { GTDResponseValidationError } from "./errors";
 import { getActionLabel } from "./inbox-modal-utils";
 import { setActiveTimeout } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 export type RenderTarget = "inbox" | "editable";
 
 export type RenderCallback = (target: RenderTarget, options?: { immediate?: boolean }) => void;
+
+class DiscardItemConfirmationModal extends Modal {
+  constructor(
+    app: App,
+    private readonly onConfirm: () => void
+  ) {
+    super(app);
+  }
+
+  onOpen(): void {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("flow-discard-confirmation-modal");
+    contentEl.createEl("h2", { text: "Discard item?" });
+    contentEl.createEl("p", {
+      text: "This action cannot be undone.",
+      cls: "setting-item-description",
+    });
+
+    const buttonContainer = contentEl.createDiv({ cls: "flow-gtd-modal-buttons" });
+    const cancelButton = buttonContainer.createEl("button", { text: "Cancel" });
+    cancelButton.addEventListener("click", () => this.close());
+
+    const discardButton = buttonContainer.createEl("button", {
+      text: "Discard",
+      cls: "mod-warning",
+    });
+    discardButton.addEventListener("click", () => {
+      this.close();
+      this.onConfirm();
+    });
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+  }
+}
 
 export class InboxModalState {
   public editableItems: EditableItem[] = [];
@@ -137,12 +175,9 @@ export class InboxModalState {
   }
 
   confirmAndDiscardItem(item: EditableItem) {
-    const confirmed = confirm(
-      "Are you sure you want to discard this item? This action cannot be undone."
-    );
-    if (confirmed) {
-      this.discardItem(item);
-    }
+    new DiscardItemConfirmationModal(this.app, () => {
+      runAsync(this.discardItem(item), "Failed to discard inbox item");
+    }).open();
   }
 
   async discardItem(item: EditableItem) {

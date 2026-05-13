@@ -89,7 +89,7 @@ export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
           }
           return parseJsonlFormat(content);
         }
-      } catch (adapterError) {
+      } catch {
         // File doesn't exist yet, will return empty array below
       }
 
@@ -163,7 +163,7 @@ async function ensureFocusDataDirectory(vault: Vault): Promise<void> {
         return;
       }
     }
-  } catch (error) {
+  } catch {
     // Ignore errors, will try cache or create below
   }
 

@@ -499,6 +499,16 @@ export class DropdownComponent {
 }
 
 export class MarkdownRenderer {
+  static async render(
+    _app: App,
+    markdown: string,
+    element: HTMLElement,
+    _sourcePath: string,
+    _component: any
+  ): Promise<void> {
+    element.innerHTML = markdown;
+  }
+
   static async renderMarkdown(
     markdown: string,
     element: HTMLElement,

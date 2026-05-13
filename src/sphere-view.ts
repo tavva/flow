@@ -21,6 +21,7 @@ import { extractContexts } from "./context-tags";
 import {
   clearActiveTimeout,
   createSvgElementForOwner,
+  revealLeaf,
   setActiveTimeout,
   TimerHandle,
 } from "./obsidian-platform";
@@ -96,7 +97,7 @@ export class SphereView extends ItemView {
     container.empty();
     container.addClass("flow-gtd-sphere-view");
 
-    this.renderLoadingState(container as HTMLElement);
+    this.renderLoadingState(container);
 
     // Register metadata cache listener for automatic refresh when files change
     this.registerMetadataCacheListener();
@@ -104,10 +105,10 @@ export class SphereView extends ItemView {
 
     try {
       const data = await this.loadSphereData();
-      this.renderContent(container as HTMLElement, data);
+      this.renderContent(container, data);
     } catch (error) {
       console.error("Failed to load sphere view", error);
-      (container as HTMLElement).empty();
+      container.empty();
       const errorEl = container.createDiv({ cls: "flow-gtd-sphere-loading" });
       errorEl.setText("Unable to load sphere details. Check the console for more information.");
     }
@@ -232,7 +233,7 @@ export class SphereView extends ItemView {
 
   private removeActionFromDom(file: string, action: string): void {
     const container = this.contentEl;
-    const items = container.querySelectorAll("li[data-focus-file]");
+    const items = container.querySelectorAll<HTMLElement>("li[data-focus-file]");
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (
@@ -247,15 +248,15 @@ export class SphereView extends ItemView {
 
   private async markActionWaitingInDom(file: string, action: string): Promise<void> {
     const container = this.contentEl;
-    const items = container.querySelectorAll("li[data-focus-file]");
+    const items = container.querySelectorAll<HTMLElement>("li[data-focus-file]");
     for (let i = 0; i < items.length; i++) {
-      const item = items[i] as HTMLElement;
+      const item = items[i];
       if (
         item.getAttribute("data-focus-file") === file &&
         item.getAttribute("data-focus-action") === action
       ) {
         item.empty();
-        await MarkdownRenderer.renderMarkdown(`🤝 ${action}`, item, "", this);
+        await MarkdownRenderer.render(this.app, `🤝 ${action}`, item, file, this);
         return;
       }
     }
@@ -264,10 +265,10 @@ export class SphereView extends ItemView {
   private async refreshFocusHighlighting(): Promise<void> {
     const focusItems = await loadFocusItems(this.app.vault);
     const container = this.contentEl;
-    const items = container.querySelectorAll("li[data-focus-file]");
+    const items = container.querySelectorAll<HTMLElement>("li[data-focus-file]");
 
     for (let i = 0; i < items.length; i++) {
-      const item = items[i] as HTMLElement;
+      const item = items[i];
       const file = item.getAttribute("data-focus-file");
       const action = item.getAttribute("data-focus-action");
       const inFocus = focusItems.some(
@@ -352,7 +353,7 @@ export class SphereView extends ItemView {
       cls: "flow-gtd-sphere-search-clear",
       text: "✕",
     });
-    clearButton.style.display = this.searchQuery ? "" : "none";
+    clearButton.classList.toggle("flow-hidden", !this.searchQuery);
 
     // Toggle button
     const toggleButton = controlsRow.createEl("button", {
@@ -363,17 +364,17 @@ export class SphereView extends ItemView {
     // Input event handler
     searchInput.addEventListener("input", (e) => {
       this.searchQuery = (e.target as HTMLInputElement).value;
-      clearButton.style.display = this.searchQuery ? "" : "none";
-      this.refreshContent();
+      clearButton.classList.toggle("flow-hidden", !this.searchQuery);
+      runAsync(this.refreshContent(), "Failed to refresh sphere content after search");
     });
 
     // Clear button handler
     clearButton.addEventListener("click", () => {
       this.searchQuery = "";
       searchInput.value = "";
-      clearButton.style.display = "none";
+      clearButton.classList.add("flow-hidden");
       searchInput.focus();
-      this.refresh();
+      runAsync(this.refresh(), "Failed to refresh sphere view after clearing search");
     });
 
     // Toggle button handler
@@ -428,7 +429,7 @@ export class SphereView extends ItemView {
 
   private toggleNextActionsVisibility(): void {
     const container = this.contentEl;
-    const allActionLists = container.querySelectorAll(".flow-gtd-sphere-next-actions");
+    const allActionLists = container.querySelectorAll<HTMLElement>(".flow-gtd-sphere-next-actions");
 
     allActionLists.forEach((list) => {
       if (this.showNextActions) {
@@ -445,11 +446,11 @@ export class SphereView extends ItemView {
       if (e.key === "Escape") {
         this.searchQuery = "";
         searchInput.value = "";
-        const clearButton = container.querySelector(".flow-gtd-sphere-search-clear") as HTMLElement;
+        const clearButton = container.querySelector<HTMLElement>(".flow-gtd-sphere-search-clear");
         if (clearButton) {
-          clearButton.style.display = "none";
+          clearButton.classList.add("flow-hidden");
         }
-        this.refresh();
+        runAsync(this.refresh(), "Failed to refresh sphere view after clearing search");
       }
     };
 
@@ -774,7 +775,7 @@ export class SphereView extends ItemView {
     const item = list.createEl("li");
     item.setAttribute("data-focus-file", file);
     item.setAttribute("data-focus-action", action);
-    await MarkdownRenderer.renderMarkdown(displayText, item, "", this);
+    await MarkdownRenderer.render(this.app, displayText, item, file, this);
     item.classList.add("flow-gtd-sphere-action-item");
 
     // Check if this action is in the focus and add CSS class if so
@@ -790,7 +791,10 @@ export class SphereView extends ItemView {
       "click",
       wrapAsyncEvent(async (e) => {
         // Capture element reference before any async operations
-        const clickedElement = e.currentTarget as HTMLElement;
+        const clickedElement = e.currentTarget;
+        if (!(clickedElement instanceof HTMLElement)) {
+          return;
+        }
 
         // Use the line result we already have, or find it again if needed
         const finalLineResult = lineResult.found
@@ -990,7 +994,7 @@ export class SphereView extends ItemView {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
+      await revealLeaf(workspace, leaf);
     }
   }
 

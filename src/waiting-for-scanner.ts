@@ -60,7 +60,7 @@ export class WaitingForScanner {
       if (dv) {
         return await this.scanWithDataview(dv);
       }
-    } catch (error) {
+    } catch {
       // Dataview not available or not properly initialized, fall back to manual scanning
     }
 

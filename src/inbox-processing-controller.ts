@@ -37,11 +37,10 @@ export class InboxProcessingController {
     this.scanner = dependencies.scanner ?? new FlowProjectScanner(app);
     this.personScanner = dependencies.personScanner ?? new PersonScanner(app);
     this.writer = dependencies.writer ?? new FileWriter(app, settings);
-    this.inboxScanner = (
-      dependencies.inboxScanner
-        ? Object.assign(new InboxScanner(app, settings), dependencies.inboxScanner)
-        : new InboxScanner(app, settings)
-    ) as InboxScanner;
+    this.inboxScanner = new InboxScanner(app, settings);
+    if (dependencies.inboxScanner) {
+      Object.assign(this.inboxScanner, dependencies.inboxScanner);
+    }
     this.persistence =
       dependencies.persistenceService ??
       new InboxItemPersistenceService(this.writer, app, settings, saveSettings);

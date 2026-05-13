@@ -7,6 +7,7 @@ import { ActionLineFinder } from "./action-line-finder";
 import { validateReminderDate, validateInboxItem } from "./validation";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { generateCoverImage } from "./cover-image-generator";
+import { runAsync } from "./async-utils";
 
 const ACTIONS_REQUIRING_NEXT_STEP: readonly string[] = [
   "create-project",
@@ -159,7 +160,7 @@ export class InboxItemPersistenceService {
         );
 
         // Auto-create cover image if enabled (fire and forget - don't block processing)
-        this.maybeGenerateCoverImage(file);
+        runAsync(this.maybeGenerateCoverImage(file), "Failed to generate cover image for project");
 
         return file.path;
       }

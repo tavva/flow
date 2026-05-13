@@ -70,9 +70,17 @@ export function validateProjectTag(tag: string): { valid: boolean; error?: strin
 /**
  * Sanitizes a string for use as a filename
  */
+const INVALID_FILENAME_CONTROL_CHARACTERS = Array.from({ length: 32 }, (_, codePoint) =>
+  String.fromCharCode(codePoint)
+).join("");
+const INVALID_FILENAME_PATTERN = new RegExp(
+  `[<>:"/\\\\|?*${INVALID_FILENAME_CONTROL_CHARACTERS}]`,
+  "g"
+);
+
 export function sanitizeFileName(fileName: string): string {
   return fileName
-    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "") // Remove invalid filename characters
+    .replace(INVALID_FILENAME_PATTERN, "") // Remove invalid filename characters
     .replace(/\s+/g, " ") // Normalize whitespace
     .trim()
     .substring(0, 255); // Limit to reasonable length

@@ -5,6 +5,8 @@ import { App, Modal, Setting } from "obsidian";
 import { PluginSettings } from "./types";
 import { FileWriter } from "./file-writer";
 import { sanitizeFileName } from "./validation";
+import { requestActiveAnimationFrame } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 interface NewPersonData {
   name: string;
@@ -59,9 +61,9 @@ export class NewPersonModal extends Modal {
       });
 
     // Focus the name input after the modal is fully rendered
-    requestAnimationFrame(() => {
+    requestActiveAnimationFrame(() => {
       nameInput?.focus();
-    });
+    }, contentEl);
 
     // First discussion item (optional)
     new Setting(contentEl)
@@ -86,7 +88,9 @@ export class NewPersonModal extends Modal {
       text: "Create Person",
       cls: "mod-cta",
     });
-    createButton.addEventListener("click", () => this.createPerson());
+    createButton.addEventListener("click", () => {
+      runAsync(this.createPerson(), "Failed to create person");
+    });
   }
 
   private async createPerson() {

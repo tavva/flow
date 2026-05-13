@@ -128,7 +128,7 @@ export class FocusView extends RefreshingView {
     container.addClass("flow-gtd-focus-view");
 
     // Show loading state immediately
-    this.renderLoadingState(container as HTMLElement);
+    this.renderLoadingState(container);
 
     // Load focus items from file
     await this.loadFocus();
@@ -166,24 +166,24 @@ export class FocusView extends RefreshingView {
 
     // Show clear notification if applicable
     if (this.shouldShowClearNotification()) {
-      this.renderClearNotification(container as HTMLElement);
+      this.renderClearNotification(container);
     }
 
     // Render context filter buttons (using all items so all contexts are discoverable)
-    this.renderContextFilter(container as HTMLElement, this.focusItems);
+    this.renderContextFilter(container, this.focusItems);
 
     // Show current projects box
-    this.renderCurrentProjectsBox(container as HTMLElement);
+    this.renderCurrentProjectsBox(container);
 
     // Apply context filter
     const filteredItems = this.filterItemsByContext(this.focusItems);
 
     if (filteredItems.length === 0) {
-      this.renderEmptyMessage(container as HTMLElement);
+      this.renderEmptyMessage(container);
       return;
     }
 
-    this.renderGroupedItems(container as HTMLElement, filteredItems);
+    this.renderGroupedItems(container, filteredItems);
   }
 
   private async loadFocus(): Promise<void> {
@@ -273,22 +273,22 @@ export class FocusView extends RefreshingView {
 
       // Show clear notification if applicable
       if (this.shouldShowClearNotification()) {
-        this.renderClearNotification(container as HTMLElement);
+        this.renderClearNotification(container);
       }
 
       // Render context filter buttons (using all items so all contexts are discoverable)
-      this.renderContextFilter(container as HTMLElement, validatedItems);
+      this.renderContextFilter(container, validatedItems);
 
       // Show current projects box
-      this.renderCurrentProjectsBox(container as HTMLElement);
+      this.renderCurrentProjectsBox(container);
 
       // Apply context filter
       const filteredItems = this.filterItemsByContext(validatedItems);
 
       if (filteredItems.length === 0) {
-        this.renderEmptyMessage(container as HTMLElement);
+        this.renderEmptyMessage(container);
       } else {
-        this.renderGroupedItems(container as HTMLElement, filteredItems);
+        this.renderGroupedItems(container, filteredItems);
       }
     } catch (error) {
       console.error("Failed to refresh focus view", error);
@@ -599,7 +599,7 @@ export class FocusView extends RefreshingView {
     const textSpan = itemEl.createSpan({
       cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
     });
-    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
+    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -689,7 +689,12 @@ export class FocusView extends RefreshingView {
     // Drag event handlers
     itemEl.addEventListener("dragstart", (e) => this.onDragStart(e, item));
     itemEl.addEventListener("dragover", (e) => this.onDragOver(e));
-    itemEl.addEventListener("drop", (e) => this.onDrop(e, item));
+    itemEl.addEventListener(
+      "drop",
+      wrapAsyncEvent(async (e) => {
+        await this.onDrop(e, item);
+      }, "Failed to reorder focus item")
+    );
     itemEl.addEventListener("dragend", (e) => this.onDragEnd(e));
 
     // Content wrapper for project name + action text
@@ -722,7 +727,7 @@ export class FocusView extends RefreshingView {
     const textSpan = actionRow.createSpan({
       cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
     });
-    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
+    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -811,7 +816,7 @@ export class FocusView extends RefreshingView {
     const textSpan = itemEl.createSpan({
       cls: "flow-gtd-focus-item-text is-completed",
     });
-    await MarkdownRenderer.renderMarkdown(item.text, textSpan, item.file, this);
+    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
 
     textSpan.addEventListener("click", (e) => {
       this.handleRenderedTextClick(e, item);
@@ -932,18 +937,21 @@ export class FocusView extends RefreshingView {
     }
 
     // Handle clicks on internal links (wikilinks)
-    const internalLink = target.closest("a.internal-link") as HTMLElement | null;
+    const internalLink = target.closest<HTMLElement>("a.internal-link");
     if (internalLink) {
       e.preventDefault();
       const href = internalLink.getAttribute("data-href");
       if (href) {
-        this.app.workspace.openLinkText(href, item.file);
+        runAsync(
+          this.app.workspace.openLinkText(href, item.file),
+          "Failed to open rendered focus link"
+        );
       }
       return;
     }
 
     // Handle clicks on tags
-    const tagLink = target.closest("a.tag") as HTMLElement | null;
+    const tagLink = target.closest<HTMLElement>("a.tag");
     if (tagLink) {
       e.preventDefault();
       const tag = tagLink.textContent;
@@ -1135,8 +1143,10 @@ export class FocusView extends RefreshingView {
       e.dataTransfer.effectAllowed = "move";
     }
     // Add dragging class to item
-    const target = e.target as HTMLElement;
-    target.addClass("dragging");
+    const target = e.currentTarget;
+    if (target instanceof HTMLElement) {
+      target.addClass("dragging");
+    }
   }
 
   private onDragOver(e: DragEvent): void {
@@ -1177,7 +1187,9 @@ export class FocusView extends RefreshingView {
   private onDragEnd(e: DragEvent): void {
     this.draggedItem = null;
     // Remove dragging class
-    const target = e.target as HTMLElement;
-    target.removeClass("dragging");
+    const target = e.currentTarget;
+    if (target instanceof HTMLElement) {
+      target.removeClass("dragging");
+    }
   }
 }

@@ -1460,7 +1460,7 @@ describe("FocusView", () => {
     let renderSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      renderSpy = jest.spyOn(MarkdownRenderer, "renderMarkdown");
+      renderSpy = jest.spyOn(MarkdownRenderer, "render");
     });
 
     afterEach(() => {
@@ -1483,6 +1483,7 @@ describe("FocusView", () => {
       await view.onOpen();
 
       expect(renderSpy).toHaveBeenCalledWith(
+        expect.anything(),
         "Call [[John]] about #project/alpha",
         expect.any(HTMLElement),
         "Projects/Test.md",
@@ -1507,6 +1508,7 @@ describe("FocusView", () => {
       await view.onOpen();
 
       expect(renderSpy).toHaveBeenCalledWith(
+        expect.anything(),
         "Review [[PR-42]] notes",
         expect.any(HTMLElement),
         "Projects/Test.md",
@@ -1531,6 +1533,7 @@ describe("FocusView", () => {
       await view.onOpen();
 
       expect(renderSpy).toHaveBeenCalledWith(
+        expect.anything(),
         "Email [[Sarah]]",
         expect.any(HTMLElement),
         "Projects/Test.md",

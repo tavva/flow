@@ -4,6 +4,7 @@
 import { App, Modal, TFile, normalizePath } from "obsidian";
 import { PluginSettings } from "./types";
 import { TagSuggest } from "./tag-suggest";
+import { runAsync } from "./async-utils";
 
 export class AddToInboxModal extends Modal {
   private settings: PluginSettings;
@@ -38,7 +39,7 @@ export class AddToInboxModal extends Modal {
     this.inputEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        this.submit();
+        runAsync(this.submit(), "Failed to submit inbox capture");
       }
     });
 
@@ -53,7 +54,9 @@ export class AddToInboxModal extends Modal {
       text: "Capture",
       cls: "mod-cta",
     });
-    captureButton.addEventListener("click", () => this.submit());
+    captureButton.addEventListener("click", () => {
+      runAsync(this.submit(), "Failed to submit inbox capture");
+    });
 
     // Attach tag autocomplete
     this.tagSuggest?.close();

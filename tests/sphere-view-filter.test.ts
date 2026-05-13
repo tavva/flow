@@ -455,6 +455,7 @@ describe("SphereView filtering", () => {
 
 // Helper to create mock element
 function createMockElement(): any {
+  const classes = new Set<string>();
   const element: any = {
     createDiv: jest.fn((opts?: any) => {
       const newEl = createMockElement();
@@ -478,6 +479,30 @@ function createMockElement(): any {
     setText: jest.fn(),
     addEventListener: jest.fn(),
     style: {},
+    classList: {
+      add: jest.fn((className: string) => {
+        classes.add(className);
+        if (className === "flow-hidden") {
+          element.style.display = "none";
+        }
+      }),
+      remove: jest.fn((className: string) => {
+        classes.delete(className);
+        if (className === "flow-hidden") {
+          element.style.display = "";
+        }
+      }),
+      contains: jest.fn((className: string) => classes.has(className)),
+      toggle: jest.fn((className: string, force?: boolean) => {
+        const shouldAdd = force ?? !classes.has(className);
+        if (shouldAdd) {
+          element.classList.add(className);
+        } else {
+          element.classList.remove(className);
+        }
+        return shouldAdd;
+      }),
+    },
     empty: jest.fn(),
     value: "",
     placeholder: "",

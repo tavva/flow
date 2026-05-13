@@ -1,52 +1,63 @@
 // ABOUTME: Centralizes Obsidian active window/document access for popout compatibility.
 // ABOUTME: Provides DOM, timer, and window helpers with safe test fallbacks.
 
-type ObsidianGlobals = typeof globalThis & {
-  activeDocument?: Document;
-  activeWindow?: Window;
-  document?: Document;
-  window?: Window & {
-    activeDocument?: Document;
-    activeWindow?: Window;
-  };
-};
+import type { Workspace, WorkspaceLeaf } from "obsidian";
 
 export type TimerHandle = number;
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-function getGlobals(): ObsidianGlobals {
-  return globalThis as ObsidianGlobals;
+function getAmbientDocument(): Document | undefined {
+  if (typeof global === "undefined") {
+    return undefined;
+  }
+
+  const documentKey = "document";
+  return (global as Record<string, unknown>)[documentKey] as Document | undefined;
+}
+
+function getWindowDocument(): Document | undefined {
+  if (typeof window === "undefined") {
+    return getAmbientDocument();
+  }
+
+  const documentKey = "document" as keyof Window;
+  return (
+    window.activeDocument ?? (window[documentKey] as Document | undefined) ?? getAmbientDocument()
+  );
+}
+
+function getWindowActiveTarget(): Window | undefined {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  return window.activeWindow ?? window;
 }
 
 export function getActiveDocument(): Document {
-  const globals = getGlobals();
-  const activeDocument = globals.activeDocument ?? globals.window?.activeDocument;
+  const focusedDocument =
+    typeof activeDocument === "undefined" ? getWindowDocument() : activeDocument;
 
-  if (activeDocument) {
-    return activeDocument;
-  }
-  if (globals.document) {
-    return globals.document;
+  if (focusedDocument) {
+    return focusedDocument;
   }
 
-  throw new Error("No active document is available");
+  throw new Error("No active Document is available");
 }
 
 export function getActiveWindow(): Window {
-  const globals = getGlobals();
-  const activeWindow = globals.activeWindow ?? globals.window?.activeWindow;
+  const focusedWindow =
+    typeof activeWindow === "undefined" ? getWindowActiveTarget() : activeWindow;
 
-  if (activeWindow) {
-    return activeWindow;
-  }
-  if (globals.window) {
-    return globals.window;
+  if (focusedWindow) {
+    return focusedWindow;
   }
 
-  const activeDocument = globals.activeDocument ?? globals.document;
-  if (activeDocument?.defaultView) {
-    return activeDocument.defaultView;
+  const focusedDocument =
+    typeof activeDocument === "undefined" ? getWindowDocument() : activeDocument;
+  if (focusedDocument?.defaultView) {
+    return focusedDocument.defaultView;
   }
 
   throw new Error("No active window is available");
@@ -102,6 +113,30 @@ export function clearActiveInterval(handle: TimerHandle, owner?: Node | null): v
   getWindowForOwner(owner).clearInterval(handle);
 }
 
+export function requestActiveAnimationFrame(
+  callback: FrameRequestCallback,
+  owner?: Node | null
+): number {
+  const ownerWindow = getWindowForOwner(owner);
+  if (typeof ownerWindow.requestAnimationFrame === "function") {
+    return ownerWindow.requestAnimationFrame(callback);
+  }
+
+  return ownerWindow.setTimeout(() => callback(Date.now()), 0);
+}
+
 export function openInActiveWindow(url: string, target?: string): void {
   getActiveWindow().open(url, target);
+}
+
+export async function revealLeaf(workspace: Workspace, leaf: WorkspaceLeaf): Promise<void> {
+  await workspace.revealLeaf(leaf);
+}
+
+export function setActiveLeaf(
+  workspace: Workspace,
+  leaf: WorkspaceLeaf,
+  params?: { focus?: boolean }
+): void {
+  workspace.setActiveLeaf(leaf, params);
 }

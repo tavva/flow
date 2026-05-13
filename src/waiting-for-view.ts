@@ -103,17 +103,22 @@ export class WaitingForView extends RefreshingView {
 
     // Load items asynchronously after view is visible
     setActiveTimeout(
-      async () => {
-        try {
-          const items = await this.scanner.scanWaitingForItems();
-          loadingEl.remove();
-          this.renderContent(container as HTMLElement, items);
-        } catch (error) {
-          console.error("Failed to load waiting for view", error);
-          loadingEl.setText(
-            "Unable to load waiting for items. Check the console for more information."
-          );
-        }
+      () => {
+        runAsync(
+          (async () => {
+            try {
+              const items = await this.scanner.scanWaitingForItems();
+              loadingEl.remove();
+              this.renderContent(container, items);
+            } catch (error) {
+              console.error("Failed to load waiting for view", error);
+              loadingEl.setText(
+                "Unable to load waiting for items. Check the console for more information."
+              );
+            }
+          })(),
+          "Failed to load waiting for view"
+        );
       },
       0,
       container
@@ -140,7 +145,7 @@ export class WaitingForView extends RefreshingView {
 
       // Clear and render
       container.empty();
-      this.renderContent(container as HTMLElement, items);
+      this.renderContent(container, items);
     } catch (error) {
       console.error("Failed to refresh waiting for view", error);
       container.empty();
@@ -179,7 +184,7 @@ export class WaitingForView extends RefreshingView {
           const items = await this.scanner.scanWaitingForItems();
           const viewContainer = this.contentEl;
           viewContainer.empty();
-          this.renderContent(viewContainer as HTMLElement, items);
+          this.renderContent(viewContainer, items);
         }, "Failed to filter waiting-for view by sphere")
       );
     });
@@ -253,7 +258,7 @@ export class WaitingForView extends RefreshingView {
           const refreshedItems = await this.scanner.scanWaitingForItems();
           const viewContainer = this.contentEl;
           viewContainer.empty();
-          this.renderContent(viewContainer as HTMLElement, refreshedItems);
+          this.renderContent(viewContainer, refreshedItems);
         }, "Failed to filter waiting-for view by context")
       );
     });

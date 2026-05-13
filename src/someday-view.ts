@@ -84,17 +84,22 @@ export class SomedayView extends RefreshingView {
 
     // Load items asynchronously after view is visible
     setActiveTimeout(
-      async () => {
-        try {
-          const data = await this.scanner.scanSomedayData();
-          loadingEl.remove();
-          this.renderContent(container as HTMLElement, data);
-        } catch (error) {
-          console.error("Failed to load someday view", error);
-          loadingEl.setText(
-            "Unable to load someday items. Check the console for more information."
-          );
-        }
+      () => {
+        runAsync(
+          (async () => {
+            try {
+              const data = await this.scanner.scanSomedayData();
+              loadingEl.remove();
+              this.renderContent(container, data);
+            } catch (error) {
+              console.error("Failed to load someday view", error);
+              loadingEl.setText(
+                "Unable to load someday items. Check the console for more information."
+              );
+            }
+          })(),
+          "Failed to load someday view"
+        );
       },
       0,
       container
@@ -116,7 +121,7 @@ export class SomedayView extends RefreshingView {
 
       // Clear and render
       container.empty();
-      this.renderContent(container as HTMLElement, data);
+      this.renderContent(container, data);
     } catch (error) {
       console.error("Failed to refresh someday view", error);
       container.empty();
@@ -155,7 +160,7 @@ export class SomedayView extends RefreshingView {
           const data = await this.scanner.scanSomedayData();
           const viewContainer = this.contentEl;
           viewContainer.empty();
-          this.renderContent(viewContainer as HTMLElement, data);
+          this.renderContent(viewContainer, data);
         }, "Failed to filter someday view by sphere")
       );
     });
@@ -247,7 +252,7 @@ export class SomedayView extends RefreshingView {
           const data = await this.scanner.scanSomedayData();
           const viewContainer = this.contentEl;
           viewContainer.empty();
-          this.renderContent(viewContainer as HTMLElement, data);
+          this.renderContent(viewContainer, data);
         }, "Failed to filter someday view by context")
       );
     });

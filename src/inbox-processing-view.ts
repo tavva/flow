@@ -12,8 +12,23 @@ import {
   setActiveTimeout,
   TimerHandle,
 } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 export const INBOX_PROCESSING_VIEW_TYPE = "flow-gtd-inbox-processing";
+
+interface KeyboardTarget {
+  tagName?: string;
+  isContentEditable?: boolean;
+  blur?: () => void;
+}
+
+function getKeyboardTarget(target: EventTarget | null): KeyboardTarget | null {
+  if (!target || typeof target !== "object") {
+    return null;
+  }
+
+  return target as KeyboardTarget;
+}
 
 export class InboxProcessingView extends ItemView {
   private settings: PluginSettings;
@@ -48,7 +63,7 @@ export class InboxProcessingView extends ItemView {
     container.empty();
     container.addClass("flow-gtd-inbox-modal");
 
-    renderInboxView(container as HTMLElement, this.state, { isLoading: true });
+    renderInboxView(container, this.state, { isLoading: true });
 
     await this.state.loadReferenceData();
     await this.state.loadInboxItems();
@@ -103,7 +118,7 @@ export class InboxProcessingView extends ItemView {
         // Small timeout to ensure DOM is ready and layout is settled
         setActiveTimeout(
           () => {
-            const element = container.querySelector(selector) as HTMLElement;
+            const element = container.querySelector<HTMLElement>(selector);
             if (element) {
               element.focus();
             }
@@ -136,14 +151,17 @@ export class InboxProcessingView extends ItemView {
       return;
     }
 
-    const target = event.target as HTMLElement;
+    const target = getKeyboardTarget(event.target);
+    if (!target) {
+      return;
+    }
     const expandedItem = this.state.editableItems.find((item) => item.isExpanded);
     const currentIndex = this.state.editableItems.findIndex((item) => item.isExpanded);
 
     // Ctrl+Shift+Q blurs the input without closing the view
     if (event.key.toLowerCase() === "q" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
-        target.blur();
+        target.blur?.();
         event.preventDefault();
         event.stopPropagation();
       }
@@ -153,7 +171,7 @@ export class InboxProcessingView extends ItemView {
     // Ctrl+Shift+Enter saves the current item
     if (event.key === "Enter" && event.ctrlKey && event.shiftKey && !event.metaKey) {
       if (expandedItem) {
-        this.state.saveAndRemoveItem(expandedItem);
+        runAsync(this.state.saveAndRemoveItem(expandedItem), "Failed to save inbox item");
         event.preventDefault();
         event.stopPropagation();
       }

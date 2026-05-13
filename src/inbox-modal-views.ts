@@ -7,6 +7,7 @@ import { EditableItem } from "./inbox-types";
 import { FlowProject, PersonNote } from "./types";
 import { TagSuggest } from "./tag-suggest";
 import { ownerDocumentContains, setActiveTimeout } from "./obsidian-platform";
+import { runAsync } from "./async-utils";
 
 export interface EditableItemsViewOptions {
   onClose: () => void;
@@ -15,6 +16,14 @@ export interface EditableItemsViewOptions {
 
 export interface InboxViewOptions {
   isLoading?: boolean;
+}
+
+function setElementHidden(element: HTMLElement, hidden: boolean): void {
+  element.classList.toggle("flow-hidden", hidden);
+}
+
+function isElementHidden(element: HTMLElement): boolean {
+  return element.classList.contains("flow-hidden");
 }
 
 export function renderInboxView(
@@ -605,7 +614,7 @@ function renderProjectPersonSection(
   }
 
   const dropdown = inputWrapper.createDiv("flow-inbox-project-dropdown");
-  dropdown.style.display = "none";
+  setElementHidden(dropdown, true);
 
   let highlightedIndex = -1;
   let dropdownItems: HTMLElement[] = [];
@@ -695,7 +704,7 @@ function renderProjectPersonSection(
         item.editedPersonName = undefined;
         item.selectedAction = "create-project";
         input.value = searchTerm.trim();
-        dropdown.style.display = "none";
+        setElementHidden(dropdown, true);
         input.blur();
         state.queueRender("editable");
       });
@@ -718,25 +727,25 @@ function renderProjectPersonSection(
         item.editedPersonName = searchTerm.trim();
         item.selectedAction = "create-person";
         input.value = `👤 ${searchTerm.trim()}`;
-        dropdown.style.display = "none";
+        setElementHidden(dropdown, true);
         input.blur();
         state.queueRender("editable");
       });
     }
 
     if (sortedProjects.length === 0 && sortedPersons.length === 0 && !searchTerm.trim()) {
-      dropdown.style.display = "none";
+      setElementHidden(dropdown, true);
       return;
     }
 
-    dropdown.style.display = "block";
+    setElementHidden(dropdown, false);
   };
 
   const selectProject = (project: FlowProject | undefined) => {
     item.selectedProject = project;
     item.selectedPerson = undefined;
     input.value = project?.title || "";
-    dropdown.style.display = "none";
+    setElementHidden(dropdown, true);
     input.blur();
 
     if (project) {
@@ -752,7 +761,7 @@ function renderProjectPersonSection(
     item.selectedProject = undefined;
     item.editedProjectTitle = undefined;
     input.value = person ? `👤 ${person.title}` : "";
-    dropdown.style.display = "none";
+    setElementHidden(dropdown, true);
     input.blur();
 
     if (person) {
@@ -775,7 +784,7 @@ function renderProjectPersonSection(
   });
 
   input.addEventListener("keydown", (e) => {
-    if (dropdown.style.display === "none" || dropdownItems.length === 0) {
+    if (isElementHidden(dropdown) || dropdownItems.length === 0) {
       return;
     }
 
@@ -792,7 +801,7 @@ function renderProjectPersonSection(
       dropdownItems[highlightedIndex].click();
     } else if (e.key === "Escape") {
       e.preventDefault();
-      dropdown.style.display = "none";
+      setElementHidden(dropdown, true);
       highlightedIndex = -1;
     }
   });
@@ -805,7 +814,7 @@ function renderProjectPersonSection(
     // Delay to allow click on dropdown item
     setActiveTimeout(
       () => {
-        dropdown.style.display = "none";
+        setElementHidden(dropdown, true);
         highlightedIndex = -1;
       },
       200,
@@ -906,7 +915,7 @@ function renderParentProjectSection(
     input.value = item.parentProject?.title || "";
 
     const dropdown = selectorWrapper.createDiv("flow-inbox-parent-project-dropdown");
-    dropdown.style.display = "none";
+    setElementHidden(dropdown, true);
 
     let highlightedIndex = -1;
     let dropdownItems: HTMLElement[] = [];
@@ -934,7 +943,7 @@ function renderParentProjectSection(
       const sortedProjects = [...filteredProjects].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
 
       if (sortedProjects.length === 0) {
-        dropdown.style.display = "none";
+        setElementHidden(dropdown, true);
         return;
       }
 
@@ -953,13 +962,13 @@ function renderParentProjectSection(
         projectBtn.addEventListener("click", () => {
           item.parentProject = project;
           input.value = project.title;
-          dropdown.style.display = "none";
+          setElementHidden(dropdown, true);
           input.blur();
           state.queueRender("editable");
         });
       });
 
-      dropdown.style.display = "block";
+      setElementHidden(dropdown, false);
     };
 
     input.addEventListener("input", () => {
@@ -972,7 +981,7 @@ function renderParentProjectSection(
     });
 
     input.addEventListener("keydown", (e) => {
-      if (dropdown.style.display === "none" || dropdownItems.length === 0) {
+      if (isElementHidden(dropdown) || dropdownItems.length === 0) {
         return;
       }
 
@@ -989,7 +998,7 @@ function renderParentProjectSection(
         dropdownItems[highlightedIndex].click();
       } else if (e.key === "Escape") {
         e.preventDefault();
-        dropdown.style.display = "none";
+        setElementHidden(dropdown, true);
         highlightedIndex = -1;
       }
     });
@@ -1002,7 +1011,7 @@ function renderParentProjectSection(
       // Delay to allow click on dropdown item
       setActiveTimeout(
         () => {
-          dropdown.style.display = "none";
+          setElementHidden(dropdown, true);
           highlightedIndex = -1;
         },
         200,
@@ -1057,11 +1066,15 @@ function renderBottomBar(container: HTMLElement, item: EditableItem, state: Inbo
       summaryText = ` · ${actionCount} ${actionCount === 1 ? "action" : "actions"}`;
     }
 
-    saveBtn.innerHTML = `Save<span class="flow-inbox-action-summary">${summaryText}</span>`;
+    saveBtn.appendText("Save");
+    saveBtn.createSpan({
+      cls: "flow-inbox-action-summary",
+      text: summaryText,
+    });
   }
 
   saveBtn.addEventListener("click", () => {
-    state.saveAndRemoveItem(item);
+    runAsync(state.saveAndRemoveItem(item), "Failed to save inbox item");
   });
 }
 

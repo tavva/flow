@@ -16,7 +16,13 @@ import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
 import { generateCoverImage } from "./src/cover-image-generator";
 import { ProjectCoverDisplay } from "./src/project-cover-display";
 import { checkAndPromptLegacyMigration } from "./src/legacy-focus-migration";
-import { clearActiveInterval, setActiveInterval, TimerHandle } from "./src/obsidian-platform";
+import {
+  clearActiveInterval,
+  revealLeaf,
+  setActiveInterval,
+  setActiveLeaf,
+  TimerHandle,
+} from "./src/obsidian-platform";
 import { runAsync } from "./src/async-utils";
 
 type InboxCommandConfig = {
@@ -262,17 +268,6 @@ export default class FlowGTDCoachPlugin extends Plugin {
       this.projectCoverDisplay.destroy();
       this.projectCoverDisplay = null;
     }
-
-    // Detach all sphere views
-    this.app.workspace.detachLeavesOfType(SPHERE_VIEW_TYPE);
-    // Detach all inbox processing views
-    this.app.workspace.detachLeavesOfType(INBOX_PROCESSING_VIEW_TYPE);
-    // Detach all waiting for views
-    this.app.workspace.detachLeavesOfType(WAITING_FOR_VIEW_TYPE);
-    // Detach all someday views
-    this.app.workspace.detachLeavesOfType(SOMEDAY_VIEW_TYPE);
-    // Detach all focus views
-    this.app.workspace.detachLeavesOfType(FOCUS_VIEW_TYPE);
   }
 
   async loadSettings() {
@@ -355,8 +350,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
       const view = leaf.view as InboxProcessingView;
 
       // Reveal and refresh the existing view
-      this.app.workspace.revealLeaf(leaf);
-      this.app.workspace.setActiveLeaf(leaf, { focus: true });
+      await revealLeaf(this.app.workspace, leaf);
+      setActiveLeaf(this.app.workspace, leaf, { focus: true });
       await view.refresh();
       return;
     }
@@ -377,8 +372,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
       // Check if this view is for the same sphere
       if (view.getDisplayText().toLowerCase().includes(sphere.toLowerCase())) {
         // Activate and refresh the existing view
-        this.app.workspace.revealLeaf(leaf);
-        this.app.workspace.setActiveLeaf(leaf, { focus: true });
+        await revealLeaf(this.app.workspace, leaf);
+        setActiveLeaf(this.app.workspace, leaf, { focus: true });
         await view.onOpen(); // Refresh the view with latest data
         // Open focus if not already open
         await this.activateFocusView();
@@ -487,8 +482,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
-      workspace.setActiveLeaf(leaf, { focus: true });
+      await revealLeaf(workspace, leaf);
+      setActiveLeaf(workspace, leaf, { focus: true });
     }
   }
 
@@ -506,8 +501,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
-      workspace.setActiveLeaf(leaf, { focus: true });
+      await revealLeaf(workspace, leaf);
+      setActiveLeaf(workspace, leaf, { focus: true });
     }
   }
 
@@ -529,8 +524,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     if (leaf) {
-      workspace.revealLeaf(leaf);
-      workspace.setActiveLeaf(leaf, { focus: true });
+      await revealLeaf(workspace, leaf);
+      setActiveLeaf(workspace, leaf, { focus: true });
     }
 
     // Refresh if view already existed

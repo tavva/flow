@@ -7,6 +7,7 @@ import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { loadFocusItems, saveFocusItems } from "./focus-persistence";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { runAsync } from "./async-utils";
+import { revealLeaf } from "./obsidian-platform";
 
 /**
  * Determine the sphere for an action based on file context and inline tags
@@ -228,6 +229,6 @@ async function activateFocusView(app: App): Promise<void> {
   }
 
   if (leaf) {
-    workspace.revealLeaf(leaf);
+    await revealLeaf(workspace, leaf);
   }
 }
