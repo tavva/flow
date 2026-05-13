@@ -7,24 +7,13 @@ export type TimerHandle = number;
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-function getAmbientDocument(): Document | undefined {
-  if (typeof global === "undefined") {
+function getWindowDocument(): Document | undefined {
+  if (typeof window === "undefined") {
     return undefined;
   }
 
-  const documentKey = "document";
-  return (global as Record<string, unknown>)[documentKey] as Document | undefined;
-}
-
-function getWindowDocument(): Document | undefined {
-  if (typeof window === "undefined") {
-    return getAmbientDocument();
-  }
-
   const documentKey = "document" as keyof Window;
-  return (
-    window.activeDocument ?? (window[documentKey] as Document | undefined) ?? getAmbientDocument()
-  );
+  return window.activeDocument ?? (window[documentKey] as Document | undefined);
 }
 
 function getWindowActiveTarget(): Window | undefined {
@@ -33,6 +22,22 @@ function getWindowActiveTarget(): Window | undefined {
   }
 
   return window.activeWindow ?? window;
+}
+
+function getOptionalActiveWindow(owner?: Node | null): Window | undefined {
+  if (owner?.ownerDocument?.defaultView) {
+    return owner.ownerDocument.defaultView;
+  }
+
+  const focusedWindow =
+    typeof activeWindow === "undefined" ? getWindowActiveTarget() : activeWindow;
+  if (focusedWindow) {
+    return focusedWindow;
+  }
+
+  const focusedDocument =
+    typeof activeDocument === "undefined" ? getWindowDocument() : activeDocument;
+  return focusedDocument?.defaultView ?? undefined;
 }
 
 export function getActiveDocument(): Document {
@@ -94,11 +99,20 @@ export function setActiveTimeout(
   delayMs: number,
   owner?: Node | null
 ): TimerHandle {
-  return getWindowForOwner(owner).setTimeout(callback, delayMs);
+  return (
+    getOptionalActiveWindow(owner)?.setTimeout(callback, delayMs) ??
+    (setTimeout(callback, delayMs) as unknown as TimerHandle)
+  );
 }
 
 export function clearActiveTimeout(handle: TimerHandle, owner?: Node | null): void {
-  getWindowForOwner(owner).clearTimeout(handle);
+  const ownerWindow = getOptionalActiveWindow(owner);
+  if (ownerWindow) {
+    ownerWindow.clearTimeout(handle);
+    return;
+  }
+
+  clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
 }
 
 export function setActiveInterval(
@@ -106,23 +120,35 @@ export function setActiveInterval(
   delayMs: number,
   owner?: Node | null
 ): TimerHandle {
-  return getWindowForOwner(owner).setInterval(callback, delayMs);
+  return (
+    getOptionalActiveWindow(owner)?.setInterval(callback, delayMs) ??
+    (setInterval(callback, delayMs) as unknown as TimerHandle)
+  );
 }
 
 export function clearActiveInterval(handle: TimerHandle, owner?: Node | null): void {
-  getWindowForOwner(owner).clearInterval(handle);
+  const ownerWindow = getOptionalActiveWindow(owner);
+  if (ownerWindow) {
+    ownerWindow.clearInterval(handle);
+    return;
+  }
+
+  clearInterval(handle as unknown as ReturnType<typeof setInterval>);
 }
 
 export function requestActiveAnimationFrame(
   callback: FrameRequestCallback,
   owner?: Node | null
 ): number {
-  const ownerWindow = getWindowForOwner(owner);
-  if (typeof ownerWindow.requestAnimationFrame === "function") {
+  const ownerWindow = getOptionalActiveWindow(owner);
+  if (typeof ownerWindow?.requestAnimationFrame === "function") {
     return ownerWindow.requestAnimationFrame(callback);
   }
 
-  return ownerWindow.setTimeout(() => callback(Date.now()), 0);
+  return (
+    ownerWindow?.setTimeout(() => callback(Date.now()), 0) ??
+    (setTimeout(() => callback(Date.now()), 0) as unknown as number)
+  );
 }
 
 export function openInActiveWindow(url: string, target?: string): void {

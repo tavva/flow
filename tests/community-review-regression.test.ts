@@ -62,8 +62,31 @@ describe("community source review regressions", () => {
     expect(readRepoFile("src/sphere-view.ts")).not.toContain(".renderMarkdown(");
   });
 
-  it("uses Obsidian active globals without falling back through globalThis", () => {
-    expect(readRepoFile("src/obsidian-platform.ts")).not.toContain("globalThis");
+  it("uses Obsidian active globals without falling back through global objects", () => {
+    const platformSource = readRepoFile("src/obsidian-platform.ts");
+
+    expect(platformSource).not.toContain("globalThis");
+    expect(platformSource).not.toMatch(/\bglobal\b/);
+  });
+
+  it("does not return values from new project modal void callbacks", () => {
+    const modalSource = readRepoFile("src/new-project-modal.ts");
+
+    expect(modalSource).not.toMatch(/\.forEach\(\(value\) => dropdown\.addOption/);
+    expect(modalSource).not.toMatch(/\.addToggle\(\(toggle\) =>\s*\n\s*toggle\./);
+  });
+
+  it("does not duplicate community-reviewed CSS selectors", () => {
+    const styles = readRepoFile("styles.css");
+    const selectors = [".flow-gtd-sphere-title", ".flow-gtd-focus-item-actions"];
+
+    for (const selector of selectors) {
+      const occurrences = styles
+        .split("\n")
+        .filter((line) => line.trim() === `${selector} {`).length;
+
+      expect(occurrences).toBe(1);
+    }
   });
 
   it("advertises the minimum Obsidian version required by used APIs", () => {

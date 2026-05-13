@@ -78,27 +78,27 @@ export class NewProjectModal extends Modal {
     new Setting(contentEl)
       .setName("Project title")
       .setDesc("The outcome or goal of this project")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Enter project title...")
           .setValue(this.data.title)
           .onChange((value) => {
             this.data.title = value;
-          })
-      );
+          });
+      });
 
     // First next action
     new Setting(contentEl)
       .setName("First next action")
       .setDesc("The immediate next physical action to move this project forward")
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Enter next action...")
           .setValue(this.data.nextAction)
           .onChange((value) => {
             this.data.nextAction = value;
-          })
-      );
+          });
+      });
 
     // Description (optional)
     new Setting(contentEl)
@@ -146,7 +146,9 @@ export class NewProjectModal extends Modal {
       .setName("Priority")
       .setDesc("1 (highest) to 5 (lowest)")
       .addDropdown((dropdown) => {
-        ["1", "2", "3", "4", "5"].forEach((value) => dropdown.addOption(value, value));
+        for (const value of ["1", "2", "3", "4", "5"]) {
+          dropdown.addOption(value, value);
+        }
         dropdown.setValue(String(this.data.priority));
         dropdown.onChange((value) => {
           this.data.priority = parseInt(value, 10);
@@ -157,15 +159,15 @@ export class NewProjectModal extends Modal {
     new Setting(contentEl)
       .setName("Create as sub-project")
       .setDesc("Make this a child of an existing project")
-      .addToggle((toggle) =>
+      .addToggle((toggle) => {
         toggle.setValue(this.data.isSubProject).onChange((value) => {
           this.data.isSubProject = value;
           if (!value) {
             this.data.parentProject = null;
           }
           this.render();
-        })
-      );
+        });
+      });
 
     // Parent project selector (if sub-project)
     if (this.data.isSubProject) {
@@ -176,11 +178,11 @@ export class NewProjectModal extends Modal {
     new Setting(contentEl)
       .setName("Add to focus")
       .setDesc("Add the first next action to your focus after creation")
-      .addToggle((toggle) =>
+      .addToggle((toggle) => {
         toggle.setValue(this.data.addToFocus).onChange((value) => {
           this.data.addToFocus = value;
-        })
-      );
+        });
+      });
 
     // Action buttons
     const buttonContainer = contentEl.createDiv({ cls: "flow-gtd-modal-buttons" });

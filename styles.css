@@ -1032,9 +1032,9 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-gtd-sphere-title {
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 16px;
+  margin: 0 0 12px 0;
+  font-size: 1.5em;
+  font-weight: 600;
 }
 
 .flow-gtd-sphere-section {
@@ -1832,8 +1832,10 @@ select.flow-gtd-inline-select option,
 }
 
 .flow-gtd-focus-item-actions {
-  display: flex;
-  gap: 6px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -1956,12 +1958,6 @@ select.flow-gtd-inline-select option,
   padding: 12px 0;
   border-bottom: 1px solid var(--background-modifier-border);
   margin-bottom: 16px;
-}
-
-.flow-gtd-sphere-title {
-  margin: 0 0 12px 0;
-  font-size: 1.5em;
-  font-weight: 600;
 }
 
 .flow-gtd-sphere-controls-row {
@@ -2133,14 +2129,6 @@ select.flow-gtd-inline-select option,
 /* Pin indicator */
 .flow-gtd-focus-pin-indicator {
   margin-right: 4px;
-}
-
-/* Action button visibility - show only primary by default, all on hover */
-.flow-gtd-focus-item-actions {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .flow-gtd-focus-action-secondary {
