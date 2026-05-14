@@ -3,13 +3,32 @@
 
 import { AbstractInputSuggest, App, TFile, TFolder } from "obsidian";
 
+type TriggerableInput = HTMLInputElement & {
+  trigger?: (eventType: string) => void;
+};
+
+function notifyInputChanged(inputEl: TriggerableInput): void {
+  if (typeof inputEl.trigger === "function") {
+    inputEl.trigger("input");
+    inputEl.trigger("change");
+    return;
+  }
+
+  const EventCtor = inputEl.ownerDocument.defaultView?.Event ?? Event;
+  inputEl.dispatchEvent(new EventCtor("input", { bubbles: true }));
+  inputEl.dispatchEvent(new EventCtor("change", { bubbles: true }));
+}
+
 /**
  * Folder path suggester for settings inputs.
  * Allows selecting existing folders while also accepting typed paths for folders that don't exist yet.
  */
 export class FolderPathSuggest extends AbstractInputSuggest<TFolder> {
+  private readonly inputEl: TriggerableInput;
+
   constructor(app: App, inputEl: HTMLInputElement) {
     super(app, inputEl);
+    this.inputEl = inputEl;
   }
 
   getSuggestions(query: string): TFolder[] {
@@ -36,6 +55,7 @@ export class FolderPathSuggest extends AbstractInputSuggest<TFolder> {
 
   selectSuggestion(folder: TFolder, _evt: MouseEvent | KeyboardEvent): void {
     this.setValue(folder.path);
+    notifyInputChanged(this.inputEl);
     this.close();
   }
 }
@@ -46,9 +66,11 @@ export class FolderPathSuggest extends AbstractInputSuggest<TFolder> {
  */
 export class FilePathSuggest extends AbstractInputSuggest<TFile> {
   private extensions?: string[];
+  private readonly inputEl: TriggerableInput;
 
   constructor(app: App, inputEl: HTMLInputElement, extensions?: string[]) {
     super(app, inputEl);
+    this.inputEl = inputEl;
     this.extensions = extensions;
   }
 
@@ -81,6 +103,7 @@ export class FilePathSuggest extends AbstractInputSuggest<TFile> {
 
   selectSuggestion(file: TFile, _evt: MouseEvent | KeyboardEvent): void {
     this.setValue(file.path);
+    notifyInputChanged(this.inputEl);
     this.close();
   }
 }

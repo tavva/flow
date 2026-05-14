@@ -522,14 +522,26 @@ export class MarkdownRenderer {
 }
 
 export class AbstractInputSuggest<T> {
-  protected app: App;
+  app: App;
+  inputEl: HTMLInputElement | HTMLDivElement;
+  close = jest.fn();
 
-  constructor(app: App, inputEl: HTMLElement) {
+  constructor(app: App, inputEl: HTMLInputElement | HTMLDivElement) {
     this.app = app;
+    this.inputEl = inputEl;
   }
 
-  setValue(value: string): void {}
-  close(): void {}
+  setValue(value: string): void {
+    if (this.inputEl instanceof HTMLInputElement) {
+      this.inputEl.value = value;
+    } else {
+      this.inputEl.innerText = value;
+    }
+  }
+
+  getValue(): string {
+    return this.inputEl instanceof HTMLInputElement ? this.inputEl.value : this.inputEl.innerText;
+  }
 }
 
 export const Platform = {
