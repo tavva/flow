@@ -1,6 +1,6 @@
 {
   "name": "flow",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Implements key processes in David Allen's Getting Things Done (GTD) methodology.",
   "main": "main.js",
   "scripts": {
