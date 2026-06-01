@@ -67,11 +67,18 @@ export class FolderPathSuggest extends AbstractInputSuggest<TFolder> {
 export class FilePathSuggest extends AbstractInputSuggest<TFile> {
   private extensions?: string[];
   private readonly inputEl: TriggerableInput;
+  private getBaseFolder?: () => string;
 
-  constructor(app: App, inputEl: HTMLInputElement, extensions?: string[]) {
+  constructor(
+    app: App,
+    inputEl: HTMLInputElement,
+    extensions?: string[],
+    getBaseFolder?: () => string
+  ) {
     super(app, inputEl);
     this.inputEl = inputEl;
     this.extensions = extensions;
+    this.getBaseFolder = getBaseFolder;
   }
 
   getSuggestions(query: string): TFile[] {
@@ -83,11 +90,14 @@ export class FilePathSuggest extends AbstractInputSuggest<TFile> {
         if (this.extensions && !this.extensions.includes(file.extension)) {
           return false;
         }
-        return file.path.toLowerCase().includes(lowerQuery);
+        if (!this.isWithinBaseFolder(file)) {
+          return false;
+        }
+        return this.suggestionText(file).toLowerCase().includes(lowerQuery);
       })
       .sort((a, b) => {
-        const aLower = a.path.toLowerCase();
-        const bLower = b.path.toLowerCase();
+        const aLower = this.suggestionText(a).toLowerCase();
+        const bLower = this.suggestionText(b).toLowerCase();
         const aStartsWith = aLower.startsWith(lowerQuery);
         const bStartsWith = bLower.startsWith(lowerQuery);
         if (aStartsWith && !bStartsWith) return -1;
@@ -98,12 +108,32 @@ export class FilePathSuggest extends AbstractInputSuggest<TFile> {
   }
 
   renderSuggestion(file: TFile, el: HTMLElement): void {
-    el.setText(file.path);
+    el.setText(this.suggestionText(file));
   }
 
   selectSuggestion(file: TFile, _evt: MouseEvent | KeyboardEvent): void {
-    this.setValue(file.path);
+    this.setValue(this.suggestionText(file));
     notifyInputChanged(this.inputEl);
     this.close();
+  }
+
+  /**
+   * When scoped to a base folder, suggestions show and insert the path relative
+   * to that folder, since the stored value is joined back onto the folder.
+   * Without a base folder, the full vault path is used.
+   */
+  private suggestionText(file: TFile): string {
+    const base = this.baseFolder();
+    const prefix = base === "" ? "" : `${base}/`;
+    return file.path.startsWith(prefix) ? file.path.slice(prefix.length) : file.path;
+  }
+
+  private isWithinBaseFolder(file: TFile): boolean {
+    const base = this.baseFolder();
+    return base === "" || file.path.startsWith(`${base}/`);
+  }
+
+  private baseFolder(): string {
+    return (this.getBaseFolder?.() ?? "").replace(/\/+$/, "");
   }
 }

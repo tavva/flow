@@ -238,15 +238,21 @@ export class FlowGTDSettingTab extends PluginSettingTab {
       .setDesc(
         "Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)"
       )
-      .addText((text) =>
+      .addText((text) => {
         text
           .setPlaceholder("Inbox.md")
           .setValue(this.plugin.settings.defaultInboxFile)
           .onChange((value) => {
             this.plugin.settings.defaultInboxFile = value;
             this.saveSettingsAfterChange();
-          })
-      );
+          });
+        new FilePathSuggest(
+          this.app,
+          text.inputEl,
+          ["md"],
+          () => this.plugin.settings.inboxFilesFolderPath
+        );
+      });
 
     // Cover Images Folder
     new Setting(containerEl)

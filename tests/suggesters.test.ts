@@ -42,4 +42,38 @@ describe("settings path suggesters", () => {
     expect(input.value).toBe("GTD/Next actions.md");
     expect(events).toEqual(["input", "change"]);
   });
+
+  it("scopes suggestions to a base folder and matches on the name within it", () => {
+    const input = createInput();
+    const app = new App();
+    const inboxFile = Object.assign(new TFile("Flow Inbox Files/Inbox.md", "Inbox"), {
+      extension: "md",
+    });
+    const otherFile = Object.assign(new TFile("Projects/Roadmap.md", "Roadmap"), {
+      extension: "md",
+    });
+    app.vault.getFiles = jest.fn().mockReturnValue([inboxFile, otherFile]);
+    const suggest = new FilePathSuggest(app, input, ["md"], () => "Flow Inbox Files");
+
+    // "flow" only appears in the folder portion of the path, never in the name,
+    // so a name-scoped match must return nothing.
+    expect(suggest.getSuggestions("flow")).toEqual([]);
+    // Files outside the base folder are excluded entirely.
+    expect(suggest.getSuggestions("roadmap")).toEqual([]);
+    // Matching on the name within the folder finds the inbox file.
+    expect(suggest.getSuggestions("inb")).toEqual([inboxFile]);
+  });
+
+  it("inserts only the name relative to the base folder when selecting", () => {
+    const input = createInput();
+    input.trigger = jest.fn();
+    const file = Object.assign(new TFile("Flow Inbox Files/Inbox.md", "Inbox"), {
+      extension: "md",
+    });
+    const suggest = new FilePathSuggest(new App(), input, ["md"], () => "Flow Inbox Files");
+
+    suggest.selectSuggestion(file, createKeyboardEvent());
+
+    expect(input.value).toBe("Inbox.md");
+  });
 });
