@@ -21,6 +21,14 @@ const ACTIONS_REQUIRING_SPHERES: readonly string[] = [
   "someday-file",
 ];
 
+function flattenToSingleLine(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join(" ");
+}
+
 export class InboxItemPersistenceService {
   constructor(
     private readonly writer: FileWriter,
@@ -59,7 +67,9 @@ export class InboxItemPersistenceService {
       finalNextActions = [item.original];
     }
 
-    return finalNextActions;
+    // Each next action must occupy a single line in the destination file, so
+    // collapse any multi-line content (e.g. a captured note used as the action).
+    return finalNextActions.map(flattenToSingleLine);
   }
 
   private validateFinalNextActions(item: EditableItem, finalNextActions: string[]): void {

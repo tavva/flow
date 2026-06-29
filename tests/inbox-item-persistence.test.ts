@@ -115,6 +115,22 @@ describe("InboxItemPersistenceService", () => {
     expect(writerMocks.addToNextActionsFile).not.toHaveBeenCalled();
   });
 
+  it("flattens multi-line note content into a single-line next action", async () => {
+    const item: EditableItem = {
+      original: "Call dentist\nabout the crown that fell out",
+      isAIProcessed: false,
+      selectedAction: "next-actions-file",
+      selectedSpheres: ["personal"],
+      sourceNoteLink: "[[Captured note|source]]",
+    };
+
+    await service.persist(item);
+
+    expect(writerMocks.addToNextActionsFile).toHaveBeenCalledTimes(1);
+    const actionsArg = writerMocks.addToNextActionsFile.mock.calls[0][0];
+    expect(actionsArg).toEqual(["Call dentist about the crown that fell out"]);
+  });
+
   it("skips persistence work for trash items", async () => {
     const item: EditableItem = {
       original: "Duplicate",
