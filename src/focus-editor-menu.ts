@@ -4,7 +4,7 @@
 import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { updateFocusItems } from "./focus-persistence";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { runAsync } from "./async-utils";
 import { revealLeaf } from "./obsidian-platform";
@@ -144,80 +144,30 @@ async function toggleFocusFromMenu(
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
   const focusFilePath = settings.focusFilePath;
-  const focusItems = await loadFocusItems(app.vault, focusFilePath);
-  const onFocus = isActionOnFocus(filePath, lineNumber, focusItems);
+  const actionText = extractActionText(line);
+  if (!actionText) return;
 
-  if (onFocus) {
-    await removeFromFocus(app, filePath, lineNumber, focusItems, focusFilePath, refreshFocusView);
-    return;
-  }
-
-  await addToFocus(
-    app,
-    filePath,
-    lineNumber,
-    line,
-    sphere,
-    settings,
-    focusItems,
-    focusFilePath,
-    refreshFocusView
+  await updateFocusItems(
+    app.vault,
+    (items) => {
+      if (isActionOnFocus(filePath, lineNumber, items)) {
+        return items.filter((item) => !(item.file === filePath && item.lineNumber === lineNumber));
+      }
+      return [
+        ...items,
+        {
+          file: filePath,
+          lineNumber,
+          lineContent: line,
+          text: actionText,
+          sphere,
+          isGeneral: filePath === (settings.nextActionsFilePath?.trim() || "Next actions.md"),
+          addedAt: Date.now(),
+        },
+      ];
+    },
+    focusFilePath
   );
-}
-
-/**
- * Add an action to the focus
- */
-async function addToFocus(
-  app: App,
-  filePath: string,
-  lineNumber: number,
-  lineContent: string,
-  sphere: string,
-  settings: PluginSettings,
-  focusItems: FocusItem[],
-  focusFilePath: string,
-  refreshFocusView: () => Promise<void>
-): Promise<void> {
-  const actionText = extractActionText(lineContent);
-  if (!actionText) {
-    return;
-  }
-
-  // Determine if this is a general action (from next actions file)
-  const isGeneral = filePath === (settings.nextActionsFilePath?.trim() || "Next actions.md");
-
-  const item: FocusItem = {
-    file: filePath,
-    lineNumber,
-    lineContent,
-    text: actionText,
-    sphere,
-    isGeneral,
-    addedAt: Date.now(),
-  };
-
-  focusItems.push(item);
-  await saveFocusItems(app.vault, focusItems, focusFilePath);
-  await activateFocusView(app);
-  await refreshFocusView();
-}
-
-/**
- * Remove an action from the focus
- */
-async function removeFromFocus(
-  app: App,
-  filePath: string,
-  lineNumber: number,
-  focusItems: FocusItem[],
-  focusFilePath: string,
-  refreshFocusView: () => Promise<void>
-): Promise<void> {
-  const updatedFocus = focusItems.filter(
-    (item) => !(item.file === filePath && item.lineNumber === lineNumber)
-  );
-  await saveFocusItems(app.vault, updatedFocus, focusFilePath);
   await activateFocusView(app);
   await refreshFocusView();
 }

@@ -78,43 +78,38 @@ function parseJsonlFormat(content: string): FocusItem[] {
  * Load focus items from the vault file
  */
 export async function loadFocusItems(vault: Vault, filePath?: string): Promise<FocusItem[]> {
+  return withFocusFileLock(vault, () =>
+    readFocusItems(vault, resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath)))
+  );
+}
+
+// Only call while holding the vault's focus lock. Read errors must abort updates.
+async function readFocusItems(vault: Vault, filePath: string): Promise<FocusItem[]> {
+  const file = vault.getAbstractFileByPath(filePath);
+  let content: string;
+  if (file instanceof TFile) {
+    content = await vault.read(file);
+  } else {
+    if (!(await vault.adapter.exists(filePath))) return [];
+    content = await vault.adapter.read(filePath);
+  }
+  return isLegacyFormat(content) ? parseLegacyFormat(content) : parseJsonlFormat(content);
+}
+
+/**
+ * Read, change, and save the latest focus list under one lock, including relocation.
+ * Callbacks must not call other locking focus operations.
+ */
+export async function updateFocusItems(
+  vault: Vault,
+  update: (items: FocusItem[]) => FocusItem[] | Promise<FocusItem[]>,
+  filePath?: string
+): Promise<FocusItem[]> {
   return withFocusFileLock(vault, async () => {
-    const focusFilePath = resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath));
-    try {
-      let file = vault.getAbstractFileByPath(focusFilePath);
-
-      // If file not found via cache, try reading directly from adapter
-      if (!(file instanceof TFile)) {
-        try {
-          // Check if file exists on disk but not in cache yet
-          const exists = await vault.adapter.exists(focusFilePath);
-          if (exists) {
-            const content = await vault.adapter.read(focusFilePath);
-            if (isLegacyFormat(content)) {
-              return parseLegacyFormat(content);
-            }
-            return parseJsonlFormat(content);
-          }
-        } catch {
-          // File doesn't exist yet, will return empty array below
-        }
-
-        // File doesn't exist at all, return empty array
-        return [];
-      }
-
-      const content = await vault.read(file);
-
-      // Handle legacy JSON format for migration
-      if (isLegacyFormat(content)) {
-        return parseLegacyFormat(content);
-      }
-
-      return parseJsonlFormat(content);
-    } catch (error) {
-      console.error("Failed to load focus items from file", error);
-      return [];
-    }
+    const path = resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath));
+    const items = await update(await readFocusItems(vault, path));
+    await writeFocusItems(vault, items, path);
+    return items;
   });
 }
 
@@ -134,33 +129,23 @@ export async function saveFocusItems(
   items: FocusItem[],
   filePath?: string
 ): Promise<void> {
-  return withFocusFileLock(vault, async () => {
-    const focusFilePath = resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath));
-    try {
-      await ensureFocusDataDirectory(vault, focusFilePath);
+  return withFocusFileLock(vault, () =>
+    writeFocusItems(vault, items, resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath)))
+  );
+}
 
-      const content = toJsonlFormat(items);
-
-      // Check if file exists via cache first
-      const file = vault.getAbstractFileByPath(focusFilePath);
-
-      if (file instanceof TFile) {
-        await vault.modify(file, content);
-      } else {
-        // File not in cache, check if it exists on disk
-        const existsOnDisk = await vault.adapter.exists(focusFilePath);
-
-        if (existsOnDisk) {
-          await vault.adapter.write(focusFilePath, content);
-        } else {
-          await vault.create(focusFilePath, content);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to save focus items to file", error);
-      throw error;
-    }
-  });
+// Only call while holding the vault's focus lock.
+async function writeFocusItems(vault: Vault, items: FocusItem[], filePath: string): Promise<void> {
+  await ensureFocusDataDirectory(vault, filePath);
+  const content = toJsonlFormat(items);
+  const file = vault.getAbstractFileByPath(filePath);
+  if (file instanceof TFile) {
+    await vault.modify(file, content);
+  } else if (await vault.adapter.exists(filePath)) {
+    await vault.adapter.write(filePath, content);
+  } else {
+    await vault.create(filePath, content);
+  }
 }
 
 /** Create each parent folder, checking the adapter when the cache is behind. */

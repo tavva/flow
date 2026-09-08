@@ -33,6 +33,12 @@ jest.mock("../src/file-writer", () => ({
 }));
 
 jest.mock("../src/focus-persistence", () => ({
+  updateFocusItems: jest.fn(async (vault, update, path) => {
+    const persistence = require("../src/focus-persistence");
+    const items = await update(await persistence.loadFocusItems(vault, path));
+    await persistence.saveFocusItems(vault, items, path);
+    return items;
+  }),
   loadFocusItems: jest.fn().mockResolvedValue([]),
   saveFocusItems: jest.fn().mockResolvedValue(undefined),
 }));

@@ -14,6 +14,12 @@ jest.mock("../src/action-line-finder");
 // Mock focus persistence
 let mockFocusItems: FocusItem[] = [];
 jest.mock("../src/focus-persistence", () => ({
+  updateFocusItems: jest.fn(async (vault, update, path) => {
+    const persistence = require("../src/focus-persistence");
+    const items = await update(await persistence.loadFocusItems(vault, path));
+    await persistence.saveFocusItems(vault, items, path);
+    return items;
+  }),
   loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
   saveFocusItems: jest.fn((vault, items) => {
     mockFocusItems = items;

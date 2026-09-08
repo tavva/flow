@@ -8,7 +8,13 @@ jest.mock("obsidian");
 // Mock focus persistence
 let mockFocusItems: FocusItem[] = [];
 jest.mock("../src/focus-persistence", () => ({
-  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  updateFocusItems: jest.fn(async (vault, update, path) => {
+    const persistence = require("../src/focus-persistence");
+    const items = await update(await persistence.loadFocusItems(vault, path));
+    await persistence.saveFocusItems(vault, items, path);
+    return items;
+  }),
+  loadFocusItems: jest.fn(() => Promise.resolve(JSON.parse(JSON.stringify(mockFocusItems)))),
   saveFocusItems: jest.fn((vault, items) => {
     mockFocusItems = items;
     return Promise.resolve();
@@ -96,6 +102,27 @@ describe("FocusView", () => {
     mockSettings.focusFilePath = "B.md";
     await expect((view as any).saveFocus()).rejects.toThrow("Focus file changed");
     expect(mockSaveFocusItems).not.toHaveBeenCalled();
+  });
+
+  it("rejects a stale view save without overwriting newer additions", async () => {
+    mockFocusItems = [{ file: "A.md", text: "A", lineNumber: 1 } as FocusItem];
+    await (view as any).loadFocus();
+    (view as any).focusItems[0].isPinned = true;
+    mockFocusItems = [...mockFocusItems, { file: "B.md", text: "B", lineNumber: 1 } as FocusItem];
+    await expect((view as any).saveFocus()).rejects.toThrow("Focus list changed");
+    expect(mockSaveFocusItems).not.toHaveBeenCalled();
+    expect(mockFocusItems.map((item) => item.text)).toEqual(["A", "B"]);
+  });
+
+  it("blocks cached edits after a failed refresh even if the next read succeeds", async () => {
+    mockFocusItems = [{ file: "A.md", text: "A", lineNumber: 1 } as FocusItem];
+    await (view as any).loadFocus();
+    (mockLoadFocusItems as jest.Mock).mockRejectedValueOnce(new Error("Read failed"));
+    await expect((view as any).loadFocus()).rejects.toThrow("Read failed");
+    (view as any).focusItems[0].isPinned = true;
+    await expect((view as any).saveFocus()).rejects.toThrow("Focus list changed");
+    expect(mockSaveFocusItems).not.toHaveBeenCalled();
+    expect(mockFocusItems[0].isPinned).toBeUndefined();
   });
 
   it("discards a refresh of the old file when a new file loads during validation", async () => {
@@ -195,7 +222,7 @@ describe("FocusView", () => {
       addedAt: 123456,
     };
     mockFocusItems = [item];
-    (view as any).focusItems = [...mockFocusItems];
+    await (view as any).loadFocus();
 
     await (view as any).removeFromFocus(item);
 
@@ -296,7 +323,7 @@ describe("FocusView", () => {
 
       mockFocusItems = [regularItem];
       // Initialize the view's internal focusItems array
-      (view as any).focusItems = [...mockFocusItems];
+      await (view as any).loadFocus();
 
       // Create a proper TFile mock
       const { TFile } = require("obsidian");
@@ -361,7 +388,8 @@ describe("FocusView", () => {
         addedAt: Date.now(),
       };
 
-      (view as any).focusItems = [item];
+      mockFocusItems = [item];
+      await (view as any).loadFocus();
 
       const { TFile } = require("obsidian");
       const mockFile = new TFile();
@@ -710,7 +738,7 @@ describe("FocusView", () => {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
       // Initialize the view's internal focusItems array
-      (testView as any).focusItems = [...mockFocusItems];
+      await (testView as any).loadFocus();
 
       // Pin the second item
       await (testView as any).pinItem((testView as any).focusItems[1]);
@@ -748,7 +776,7 @@ describe("FocusView", () => {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
       // Initialize the view's internal focusItems array
-      (testView as any).focusItems = [...mockFocusItems];
+      await (testView as any).loadFocus();
 
       // Unpin the item
       await (testView as any).unpinItem((testView as any).focusItems[0]);
@@ -802,7 +830,7 @@ describe("FocusView", () => {
         scanProjects: jest.fn().mockResolvedValue([]),
       };
       // Initialize the view's internal focusItems array
-      (testView as any).focusItems = [...mockFocusItems];
+      await (testView as any).loadFocus();
 
       // Simulate dragging third item to first position
       const draggedItem = (testView as any).focusItems[2];
@@ -860,7 +888,7 @@ describe("FocusView", () => {
       (testView as any).app = mockApp;
       (testView as any).validator = mockValidator;
       // Initialize the view's internal focusItems array
-      (testView as any).focusItems = [...mockFocusItems];
+      await (testView as any).loadFocus();
 
       // Mock file read
       mockApp.vault.read = jest.fn().mockResolvedValue("- [ ] Pinned action");
@@ -1158,7 +1186,8 @@ describe("FocusView", () => {
       mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
       mockApp.vault.read.mockResolvedValue("line1\nline2\nline3\nline4\n- [ ] Test action\nline6");
 
-      (view as any).focusItems = [mockItem];
+      mockFocusItems = [mockItem];
+      await (view as any).loadFocus();
 
       // Mock validator
       (view as any).validator = {
@@ -1191,7 +1220,8 @@ describe("FocusView", () => {
       mockApp.vault.getAbstractFileByPath.mockReturnValue(mockTFile);
       mockApp.vault.read.mockResolvedValue("line1\nline2\nline3\nline4\n- [ ] Test action\nline6");
 
-      (view as any).focusItems = [mockItem];
+      mockFocusItems = [mockItem];
+      await (view as any).loadFocus();
       (view as any).validator = {
         validateItem: jest.fn().mockResolvedValue({ found: true }),
       };

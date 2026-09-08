@@ -5,7 +5,7 @@ import { App, Modal, Setting } from "obsidian";
 import { PluginSettings, FlowProject, GTDProcessingResult, FocusItem } from "./types";
 import { FileWriter } from "./file-writer";
 import { FlowProjectScanner } from "./flow-scanner";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { updateFocusItems } from "./focus-persistence";
 import { ActionLineFinder } from "./action-line-finder";
 import { sanitizeFileName, validateNextAction } from "./validation";
 import { requestActiveAnimationFrame, setActiveTimeout } from "./obsidian-platform";
@@ -379,9 +379,7 @@ export class NewProjectModal extends Modal {
     };
 
     const focusFilePath = this.settings.focusFilePath;
-    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
-    focusItems.push(focusItem);
-    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
+    await updateFocusItems(this.app.vault, (items) => [...items, focusItem], focusFilePath);
   }
 
   private showError(message: string) {

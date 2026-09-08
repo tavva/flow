@@ -15,7 +15,7 @@ import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { loadFocusItems, updateFocusItems } from "./focus-persistence";
 import { resolveFocusFilePath } from "./focus-file-path";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 import { extractContexts } from "./context-tags";
@@ -943,10 +943,13 @@ export class SphereView extends ItemView {
     };
 
     const focusFilePath = this.settings.focusFilePath;
-    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
-    focusItems.push(item);
     this.suppressFocusRefresh = true;
-    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
+    try {
+      await updateFocusItems(this.app.vault, (items) => [...items, item], focusFilePath);
+    } catch (error) {
+      this.suppressFocusRefresh = false;
+      throw error;
+    }
     await this.activateFocusView();
     await this.refreshFocusView();
 
@@ -962,12 +965,17 @@ export class SphereView extends ItemView {
     element?: HTMLElement
   ): Promise<void> {
     const focusFilePath = this.settings.focusFilePath;
-    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
-    const updatedFocus = focusItems.filter(
-      (item) => !(item.file === file && item.lineNumber === lineNumber)
-    );
     this.suppressFocusRefresh = true;
-    await saveFocusItems(this.app.vault, updatedFocus, focusFilePath);
+    try {
+      await updateFocusItems(
+        this.app.vault,
+        (items) => items.filter((item) => !(item.file === file && item.lineNumber === lineNumber)),
+        focusFilePath
+      );
+    } catch (error) {
+      this.suppressFocusRefresh = false;
+      throw error;
+    }
     await this.activateFocusView();
     await this.refreshFocusView();
 

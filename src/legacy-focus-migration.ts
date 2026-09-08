@@ -4,7 +4,7 @@
 import { App, Modal, TFile, Vault } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { updateFocusItems } from "./focus-persistence";
 import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
 import { wrapAsyncEvent } from "./async-utils";
 
@@ -356,12 +356,15 @@ export async function checkAndPromptLegacyMigration(
     async () => {
       // Migrate
       const focusFilePath = settings.focusFilePath;
-      const existingFocus = await loadFocusItems(app.vault, focusFilePath);
-      const result = await migrateLegacyFocusItems(app, legacyItems, existingFocus, settings);
-
-      // Save migrated items
-      const newFocus = [...existingFocus, ...result.migrated];
-      await saveFocusItems(app.vault, newFocus, focusFilePath);
+      let result!: Awaited<ReturnType<typeof migrateLegacyFocusItems>>;
+      await updateFocusItems(
+        app.vault,
+        async (existingFocus) => {
+          result = await migrateLegacyFocusItems(app, legacyItems, existingFocus, settings);
+          return [...existingFocus, ...result.migrated];
+        },
+        focusFilePath
+      );
 
       // Refresh focus view to show migrated items
       await refreshFocusView(app);
@@ -379,19 +382,22 @@ export async function checkAndPromptLegacyMigration(
 
             // Update focus items to match new line content (without tags)
             const focusFilePath = settings.focusFilePath;
-            const focusItems = await loadFocusItems(app.vault, focusFilePath);
-            const updatedItems = focusItems.map((item) => ({
-              ...item,
-              lineContent: item.lineContent
-                .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
-                .replace(/\s+$/, "")
-                .replace(/\s{2,}/g, " "),
-              text: item.text
-                .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
-                .replace(/\s+$/, "")
-                .replace(/\s{2,}/g, " "),
-            }));
-            await saveFocusItems(app.vault, updatedItems, focusFilePath);
+            await updateFocusItems(
+              app.vault,
+              (focusItems) =>
+                focusItems.map((item) => ({
+                  ...item,
+                  lineContent: item.lineContent
+                    .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                    .replace(/\s+$/, "")
+                    .replace(/\s{2,}/g, " "),
+                  text: item.text
+                    .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                    .replace(/\s+$/, "")
+                    .replace(/\s{2,}/g, " "),
+                })),
+              focusFilePath
+            );
 
             // Refresh focus view to show updated items
             await refreshFocusView(app);

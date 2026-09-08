@@ -5,7 +5,7 @@ import { EditableItem } from "./inbox-types";
 import { GTDProcessingResult, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { validateReminderDate, validateInboxItem } from "./validation";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { updateFocusItems } from "./focus-persistence";
 import { generateCoverImage } from "./cover-image-generator";
 import { runAsync } from "./async-utils";
 
@@ -256,9 +256,9 @@ export class InboxItemPersistenceService {
     const primarySphere = item.selectedSpheres[0];
     const isGeneral = filePath === (this.settings.nextActionsFilePath?.trim() || "Next actions.md");
 
-    // Load current focus items
+    // Prepare additions before taking the focus lock
     const focusFilePath = this.settings.focusFilePath;
-    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
+    const focusItems: FocusItem[] = [];
 
     // Add each action marked for focus
     const addToFocus = item.addToFocus || [];
@@ -289,7 +289,7 @@ export class InboxItemPersistenceService {
     }
 
     // Save focus items
-    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
+    await updateFocusItems(this.app.vault, (items) => [...items, ...focusItems], focusFilePath);
   }
 
   private async maybeGenerateCoverImage(projectFile: TFile): Promise<void> {

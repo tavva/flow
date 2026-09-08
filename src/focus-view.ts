@@ -6,7 +6,7 @@ import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
-import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { loadFocusItems, updateFocusItems } from "./focus-persistence";
 import { RefreshingView } from "./refreshing-view";
 import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
 import { getDataviewApi } from "./dataview-api";
@@ -58,6 +58,7 @@ export class FocusView extends RefreshingView {
   private focusItems: FocusItem[] = [];
   private loadedFocusFilePath: string;
   private focusLoadVersion = 0;
+  private loadedFocusSnapshot: string | null = null;
   private selectedContexts: string[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
@@ -196,13 +197,20 @@ export class FocusView extends RefreshingView {
   private async loadFocus(): Promise<number> {
     const loadVersion = ++this.focusLoadVersion;
     const filePath = resolveFocusFilePath(this.settings.focusFilePath);
-    const items = await loadFocusItems(this.app.vault, filePath);
+    let items: FocusItem[];
+    try {
+      items = await loadFocusItems(this.app.vault, filePath);
+    } catch (error) {
+      if (loadVersion === this.focusLoadVersion) this.loadedFocusSnapshot = null;
+      throw error;
+    }
     if (
       loadVersion !== this.focusLoadVersion ||
       filePath !== resolveFocusFilePath(this.settings.focusFilePath)
     )
       return -1;
     this.focusItems = items;
+    this.loadedFocusSnapshot = JSON.stringify(items);
     this.loadedFocusFilePath = filePath;
     return loadVersion;
   }
@@ -211,7 +219,25 @@ export class FocusView extends RefreshingView {
     if (this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
       throw new Error("Focus file changed. Refresh the Focus view before trying again.");
     }
-    await saveFocusItems(this.app.vault, this.focusItems, this.loadedFocusFilePath);
+    const filePath = this.loadedFocusFilePath;
+    const loadVersion = this.focusLoadVersion;
+    const expected = this.loadedFocusSnapshot;
+    // Capture the edit now; later UI mutations must not change a queued write.
+    const proposed = JSON.stringify(this.focusItems);
+    await updateFocusItems(
+      this.app.vault,
+      (current) => {
+        if (filePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
+          throw new Error("Focus file changed. Refresh the Focus view before trying again.");
+        }
+        if (expected === null || JSON.stringify(current) !== expected) {
+          throw new Error("Focus list changed. Refresh the Focus view before trying again.");
+        }
+        return JSON.parse(proposed) as FocusItem[];
+      },
+      filePath
+    );
+    if (loadVersion === this.focusLoadVersion) this.loadedFocusSnapshot = proposed;
   }
 
   async onClose() {

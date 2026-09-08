@@ -13,7 +13,13 @@ jest.mock("obsidian");
 // Mock focus persistence
 let mockFocusItems: FocusItem[] = [];
 jest.mock("../src/focus-persistence", () => ({
-  loadFocusItems: jest.fn(() => Promise.resolve(mockFocusItems)),
+  updateFocusItems: jest.fn(async (vault, update, path) => {
+    const persistence = require("../src/focus-persistence");
+    const items = await update(await persistence.loadFocusItems(vault, path));
+    await persistence.saveFocusItems(vault, items, path);
+    return items;
+  }),
+  loadFocusItems: jest.fn(() => Promise.resolve(JSON.parse(JSON.stringify(mockFocusItems)))),
   saveFocusItems: jest.fn((vault, items) => {
     mockFocusItems = items;
     return Promise.resolve();

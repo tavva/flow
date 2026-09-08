@@ -711,6 +711,13 @@ describe("checkAndPromptLegacyMigration", () => {
     // Mock loadFocusItems to return empty by default
     (focusPersistence.loadFocusItems as jest.Mock).mockResolvedValue([]);
     (focusPersistence.saveFocusItems as jest.Mock).mockResolvedValue(undefined);
+    (focusPersistence.updateFocusItems as jest.Mock).mockImplementation(
+      async (vault, update, path) => {
+        const items = await update(await focusPersistence.loadFocusItems(vault, path));
+        await focusPersistence.saveFocusItems(vault, items, path);
+        return items;
+      }
+    );
 
     // Mock LegacyMigrationModal to capture callbacks
     jest.spyOn(LegacyMigrationModal.prototype, "open").mockImplementation(function (this: any) {

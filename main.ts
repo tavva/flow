@@ -15,7 +15,7 @@ import { SomedayView, SOMEDAY_VIEW_TYPE } from "./src/someday-view";
 import { FocusView, FOCUS_VIEW_TYPE } from "./src/focus-view";
 import { shouldClearFocus, archiveClearedTasks } from "./src/focus-auto-clear";
 import { registerFocusEditorMenu } from "./src/focus-editor-menu";
-import { loadFocusItems, saveFocusItems } from "./src/focus-persistence";
+import { updateFocusItems } from "./src/focus-persistence";
 import { generateCoverImage } from "./src/cover-image-generator";
 import { ProjectCoverDisplay } from "./src/project-cover-display";
 import { checkAndPromptLegacyMigration } from "./src/legacy-focus-migration";
@@ -600,27 +600,30 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Load focus items
     const focusFilePath = this.settings.focusFilePath;
-    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
-
-    // Archive the tasks if archive file is configured
     let archiveSucceeded = false;
-    if (this.settings.focusArchiveFile && focusItems.length > 0) {
-      try {
-        await archiveClearedTasks(
-          this.app.vault,
-          focusItems,
-          this.settings.focusArchiveFile,
-          new Date()
-        );
-        archiveSucceeded = true;
-      } catch (error) {
-        console.error("Failed to archive cleared focus tasks", error);
-        archiveSucceeded = false;
-      }
-    }
+    await updateFocusItems(
+      this.app.vault,
+      async (focusItems) => {
+        // Archive and clear the same snapshot while other focus changes wait.
+        if (this.settings.focusArchiveFile && focusItems.length > 0) {
+          try {
+            await archiveClearedTasks(
+              this.app.vault,
+              focusItems,
+              this.settings.focusArchiveFile,
+              new Date()
+            );
+            archiveSucceeded = true;
+          } catch (error) {
+            console.error("Failed to archive cleared focus tasks", error);
+            archiveSucceeded = false;
+          }
+        }
 
-    // Clear the focus
-    await saveFocusItems(this.app.vault, [], focusFilePath);
+        return [];
+      },
+      focusFilePath
+    );
     this.settings.lastFocusClearTimestamp = Date.now();
     this.settings.lastFocusArchiveSucceeded = archiveSucceeded;
     this.settings.focusClearedNotificationDismissed = false; // Reset so user sees notification
