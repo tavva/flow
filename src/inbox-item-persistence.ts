@@ -257,7 +257,8 @@ export class InboxItemPersistenceService {
     const isGeneral = filePath === (this.settings.nextActionsFilePath?.trim() || "Next actions.md");
 
     // Load current focus items
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
 
     // Add each action marked for focus
     const addToFocus = item.addToFocus || [];
@@ -288,7 +289,7 @@ export class InboxItemPersistenceService {
     }
 
     // Save focus items
-    await saveFocusItems(this.app.vault, focusItems);
+    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
   }
 
   private async maybeGenerateCoverImage(projectFile: TFile): Promise<void> {

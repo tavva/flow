@@ -15,7 +15,8 @@ import { FlowProject, PluginSettings, FocusItem } from "./types";
 import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
-import { loadFocusItems, saveFocusItems, FOCUS_FILE_PATH } from "./focus-persistence";
+import { loadFocusItems, saveFocusItems } from "./focus-persistence";
+import { resolveFocusFilePath } from "./focus-file-path";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 import { extractContexts } from "./context-tags";
 import {
@@ -191,7 +192,7 @@ export class SphereView extends ItemView {
       this.app.metadataCache.offref(this.metadataCacheEventRef);
     }
     this.metadataCacheEventRef = this.app.metadataCache.on("changed", (file) => {
-      if (file.path === FOCUS_FILE_PATH) {
+      if (file.path === resolveFocusFilePath(this.settings.focusFilePath)) {
         if (this.suppressFocusRefresh) {
           this.suppressFocusRefresh = false;
           return;
@@ -263,7 +264,8 @@ export class SphereView extends ItemView {
   }
 
   private async refreshFocusHighlighting(): Promise<void> {
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     const container = this.contentEl;
     const items = container.querySelectorAll<HTMLElement>("li[data-focus-file]");
 
@@ -779,7 +781,8 @@ export class SphereView extends ItemView {
     item.classList.add("flow-gtd-sphere-action-item");
 
     // Check if this action is in the focus and add CSS class if so
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     const inFocus = focusItems.some(
       (focusItem) => focusItem.file === file && focusItem.text === action
     );
@@ -939,10 +942,11 @@ export class SphereView extends ItemView {
       contexts: extractContexts(lineContent, this.settings.contextTagPrefix),
     };
 
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     focusItems.push(item);
     this.suppressFocusRefresh = true;
-    await saveFocusItems(this.app.vault, focusItems);
+    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
     await this.activateFocusView();
     await this.refreshFocusView();
 
@@ -957,12 +961,13 @@ export class SphereView extends ItemView {
     lineNumber: number,
     element?: HTMLElement
   ): Promise<void> {
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     const updatedFocus = focusItems.filter(
       (item) => !(item.file === file && item.lineNumber === lineNumber)
     );
     this.suppressFocusRefresh = true;
-    await saveFocusItems(this.app.vault, updatedFocus);
+    await saveFocusItems(this.app.vault, updatedFocus, focusFilePath);
     await this.activateFocusView();
     await this.refreshFocusView();
 
@@ -973,7 +978,8 @@ export class SphereView extends ItemView {
   }
 
   private async isOnFocus(file: string, lineNumber: number): Promise<boolean> {
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     return focusItems.some((item) => item.file === file && item.lineNumber === lineNumber);
   }
 

@@ -11,6 +11,7 @@ import { RefreshingView } from "./refreshing-view";
 import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
 import { getDataviewApi } from "./dataview-api";
 import { runAsync, wrapAsyncEvent } from "./async-utils";
+import { resolveFocusFilePath } from "./focus-file-path";
 
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
@@ -55,11 +56,14 @@ export class FocusView extends RefreshingView {
   private allProjects: FlowProject[] = [];
   private draggedItem: FocusItem | null = null;
   private focusItems: FocusItem[] = [];
+  private loadedFocusFilePath: string;
+  private focusLoadVersion = 0;
   private selectedContexts: string[] = [];
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
     this.settings = settings;
+    this.loadedFocusFilePath = resolveFocusFilePath(settings.focusFilePath);
     this.validator = new FocusValidator(this.app);
     this.scanner = new FlowProjectScanner(this.app);
     this.saveSettings = saveSettings;
@@ -123,6 +127,7 @@ export class FocusView extends RefreshingView {
   }
 
   async onOpen() {
+    this.cleanup();
     const container = this.contentEl;
     container.empty();
     container.addClass("flow-gtd-focus-view");
@@ -131,7 +136,8 @@ export class FocusView extends RefreshingView {
     this.renderLoadingState(container);
 
     // Load focus items from file
-    await this.loadFocus();
+    const loadVersion = await this.loadFocus();
+    if (loadVersion !== this.focusLoadVersion) return;
 
     // Clean up old completed items (before midnight)
     const midnight = this.getMidnightTimestamp();
@@ -147,6 +153,7 @@ export class FocusView extends RefreshingView {
 
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
+    if (loadVersion !== this.focusLoadVersion) return;
 
     // Register event listener for metadata cache changes (fires after file is indexed)
     this.registerMetadataCacheListener((file: TFile) => {
@@ -186,12 +193,25 @@ export class FocusView extends RefreshingView {
     this.renderGroupedItems(container, filteredItems);
   }
 
-  private async loadFocus(): Promise<void> {
-    this.focusItems = await loadFocusItems(this.app.vault);
+  private async loadFocus(): Promise<number> {
+    const loadVersion = ++this.focusLoadVersion;
+    const filePath = resolveFocusFilePath(this.settings.focusFilePath);
+    const items = await loadFocusItems(this.app.vault, filePath);
+    if (
+      loadVersion !== this.focusLoadVersion ||
+      filePath !== resolveFocusFilePath(this.settings.focusFilePath)
+    )
+      return -1;
+    this.focusItems = items;
+    this.loadedFocusFilePath = filePath;
+    return loadVersion;
   }
 
   private async saveFocus(): Promise<void> {
-    await saveFocusItems(this.app.vault, this.focusItems);
+    if (this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
+      throw new Error("Focus file changed. Refresh the Focus view before trying again.");
+    }
+    await saveFocusItems(this.app.vault, this.focusItems, this.loadedFocusFilePath);
   }
 
   async onClose() {
@@ -201,7 +221,8 @@ export class FocusView extends RefreshingView {
   protected async performRefresh(): Promise<void> {
     try {
       // Reload focus items from file to pick up changes from other views
-      await this.loadFocus();
+      const loadVersion = await this.loadFocus();
+      if (loadVersion !== this.focusLoadVersion) return;
 
       // Clean up old completed items (before midnight)
       const midnight = this.getMidnightTimestamp();
@@ -258,12 +279,18 @@ export class FocusView extends RefreshingView {
       }
 
       // Update focus if any items were removed or updated
+      if (
+        loadVersion !== this.focusLoadVersion ||
+        this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)
+      )
+        return;
       if (needsSave) {
         this.focusItems = validatedItems;
         await this.saveFocus();
       }
 
       // Re-render the view
+      if (loadVersion !== this.focusLoadVersion) return;
       const container = this.contentEl;
       container.empty();
       container.addClass("flow-gtd-focus-view");

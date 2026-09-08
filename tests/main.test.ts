@@ -1,12 +1,13 @@
 // ABOUTME: Tests for the main plugin class focusing on command registration and view management
 // ABOUTME: Verifies that views are properly focused when already open
-import { App, WorkspaceLeaf, Notice } from "obsidian";
+import { App, WorkspaceLeaf, Notice, TFile } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { INBOX_PROCESSING_VIEW_TYPE } from "../src/inbox-processing-view";
 import { WAITING_FOR_VIEW_TYPE } from "../src/waiting-for-view";
 import { FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { SPHERE_VIEW_TYPE } from "../src/sphere-view";
 import { DEFAULT_SETTINGS } from "../src/types";
+import { saveFocusItems } from "../src/focus-persistence";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock the view modules
@@ -66,6 +67,8 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       isDesktopOnly: false,
     });
 
+    // Keep startup auto-clear from racing with the file operations under test.
+    plugin.loadData = jest.fn().mockResolvedValue({ settings: { focusAutoClearTime: "" } });
     await plugin.onload();
   });
 
@@ -274,6 +277,188 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
   });
 
   describe("loadSettings", () => {
+    beforeEach(() => {
+      (mockApp.workspace.getLeavesOfType as jest.Mock).mockReturnValue([]);
+    });
+
+    it("routes a pending first write to the new location even if no file existed yet", async () => {
+      plugin.settings.focusFilePath = "A.md";
+      await plugin.updateFocusFilePath("B.md");
+      await saveFocusItems(mockApp.vault, [], "A.md");
+      expect(mockApp.vault.create).toHaveBeenCalledWith("B.md", "");
+      expect(mockApp.vault.create).not.toHaveBeenCalledWith("A.md", expect.anything());
+    });
+
+    it("waits for an active focus write before moving the file", async () => {
+      plugin.settings.focusFilePath = "A.md";
+      const source = new TFile("A.md");
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      let finishWrite!: () => void;
+      let startedWrite!: () => void;
+      const started = new Promise<void>((resolve) => {
+        startedWrite = resolve;
+      });
+      mockApp.vault.modify = jest.fn(() => {
+        startedWrite();
+        return new Promise<void>((resolve) => {
+          finishWrite = resolve;
+        });
+      });
+      mockApp.fileManager.renameFile = jest.fn(async (_file, path) => {
+        source.path = path;
+      });
+      const write = saveFocusItems(mockApp.vault, [], "A.md");
+      await started;
+      const move = plugin.updateFocusFilePath("B.md");
+      await new Promise(setImmediate);
+      expect(mockApp.fileManager.renameFile).not.toHaveBeenCalled();
+      finishWrite();
+      await Promise.all([write, move]);
+      expect(source.path).toBe("B.md");
+    });
+
+    it("supports moving back to a previous location without redirect loops", async () => {
+      plugin.settings.focusFilePath = "A.md";
+      const source = new TFile("A.md");
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      mockApp.fileManager.renameFile = jest.fn(async (_file, path) => {
+        source.path = path;
+      });
+      await plugin.updateFocusFilePath("B.md");
+      await plugin.updateFocusFilePath("A.md");
+      await saveFocusItems(mockApp.vault, [], "B.md");
+      expect(mockApp.vault.modify).toHaveBeenCalledWith(source, "");
+      expect(mockApp.vault.create).not.toHaveBeenCalled();
+      expect(source.path).toBe("A.md");
+    });
+
+    it("routes an in-flight operation's old path to the moved file instead of recreating it", async () => {
+      const oldPath = DEFAULT_SETTINGS.focusFilePath;
+      const source = new TFile(oldPath);
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      mockApp.fileManager.renameFile = jest.fn(async (_file, path) => {
+        source.path = path;
+      });
+      await plugin.updateFocusFilePath("Focus.md");
+      await saveFocusItems(mockApp.vault, [], oldPath);
+      expect(mockApp.vault.modify).toHaveBeenCalledWith(source, "");
+      expect(mockApp.vault.create).not.toHaveBeenCalled();
+      expect(source.path).toBe("Focus.md");
+    });
+
+    it("restores the original file and setting if saving the new setting fails", async () => {
+      const source = new TFile(DEFAULT_SETTINGS.focusFilePath);
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      mockApp.fileManager.renameFile = jest.fn().mockResolvedValue(undefined);
+      plugin.saveData = jest.fn().mockRejectedValue(new Error("Settings failed"));
+      await expect(plugin.updateFocusFilePath("Focus.md")).rejects.toThrow("Settings failed");
+      expect(mockApp.fileManager.renameFile.mock.calls).toEqual([
+        [source, "Focus.md"],
+        [source, DEFAULT_SETTINGS.focusFilePath],
+      ]);
+      expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+    });
+
+    it("rejects a folder destination without changing the setting", async () => {
+      mockApp.vault.adapter.stat = jest.fn().mockResolvedValue({ type: "folder" });
+      await expect(plugin.updateFocusFilePath("Folder.md")).rejects.toThrow("points to a folder");
+      expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+    });
+
+    it.each(["../Focus.md", "Folder/../Focus.md", "Focus.txt"])(
+      "rejects invalid path %s",
+      async (path) => {
+        await expect(plugin.updateFocusFilePath(path)).rejects.toThrow(
+          "Markdown file path inside your vault"
+        );
+        expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+      }
+    );
+
+    it("moves the existing focus file before saving its new location", async () => {
+      const source = new TFile(DEFAULT_SETTINGS.focusFilePath);
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      mockApp.fileManager.renameFile = jest.fn().mockResolvedValue(undefined);
+      plugin.saveData = jest.fn().mockResolvedValue(undefined);
+      await plugin.updateFocusFilePath("GTD/Nested/Focus.md");
+      expect(mockApp.vault.createFolder).toHaveBeenCalledWith("GTD");
+      expect(mockApp.vault.createFolder).toHaveBeenCalledWith("GTD/Nested");
+      expect(mockApp.fileManager.renameFile).toHaveBeenCalledWith(source, "GTD/Nested/Focus.md");
+      expect(plugin.settings.focusFilePath).toBe("GTD/Nested/Focus.md");
+    });
+
+    it("keeps the original setting if moving the file fails", async () => {
+      const source = new TFile(DEFAULT_SETTINGS.focusFilePath);
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : null
+      );
+      mockApp.fileManager.renameFile = jest.fn().mockRejectedValue(new Error("Move failed"));
+      await expect(plugin.updateFocusFilePath("Focus.md")).rejects.toThrow("Move failed");
+      expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+    });
+
+    it("asks before using an existing destination and leaves both files untouched on cancellation", async () => {
+      const source = new TFile(DEFAULT_SETTINGS.focusFilePath);
+      const destination = new TFile("Focus.md");
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === source.path ? source : path === destination.path ? destination : null
+      );
+      mockApp.fileManager.renameFile = jest.fn();
+      const confirm = jest.fn().mockResolvedValue(false);
+      expect(await plugin.updateFocusFilePath("Focus.md", confirm)).toBe(false);
+      expect(confirm).toHaveBeenCalledWith("Focus.md");
+      expect(mockApp.fileManager.renameFile).not.toHaveBeenCalled();
+      expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+    });
+
+    it("uses an existing destination only after confirmation without moving the old file", async () => {
+      const destination = new TFile("Focus.md");
+      mockApp.vault.getAbstractFileByPath = jest.fn((path) =>
+        path === destination.path ? destination : null
+      );
+      mockApp.fileManager.renameFile = jest.fn();
+      const confirm = jest.fn().mockResolvedValue(true);
+      expect(await plugin.updateFocusFilePath("Focus.md", confirm)).toBe(true);
+      expect(plugin.settings.focusFilePath).toBe("Focus.md");
+      expect(mockApp.fileManager.renameFile).not.toHaveBeenCalled();
+    });
+
+    it("keeps the original focus location for existing installations", async () => {
+      plugin.loadData = jest.fn().mockResolvedValue({ settings: { somedayFilePath: "Later.md" } });
+      await plugin.loadSettings();
+      expect(plugin.settings.focusFilePath).toBe("flow-focus-data/focus.md");
+      expect(plugin.settings.somedayFilePath).toBe("Later.md");
+    });
+
+    it("saves a custom focus path and reloads open focus and sphere views", async () => {
+      const focus = { view: { onOpen: jest.fn().mockResolvedValue(undefined) } };
+      const sphere = { view: { onOpen: jest.fn().mockResolvedValue(undefined) } };
+      (mockApp.workspace.getLeavesOfType as jest.Mock).mockImplementation((type) =>
+        type === FOCUS_VIEW_TYPE ? [focus] : type === SPHERE_VIEW_TYPE ? [sphere] : []
+      );
+      plugin.saveData = jest.fn().mockResolvedValue(undefined);
+      await plugin.updateFocusFilePath(" GTD/Focus.md ");
+      expect(plugin.settings.focusFilePath).toBe("GTD/Focus.md");
+      expect(plugin.saveData).toHaveBeenCalledWith({
+        settings: expect.objectContaining({ focusFilePath: "GTD/Focus.md" }),
+      });
+      expect(focus.view.onOpen).toHaveBeenCalledTimes(1);
+      expect(sphere.view.onOpen).toHaveBeenCalledTimes(1);
+
+      await plugin.updateFocusFilePath(" ");
+      expect(plugin.settings.focusFilePath).toBe(DEFAULT_SETTINGS.focusFilePath);
+    });
+
     it("should initialise settings to defaults when loadData returns null (new installation)", async () => {
       // Create a fresh plugin instance
       const freshPlugin = new FlowGTDCoachPlugin(mockApp, {

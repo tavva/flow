@@ -778,6 +778,24 @@ describe("SphereView", () => {
   });
 
   describe("focus file change handling", () => {
+    it("updates highlighting for the configured focus file only", async () => {
+      settings.focusFilePath = " GTD/Focus.md ";
+      const view = new SphereView(leaf, "work", settings, mockSaveSettings);
+      view.app = app;
+      await view.onOpen();
+      const highlightSpy = jest.spyOn(view as any, "refreshFocusHighlighting");
+      const changeHandler = (app.metadataCache.on as jest.Mock).mock.calls.find(
+        (call: any[]) => call[0] === "changed"
+      )[1];
+
+      changeHandler(new TFile("flow-focus-data/focus.md"));
+      expect(highlightSpy).not.toHaveBeenCalled();
+      changeHandler(new TFile("GTD/Focus.md"));
+      expect(highlightSpy).toHaveBeenCalledTimes(1);
+      highlightSpy.mockRestore();
+      await view.onClose();
+    });
+
     it("should update CSS classes without full refresh when focus file changes", async () => {
       const view = new SphereView(leaf, "work", settings, mockSaveSettings);
       view.app = app;

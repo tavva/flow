@@ -378,9 +378,10 @@ export class NewProjectModal extends Modal {
       addedAt: Date.now(),
     };
 
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     focusItems.push(focusItem);
-    await saveFocusItems(this.app.vault, focusItems);
+    await saveFocusItems(this.app.vault, focusItems, focusFilePath);
   }
 
   private showError(message: string) {

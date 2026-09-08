@@ -355,12 +355,13 @@ export async function checkAndPromptLegacyMigration(
     legacyItems.length,
     async () => {
       // Migrate
-      const existingFocus = await loadFocusItems(app.vault);
+      const focusFilePath = settings.focusFilePath;
+      const existingFocus = await loadFocusItems(app.vault, focusFilePath);
       const result = await migrateLegacyFocusItems(app, legacyItems, existingFocus, settings);
 
       // Save migrated items
       const newFocus = [...existingFocus, ...result.migrated];
-      await saveFocusItems(app.vault, newFocus);
+      await saveFocusItems(app.vault, newFocus, focusFilePath);
 
       // Refresh focus view to show migrated items
       await refreshFocusView(app);
@@ -377,7 +378,8 @@ export async function checkAndPromptLegacyMigration(
             await removeLegacyTags(app.vault, legacyItems);
 
             // Update focus items to match new line content (without tags)
-            const focusItems = await loadFocusItems(app.vault);
+            const focusFilePath = settings.focusFilePath;
+            const focusItems = await loadFocusItems(app.vault, focusFilePath);
             const updatedItems = focusItems.map((item) => ({
               ...item,
               lineContent: item.lineContent
@@ -389,7 +391,7 @@ export async function checkAndPromptLegacyMigration(
                 .replace(/\s+$/, "")
                 .replace(/\s{2,}/g, " "),
             }));
-            await saveFocusItems(app.vault, updatedItems);
+            await saveFocusItems(app.vault, updatedItems, focusFilePath);
 
             // Refresh focus view to show updated items
             await refreshFocusView(app);

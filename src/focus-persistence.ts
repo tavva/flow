@@ -5,7 +5,11 @@ import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 import { ValidationError } from "./errors";
 
-export const FOCUS_FILE_PATH = "flow-focus-data/focus.md";
+import { resolveFocusFilePath } from "./focus-file-path";
+import { DEFAULT_SETTINGS } from "./types/settings";
+import { withFocusFileLock, resolveMovedFocusFilePath } from "./focus-file-operations";
+
+export const FOCUS_FILE_PATH = DEFAULT_SETTINGS.focusFilePath;
 
 interface LegacyFocusFileFormat {
   version: number;
@@ -73,42 +77,45 @@ function parseJsonlFormat(content: string): FocusItem[] {
 /**
  * Load focus items from the vault file
  */
-export async function loadFocusItems(vault: Vault): Promise<FocusItem[]> {
-  try {
-    let file = vault.getAbstractFileByPath(FOCUS_FILE_PATH);
+export async function loadFocusItems(vault: Vault, filePath?: string): Promise<FocusItem[]> {
+  return withFocusFileLock(vault, async () => {
+    const focusFilePath = resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath));
+    try {
+      let file = vault.getAbstractFileByPath(focusFilePath);
 
-    // If file not found via cache, try reading directly from adapter
-    if (!(file instanceof TFile)) {
-      try {
-        // Check if file exists on disk but not in cache yet
-        const exists = await vault.adapter.exists(FOCUS_FILE_PATH);
-        if (exists) {
-          const content = await vault.adapter.read(FOCUS_FILE_PATH);
-          if (isLegacyFormat(content)) {
-            return parseLegacyFormat(content);
+      // If file not found via cache, try reading directly from adapter
+      if (!(file instanceof TFile)) {
+        try {
+          // Check if file exists on disk but not in cache yet
+          const exists = await vault.adapter.exists(focusFilePath);
+          if (exists) {
+            const content = await vault.adapter.read(focusFilePath);
+            if (isLegacyFormat(content)) {
+              return parseLegacyFormat(content);
+            }
+            return parseJsonlFormat(content);
           }
-          return parseJsonlFormat(content);
+        } catch {
+          // File doesn't exist yet, will return empty array below
         }
-      } catch {
-        // File doesn't exist yet, will return empty array below
+
+        // File doesn't exist at all, return empty array
+        return [];
       }
 
-      // File doesn't exist at all, return empty array
+      const content = await vault.read(file);
+
+      // Handle legacy JSON format for migration
+      if (isLegacyFormat(content)) {
+        return parseLegacyFormat(content);
+      }
+
+      return parseJsonlFormat(content);
+    } catch (error) {
+      console.error("Failed to load focus items from file", error);
       return [];
     }
-
-    const content = await vault.read(file);
-
-    // Handle legacy JSON format for migration
-    if (isLegacyFormat(content)) {
-      return parseLegacyFormat(content);
-    }
-
-    return parseJsonlFormat(content);
-  } catch (error) {
-    console.error("Failed to load focus items from file", error);
-    return [];
-  }
+  });
 }
 
 /**
@@ -122,71 +129,57 @@ function toJsonlFormat(items: FocusItem[]): string {
 /**
  * Save focus items to the vault file
  */
-export async function saveFocusItems(vault: Vault, items: FocusItem[]): Promise<void> {
-  try {
-    // Ensure flow-focus-data directory exists
-    await ensureFocusDataDirectory(vault);
+export async function saveFocusItems(
+  vault: Vault,
+  items: FocusItem[],
+  filePath?: string
+): Promise<void> {
+  return withFocusFileLock(vault, async () => {
+    const focusFilePath = resolveMovedFocusFilePath(vault, resolveFocusFilePath(filePath));
+    try {
+      await ensureFocusDataDirectory(vault, focusFilePath);
 
-    const content = toJsonlFormat(items);
+      const content = toJsonlFormat(items);
 
-    // Check if file exists via cache first
-    const file = vault.getAbstractFileByPath(FOCUS_FILE_PATH);
+      // Check if file exists via cache first
+      const file = vault.getAbstractFileByPath(focusFilePath);
 
-    if (file instanceof TFile) {
-      await vault.modify(file, content);
-    } else {
-      // File not in cache, check if it exists on disk
-      const existsOnDisk = await vault.adapter.exists(FOCUS_FILE_PATH);
-
-      if (existsOnDisk) {
-        await vault.adapter.write(FOCUS_FILE_PATH, content);
+      if (file instanceof TFile) {
+        await vault.modify(file, content);
       } else {
-        await vault.create(FOCUS_FILE_PATH, content);
+        // File not in cache, check if it exists on disk
+        const existsOnDisk = await vault.adapter.exists(focusFilePath);
+
+        if (existsOnDisk) {
+          await vault.adapter.write(focusFilePath, content);
+        } else {
+          await vault.create(focusFilePath, content);
+        }
       }
+    } catch (error) {
+      console.error("Failed to save focus items to file", error);
+      throw error;
     }
-  } catch (error) {
-    console.error("Failed to save focus items to file", error);
-    throw error;
-  }
+  });
 }
 
-/**
- * Ensure the flow-focus-data directory exists
- */
-async function ensureFocusDataDirectory(vault: Vault): Promise<void> {
-  // Check if folder exists on disk first (adapter is more reliable than cache)
-  try {
-    const exists = await vault.adapter.exists("flow-focus-data");
-    if (exists) {
-      const stat = await vault.adapter.stat("flow-focus-data");
-      if (stat?.type === "folder") {
-        return;
-      }
+/** Create each parent folder, checking the adapter when the cache is behind. */
+export async function ensureFocusDataDirectory(vault: Vault, filePath: string): Promise<void> {
+  const parts = filePath.split("/").slice(0, -1);
+  for (let i = 1; i <= parts.length; i++) {
+    const folderPath = parts.slice(0, i).join("/");
+    const stat = await vault.adapter.stat(folderPath);
+    if (stat?.type === "folder") continue;
+    const cached = vault.getAbstractFileByPath(folderPath);
+    if (stat || (cached && !(cached instanceof TFolder))) {
+      throw new ValidationError(`${folderPath} exists but is not a folder`);
     }
-  } catch {
-    // Ignore errors, will try cache or create below
-  }
-
-  // Try to get from cache
-  const focusDataDir = vault.getAbstractFileByPath("flow-focus-data");
-
-  if (focusDataDir instanceof TFolder) {
-    return;
-  }
-
-  if (focusDataDir) {
-    throw new ValidationError("flow-focus-data exists but is not a folder");
-  }
-
-  // Create the folder
-  try {
-    await vault.createFolder("flow-focus-data");
-  } catch (error) {
-    // Might have been created in race condition, check if it exists now
-    const exists = await vault.adapter.exists("flow-focus-data");
-    if (exists) {
-      return;
+    if (cached instanceof TFolder) continue;
+    try {
+      await vault.createFolder(folderPath);
+    } catch (error) {
+      // Another device or operation may have created the folder in the meantime.
+      if ((await vault.adapter.stat(folderPath))?.type !== "folder") throw error;
     }
-    throw error;
   }
 }

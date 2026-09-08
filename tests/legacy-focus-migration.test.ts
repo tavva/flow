@@ -773,7 +773,8 @@ describe("checkAndPromptLegacyMigration", () => {
     expect(saveSettings).toHaveBeenCalled();
   });
 
-  it("migrates items and saves to focus when user confirms", async () => {
+  it("migrates items and saves to the configured focus file when user confirms", async () => {
+    settings.focusFilePath = "GTD/Focus.md";
     const mockFile = createMockTFile("Projects/Test.md");
     mockVault.getMarkdownFiles.mockReturnValue([mockFile]);
     mockVault.read.mockResolvedValue("- [ ] Task #flow-planned");
@@ -788,7 +789,7 @@ describe("checkAndPromptLegacyMigration", () => {
     await capturedMigrationModal!.onMigrate();
 
     // Should have loaded existing items
-    expect(focusPersistence.loadFocusItems).toHaveBeenCalledWith(mockVault);
+    expect(focusPersistence.loadFocusItems).toHaveBeenCalledWith(mockVault, settings.focusFilePath);
 
     // Should have saved migrated items
     expect(focusPersistence.saveFocusItems).toHaveBeenCalledWith(
@@ -799,7 +800,8 @@ describe("checkAndPromptLegacyMigration", () => {
           text: "Task #flow-planned",
           sphere: "personal",
         }),
-      ])
+      ]),
+      settings.focusFilePath
     );
   });
 
@@ -921,7 +923,8 @@ describe("checkAndPromptLegacyMigration", () => {
           file: "Projects/Test.md",
           text: "New task #flow-planned",
         }),
-      ])
+      ]),
+      settings.focusFilePath
     );
   });
 });
