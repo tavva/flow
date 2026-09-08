@@ -254,7 +254,8 @@ describe("NewProjectModal", () => {
             text: "First action",
             sphere: "work",
           }),
-        ])
+        ]),
+        DEFAULT_SETTINGS.focusFilePath
       );
     });
 

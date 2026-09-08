@@ -13,6 +13,7 @@ export interface PluginSettings {
   processedInboxFolderPath: string;
   nextActionsFilePath: string;
   somedayFilePath: string;
+  focusFilePath: string;
   projectsFolderPath: string;
   projectTemplateFilePath: string;
   personsFolderPath: string;
@@ -45,6 +46,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   processedInboxFolderPath: "Processed Inbox Folder Notes",
   nextActionsFilePath: "Next actions.md",
   somedayFilePath: "Someday.md",
+  focusFilePath: "flow-focus-data/focus.md",
   projectsFolderPath: "Projects",
   projectTemplateFilePath: "Templates/Project.md",
   personsFolderPath: "People",

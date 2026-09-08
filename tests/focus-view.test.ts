@@ -15,7 +15,10 @@ jest.mock("../src/focus-persistence", () => ({
   }),
 }));
 
-import { saveFocusItems as mockSaveFocusItems } from "../src/focus-persistence";
+import {
+  loadFocusItems as mockLoadFocusItems,
+  saveFocusItems as mockSaveFocusItems,
+} from "../src/focus-persistence";
 
 describe("FocusView", () => {
   let view: FocusView;
@@ -72,6 +75,56 @@ describe("FocusView", () => {
 
   it("should have correct view type", () => {
     expect(view.getViewType()).toBe(FOCUS_VIEW_TYPE);
+  });
+
+  it("loads and saves the configured focus file after the setting changes", async () => {
+    mockSettings.focusFilePath = "GTD/Focus.md";
+    await (view as any).loadFocus();
+    expect(mockLoadFocusItems).toHaveBeenLastCalledWith(mockApp.vault, "GTD/Focus.md");
+    await (view as any).saveFocus();
+    expect(mockSaveFocusItems).toHaveBeenLastCalledWith(mockApp.vault, [], "GTD/Focus.md");
+
+    mockSettings.focusFilePath = "Other/Focus.md";
+    await (view as any).loadFocus();
+    expect(mockLoadFocusItems).toHaveBeenLastCalledWith(mockApp.vault, "Other/Focus.md");
+  });
+
+  it("does not save stale items into a newly selected file", async () => {
+    mockSettings.focusFilePath = "A.md";
+    await (view as any).loadFocus();
+    (mockSaveFocusItems as jest.Mock).mockClear();
+    mockSettings.focusFilePath = "B.md";
+    await expect((view as any).saveFocus()).rejects.toThrow("Focus file changed");
+    expect(mockSaveFocusItems).not.toHaveBeenCalled();
+  });
+
+  it("discards a refresh of the old file when a new file loads during validation", async () => {
+    mockSettings.focusFilePath = "A.md";
+    mockFocusItems = [{ file: "Task A.md", text: "Task A", lineNumber: 1 } as FocusItem];
+    let finishValidation!: (value: { found: boolean }) => void;
+    let startedValidation!: () => void;
+    const started = new Promise<void>((resolve) => {
+      startedValidation = resolve;
+    });
+    (view as any).validator = {
+      validateItem: jest.fn(() => {
+        startedValidation();
+        return new Promise((resolve) => {
+          finishValidation = resolve;
+        });
+      }),
+    };
+    const refresh = (view as any).performRefresh();
+    await started;
+    mockSettings.focusFilePath = "B.md";
+    const itemsB = [{ file: "Task B.md", text: "Task B", lineNumber: 1 } as FocusItem];
+    mockFocusItems = itemsB;
+    await (view as any).loadFocus();
+    (mockSaveFocusItems as jest.Mock).mockClear();
+    finishValidation({ found: false });
+    await refresh;
+    expect(mockSaveFocusItems).not.toHaveBeenCalled();
+    expect((view as any).focusItems).toEqual(itemsB);
   });
 
   it("should have correct display text", () => {

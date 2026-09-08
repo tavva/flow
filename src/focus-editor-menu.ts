@@ -143,15 +143,26 @@ async function toggleFocusFromMenu(
   settings: PluginSettings,
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
-  const focusItems = await loadFocusItems(app.vault);
+  const focusFilePath = settings.focusFilePath;
+  const focusItems = await loadFocusItems(app.vault, focusFilePath);
   const onFocus = isActionOnFocus(filePath, lineNumber, focusItems);
 
   if (onFocus) {
-    await removeFromFocus(app, filePath, lineNumber, focusItems, refreshFocusView);
+    await removeFromFocus(app, filePath, lineNumber, focusItems, focusFilePath, refreshFocusView);
     return;
   }
 
-  await addToFocus(app, filePath, lineNumber, line, sphere, settings, focusItems, refreshFocusView);
+  await addToFocus(
+    app,
+    filePath,
+    lineNumber,
+    line,
+    sphere,
+    settings,
+    focusItems,
+    focusFilePath,
+    refreshFocusView
+  );
 }
 
 /**
@@ -165,6 +176,7 @@ async function addToFocus(
   sphere: string,
   settings: PluginSettings,
   focusItems: FocusItem[],
+  focusFilePath: string,
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
   const actionText = extractActionText(lineContent);
@@ -186,7 +198,7 @@ async function addToFocus(
   };
 
   focusItems.push(item);
-  await saveFocusItems(app.vault, focusItems);
+  await saveFocusItems(app.vault, focusItems, focusFilePath);
   await activateFocusView(app);
   await refreshFocusView();
 }
@@ -199,12 +211,13 @@ async function removeFromFocus(
   filePath: string,
   lineNumber: number,
   focusItems: FocusItem[],
+  focusFilePath: string,
   refreshFocusView: () => Promise<void>
 ): Promise<void> {
   const updatedFocus = focusItems.filter(
     (item) => !(item.file === filePath && item.lineNumber === lineNumber)
   );
-  await saveFocusItems(app.vault, updatedFocus);
+  await saveFocusItems(app.vault, updatedFocus, focusFilePath);
   await activateFocusView(app);
   await refreshFocusView();
 }

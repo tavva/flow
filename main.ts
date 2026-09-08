@@ -1,3 +1,6 @@
+// ABOUTME: Registers Flow commands, views, settings, and lifecycle services.
+// ABOUTME: Coordinates inbox processing, focus management, and project tools.
+
 import { Plugin, Notice, MarkdownView } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
@@ -24,6 +27,9 @@ import {
   TimerHandle,
 } from "./src/obsidian-platform";
 import { runAsync } from "./src/async-utils";
+import { resolveFocusFilePath } from "./src/focus-file-path";
+import { moveFocusFile } from "./src/focus-file-move";
+import { confirmExistingFocusFile } from "./src/focus-file-confirm-modal";
 
 type InboxCommandConfig = {
   id: string;
@@ -39,6 +45,7 @@ function hasOnOpen(view: unknown): view is RefreshableView {
 }
 
 export default class FlowGTDCoachPlugin extends Plugin {
+  private changingFocusFile = false;
   settings: PluginSettings;
   private autoClearInterval: TimerHandle | null = null;
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
@@ -279,6 +286,55 @@ export default class FlowGTDCoachPlugin extends Plugin {
     await this.saveData({
       settings: this.settings,
     });
+  }
+
+  async updateFocusFilePath(
+    value: string,
+    confirmExisting = (path: string) => confirmExistingFocusFile(this.app, path)
+  ): Promise<boolean> {
+    const filePath = resolveFocusFilePath(value);
+    if (filePath === resolveFocusFilePath(this.settings.focusFilePath)) return true;
+    if (this.changingFocusFile) return false;
+    if (
+      !filePath.toLowerCase().endsWith(".md") ||
+      filePath.split("/").some((part) => !part || part === "." || part === "..")
+    ) {
+      throw new Error("Choose a Markdown file path inside your vault.");
+    }
+    this.changingFocusFile = true;
+    try {
+      const previousPath = this.settings.focusFilePath;
+      const changed = await moveFocusFile(
+        this.app,
+        resolveFocusFilePath(previousPath),
+        filePath,
+        confirmExisting,
+        async () => {
+          this.settings.focusFilePath = filePath;
+          try {
+            await this.saveSettings();
+          } catch (error) {
+            this.settings.focusFilePath = previousPath;
+            throw error;
+          }
+        }
+      );
+      if (!changed) return false;
+      await this.refreshViewsAfterFocusFileChange();
+      return true;
+    } finally {
+      this.changingFocusFile = false;
+    }
+  }
+
+  private async refreshViewsAfterFocusFileChange(): Promise<void> {
+    for (const type of [FOCUS_VIEW_TYPE, SPHERE_VIEW_TYPE]) {
+      for (const leaf of this.app.workspace.getLeavesOfType(type)) {
+        if (hasOnOpen(leaf.view)) {
+          await leaf.view.onOpen();
+        }
+      }
+    }
   }
 
   private registerInboxCommand(config: InboxCommandConfig) {
@@ -543,7 +599,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     // Load focus items
-    const focusItems = await loadFocusItems(this.app.vault);
+    const focusFilePath = this.settings.focusFilePath;
+    const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
 
     // Archive the tasks if archive file is configured
     let archiveSucceeded = false;
@@ -563,7 +620,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     }
 
     // Clear the focus
-    await saveFocusItems(this.app.vault, []);
+    await saveFocusItems(this.app.vault, [], focusFilePath);
     this.settings.lastFocusClearTimestamp = Date.now();
     this.settings.lastFocusArchiveSucceeded = archiveSucceeded;
     this.settings.focusClearedNotificationDismissed = false; // Reset so user sees notification

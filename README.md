@@ -63,6 +63,12 @@ _Screenshot from the current inbox processing flow._
 
 **Do** — Work from your focus. When done, mark complete. When blocked, convert to waiting-for.
 
+## Focus File Location
+
+Choose **Settings → Flow → Output Files & Folders → Focus File** to set the vault-relative path for your focus list. The default is `flow-focus-data/focus.md`; leaving the setting blank uses this default. Click **Apply** to move your focus file to the new location.
+
+Flow creates missing folders and moves your existing focus file automatically. If the destination already exists, Flow asks whether to use that file instead; neither file is overwritten or merged. Cancelling or a failed move keeps your current location.
+
 ## Project Structure
 
 Flow projects use YAML frontmatter:

@@ -1,4 +1,7 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+// ABOUTME: Presents Flow configuration in the Obsidian settings dialog.
+// ABOUTME: Persists project, inbox, output file, and focus preferences.
+
+import { App, Notice, PluginSettingTab, Setting, TextComponent } from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS } from "./types";
 import { FolderPathSuggest, FilePathSuggest } from "./suggesters";
@@ -167,6 +170,40 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           });
         new FilePathSuggest(this.app, text.inputEl, ["md"]);
       });
+
+    // Focus File
+    let focusPathInput: TextComponent;
+    new Setting(containerEl)
+      .setName("Focus File")
+      .setDesc(
+        "File for your focus list, relative to the vault. Apply moves your existing file to the new location. Leave blank to use the default."
+      )
+      .addText((text) => {
+        focusPathInput = text;
+        text
+          .setPlaceholder(DEFAULT_SETTINGS.focusFilePath)
+          .setValue(this.plugin.settings.focusFilePath);
+        new FilePathSuggest(this.app, text.inputEl, ["md"]);
+      })
+      .addButton((button) =>
+        button.setButtonText("Apply").onClick(async () => {
+          button.setDisabled(true);
+          focusPathInput.setDisabled(true);
+          try {
+            if (await this.plugin.updateFocusFilePath(focusPathInput.getValue())) {
+              focusPathInput.setValue(this.plugin.settings.focusFilePath);
+              new Notice("Focus file location updated.");
+            }
+          } catch (error) {
+            new Notice(
+              error instanceof Error ? error.message : "Could not change the focus file location."
+            );
+          } finally {
+            button.setDisabled(false);
+            focusPathInput.setDisabled(false);
+          }
+        })
+      );
 
     // Projects Folder
     new Setting(containerEl)

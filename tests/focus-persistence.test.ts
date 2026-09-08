@@ -27,6 +27,30 @@ describe("focus-persistence JSONL format", () => {
   });
 
   describe("loadFocusItems", () => {
+    it("reads the configured file from disk when it is not cached", async () => {
+      mockVault.getAbstractFileByPath.mockReturnValue(null);
+      (mockVault.adapter.exists as jest.Mock).mockResolvedValue(true);
+      (mockVault.adapter.read as jest.Mock).mockResolvedValue('{"text":"Custom task"}');
+      const items = await loadFocusItems(mockVault, "GTD/Focus.md");
+      expect(items[0].text).toBe("Custom task");
+      expect(mockVault.adapter.read).toHaveBeenCalledWith("GTD/Focus.md");
+    });
+
+    it("reads a configured cached file", async () => {
+      const file = new TFile("GTD/Focus.md");
+      mockVault.getAbstractFileByPath.mockImplementation((path) =>
+        path === file.path ? file : null
+      );
+      mockVault.read.mockResolvedValue('{"text":"Custom task"}');
+      expect(await loadFocusItems(mockVault, file.path)).toEqual([
+        { text: "Custom task", contexts: [] },
+      ]);
+    });
+
+    it("uses the default path for a blank setting", async () => {
+      await loadFocusItems(mockVault, "  ");
+      expect(mockVault.getAbstractFileByPath).toHaveBeenCalledWith(FOCUS_FILE_PATH);
+    });
     it("loads items from JSONL format (one JSON object per line)", async () => {
       const item1: FocusItem = {
         file: "Projects/Test.md",
@@ -228,6 +252,35 @@ describe("focus-persistence JSONL format", () => {
   });
 
   describe("saveFocusItems", () => {
+    it("creates nested parent folders and writes only the configured file", async () => {
+      mockVault.getAbstractFileByPath.mockReturnValue(null);
+      (mockVault.adapter.exists as jest.Mock).mockResolvedValue(false);
+      await saveFocusItems(mockVault, [], "GTD/Data/Focus.md");
+      expect(mockVault.createFolder.mock.calls).toEqual([["GTD"], ["GTD/Data"]]);
+      expect(mockVault.create).toHaveBeenCalledWith("GTD/Data/Focus.md", "");
+    });
+
+    it("supports a file in the vault root without creating a folder", async () => {
+      await saveFocusItems(mockVault, [], "Focus.md");
+      expect(mockVault.createFolder).not.toHaveBeenCalled();
+      expect(mockVault.create).toHaveBeenCalledWith("Focus.md", "");
+    });
+
+    it("updates a configured file that has not entered the cache", async () => {
+      mockVault.getAbstractFileByPath.mockReturnValue(null);
+      (mockVault.adapter.exists as jest.Mock).mockResolvedValue(true);
+      await saveFocusItems(mockVault, [], "Focus.md");
+      expect(mockVault.adapter.write).toHaveBeenCalledWith("Focus.md", "");
+      expect(mockVault.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a file occupying a parent folder path", async () => {
+      mockVault.getAbstractFileByPath.mockReturnValue(new TFile("GTD"));
+      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      await expect(saveFocusItems(mockVault, [], "GTD/Focus.md")).rejects.toThrow("not a folder");
+      expect(mockVault.modify).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
     it("saves items in JSONL format (one JSON object per line)", async () => {
       const items: FocusItem[] = [
         {
