@@ -227,7 +227,7 @@ export class NewProjectModal extends Modal {
         : this.existingProjects;
 
       if (filtered.length === 0) {
-        listContainer.createEl("div", {
+        listContainer.createDiv({
           text: "No projects found",
           cls: "flow-gtd-parent-project-empty",
         });
@@ -239,7 +239,7 @@ export class NewProjectModal extends Modal {
       const sorted = [...filtered].sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
 
       sorted.forEach((project) => {
-        const item = listContainer.createEl("div", {
+        const item = listContainer.createDiv({
           text: project.title,
           cls: "flow-gtd-parent-project-item",
         });

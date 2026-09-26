@@ -220,6 +220,7 @@ describe("SphereView filtering", () => {
                 if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
                   const searchContainer = createMockElement();
                   searchContainer.createEl = header.createEl;
+                  searchContainer.createSpan = (spanOpts: any) => header.createEl("span", spanOpts);
                   return searchContainer;
                 }
                 return createMockElement();
@@ -280,6 +281,7 @@ describe("SphereView filtering", () => {
                 if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
                   const searchContainer = createMockElement();
                   searchContainer.createEl = header.createEl;
+                  searchContainer.createSpan = (spanOpts: any) => header.createEl("span", spanOpts);
                   return searchContainer;
                 }
                 return createMockElement();
@@ -338,6 +340,7 @@ describe("SphereView filtering", () => {
                 if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
                   const searchContainer = createMockElement();
                   searchContainer.createEl = header.createEl;
+                  searchContainer.createSpan = (spanOpts: any) => header.createEl("span", spanOpts);
                   return searchContainer;
                 }
                 return createMockElement();
@@ -407,6 +410,7 @@ describe("SphereView filtering", () => {
                 if (containerOpts?.cls === "flow-gtd-sphere-search-container") {
                   const searchContainer = createMockElement();
                   searchContainer.createEl = header.createEl;
+                  searchContainer.createSpan = (spanOpts: any) => header.createEl("span", spanOpts);
                   return searchContainer;
                 }
                 return createMockElement();

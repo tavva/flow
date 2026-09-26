@@ -1871,6 +1871,7 @@ describe("FocusView", () => {
         }
         return document.createElement(tag);
       });
+      (mockBox as any).createDiv = (opts?: any) => (mockBox as any).createEl("div", opts);
 
       (mockList as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
         const link = document.createElement("a");
@@ -1907,6 +1908,7 @@ describe("FocusView", () => {
 
       (container as any).createDiv = jest.fn().mockReturnValue(mockBox);
       (mockBox as any).createEl = jest.fn().mockReturnValue(mockList);
+      (mockBox as any).createDiv = jest.fn().mockReturnValue(mockList);
       (mockList as any).createEl = jest.fn().mockImplementation((tag: string, opts?: any) => {
         const link = document.createElement("a");
         link.textContent = opts?.text || "";

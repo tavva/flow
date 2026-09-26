@@ -881,7 +881,7 @@ export class FocusView extends RefreshingView {
   private renderLoadingState(container: HTMLElement) {
     const loadingContainer = container.createDiv("flow-gtd-focus-loading");
 
-    const waveIcon = loadingContainer.createEl("div", { cls: "flow-gtd-loading-icon" });
+    const waveIcon = loadingContainer.createDiv({ cls: "flow-gtd-loading-icon" });
     setIcon(waveIcon, "waves");
   }
 
@@ -899,12 +899,12 @@ export class FocusView extends RefreshingView {
 
     const box = container.createDiv({ cls: "flow-gtd-focus-current-projects" });
 
-    box.createEl("div", {
+    box.createDiv({
       text: "Current",
       cls: "flow-gtd-focus-current-projects-header",
     });
 
-    const list = box.createEl("div", { cls: "flow-gtd-focus-current-projects-list" });
+    const list = box.createDiv({ cls: "flow-gtd-focus-current-projects-list" });
 
     for (const project of currentProjects) {
       const projectLink = list.createEl("a", {

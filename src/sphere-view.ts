@@ -120,10 +120,10 @@ export class SphereView extends ItemView {
 
     const loadingContainer = container.createDiv("flow-gtd-loading-state");
 
-    const waveIcon = loadingContainer.createEl("div", { cls: "flow-gtd-loading-icon" });
+    const waveIcon = loadingContainer.createDiv({ cls: "flow-gtd-loading-icon" });
     setIcon(waveIcon, "waves");
 
-    const animatedSvg = loadingContainer.createEl("div", { cls: "flow-gtd-loading-dots" });
+    const animatedSvg = loadingContainer.createDiv({ cls: "flow-gtd-loading-dots" });
     animatedSvg.appendChild(createLoadingDotsSpinner(animatedSvg));
   }
 
@@ -351,7 +351,7 @@ export class SphereView extends ItemView {
     searchInput.value = this.searchQuery;
 
     // Clear button
-    const clearButton = searchContainer.createEl("span", {
+    const clearButton = searchContainer.createSpan({
       cls: "flow-gtd-sphere-search-clear",
       text: "✕",
     });

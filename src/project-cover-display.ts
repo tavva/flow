@@ -3,7 +3,6 @@
 
 import { App, MarkdownView, TFile } from "obsidian";
 import { PluginSettings } from "./types";
-import { createElementForOwner } from "./obsidian-platform";
 
 const COVER_IMAGE_CLASS = "flow-project-cover-image-float";
 const COVER_IMAGE_CONTAINER_CLASS = "flow-project-cover-container";
@@ -106,19 +105,13 @@ export class ProjectCoverDisplay {
 
     if (!coverContainer) {
       // Create new cover image container
-      coverContainer = createElementForOwner(contentEl, "div");
-      coverContainer.classList.add(COVER_IMAGE_CONTAINER_CLASS);
-
-      const img = createElementForOwner(contentEl, "img");
-      img.classList.add(COVER_IMAGE_CLASS);
-      img.src = imageUrl;
-      img.alt = "Project cover image";
-
-      coverContainer.appendChild(img);
-
       // Insert at the beginning of the scrolling content area
       // The CSS float: right will handle positioning
-      contentEl.insertBefore(coverContainer, contentEl.firstChild);
+      coverContainer = contentEl.createDiv({ cls: COVER_IMAGE_CONTAINER_CLASS, prepend: true });
+      coverContainer.createEl("img", {
+        cls: COVER_IMAGE_CLASS,
+        attr: { src: imageUrl, alt: "Project cover image" },
+      });
     } else {
       // Update existing image
       const img = coverContainer.querySelector(`.${COVER_IMAGE_CLASS}`) as HTMLImageElement;

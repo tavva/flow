@@ -7,7 +7,6 @@ import { join } from "path";
 import {
   clearActiveInterval,
   clearActiveTimeout,
-  createElementForOwner,
   createSvgElementForOwner,
   getActiveDocument,
   getActiveWindow,
@@ -57,14 +56,12 @@ describe("obsidian-platform", () => {
     expect(getActiveWindow()).toBe(window);
   });
 
-  it("creates HTML and SVG elements in the owner document", () => {
+  it("creates SVG elements in the owner document", () => {
     const { ownerDocument } = createPopoutDocument();
     const owner = ownerDocument.createElement("section");
 
-    const div = createElementForOwner(owner, "div");
     const svg = createSvgElementForOwner(owner, "svg");
 
-    expect(div.ownerDocument).toBe(ownerDocument);
     expect(svg.ownerDocument).toBe(ownerDocument);
     expect(svg.namespaceURI).toBe("http://www.w3.org/2000/svg");
   });

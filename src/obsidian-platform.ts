@@ -76,13 +76,6 @@ export function getWindowForOwner(owner?: Node | null): Window {
   return getDocumentForOwner(owner).defaultView ?? getActiveWindow();
 }
 
-export function createElementForOwner<K extends keyof HTMLElementTagNameMap>(
-  owner: Node | null | undefined,
-  tagName: K
-): HTMLElementTagNameMap[K] {
-  return getDocumentForOwner(owner).createElement(tagName);
-}
-
 export function createSvgElementForOwner<K extends keyof SVGElementTagNameMap>(
   owner: Node | null | undefined,
   tagName: K

@@ -39,7 +39,7 @@ export function renderInboxView(
   if (isLoading) {
     const loadingContainer = contentEl.createDiv("flow-inbox-redesign flow-inbox-loading-state");
 
-    const loadingText = loadingContainer.createEl("div", { cls: "flow-inbox-loading-text" });
+    const loadingText = loadingContainer.createDiv({ cls: "flow-inbox-loading-text" });
     loadingText.setText("Loading inbox...");
     return;
   }
@@ -48,7 +48,7 @@ export function renderInboxView(
   const emptyStateContainer = contentEl.createDiv("flow-inbox-redesign");
   const emptyState = emptyStateContainer.createDiv("flow-inbox-empty-state");
 
-  const emptyIcon = emptyState.createEl("div", { cls: "flow-inbox-empty-icon" });
+  const emptyIcon = emptyState.createDiv({ cls: "flow-inbox-empty-icon" });
   emptyIcon.setText("✨");
 
   emptyState.createEl("h3", {
