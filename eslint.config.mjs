@@ -17,7 +17,6 @@ export default defineConfig([
       "tests/**",
       "esbuild.config.mjs",
       "jest.config.cjs",
-      "deepeval.config.ts",
     ],
   },
   ...obsidianmd.configs.recommended,
