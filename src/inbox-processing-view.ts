@@ -51,7 +51,7 @@ export class InboxProcessingView extends ItemView {
   }
 
   getDisplayText(): string {
-    return "Flow Inbox Processing";
+    return "Flow inbox processing";
   }
 
   getIcon(): string {

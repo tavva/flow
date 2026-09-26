@@ -55,7 +55,7 @@ describe("WaitingForView", () => {
   });
 
   test("should return display text", () => {
-    expect(view.getDisplayText()).toBe("Waiting For");
+    expect(view.getDisplayText()).toBe("Waiting for");
   });
 
   test("should return icon", () => {

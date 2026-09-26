@@ -37,7 +37,7 @@ describe("InboxProcessingView", () => {
 
   test("returns correct display text", () => {
     const view = new InboxProcessingView(mockLeaf, testSettings, mockSaveSettings);
-    expect(view.getDisplayText()).toBe("Flow Inbox Processing");
+    expect(view.getDisplayText()).toBe("Flow inbox processing");
   });
 
   test("returns correct icon", () => {

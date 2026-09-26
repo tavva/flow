@@ -5,6 +5,7 @@ import {
   App,
   Notice,
   PluginSettingTab,
+  requireApiVersion,
   Setting,
   SettingDefinitionItem,
   TextComponent,
@@ -33,9 +34,8 @@ export interface FlowSettingGroup {
 
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
-  // Rows drawn by display() that have a visibility predicate; null when Obsidian
-  // renders the definitions itself.
-  private displayedConditionalRows: { row: FlowSettingRow; settingEl: HTMLElement }[] | null = null;
+  // Rows drawn by display() that have a visibility predicate
+  private displayedConditionalRows: { row: FlowSettingRow; settingEl: HTMLElement }[] = [];
 
   constructor(app: App, plugin: FlowGTDCoachPlugin) {
     super(app, plugin);
@@ -87,24 +87,25 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Default Priority",
             desc: "Default priority level for new projects (1-5, where 1 is highest)",
-            render: (setting) =>
-              setting.addSlider((slider) =>
-                slider
-                  .setLimits(1, 5, 1)
-                  .setValue(this.plugin.settings.defaultPriority)
-                  .setDynamicTooltip()
-                  .onChange((value) => {
-                    this.plugin.settings.defaultPriority = value;
-                    this.saveSettingsAfterChange();
-                  })
-              ),
+            render: (setting) => {
+              setting.addDropdown((dropdown) => {
+                for (const value of ["1", "2", "3", "4", "5"]) {
+                  dropdown.addOption(value, value);
+                }
+                dropdown.setValue(String(this.plugin.settings.defaultPriority));
+                dropdown.onChange((value) => {
+                  this.plugin.settings.defaultPriority = parseInt(value, 10);
+                  this.saveSettingsAfterChange();
+                });
+              });
+            },
           },
 
           // Default Status
           {
             name: "Default Status",
             desc: "Default status for new projects",
-            render: (setting) =>
+            render: (setting) => {
               setting.addDropdown((dropdown) =>
                 dropdown
                   .addOptions({
@@ -119,32 +120,35 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.plugin.settings.defaultStatus = value;
                     this.saveSettingsAfterChange();
                   })
-              ),
+              );
+            },
           },
 
           // Auto-create cover image
           {
             name: "Auto-create cover image",
             desc: "Automatically generate a cover image when creating new projects during inbox processing",
-            render: (setting) =>
+            render: (setting) => {
               setting.addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange((value) => {
                   this.plugin.settings.autoCreateCoverImage = value;
                   this.saveSettingsAfterChange();
                 })
-              ),
+              );
+            },
           },
 
           {
             name: "Display cover images on project notes",
             desc: "Show cover images on project notes",
-            render: (setting) =>
+            render: (setting) => {
               setting.addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.displayCoverImages).onChange((value) => {
                   this.plugin.settings.displayCoverImages = value;
                   this.saveSettingsAfterChange();
                 })
-              ),
+              );
+            },
           },
         ],
       },
@@ -160,51 +164,54 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Line at a time",
             desc: "Flow processes all lines in every note in this folder.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
-                  .setPlaceholder("Flow Inbox Files")
+                  .setPlaceholder(DEFAULT_SETTINGS.inboxFilesFolderPath)
                   .setValue(this.plugin.settings.inboxFilesFolderPath)
                   .onChange((value) => {
                     this.plugin.settings.inboxFilesFolderPath = value;
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
 
           // Note-at-a-time inbox
           {
             name: "Note at a time",
             desc: "Flow processes entire notes one by one in this folder.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
-                  .setPlaceholder("Flow Inbox Folder")
+                  .setPlaceholder(DEFAULT_SETTINGS.inboxFolderPath)
                   .setValue(this.plugin.settings.inboxFolderPath)
                   .onChange((value) => {
                     this.plugin.settings.inboxFolderPath = value;
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
 
           // Processed inbox folder
           {
             name: "Processed inbox folder",
             desc: "Processed notes from the inbox folder are archived here instead of being deleted.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
-                  .setPlaceholder("Processed Inbox Folder Notes")
+                  .setPlaceholder(DEFAULT_SETTINGS.processedInboxFolderPath)
                   .setValue(this.plugin.settings.processedInboxFolderPath)
                   .onChange((value) => {
                     this.plugin.settings.processedInboxFolderPath = value;
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
         ],
       },
@@ -220,7 +227,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Next Actions File",
             desc: "File for standalone next actions that aren't part of a project.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Next actions.md")
@@ -230,14 +237,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FilePathSuggest(this.app, text.inputEl, ["md"]);
-              }),
+              });
+            },
           },
 
           // Someday File
           {
             name: "Someday/Maybe File",
             desc: "File for someday/maybe items (things you might do in the future).",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Someday.md")
@@ -247,7 +255,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FilePathSuggest(this.app, text.inputEl, ["md"]);
-              }),
+              });
+            },
           },
 
           // Focus File
@@ -292,7 +301,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Projects Folder",
             desc: "Folder where new project files will be created.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Projects")
@@ -302,14 +311,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
 
           // Project Template File
           {
             name: "Project Template File",
             desc: "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables. Templater syntax is also supported if Templater is installed. See docs/project-templates.md for details.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Templates/Project.md")
@@ -319,14 +329,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FilePathSuggest(this.app, text.inputEl, ["md"]);
-              }),
+              });
+            },
           },
 
           // People Folder
           {
             name: "People Folder",
             desc: "Folder where new person notes will be created.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("People")
@@ -336,14 +347,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
 
           // Person Template File
           {
             name: "Person Template File",
             desc: "Template file used when creating new person notes. Supports {{date}}, {{time}}, and {{name}} variables.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Templates/Person.md")
@@ -353,14 +365,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FilePathSuggest(this.app, text.inputEl, ["md"]);
-              }),
+              });
+            },
           },
 
           // Default Inbox File
           {
             name: "Default Inbox File",
             desc: "Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Inbox.md")
@@ -375,14 +388,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                   ["md"],
                   () => this.plugin.settings.inboxFilesFolderPath
                 );
-              }),
+              });
+            },
           },
 
           // Cover Images Folder
           {
             name: "Cover Images Folder",
             desc: "Folder where generated project cover images will be saved",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Assets/flow-project-cover-images")
@@ -392,7 +406,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FolderPathSuggest(this.app, text.inputEl);
-              }),
+              });
+            },
           },
         ],
       },
@@ -409,10 +424,10 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Spheres",
             desc: "Comma-separated list of spheres for categorising your projects and actions.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) =>
                 text
-                  .setPlaceholder("personal, work, health")
+                  .setPlaceholder(DEFAULT_SETTINGS.spheres.join(", "))
                   .setValue(this.plugin.settings.spheres.join(", "))
                   .onChange((value) => {
                     this.plugin.settings.spheres = value
@@ -422,7 +437,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                     this.plugin.updateSphereCommands();
                   })
-              ),
+              );
+            },
           },
 
           {
@@ -430,16 +446,17 @@ export class FlowGTDSettingTab extends PluginSettingTab {
             desc:
               "Tag prefix for GTD contexts on actions (e.g. #context/home, #context/office). " +
               "Change this to use a different prefix like 'at' for #at/home or 'ctx' for #ctx/office.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) =>
                 text
-                  .setPlaceholder("context")
+                  .setPlaceholder(DEFAULT_SETTINGS.contextTagPrefix)
                   .setValue(this.plugin.settings.contextTagPrefix)
                   .onChange((value) => {
                     this.plugin.settings.contextTagPrefix = value.trim() || "context";
                     this.saveSettingsAfterChange();
                   })
-              ),
+              );
+            },
           },
         ],
       },
@@ -454,7 +471,7 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Auto-clear time",
             desc: 'Time to automatically clear the focus daily (e.g., "03:00"). Leave empty to disable auto-clearing.',
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) =>
                 text
                   .setPlaceholder("03:00")
@@ -469,13 +486,14 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.plugin.settings.focusAutoClearTime = trimmed;
                     this.saveSettingsAfterChange();
                   })
-              ),
+              );
+            },
           },
 
           {
             name: "Archive file",
             desc: "File path where cleared focus items will be archived. Disabled if auto-clear is off.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) => {
                 text
                   .setPlaceholder("Focus Archive.md")
@@ -485,7 +503,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                     this.saveSettingsAfterChange();
                   });
                 new FilePathSuggest(this.app, text.inputEl, ["md"]);
-              }),
+              });
+            },
           },
         ],
       },
@@ -500,21 +519,22 @@ export class FlowGTDSettingTab extends PluginSettingTab {
           {
             name: "Enable AI features",
             desc: "Enable AI-powered cover image generation. When disabled, AI functionality is unavailable.",
-            render: (setting) =>
+            render: (setting) => {
               setting.addToggle((toggle) =>
                 toggle.setValue(this.plugin.settings.aiEnabled).onChange((value) => {
                   this.plugin.settings.aiEnabled = value;
                   this.saveSettingsAfterChange();
                   this.refreshVisibility();
                 })
-              ),
+              );
+            },
           },
 
           {
             name: "OpenRouter API Key",
             desc: "Enter your OpenRouter API key for AI-powered features.",
             visible: aiEnabled,
-            render: (setting) =>
+            render: (setting) => {
               setting
                 .addText((text) => {
                   text
@@ -527,17 +547,18 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                   text.inputEl.type = "password";
                 })
                 .addButton((button) =>
-                  button.setButtonText("Get API Key").onClick(() => {
+                  button.setButtonText("Get API key").onClick(() => {
                     openInActiveWindow("https://openrouter.ai/keys", "_blank");
                   })
-                ),
+                );
+            },
           },
 
           {
             name: "OpenRouter Base URL",
             desc: "Override the API base URL (defaults to OpenRouter).",
             visible: aiEnabled,
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) =>
                 text
                   .setPlaceholder(DEFAULT_SETTINGS.openrouterBaseUrl)
@@ -547,14 +568,15 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                       value.trim() || DEFAULT_SETTINGS.openrouterBaseUrl;
                     this.saveSettingsAfterChange();
                   })
-              ),
+              );
+            },
           },
 
           {
             name: "Image Model",
             desc: "OpenRouter model ID for generating project cover images.",
             visible: aiEnabled,
-            render: (setting) =>
+            render: (setting) => {
               setting.addText((text) =>
                 text
                   .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
@@ -564,7 +586,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
                       value.trim() || DEFAULT_SETTINGS.openrouterImageModel;
                     this.saveSettingsAfterChange();
                   })
-              ),
+              );
+            },
           },
 
           {
@@ -593,7 +616,8 @@ export class FlowGTDSettingTab extends PluginSettingTab {
   }
 
   private refreshVisibility(): void {
-    if (this.displayedConditionalRows === null) {
+    // On 1.13+ Obsidian renders the definitions and display() never runs
+    if (requireApiVersion("1.13.0")) {
       this.refreshDomState();
       return;
     }

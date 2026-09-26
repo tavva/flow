@@ -12,8 +12,7 @@ function getWindowDocument(): Document | undefined {
     return undefined;
   }
 
-  const documentKey = "document" as keyof Window;
-  return window.activeDocument ?? (window[documentKey] as Document | undefined);
+  return window.activeDocument ?? window.document;
 }
 
 function getWindowActiveTarget(): Window | undefined {

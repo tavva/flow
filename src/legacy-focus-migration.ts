@@ -7,6 +7,7 @@ import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { updateFocusItems } from "./focus-persistence";
 import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
 import { wrapAsyncEvent } from "./async-utils";
+import { getProjectSphere } from "./frontmatter";
 
 const LEGACY_TAG = "#flow-planned";
 
@@ -61,17 +62,9 @@ async function determineSphere(
   // Check frontmatter for project/* tags
   if (file instanceof TFile) {
     const cache = app.metadataCache.getFileCache(file);
-    if (cache?.frontmatter?.tags) {
-      const tags = Array.isArray(cache.frontmatter.tags)
-        ? cache.frontmatter.tags
-        : [cache.frontmatter.tags];
-
-      for (const tag of tags) {
-        const normalizedTag = tag.replace(/^#/, "");
-        if (normalizedTag.startsWith("project/")) {
-          return normalizedTag.slice("project/".length);
-        }
-      }
+    const projectSphere = getProjectSphere(cache?.frontmatter);
+    if (projectSphere) {
+      return projectSphere;
     }
   }
 
@@ -199,7 +192,7 @@ export class LegacyMigrationModal extends Modal {
     contentEl.empty();
     contentEl.addClass("flow-legacy-migration-modal");
 
-    contentEl.createEl("h2", { text: "Migrate Legacy Focus Items" });
+    contentEl.createEl("h2", { text: "Migrate legacy focus items" });
     contentEl.createEl("p", {
       text: `Found ${this.itemCount} item${this.itemCount === 1 ? "" : "s"} with #flow-planned tags. Would you like to migrate them to the new focus system?`,
     });
@@ -267,7 +260,7 @@ export class TagRemovalModal extends Modal {
     contentEl.empty();
     contentEl.addClass("flow-tag-removal-modal");
 
-    contentEl.createEl("h2", { text: "Remove Legacy Tags" });
+    contentEl.createEl("h2", { text: "Remove legacy tags" });
 
     let message = `Migration complete. ${this.migratedCount} item${this.migratedCount === 1 ? "" : "s"} migrated.`;
     if (this.skippedCount > 0) {

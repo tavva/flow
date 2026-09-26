@@ -325,6 +325,9 @@ export function normalizePath(path: string): string {
 
 export const requestUrl = jest.fn();
 
+// Reports an Obsidian version before 1.13 unless a test says otherwise
+export const requireApiVersion = jest.fn((_version: string) => false);
+
 export interface CachedMetadata {
   frontmatter?: any;
   sections?: any[];

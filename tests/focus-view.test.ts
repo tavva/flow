@@ -662,7 +662,7 @@ describe("FocusView", () => {
       // Should have 2 sections: Pinned and Project Actions
       expect(sections.length).toBe(2);
       expect(sections[0].querySelector("h3")?.textContent).toBe("Pinned");
-      expect(sections[1].querySelector("h3")?.textContent).toBe("Project Actions");
+      expect(sections[1].querySelector("h3")?.textContent).toBe("Project actions");
     });
 
     it("should treat items without isPinned as unpinned (backward compatibility)", async () => {
@@ -693,7 +693,7 @@ describe("FocusView", () => {
 
       // Should only have Project Actions section (no pinned)
       expect(sections.length).toBe(1);
-      expect(sections[0].querySelector("h3")?.textContent).toBe("Project Actions");
+      expect(sections[0].querySelector("h3")?.textContent).toBe("Project actions");
     });
 
     it("should pin an unpinned item and move to end of pinned section", async () => {

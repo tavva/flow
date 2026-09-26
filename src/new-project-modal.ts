@@ -72,7 +72,7 @@ export class NewProjectModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl("h2", { text: "Create New Project" });
+    contentEl.createEl("h2", { text: "Create new project" });
 
     // Project title
     new Setting(contentEl)
@@ -191,7 +191,7 @@ export class NewProjectModal extends Modal {
     cancelButton.addEventListener("click", () => this.close());
 
     const createButton = buttonContainer.createEl("button", {
-      text: "Create Project",
+      text: "Create project",
       cls: "mod-cta",
     });
     createButton.addEventListener("click", () => {

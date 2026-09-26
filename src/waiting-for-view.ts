@@ -52,7 +52,7 @@ export class WaitingForView extends RefreshingView {
   }
 
   getDisplayText(): string {
-    return "Waiting For";
+    return "Waiting for";
   }
 
   getIcon(): string {
@@ -285,7 +285,7 @@ export class WaitingForView extends RefreshingView {
 
   private renderContent(container: HTMLElement, items: WaitingForItem[]) {
     const titleEl = container.createEl("h2", { cls: "flow-gtd-waiting-for-title" });
-    titleEl.setText("Waiting For");
+    titleEl.setText("Waiting for");
 
     // Render sphere filter buttons
     this.renderSphereFilter(container);

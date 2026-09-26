@@ -1674,7 +1674,7 @@ describe("SphereView", () => {
       const label = separators[0].querySelector(
         ".flow-gtd-sphere-priority-separator-label"
       )?.textContent;
-      expect(label).toBe("No Priority");
+      expect(label).toBe("No priority");
     });
   });
 

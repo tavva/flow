@@ -43,7 +43,7 @@ export class NewPersonModal extends Modal {
     const { contentEl } = this;
     contentEl.empty();
 
-    contentEl.createEl("h2", { text: "Create New Person" });
+    contentEl.createEl("h2", { text: "Create new person" });
 
     // Person name
     let nameInput: HTMLInputElement | null = null;
@@ -85,7 +85,7 @@ export class NewPersonModal extends Modal {
     cancelButton.addEventListener("click", () => this.close());
 
     const createButton = buttonContainer.createEl("button", {
-      text: "Create Person",
+      text: "Create person",
       cls: "mod-cta",
     });
     createButton.addEventListener("click", () => {

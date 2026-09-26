@@ -398,7 +398,7 @@ export class SomedayView extends RefreshingView {
     // Add "Move to Next Actions" button
     const moveButton = itemEl.createEl("button", {
       cls: "flow-gtd-someday-move-button",
-      text: "→ Next Actions",
+      text: "→ Next actions",
     });
     moveButton.setAttribute("type", "button");
     moveButton.addEventListener(

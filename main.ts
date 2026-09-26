@@ -57,7 +57,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
     // Check for legacy #flow-planned tags and prompt migration (after workspace is ready)
     this.app.workspace.onLayoutReady(() => {
       runAsync(
-        checkAndPromptLegacyMigration(this.app, this.settings, this.saveSettings.bind(this)),
+        checkAndPromptLegacyMigration(this.app, this.settings, () => this.saveSettings()),
         "Failed to check legacy focus migration"
       );
     });
@@ -79,34 +79,34 @@ export default class FlowGTDCoachPlugin extends Plugin {
       const state = leaf.getViewState().state as { sphere?: string } | undefined;
       const sphere = state?.sphere || this.settings.spheres[0] || "personal";
 
-      return new SphereView(leaf, sphere, this.settings, this.saveSettings.bind(this));
+      return new SphereView(leaf, sphere, this.settings, () => this.saveSettings());
     });
 
     // Register the inbox processing view
     this.registerView(INBOX_PROCESSING_VIEW_TYPE, (leaf) => {
-      return new InboxProcessingView(leaf, this.settings, this.saveSettings.bind(this));
+      return new InboxProcessingView(leaf, this.settings, () => this.saveSettings());
     });
 
     // Register the waiting for view
     this.registerView(
       WAITING_FOR_VIEW_TYPE,
-      (leaf) => new WaitingForView(leaf, this.settings, this.saveSettings.bind(this))
+      (leaf) => new WaitingForView(leaf, this.settings, () => this.saveSettings())
     );
 
     // Register the someday view
     this.registerView(
       SOMEDAY_VIEW_TYPE,
-      (leaf) => new SomedayView(leaf, this.settings, this.saveSettings.bind(this))
+      (leaf) => new SomedayView(leaf, this.settings, () => this.saveSettings())
     );
 
     // Register the focus view
     this.registerView(
       FOCUS_VIEW_TYPE,
-      (leaf) => new FocusView(leaf, this.settings, this.saveSettings.bind(this))
+      (leaf) => new FocusView(leaf, this.settings, () => this.saveSettings())
     );
 
     // Add ribbon icon
-    this.addRibbonIcon("inbox", "Flow: Process Inbox", () => {
+    this.addRibbonIcon("inbox", "Flow: Process inbox", () => {
       this.openInboxProcessingViewFromCommand();
     });
 
@@ -116,17 +116,17 @@ export default class FlowGTDCoachPlugin extends Plugin {
     });
 
     // Add waiting for ribbon icon
-    this.addRibbonIcon("clock", "Open Waiting For view", () => {
+    this.addRibbonIcon("clock", "Open waiting for view", () => {
       this.activateWaitingForViewFromCommand();
     });
 
     // Add someday ribbon icon
-    this.addRibbonIcon("calendar-clock", "Open Someday view", () => {
+    this.addRibbonIcon("calendar-clock", "Open someday view", () => {
       this.activateSomedayViewFromCommand();
     });
 
     // Add focus ribbon icon
-    this.addRibbonIcon("list-checks", "Open Focus", () => {
+    this.addRibbonIcon("list-checks", "Open focus", () => {
       this.activateFocusViewFromCommand();
     });
 
@@ -220,7 +220,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Register focus editor menu (right-click context menu)
     this.registerEvent(
-      registerFocusEditorMenu(this.app, this.settings, this.refreshFocusView.bind(this))
+      registerFocusEditorMenu(this.app, this.settings, () => this.refreshFocusView())
     );
 
     // Initialize project cover display
@@ -278,7 +278,10 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   async loadSettings() {
-    const data = await this.loadData();
+    // Settings are stored under "settings"; older versions stored them at the top level
+    const data = (await this.loadData()) as
+      | (Partial<PluginSettings> & { settings?: Partial<PluginSettings> })
+      | null;
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data?.settings || data);
   }
 
@@ -446,7 +449,7 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Update the view with the correct sphere
     const view = leaf.view as SphereView;
-    await view.setSphere(sphere, this.settings, this.saveSettings.bind(this));
+    await view.setSphere(sphere, this.settings, () => this.saveSettings());
 
     // Open focus if not already open
     await this.activateFocusView();

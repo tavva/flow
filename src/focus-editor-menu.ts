@@ -8,6 +8,7 @@ import { updateFocusItems } from "./focus-persistence";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { runAsync } from "./async-utils";
 import { revealLeaf } from "./obsidian-platform";
+import { getProjectSphere } from "./frontmatter";
 
 /**
  * Determine the sphere for an action based on file context and inline tags
@@ -25,17 +26,9 @@ export async function determineActionSphere(
 
   // First check if this is a project file (has project/* tags)
   const cache = app.metadataCache.getFileCache(file);
-  if (cache?.frontmatter?.tags) {
-    const tags = Array.isArray(cache.frontmatter.tags)
-      ? cache.frontmatter.tags
-      : [cache.frontmatter.tags];
-
-    for (const tag of tags) {
-      const normalizedTag = tag.replace(/^#/, "");
-      if (normalizedTag.startsWith("project/")) {
-        return normalizedTag.slice("project/".length);
-      }
-    }
+  const projectSphere = getProjectSphere(cache?.frontmatter);
+  if (projectSphere) {
+    return projectSphere;
   }
 
   // Check for inline #sphere/X tag in the line
@@ -81,22 +74,8 @@ export function registerFocusEditorMenu(
 
     // Determine the sphere synchronously
     const cache = app.metadataCache.getFileCache(file);
-    let sphere: string | null = null;
-
     // Check if this is a project file (has project/* tags)
-    if (cache?.frontmatter?.tags) {
-      const tags = Array.isArray(cache.frontmatter.tags)
-        ? cache.frontmatter.tags
-        : [cache.frontmatter.tags];
-
-      for (const tag of tags) {
-        const normalizedTag = tag.replace(/^#/, "");
-        if (normalizedTag.startsWith("project/")) {
-          sphere = normalizedTag.slice("project/".length);
-          break;
-        }
-      }
-    }
+    let sphere = getProjectSphere(cache?.frontmatter);
 
     // Check for inline #sphere/X tag in the line
     if (!sphere) {
@@ -114,7 +93,7 @@ export function registerFocusEditorMenu(
     // Add menu item (load focus asynchronously in onClick)
     menu.addItem((item) => {
       item
-        .setTitle("Toggle Focus")
+        .setTitle("Toggle focus")
         .setIcon("list-checks")
         .onClick(() => {
           runAsync(

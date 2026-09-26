@@ -4,6 +4,7 @@ import { FlowProject, GTDProcessingResult, PluginSettings, PersonNote } from "./
 import { GTDResponseValidationError, FileNotFoundError, ValidationError } from "./errors";
 import { EditableItem } from "./inbox-types";
 import { sanitizeFileName } from "./validation";
+import { Frontmatter, getFrontmatterTags } from "./frontmatter";
 
 interface TemplaterPlugin {
   templater?: {
@@ -908,12 +909,12 @@ ${description}
       throw new FileNotFoundError(project.file);
     }
 
-    await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+    await this.app.fileManager.processFrontMatter(file, (frontmatter: Frontmatter) => {
       // Ensure all project tags are preserved
-      const existingTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
+      const existingTags = getFrontmatterTags(frontmatter);
 
-      const projectTags = existingTags.filter((tag: string) => tag.startsWith("project/"));
-      const otherTags = existingTags.filter((tag: string) => !tag.startsWith("project/"));
+      const projectTags = existingTags.filter((tag) => tag.startsWith("project/"));
+      const otherTags = existingTags.filter((tag) => !tag.startsWith("project/"));
 
       frontmatter.tags = [...new Set([...projectTags, ...newTags, ...otherTags])];
     });
@@ -928,7 +929,7 @@ ${description}
       throw new FileNotFoundError(project.file);
     }
 
-    await this.app.fileManager.processFrontMatter(file, (frontmatter) => {
+    await this.app.fileManager.processFrontMatter(file, (frontmatter: Frontmatter) => {
       frontmatter.priority = newPriority;
     });
   }

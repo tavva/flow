@@ -461,7 +461,7 @@ export class FocusView extends RefreshingView {
     if (Object.keys(grouped.projectActions).length > 0) {
       const projectSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       projectSection.createEl("h3", {
-        text: "Project Actions",
+        text: "Project actions",
         cls: "flow-gtd-focus-section-title",
       });
 
@@ -476,7 +476,7 @@ export class FocusView extends RefreshingView {
     if (Object.keys(grouped.generalActions).length > 0) {
       const generalSection = container.createDiv({ cls: "flow-gtd-focus-section" });
       generalSection.createEl("h3", {
-        text: "General Actions",
+        text: "General actions",
         cls: "flow-gtd-focus-section-title",
       });
 

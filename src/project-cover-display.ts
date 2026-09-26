@@ -3,6 +3,7 @@
 
 import { App, MarkdownView, TFile } from "obsidian";
 import { PluginSettings } from "./types";
+import { getFrontmatterString, getFrontmatterTags } from "./frontmatter";
 
 const COVER_IMAGE_CLASS = "flow-project-cover-image-float";
 const COVER_IMAGE_CONTAINER_CLASS = "flow-project-cover-container";
@@ -43,14 +44,7 @@ export class ProjectCoverDisplay {
     }
 
     // Check if this is a project file
-    const tags = frontmatter.tags;
-    const isProject =
-      tags &&
-      (typeof tags === "string"
-        ? tags.includes("project/")
-        : Array.isArray(tags)
-          ? tags.some((tag: string) => tag.includes("project/"))
-          : false);
+    const isProject = getFrontmatterTags(frontmatter).some((tag) => tag.includes("project/"));
 
     if (!isProject) {
       this.removeCoverImage(activeView);
@@ -58,7 +52,7 @@ export class ProjectCoverDisplay {
     }
 
     // Check for cover-image property
-    const coverImage = frontmatter["cover-image"];
+    const coverImage = getFrontmatterString(frontmatter, "cover-image");
 
     if (!coverImage) {
       this.removeCoverImage(activeView);

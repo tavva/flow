@@ -1,5 +1,6 @@
 import { App, TFile, CachedMetadata } from "obsidian";
 import { PersonNote } from "./types";
+import { getFrontmatterString, getFrontmatterTags } from "./frontmatter";
 
 export class PersonScanner {
   constructor(private app: App) {}
@@ -31,14 +32,14 @@ export class PersonScanner {
       return null;
     }
 
-    const frontmatter = metadata.frontmatter || {};
+    const frontmatter = metadata.frontmatter;
 
     return {
       file: file.path,
       title: file.basename,
-      tags: this.extractTags(frontmatter.tags),
-      status: frontmatter.status,
-      creationDate: frontmatter["creation-date"],
+      tags: getFrontmatterTags(frontmatter),
+      status: getFrontmatterString(frontmatter, "status"),
+      creationDate: getFrontmatterString(frontmatter, "creation-date"),
     };
   }
 
@@ -46,33 +47,7 @@ export class PersonScanner {
    * Checks if a file is a person note (has 'person' tag)
    */
   private isPersonNote(metadata: CachedMetadata): boolean {
-    const frontmatter = metadata.frontmatter;
-    if (!frontmatter || !frontmatter.tags) {
-      return false;
-    }
-
-    const tags = this.normalizeTags(frontmatter.tags);
-    return tags.includes("person");
-  }
-
-  /**
-   * Normalizes tags to array format
-   */
-  private normalizeTags(tags: string | string[]): string[] {
-    if (Array.isArray(tags)) {
-      return tags.filter((tag) => typeof tag === "string");
-    }
-    if (typeof tags === "string") {
-      return [tags];
-    }
-    return [];
-  }
-
-  /**
-   * Extracts all tags from frontmatter
-   */
-  private extractTags(tags: string | string[]): string[] {
-    return this.normalizeTags(tags);
+    return getFrontmatterTags(metadata.frontmatter).includes("person");
   }
 
   /**

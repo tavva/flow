@@ -58,7 +58,7 @@ export function renderInboxView(
 
   const emptyDescription = emptyState.createEl("p", { cls: "flow-inbox-empty-description" });
   emptyDescription.setText(
-    "No items found in your Flow inbox folders. Add files to process in your inbox folders, or close this window."
+    "No items found in your inbox folders. Add files to process in your inbox folders, or close this window."
   );
 }
 

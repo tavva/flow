@@ -1,7 +1,7 @@
 // ABOUTME: Tests the Flow settings tab's shared setting definitions.
 // ABOUTME: Covers declarative (Obsidian 1.13+) and display() rendering, including AI row visibility.
 
-import { App, Setting } from "obsidian";
+import { App, Setting, requireApiVersion } from "obsidian";
 import { FlowGTDSettingTab } from "../src/settings-tab";
 import { DEFAULT_SETTINGS, PluginSettings } from "../src/types";
 
@@ -38,6 +38,7 @@ describe("FlowGTDSettingTab", () => {
   });
 
   afterEach(() => {
+    jest.mocked(requireApiVersion).mockReturnValue(false);
     delete (global as any).createFragment;
   });
 
@@ -110,6 +111,7 @@ describe("FlowGTDSettingTab", () => {
   });
 
   it("uses Obsidian's visibility refresh when rendered declaratively", () => {
+    jest.mocked(requireApiVersion).mockReturnValue(true);
     const refreshDomState = jest.spyOn(tab, "refreshDomState");
     const aiGroup = tab.buildSettingGroups().find((group) => group.heading === "AI Settings")!;
     const aiRows = aiGroup.items.filter((row) => row.visible);

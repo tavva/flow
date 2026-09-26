@@ -5,6 +5,7 @@ import { App, TFile } from "obsidian";
 import { extractContexts } from "./context-tags";
 import { DataviewApi, getDataviewApi } from "./dataview-api";
 import { PluginSettings } from "./types";
+import { getProjectSphere } from "./frontmatter";
 
 export interface WaitingForItem {
   file: string;
@@ -36,17 +37,9 @@ export class WaitingForScanner {
     const file = this.app.vault.getAbstractFileByPath(filePath);
     if (file instanceof TFile) {
       const cache = this.app.metadataCache.getFileCache(file);
-      if (cache?.frontmatter?.tags) {
-        const tags = Array.isArray(cache.frontmatter.tags)
-          ? cache.frontmatter.tags
-          : [cache.frontmatter.tags];
-
-        for (const tag of tags) {
-          const match = tag.match(/^project\/(.+)$/);
-          if (match) {
-            return match[1];
-          }
-        }
+      const projectSphere = getProjectSphere(cache?.frontmatter);
+      if (projectSphere) {
+        return projectSphere;
       }
     }
 

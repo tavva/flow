@@ -27,7 +27,7 @@ function isLegacyFormat(content: string): boolean {
   if (!trimmed.startsWith("{")) return false;
 
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed: unknown = JSON.parse(trimmed);
     return typeof parsed === "object" && parsed !== null && "version" in parsed;
   } catch {
     // If it fails to parse as a single JSON, it's likely JSONL or corrupted
@@ -39,7 +39,7 @@ function isLegacyFormat(content: string): boolean {
  * Parse legacy JSON format
  */
 function parseLegacyFormat(content: string): FocusItem[] {
-  const data: LegacyFocusFileFormat = JSON.parse(content);
+  const data = JSON.parse(content) as LegacyFocusFileFormat;
   const items = data.items || [];
   for (const item of items) {
     if (!item.contexts) {
@@ -61,7 +61,7 @@ function parseJsonlFormat(content: string): FocusItem[] {
     if (!trimmed) continue;
 
     try {
-      const item: FocusItem = JSON.parse(trimmed);
+      const item = JSON.parse(trimmed) as FocusItem;
       if (!item.contexts) {
         item.contexts = [];
       }

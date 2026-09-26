@@ -1,6 +1,7 @@
 import type { App, TFile, CachedMetadata } from "obsidian";
 import { FlowProject } from "./types";
 import { ProjectNode, buildProjectHierarchy } from "./project-hierarchy";
+import { getFrontmatterNumber, getFrontmatterString, getFrontmatterTags } from "./frontmatter";
 
 export class FlowProjectScanner {
   private cache: Map<string, { mtime: number; project: FlowProject }> = new Map();
@@ -49,22 +50,22 @@ export class FlowProjectScanner {
     }
 
     const content = await this.app.vault.read(file);
-    const frontmatter = metadata.frontmatter || {};
+    const frontmatter = metadata.frontmatter;
 
     const project: FlowProject = {
       file: file.path,
       title: file.basename,
       description: this.extractDescription(content),
-      tags: this.extractProjectTags(frontmatter.tags),
-      priority: frontmatter.priority,
-      status: frontmatter.status,
-      creationDate: frontmatter["creation-date"],
+      tags: getFrontmatterTags(frontmatter).filter((tag) => tag.startsWith("project/")),
+      priority: getFrontmatterNumber(frontmatter, "priority"),
+      status: getFrontmatterString(frontmatter, "status"),
+      creationDate: getFrontmatterString(frontmatter, "creation-date"),
       mtime: file.stat.mtime,
       nextActions: this.extractSection(content, "## Next actions"),
-      parentProject: frontmatter["parent-project"],
+      parentProject: getFrontmatterString(frontmatter, "parent-project"),
       milestones: this.extractSectionText(content, "## Milestones"),
-      coverImage: frontmatter["cover-image"],
-      current: frontmatter.current === true,
+      coverImage: getFrontmatterString(frontmatter, "cover-image"),
+      current: frontmatter?.current === true,
     };
 
     // Update cache
@@ -80,34 +81,7 @@ export class FlowProjectScanner {
    * Checks if a file is a Flow project (has tags starting with 'project/')
    */
   private isFlowProject(metadata: CachedMetadata): boolean {
-    const frontmatter = metadata.frontmatter;
-    if (!frontmatter || !frontmatter.tags) {
-      return false;
-    }
-
-    const tags = this.normalizeTags(frontmatter.tags);
-    return tags.some((tag) => tag.startsWith("project/"));
-  }
-
-  /**
-   * Normalizes tags to array format
-   */
-  private normalizeTags(tags: string | string[]): string[] {
-    if (Array.isArray(tags)) {
-      return tags.filter((tag) => typeof tag === "string");
-    }
-    if (typeof tags === "string") {
-      return [tags];
-    }
-    return [];
-  }
-
-  /**
-   * Extracts project-specific tags (those starting with 'project/')
-   */
-  private extractProjectTags(tags: string | string[]): string[] {
-    const normalizedTags = this.normalizeTags(tags);
-    return normalizedTags.filter((tag) => tag.startsWith("project/"));
+    return getFrontmatterTags(metadata.frontmatter).some((tag) => tag.startsWith("project/"));
   }
 
   /**

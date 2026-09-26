@@ -604,7 +604,7 @@ export class SphereView extends ItemView {
         if (priority !== null) {
           separatorLabel.setText(`P${priority}`);
         } else {
-          separatorLabel.setText("No Priority");
+          separatorLabel.setText("No priority");
         }
       }
 
