@@ -172,11 +172,23 @@ export class Notice {
 }
 
 export class Setting {
-  constructor(containerEl: HTMLElement) {}
+  settingEl: HTMLElement = document.createElement("div");
+  // Components passed to add* callbacks, in the order they were added
+  components: any[] = [];
+
+  constructor(containerEl: HTMLElement) {
+    containerEl?.appendChild?.(this.settingEl);
+  }
   setName(name: string) {
+    this.settingEl.dataset.name = name;
     return this;
   }
-  setDesc(desc: string) {
+  setDesc(desc: string | DocumentFragment) {
+    this.settingEl.dataset.desc = typeof desc === "string" ? desc : (desc.textContent ?? "");
+    return this;
+  }
+  setHeading() {
+    this.settingEl.classList.add("setting-item-heading");
     return this;
   }
   addText(cb: (text: any) => void) {
@@ -186,6 +198,7 @@ export class Setting {
       setPlaceholder: jest.fn().mockReturnThis(),
       inputEl: document.createElement("input"),
     };
+    this.components.push(textComponent);
     cb(textComponent);
     return this;
   }
@@ -196,6 +209,7 @@ export class Setting {
       setPlaceholder: jest.fn().mockReturnThis(),
       inputEl: Object.assign(document.createElement("textarea"), { rows: 0 }),
     };
+    this.components.push(textareaComponent);
     cb(textareaComponent);
     return this;
   }
@@ -216,6 +230,7 @@ export class Setting {
       setTooltip: jest.fn().mockReturnThis(),
       toggleEl: toggleEl,
     };
+    this.components.push(toggleComponent);
     cb(toggleComponent);
     return this;
   }
@@ -296,11 +311,12 @@ export class PluginSettingTab {
   constructor(app: App, plugin: Plugin) {
     this.app = app;
     this.plugin = plugin;
-    this.containerEl = document.createElement("div");
+    this.containerEl = createObsidianElement("div");
   }
 
   display() {}
   hide() {}
+  refreshDomState() {}
 }
 
 export function normalizePath(path: string): string {

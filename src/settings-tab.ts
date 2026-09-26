@@ -1,473 +1,606 @@
 // ABOUTME: Presents Flow configuration in the Obsidian settings dialog.
 // ABOUTME: Persists project, inbox, output file, and focus preferences.
 
-import { App, Notice, PluginSettingTab, Setting, TextComponent } from "obsidian";
+import {
+  App,
+  Notice,
+  PluginSettingTab,
+  Setting,
+  SettingDefinitionItem,
+  TextComponent,
+} from "obsidian";
 import FlowGTDCoachPlugin from "../main";
 import { DEFAULT_SETTINGS } from "./types";
 import { FolderPathSuggest, FilePathSuggest } from "./suggesters";
 import { openInActiveWindow } from "./obsidian-platform";
 import { runAsync } from "./async-utils";
 
+// One settings row. Obsidian 1.13+ renders these declaratively (and indexes them for
+// settings search); older versions draw them through display().
+export interface FlowSettingRow {
+  name: string;
+  desc?: string | DocumentFragment;
+  searchable?: boolean;
+  visible?: () => boolean;
+  render: (setting: Setting) => void;
+}
+
+export interface FlowSettingGroup {
+  type: "group";
+  heading: string;
+  items: FlowSettingRow[];
+}
+
 export class FlowGTDSettingTab extends PluginSettingTab {
   plugin: FlowGTDCoachPlugin;
+  // Rows drawn by display() that have a visibility predicate; null when Obsidian
+  // renders the definitions itself.
+  private displayedConditionalRows: { row: FlowSettingRow; settingEl: HTMLElement }[] | null = null;
 
   constructor(app: App, plugin: FlowGTDCoachPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
+  // Obsidian 1.13+ calls this and skips display().
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return this.buildSettingGroups();
+  }
+
+  // Obsidian versions before 1.13 call this instead of getSettingDefinitions().
   display(): void {
     const { containerEl } = this;
 
     containerEl.empty();
+    this.displayedConditionalRows = [];
 
-    new Setting(containerEl).setHeading().setName("Default Project Settings");
-    containerEl
-      .createDiv("setting-item-description")
-      .createEl("p", { text: "These settings are used when creating new Flow projects." });
+    for (const group of this.buildSettingGroups()) {
+      new Setting(containerEl).setHeading().setName(group.heading);
 
-    // Default Priority
-    new Setting(containerEl)
-      .setName("Default Priority")
-      .setDesc("Default priority level for new projects (1-5, where 1 is highest)")
-      .addSlider((slider) =>
-        slider
-          .setLimits(1, 5, 1)
-          .setValue(this.plugin.settings.defaultPriority)
-          .setDynamicTooltip()
-          .onChange((value) => {
-            this.plugin.settings.defaultPriority = value;
-            this.saveSettingsAfterChange();
-          })
-      );
+      for (const row of group.items) {
+        const setting = new Setting(containerEl).setName(row.name);
+        if (row.desc) {
+          setting.setDesc(row.desc);
+        }
+        row.render(setting);
 
-    // Default Status
-    new Setting(containerEl)
-      .setName("Default Status")
-      .setDesc("Default status for new projects")
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOptions({
-            live: "Live",
-            active: "Active",
-            planning: "Planning",
-            paused: "Paused",
-            completed: "Completed",
-          })
-          .setValue(this.plugin.settings.defaultStatus)
-          .onChange((value) => {
-            this.plugin.settings.defaultStatus = value;
-            this.saveSettingsAfterChange();
-          })
-      );
+        if (row.visible) {
+          this.displayedConditionalRows.push({ row, settingEl: setting.settingEl });
+        }
+      }
+    }
 
-    // Auto-create cover image
-    new Setting(containerEl)
-      .setName("Auto-create cover image")
-      .setDesc(
-        "Automatically generate a cover image when creating new projects during inbox processing"
-      )
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange((value) => {
-          this.plugin.settings.autoCreateCoverImage = value;
-          this.saveSettingsAfterChange();
-        })
-      );
+    this.refreshVisibility();
+  }
 
-    new Setting(containerEl)
-      .setName("Display cover images on project notes")
-      .setDesc("Show cover images on project notes")
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.displayCoverImages).onChange((value) => {
-          this.plugin.settings.displayCoverImages = value;
-          this.saveSettingsAfterChange();
-        })
-      );
+  buildSettingGroups(): FlowSettingGroup[] {
+    const aiEnabled = () => this.plugin.settings.aiEnabled;
 
-    // Inbox Settings
-    new Setting(containerEl).setHeading().setName("Inbox Settings");
-    containerEl
-      .createDiv("setting-item-description")
-      .createEl("p", { text: "Configure inbox folders for processing." });
+    return [
+      {
+        type: "group",
+        heading: "Default Project Settings",
+        items: [
+          this.introRow("These settings are used when creating new Flow projects."),
 
-    // Line-at-a-time inbox
-    new Setting(containerEl)
-      .setName("Line at a time")
-      .setDesc("Flow processes all lines in every note in this folder.")
-      .addText((text) => {
-        text
-          .setPlaceholder("Flow Inbox Files")
-          .setValue(this.plugin.settings.inboxFilesFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.inboxFilesFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Default Priority
+          {
+            name: "Default Priority",
+            desc: "Default priority level for new projects (1-5, where 1 is highest)",
+            render: (setting) =>
+              setting.addSlider((slider) =>
+                slider
+                  .setLimits(1, 5, 1)
+                  .setValue(this.plugin.settings.defaultPriority)
+                  .setDynamicTooltip()
+                  .onChange((value) => {
+                    this.plugin.settings.defaultPriority = value;
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
 
-    // Note-at-a-time inbox
-    new Setting(containerEl)
-      .setName("Note at a time")
-      .setDesc("Flow processes entire notes one by one in this folder.")
-      .addText((text) => {
-        text
-          .setPlaceholder("Flow Inbox Folder")
-          .setValue(this.plugin.settings.inboxFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.inboxFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Default Status
+          {
+            name: "Default Status",
+            desc: "Default status for new projects",
+            render: (setting) =>
+              setting.addDropdown((dropdown) =>
+                dropdown
+                  .addOptions({
+                    live: "Live",
+                    active: "Active",
+                    planning: "Planning",
+                    paused: "Paused",
+                    completed: "Completed",
+                  })
+                  .setValue(this.plugin.settings.defaultStatus)
+                  .onChange((value) => {
+                    this.plugin.settings.defaultStatus = value;
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
 
-    // Processed inbox folder
-    new Setting(containerEl)
-      .setName("Processed inbox folder")
-      .setDesc("Processed notes from the inbox folder are archived here instead of being deleted.")
-      .addText((text) => {
-        text
-          .setPlaceholder("Processed Inbox Folder Notes")
-          .setValue(this.plugin.settings.processedInboxFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.processedInboxFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Auto-create cover image
+          {
+            name: "Auto-create cover image",
+            desc: "Automatically generate a cover image when creating new projects during inbox processing",
+            render: (setting) =>
+              setting.addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.autoCreateCoverImage).onChange((value) => {
+                  this.plugin.settings.autoCreateCoverImage = value;
+                  this.saveSettingsAfterChange();
+                })
+              ),
+          },
 
-    // Output Files
-    new Setting(containerEl).setHeading().setName("Output Files & Folders");
-    containerEl
-      .createDiv("setting-item-description")
-      .createEl("p", { text: "Configure where processed items should be saved." });
+          {
+            name: "Display cover images on project notes",
+            desc: "Show cover images on project notes",
+            render: (setting) =>
+              setting.addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.displayCoverImages).onChange((value) => {
+                  this.plugin.settings.displayCoverImages = value;
+                  this.saveSettingsAfterChange();
+                })
+              ),
+          },
+        ],
+      },
 
-    // Next Actions File
-    new Setting(containerEl)
-      .setName("Next Actions File")
-      .setDesc("File for standalone next actions that aren't part of a project.")
-      .addText((text) => {
-        text
-          .setPlaceholder("Next actions.md")
-          .setValue(this.plugin.settings.nextActionsFilePath)
-          .onChange((value) => {
-            this.plugin.settings.nextActionsFilePath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      });
+      // Inbox Settings
+      {
+        type: "group",
+        heading: "Inbox Settings",
+        items: [
+          this.introRow("Configure inbox folders for processing."),
 
-    // Someday File
-    new Setting(containerEl)
-      .setName("Someday/Maybe File")
-      .setDesc("File for someday/maybe items (things you might do in the future).")
-      .addText((text) => {
-        text
-          .setPlaceholder("Someday.md")
-          .setValue(this.plugin.settings.somedayFilePath)
-          .onChange((value) => {
-            this.plugin.settings.somedayFilePath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      });
+          // Line-at-a-time inbox
+          {
+            name: "Line at a time",
+            desc: "Flow processes all lines in every note in this folder.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Flow Inbox Files")
+                  .setValue(this.plugin.settings.inboxFilesFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.inboxFilesFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
 
-    // Focus File
-    let focusPathInput: TextComponent;
-    new Setting(containerEl)
-      .setName("Focus File")
-      .setDesc(
-        "File for your focus list, relative to the vault. Apply moves your existing file to the new location. Leave blank to use the default."
-      )
-      .addText((text) => {
-        focusPathInput = text;
-        text
-          .setPlaceholder(DEFAULT_SETTINGS.focusFilePath)
-          .setValue(this.plugin.settings.focusFilePath);
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      })
-      .addButton((button) =>
-        button.setButtonText("Apply").onClick(async () => {
-          button.setDisabled(true);
-          focusPathInput.setDisabled(true);
-          try {
-            if (await this.plugin.updateFocusFilePath(focusPathInput.getValue())) {
-              focusPathInput.setValue(this.plugin.settings.focusFilePath);
-              new Notice("Focus file location updated.");
-            }
-          } catch (error) {
-            new Notice(
-              error instanceof Error ? error.message : "Could not change the focus file location."
-            );
-          } finally {
-            button.setDisabled(false);
-            focusPathInput.setDisabled(false);
-          }
-        })
-      );
+          // Note-at-a-time inbox
+          {
+            name: "Note at a time",
+            desc: "Flow processes entire notes one by one in this folder.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Flow Inbox Folder")
+                  .setValue(this.plugin.settings.inboxFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.inboxFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
 
-    // Projects Folder
-    new Setting(containerEl)
-      .setName("Projects Folder")
-      .setDesc("Folder where new project files will be created.")
-      .addText((text) => {
-        text
-          .setPlaceholder("Projects")
-          .setValue(this.plugin.settings.projectsFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.projectsFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Processed inbox folder
+          {
+            name: "Processed inbox folder",
+            desc: "Processed notes from the inbox folder are archived here instead of being deleted.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Processed Inbox Folder Notes")
+                  .setValue(this.plugin.settings.processedInboxFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.processedInboxFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
+        ],
+      },
 
-    // Project Template File
-    new Setting(containerEl)
-      .setName("Project Template File")
-      .setDesc(
-        "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables. Templater syntax is also supported if Templater is installed. See docs/project-templates.md for details."
-      )
-      .addText((text) => {
-        text
-          .setPlaceholder("Templates/Project.md")
-          .setValue(this.plugin.settings.projectTemplateFilePath)
-          .onChange((value) => {
-            this.plugin.settings.projectTemplateFilePath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      });
+      // Output Files
+      {
+        type: "group",
+        heading: "Output Files & Folders",
+        items: [
+          this.introRow("Configure where processed items should be saved."),
 
-    // People Folder
-    new Setting(containerEl)
-      .setName("People Folder")
-      .setDesc("Folder where new person notes will be created.")
-      .addText((text) => {
-        text
-          .setPlaceholder("People")
-          .setValue(this.plugin.settings.personsFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.personsFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Next Actions File
+          {
+            name: "Next Actions File",
+            desc: "File for standalone next actions that aren't part of a project.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Next actions.md")
+                  .setValue(this.plugin.settings.nextActionsFilePath)
+                  .onChange((value) => {
+                    this.plugin.settings.nextActionsFilePath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(this.app, text.inputEl, ["md"]);
+              }),
+          },
 
-    // Person Template File
-    new Setting(containerEl)
-      .setName("Person Template File")
-      .setDesc(
-        "Template file used when creating new person notes. Supports {{date}}, {{time}}, and {{name}} variables."
-      )
-      .addText((text) => {
-        text
-          .setPlaceholder("Templates/Person.md")
-          .setValue(this.plugin.settings.personTemplateFilePath)
-          .onChange((value) => {
-            this.plugin.settings.personTemplateFilePath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      });
+          // Someday File
+          {
+            name: "Someday/Maybe File",
+            desc: "File for someday/maybe items (things you might do in the future).",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Someday.md")
+                  .setValue(this.plugin.settings.somedayFilePath)
+                  .onChange((value) => {
+                    this.plugin.settings.somedayFilePath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(this.app, text.inputEl, ["md"]);
+              }),
+          },
 
-    // Default Inbox File
-    new Setting(containerEl)
-      .setName("Default Inbox File")
-      .setDesc(
-        "Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)"
-      )
-      .addText((text) => {
-        text
-          .setPlaceholder("Inbox.md")
-          .setValue(this.plugin.settings.defaultInboxFile)
-          .onChange((value) => {
-            this.plugin.settings.defaultInboxFile = value;
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(
-          this.app,
-          text.inputEl,
-          ["md"],
-          () => this.plugin.settings.inboxFilesFolderPath
-        );
-      });
+          // Focus File
+          {
+            name: "Focus File",
+            desc: "File for your focus list, relative to the vault. Apply moves your existing file to the new location. Leave blank to use the default.",
+            render: (setting) => {
+              let focusPathInput: TextComponent;
+              setting
+                .addText((text) => {
+                  focusPathInput = text;
+                  text
+                    .setPlaceholder(DEFAULT_SETTINGS.focusFilePath)
+                    .setValue(this.plugin.settings.focusFilePath);
+                  new FilePathSuggest(this.app, text.inputEl, ["md"]);
+                })
+                .addButton((button) =>
+                  button.setButtonText("Apply").onClick(async () => {
+                    button.setDisabled(true);
+                    focusPathInput.setDisabled(true);
+                    try {
+                      if (await this.plugin.updateFocusFilePath(focusPathInput.getValue())) {
+                        focusPathInput.setValue(this.plugin.settings.focusFilePath);
+                        new Notice("Focus file location updated.");
+                      }
+                    } catch (error) {
+                      new Notice(
+                        error instanceof Error
+                          ? error.message
+                          : "Could not change the focus file location."
+                      );
+                    } finally {
+                      button.setDisabled(false);
+                      focusPathInput.setDisabled(false);
+                    }
+                  })
+                );
+            },
+          },
 
-    // Cover Images Folder
-    new Setting(containerEl)
-      .setName("Cover Images Folder")
-      .setDesc("Folder where generated project cover images will be saved")
-      .addText((text) => {
-        text
-          .setPlaceholder("Assets/flow-project-cover-images")
-          .setValue(this.plugin.settings.coverImagesFolderPath)
-          .onChange((value) => {
-            this.plugin.settings.coverImagesFolderPath = value;
-            this.saveSettingsAfterChange();
-          });
-        new FolderPathSuggest(this.app, text.inputEl);
-      });
+          // Projects Folder
+          {
+            name: "Projects Folder",
+            desc: "Folder where new project files will be created.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Projects")
+                  .setValue(this.plugin.settings.projectsFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.projectsFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
 
-    // Spheres
-    new Setting(containerEl).setHeading().setName("Spheres");
-    containerEl.createDiv("setting-item-description").createEl("p", {
-      text: "Spheres help categorise projects and actions (e.g., personal, work, health).",
-    });
+          // Project Template File
+          {
+            name: "Project Template File",
+            desc: "Template file used when creating new projects. Supports {{date}}, {{time}}, {{priority}}, {{status}}, {{sphere}}, and {{description}} variables. Templater syntax is also supported if Templater is installed. See docs/project-templates.md for details.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Templates/Project.md")
+                  .setValue(this.plugin.settings.projectTemplateFilePath)
+                  .onChange((value) => {
+                    this.plugin.settings.projectTemplateFilePath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(this.app, text.inputEl, ["md"]);
+              }),
+          },
 
-    new Setting(containerEl)
-      .setName("Spheres")
-      .setDesc("Comma-separated list of spheres for categorising your projects and actions.")
-      .addText((text) =>
-        text
-          .setPlaceholder("personal, work, health")
-          .setValue(this.plugin.settings.spheres.join(", "))
-          .onChange((value) => {
-            this.plugin.settings.spheres = value
-              .split(",")
-              .map((s) => s.trim())
-              .filter((s) => s.length > 0);
-            this.saveSettingsAfterChange();
-            this.plugin.updateSphereCommands();
-          })
-      );
+          // People Folder
+          {
+            name: "People Folder",
+            desc: "Folder where new person notes will be created.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("People")
+                  .setValue(this.plugin.settings.personsFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.personsFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
 
-    new Setting(containerEl)
-      .setName("Context tag prefix")
-      .setDesc(
-        "Tag prefix for GTD contexts on actions (e.g. #context/home, #context/office). " +
-          "Change this to use a different prefix like 'at' for #at/home or 'ctx' for #ctx/office."
-      )
-      .addText((text) =>
-        text
-          .setPlaceholder("context")
-          .setValue(this.plugin.settings.contextTagPrefix)
-          .onChange((value) => {
-            this.plugin.settings.contextTagPrefix = value.trim() || "context";
-            this.saveSettingsAfterChange();
-          })
-      );
+          // Person Template File
+          {
+            name: "Person Template File",
+            desc: "Template file used when creating new person notes. Supports {{date}}, {{time}}, and {{name}} variables.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Templates/Person.md")
+                  .setValue(this.plugin.settings.personTemplateFilePath)
+                  .onChange((value) => {
+                    this.plugin.settings.personTemplateFilePath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(this.app, text.inputEl, ["md"]);
+              }),
+          },
 
-    // Focus Settings
-    new Setting(containerEl).setHeading().setName("Focus");
-    containerEl
-      .createDiv("setting-item-description")
-      .createEl("p", { text: "Configure automatic clearing and archiving of your focus." });
+          // Default Inbox File
+          {
+            name: "Default Inbox File",
+            desc: "Filename for built-in Flow quick capture (will be created in Flow Inbox Files folder)",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Inbox.md")
+                  .setValue(this.plugin.settings.defaultInboxFile)
+                  .onChange((value) => {
+                    this.plugin.settings.defaultInboxFile = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(
+                  this.app,
+                  text.inputEl,
+                  ["md"],
+                  () => this.plugin.settings.inboxFilesFolderPath
+                );
+              }),
+          },
 
-    new Setting(containerEl)
-      .setName("Auto-clear time")
-      .setDesc(
-        'Time to automatically clear the focus daily (e.g., "03:00"). Leave empty to disable auto-clearing.'
-      )
-      .addText((text) =>
-        text
-          .setPlaceholder("03:00")
-          .setValue(this.plugin.settings.focusAutoClearTime)
-          .onChange((value) => {
-            const trimmed = value.trim();
-            // Validate format if not empty
-            if (trimmed && !/^\d{1,2}:\d{2}$/.test(trimmed)) {
-              // Invalid format, don't save
-              return;
-            }
-            this.plugin.settings.focusAutoClearTime = trimmed;
-            this.saveSettingsAfterChange();
-          })
-      );
+          // Cover Images Folder
+          {
+            name: "Cover Images Folder",
+            desc: "Folder where generated project cover images will be saved",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Assets/flow-project-cover-images")
+                  .setValue(this.plugin.settings.coverImagesFolderPath)
+                  .onChange((value) => {
+                    this.plugin.settings.coverImagesFolderPath = value;
+                    this.saveSettingsAfterChange();
+                  });
+                new FolderPathSuggest(this.app, text.inputEl);
+              }),
+          },
+        ],
+      },
 
-    new Setting(containerEl)
-      .setName("Archive file")
-      .setDesc(
-        "File path where cleared focus items will be archived. Disabled if auto-clear is off."
-      )
-      .addText((text) => {
-        text
-          .setPlaceholder("Focus Archive.md")
-          .setValue(this.plugin.settings.focusArchiveFile)
-          .onChange((value) => {
-            this.plugin.settings.focusArchiveFile = value.trim();
-            this.saveSettingsAfterChange();
-          });
-        new FilePathSuggest(this.app, text.inputEl, ["md"]);
-      });
+      // Spheres
+      {
+        type: "group",
+        heading: "Spheres",
+        items: [
+          this.introRow(
+            "Spheres help categorise projects and actions (e.g., personal, work, health)."
+          ),
 
-    // AI Settings
-    new Setting(containerEl).setHeading().setName("AI Settings");
-    containerEl.createDiv("setting-item-description").createEl("p", {
-      text: "Configure OpenRouter for AI-powered cover image generation.",
-    });
+          {
+            name: "Spheres",
+            desc: "Comma-separated list of spheres for categorising your projects and actions.",
+            render: (setting) =>
+              setting.addText((text) =>
+                text
+                  .setPlaceholder("personal, work, health")
+                  .setValue(this.plugin.settings.spheres.join(", "))
+                  .onChange((value) => {
+                    this.plugin.settings.spheres = value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter((s) => s.length > 0);
+                    this.saveSettingsAfterChange();
+                    this.plugin.updateSphereCommands();
+                  })
+              ),
+          },
 
-    const aiSettingsContainer = containerEl.createDiv();
+          {
+            name: "Context tag prefix",
+            desc:
+              "Tag prefix for GTD contexts on actions (e.g. #context/home, #context/office). " +
+              "Change this to use a different prefix like 'at' for #at/home or 'ctx' for #ctx/office.",
+            render: (setting) =>
+              setting.addText((text) =>
+                text
+                  .setPlaceholder("context")
+                  .setValue(this.plugin.settings.contextTagPrefix)
+                  .onChange((value) => {
+                    this.plugin.settings.contextTagPrefix = value.trim() || "context";
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
+        ],
+      },
 
-    new Setting(containerEl)
-      .setName("Enable AI features")
-      .setDesc(
-        "Enable AI-powered cover image generation. When disabled, AI functionality is unavailable."
-      )
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.aiEnabled).onChange((value) => {
-          this.plugin.settings.aiEnabled = value;
-          this.saveSettingsAfterChange();
-          aiSettingsContainer.classList.toggle("flow-hidden", !value);
-        })
-      );
+      // Focus Settings
+      {
+        type: "group",
+        heading: "Focus",
+        items: [
+          this.introRow("Configure automatic clearing and archiving of your focus."),
 
-    new Setting(aiSettingsContainer)
-      .setName("OpenRouter API Key")
-      .setDesc("Enter your OpenRouter API key for AI-powered features.")
-      .addText((text) => {
-        text
-          .setPlaceholder("sk-or-v1-...")
-          .setValue(this.plugin.settings.openrouterApiKey)
-          .onChange((value) => {
-            this.plugin.settings.openrouterApiKey = value.trim();
-            this.saveSettingsAfterChange();
-          });
-        text.inputEl.type = "password";
-      })
-      .addButton((button) =>
-        button.setButtonText("Get API Key").onClick(() => {
-          openInActiveWindow("https://openrouter.ai/keys", "_blank");
-        })
-      );
+          {
+            name: "Auto-clear time",
+            desc: 'Time to automatically clear the focus daily (e.g., "03:00"). Leave empty to disable auto-clearing.',
+            render: (setting) =>
+              setting.addText((text) =>
+                text
+                  .setPlaceholder("03:00")
+                  .setValue(this.plugin.settings.focusAutoClearTime)
+                  .onChange((value) => {
+                    const trimmed = value.trim();
+                    // Validate format if not empty
+                    if (trimmed && !/^\d{1,2}:\d{2}$/.test(trimmed)) {
+                      // Invalid format, don't save
+                      return;
+                    }
+                    this.plugin.settings.focusAutoClearTime = trimmed;
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
 
-    new Setting(aiSettingsContainer)
-      .setName("OpenRouter Base URL")
-      .setDesc("Override the API base URL (defaults to OpenRouter).")
-      .addText((text) =>
-        text
-          .setPlaceholder(DEFAULT_SETTINGS.openrouterBaseUrl)
-          .setValue(this.plugin.settings.openrouterBaseUrl)
-          .onChange((value) => {
-            this.plugin.settings.openrouterBaseUrl =
-              value.trim() || DEFAULT_SETTINGS.openrouterBaseUrl;
-            this.saveSettingsAfterChange();
-          })
-      );
+          {
+            name: "Archive file",
+            desc: "File path where cleared focus items will be archived. Disabled if auto-clear is off.",
+            render: (setting) =>
+              setting.addText((text) => {
+                text
+                  .setPlaceholder("Focus Archive.md")
+                  .setValue(this.plugin.settings.focusArchiveFile)
+                  .onChange((value) => {
+                    this.plugin.settings.focusArchiveFile = value.trim();
+                    this.saveSettingsAfterChange();
+                  });
+                new FilePathSuggest(this.app, text.inputEl, ["md"]);
+              }),
+          },
+        ],
+      },
 
-    new Setting(aiSettingsContainer)
-      .setName("Image Model")
-      .setDesc("OpenRouter model ID for generating project cover images.")
-      .addText((text) =>
-        text
-          .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
-          .setValue(this.plugin.settings.openrouterImageModel)
-          .onChange((value) => {
-            this.plugin.settings.openrouterImageModel =
-              value.trim() || DEFAULT_SETTINGS.openrouterImageModel;
-            this.saveSettingsAfterChange();
-          })
-      );
+      // AI Settings
+      {
+        type: "group",
+        heading: "AI Settings",
+        items: [
+          this.introRow("Configure OpenRouter for AI-powered cover image generation."),
 
-    const descEl = aiSettingsContainer.createDiv("setting-item-description");
-    const p1 = descEl.createEl("p");
-    p1.appendText("Get an API key from ");
-    p1.createEl("a", {
-      text: "OpenRouter",
-      href: "https://openrouter.ai/keys",
-      attr: { target: "_blank" },
-    });
-    p1.appendText(". Your key is stored locally and never shared.");
+          {
+            name: "Enable AI features",
+            desc: "Enable AI-powered cover image generation. When disabled, AI functionality is unavailable.",
+            render: (setting) =>
+              setting.addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.aiEnabled).onChange((value) => {
+                  this.plugin.settings.aiEnabled = value;
+                  this.saveSettingsAfterChange();
+                  this.refreshVisibility();
+                })
+              ),
+          },
 
-    // Set initial visibility
-    aiSettingsContainer.classList.toggle("flow-hidden", !this.plugin.settings.aiEnabled);
+          {
+            name: "OpenRouter API Key",
+            desc: "Enter your OpenRouter API key for AI-powered features.",
+            visible: aiEnabled,
+            render: (setting) =>
+              setting
+                .addText((text) => {
+                  text
+                    .setPlaceholder("sk-or-v1-...")
+                    .setValue(this.plugin.settings.openrouterApiKey)
+                    .onChange((value) => {
+                      this.plugin.settings.openrouterApiKey = value.trim();
+                      this.saveSettingsAfterChange();
+                    });
+                  text.inputEl.type = "password";
+                })
+                .addButton((button) =>
+                  button.setButtonText("Get API Key").onClick(() => {
+                    openInActiveWindow("https://openrouter.ai/keys", "_blank");
+                  })
+                ),
+          },
+
+          {
+            name: "OpenRouter Base URL",
+            desc: "Override the API base URL (defaults to OpenRouter).",
+            visible: aiEnabled,
+            render: (setting) =>
+              setting.addText((text) =>
+                text
+                  .setPlaceholder(DEFAULT_SETTINGS.openrouterBaseUrl)
+                  .setValue(this.plugin.settings.openrouterBaseUrl)
+                  .onChange((value) => {
+                    this.plugin.settings.openrouterBaseUrl =
+                      value.trim() || DEFAULT_SETTINGS.openrouterBaseUrl;
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
+
+          {
+            name: "Image Model",
+            desc: "OpenRouter model ID for generating project cover images.",
+            visible: aiEnabled,
+            render: (setting) =>
+              setting.addText((text) =>
+                text
+                  .setPlaceholder(DEFAULT_SETTINGS.openrouterImageModel)
+                  .setValue(this.plugin.settings.openrouterImageModel)
+                  .onChange((value) => {
+                    this.plugin.settings.openrouterImageModel =
+                      value.trim() || DEFAULT_SETTINGS.openrouterImageModel;
+                    this.saveSettingsAfterChange();
+                  })
+              ),
+          },
+
+          {
+            name: "",
+            desc: createFragment((fragment) => {
+              fragment.appendText("Get an API key from ");
+              fragment.createEl("a", {
+                text: "OpenRouter",
+                href: "https://openrouter.ai/keys",
+                attr: { target: "_blank" },
+              });
+              fragment.appendText(". Your key is stored locally and never shared.");
+            }),
+            searchable: false,
+            visible: aiEnabled,
+            render: () => {},
+          },
+        ],
+      },
+    ];
+  }
+
+  // Explanatory text shown under a group heading; not a setting itself.
+  private introRow(text: string): FlowSettingRow {
+    return { name: "", desc: text, searchable: false, render: () => {} };
+  }
+
+  private refreshVisibility(): void {
+    if (this.displayedConditionalRows === null) {
+      this.refreshDomState();
+      return;
+    }
+
+    for (const { row, settingEl } of this.displayedConditionalRows) {
+      settingEl.classList.toggle("flow-hidden", !row.visible?.());
+    }
   }
 
   private saveSettingsAfterChange(): void {
