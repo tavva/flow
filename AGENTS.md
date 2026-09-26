@@ -9,6 +9,8 @@ Flow is an Obsidian plugin implementing GTD (Getting Things Done). It provides m
 ```bash
 npm run dev          # Development mode with auto-rebuild
 npm run build        # Type-check and production build
+npm run lint         # Type-check plus Obsidian's recommended ESLint rules (fails on warnings)
+npm run audit:prod   # Check shipped dependencies for security advisories
 npm test             # Run all tests
 npm test -- name     # Run specific test file (e.g., npm test -- flow-scanner)
 npm run test:watch   # Tests in watch mode
@@ -25,7 +27,13 @@ Before declaring any task complete, always run:
 
 1. `npm run format` — ensure code is properly formatted
 2. `npm run build` — verify type checking passes
-3. `npm test` — confirm all tests pass
+3. `npm run lint` — catch the issues Obsidian's community plugin review flags
+4. `npm test` — confirm all tests pass
+
+A husky `pre-push` hook runs `npm run lint` and `npm run audit:prod`; CI runs both too.
+Obsidian's lint config forbids disabling some rules (e.g. `obsidianmd/*`,
+`@typescript-eslint/no-deprecated`). For newer-API calls, guard with
+`requireApiVersion("x.y.z")`, which `obsidianmd/no-unsupported-api` recognises.
 
 ## Architecture
 

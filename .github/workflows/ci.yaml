@@ -49,6 +49,9 @@ jobs:
       - name: Run lint
         run: npm run lint
 
+      - name: Audit shipped dependencies
+        run: npm run audit:prod
+
       - name: Run tests
         run: npm test -- --runInBand
 
