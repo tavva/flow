@@ -54,6 +54,9 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Run lint
+              run: npm run lint
+
             - name: Verify build and tests
               run: npm run verify
 
