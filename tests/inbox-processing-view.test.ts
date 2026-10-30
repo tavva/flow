@@ -469,6 +469,30 @@ describe("InboxProcessingView", () => {
       expect(queueRenderSpy).not.toHaveBeenCalled();
     });
 
+    test("ignores keydown while a modal is open", () => {
+      const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
+      (view as any).state.editableItems = [item];
+      const discardSpy = jest
+        .spyOn((view as any).state, "confirmAndDiscardItem")
+        .mockImplementation(() => {});
+      const queueRenderSpy = jest.spyOn((view as any).state, "queueRender");
+
+      const modalContainer = document.createElement("div");
+      modalContainer.className = "modal-container";
+      document.body.appendChild(modalContainer);
+      try {
+        for (const key of ["d", "s"]) {
+          handleKeyDown({ key, target: document.body, preventDefault: jest.fn() } as any);
+        }
+      } finally {
+        modalContainer.remove();
+      }
+
+      expect(discardSpy).not.toHaveBeenCalled();
+      expect(item.selectedAction).toBe("next-actions-file");
+      expect(queueRenderSpy).not.toHaveBeenCalled();
+    });
+
     test("updates selected action for expanded item", () => {
       const item = { isExpanded: true, selectedAction: "next-actions-file" } as any;
       (view as any).state.editableItems = [item];

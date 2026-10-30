@@ -8,6 +8,7 @@ import { renderInboxView, renderEditableItemsView } from "./inbox-modal-views";
 import { KeyboardShortcutsModal } from "./keyboard-shortcuts-modal";
 import {
   clearActiveTimeout,
+  getDocumentForOwner,
   getWindowForOwner,
   setActiveTimeout,
   TimerHandle,
@@ -148,6 +149,12 @@ export class InboxProcessingView extends ItemView {
 
   private handleKeyDown = (event: KeyboardEvent) => {
     if (this.app.workspace.getActiveViewOfType(InboxProcessingView) !== this) {
+      return;
+    }
+
+    // The listener is on the window, so keys pressed in a modal (e.g. the discard
+    // confirmation) would otherwise trigger shortcuts on the item behind it.
+    if (getDocumentForOwner(this.contentEl).querySelector(".modal-container")) {
       return;
     }
 
