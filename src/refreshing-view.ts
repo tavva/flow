@@ -87,9 +87,11 @@ export abstract class RefreshingView extends ItemView {
   /**
    * Register a metadata cache listener that triggers refresh based on predicate
    */
-  protected registerMetadataCacheListener(shouldRefresh: (file: TFile) => boolean): void {
-    this.modifyEventRef = this.app.metadataCache.on("changed", (file) => {
-      if (shouldRefresh(file)) {
+  protected registerMetadataCacheListener(
+    shouldRefresh: (file: TFile, data: string) => boolean
+  ): void {
+    this.modifyEventRef = this.app.metadataCache.on("changed", (file, data) => {
+      if (shouldRefresh(file, data)) {
         this.scheduleRefresh();
       }
     });

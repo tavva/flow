@@ -6,7 +6,7 @@ import { FocusItem, PluginSettings, FlowProject } from "./types";
 import { FocusValidator } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
-import { loadFocusItems, updateFocusItems } from "./focus-persistence";
+import { loadFocusItems, parseFocusItems, updateFocusItems } from "./focus-persistence";
 import { RefreshingView } from "./refreshing-view";
 import { extractCheckboxStatus, isCompletedCheckbox } from "./checkbox-utils";
 import { getDataviewApi } from "./dataview-api";
@@ -157,7 +157,12 @@ export class FocusView extends RefreshingView {
     if (loadVersion !== this.focusLoadVersion) return;
 
     // Register event listener for metadata cache changes (fires after file is indexed)
-    this.registerMetadataCacheListener((file: TFile) => {
+    this.registerMetadataCacheListener((file: TFile, data: string) => {
+      // Other writers (inbox processing, new projects, spheres) change the focus file
+      // directly; skip changes that only echo this view's own saves.
+      if (file.path === this.loadedFocusFilePath) {
+        return JSON.stringify(parseFocusItems(data)) !== this.loadedFocusSnapshot;
+      }
       const cache = this.app.metadataCache.getFileCache(file);
       if (cache?.listItems && cache.listItems.length > 0) {
         return this.focusItems.some((item) => item.file === file.path);

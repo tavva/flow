@@ -93,6 +93,13 @@ async function readFocusItems(vault: Vault, filePath: string): Promise<FocusItem
     if (!(await vault.adapter.exists(filePath))) return [];
     content = await vault.adapter.read(filePath);
   }
+  return parseFocusItems(content);
+}
+
+/**
+ * Parse focus file content in either the JSONL or legacy JSON format
+ */
+export function parseFocusItems(content: string): FocusItem[] {
   return isLegacyFormat(content) ? parseLegacyFormat(content) : parseJsonlFormat(content);
 }
 

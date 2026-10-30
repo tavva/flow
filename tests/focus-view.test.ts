@@ -19,6 +19,7 @@ jest.mock("../src/focus-persistence", () => ({
     mockFocusItems = items;
     return Promise.resolve();
   }),
+  parseFocusItems: jest.requireActual("../src/focus-persistence").parseFocusItems,
 }));
 
 import {
@@ -1333,6 +1334,59 @@ describe("FocusView", () => {
       const remaining = (view as any).focusItems;
       expect(remaining.length).toBe(2);
       expect(remaining.find((i: FocusItem) => i.file === "yesterday.md")).toBeUndefined();
+    });
+  });
+
+  describe("refresh when the focus file changes", () => {
+    const existingItem: FocusItem = {
+      file: "Projects/Existing.md",
+      lineNumber: 3,
+      lineContent: "- [ ] existing action",
+      text: "existing action",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: 1000,
+      contexts: [],
+    };
+    const addedItem: FocusItem = {
+      file: "Projects/Added.md",
+      lineNumber: 5,
+      lineContent: "- [ ] added action",
+      text: "added action",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: 2000,
+      contexts: [],
+    };
+    const focusFile = { path: "flow-focus-data/focus.md" };
+    const toJsonl = (items: FocusItem[]) => items.map((item) => JSON.stringify(item)).join("\n");
+
+    async function openAndGetChangedListener() {
+      mockFocusItems = [existingItem];
+      mockApp.metadataCache.getFileCache.mockReturnValue(null);
+      await view.onOpen();
+      const changedCall = mockApp.metadataCache.on.mock.calls.find(
+        (call: unknown[]) => call[0] === "changed"
+      );
+      return changedCall[1] as (file: unknown, data: string) => void;
+    }
+
+    it("schedules a refresh when another writer adds items to the focus file", async () => {
+      const onChanged = await openAndGetChangedListener();
+      const scheduleRefresh = jest.spyOn(view as any, "scheduleRefresh");
+
+      onChanged(focusFile, toJsonl([existingItem, addedItem]));
+
+      expect(scheduleRefresh).toHaveBeenCalled();
+    });
+
+    it("does not refresh when the focus file still holds the items the view shows", async () => {
+      const onChanged = await openAndGetChangedListener();
+      const scheduleRefresh = jest.spyOn(view as any, "scheduleRefresh");
+
+      onChanged(focusFile, toJsonl([existingItem]));
+
+      expect(scheduleRefresh).not.toHaveBeenCalled();
     });
   });
 
