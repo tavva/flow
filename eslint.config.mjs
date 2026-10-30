@@ -13,6 +13,7 @@ export default defineConfig([
       "dist/**",
       "coverage/**",
       "node_modules/**",
+      ".worktrees/**",
       "scripts/**",
       "tests/**",
       "esbuild.config.mjs",
