@@ -419,6 +419,8 @@ export function confirmRelease(version: string, releaseNotes: string): Promise<b
     console.log(
       `  gh release create ${version} --title "v${version}" --draft --notes-file <notes>`
     );
+    console.log(`  git tag ${version}`);
+    console.log(`  git push origin ${version}`);
     console.log("  GitHub Actions will build, attest, and upload release assets\n");
 
     const rl = readline.createInterface({
@@ -456,6 +458,60 @@ export function commitAndPush(version: string): boolean {
   }
 }
 
+export function buildReleaseTagCommands(version: string): string[][] {
+  return [
+    ["tag", version],
+    ["push", "origin", version],
+  ];
+}
+
+/**
+ * Tags the release commit and pushes the tag, which starts the release workflow.
+ * Run after the draft release exists so the workflow uploads assets to it
+ * rather than creating a draft of its own.
+ */
+export function pushReleaseTag(version: string): boolean {
+  console.log("Tagging and pushing release tag...\n");
+
+  try {
+    for (const args of buildReleaseTagCommands(version)) {
+      execFileSync("git", args, { stdio: "inherit" });
+    }
+    console.log("\n✓ Release tag pushed\n");
+    return true;
+  } catch (error) {
+    console.error("\nError pushing release tag");
+    console.error(error instanceof Error ? error.message : String(error));
+    return false;
+  }
+}
+
+export interface ReleaseOptions {
+  version?: string;
+  notesFile?: string;
+}
+
+/**
+ * Reads options that replace the version and release notes prompts once they
+ * have been agreed outside the script
+ */
+export function parseReleaseArgs(args: string[]): ReleaseOptions {
+  const options: ReleaseOptions = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg !== "--version" && arg !== "--notes-file") {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+    const value = args[++i];
+    if (value === undefined) {
+      throw new Error(`${arg} needs a value`);
+    }
+    if (arg === "--version") options.version = value;
+    else options.notesFile = value;
+  }
+  return options;
+}
+
 /**
  * Reverts version file changes
  */
@@ -470,6 +526,14 @@ function rollbackVersionFiles(): void {
  */
 async function main(): Promise<void> {
   console.log("\n=== Production Release Workflow ===\n");
+
+  let options: ReleaseOptions;
+  try {
+    options = parseReleaseArgs(process.argv.slice(2));
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  }
 
   // Pre-flight checks
   if (!runPreflightChecks()) {
@@ -488,7 +552,7 @@ async function main(): Promise<void> {
   }
 
   // Get version bump type
-  const bumpType = await promptVersionBump(current);
+  const bumpType = options.version ?? (await promptVersionBump(current));
   const nextVersion = calculateNextVersion(current, bumpType);
 
   console.log(`\nBumping version: ${pkg.version} → ${nextVersion}\n`);
@@ -516,7 +580,9 @@ async function main(): Promise<void> {
   // Prompt for release notes
   let releaseNotes: string;
   try {
-    releaseNotes = promptReleaseNotes(nextVersion);
+    releaseNotes = options.notesFile
+      ? readFileSync(options.notesFile, "utf-8").trim()
+      : promptReleaseNotes(nextVersion);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     console.error("Reverting version changes...");
@@ -524,8 +590,9 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Confirm and execute
-  const confirmed = await confirmRelease(nextVersion, releaseNotes);
+  // Confirm and execute, unless both version and notes were agreed before running
+  const confirmed =
+    options.version && options.notesFile ? true : await confirmRelease(nextVersion, releaseNotes);
   if (!confirmed) {
     console.log("Release cancelled. Reverting version changes...");
     rollbackVersionFiles();
@@ -544,7 +611,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  console.log(`\n✓ Version ${nextVersion} released successfully!\n`);
+  if (!pushReleaseTag(nextVersion)) {
+    console.error("Draft release was created but the release tag was not pushed.");
+    console.error(
+      `You can push it manually: git tag ${nextVersion} && git push origin ${nextVersion}`
+    );
+    process.exit(1);
+  }
+
+  console.log(`\n✓ Draft release ${nextVersion} created!\n`);
+  console.log("GitHub Actions will build, attest, and attach the release assets.");
+  console.log("Review the release notes and assets on GitHub, then publish the draft.\n");
 }
 
 // Run if called directly

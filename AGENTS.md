@@ -21,6 +21,20 @@ npm run release      # Interactive production release workflow
 npm run release:beta # Interactive beta release workflow
 ```
 
+### Releasing
+
+Agents follow this order and wait for Ben at each approval:
+
+1. Draft release notes covering every user-facing commit since the last tag
+   (`git log <last tag>..HEAD`), not just the current session's work.
+2. Ben approves or edits the notes.
+3. Propose a version number.
+4. Ben approves it.
+5. Run `npm run release -- --version <version> --notes-file <notes>`, wait for the
+   release workflow to attach attested assets, then publish the draft.
+
+Never get round the script's prompts in any other way. See `docs/RELEASING.md`.
+
 ### Completion Checklist
 
 Before declaring any task complete, always run:

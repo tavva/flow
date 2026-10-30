@@ -12,9 +12,18 @@ These steps describe how to cut a new Flow release and publish attested release 
    - build the plugin locally so you can catch build failures before publishing
    - create and push the release commit
    - create a draft GitHub release with the release notes, but without local asset uploads
+   - tag the release commit and push the tag, which starts the release workflow
 3. Review the local build artifacts (`main.js`, `styles.css`, `manifest.json`) and any documentation edits before confirming the release.
 
 If the script exits early, fix the reported issue and rerun it.
+
+To run it without prompts once the version and notes are agreed, pass both:
+`npm run release -- --version 1.3.13 --notes-file notes.md`. This also skips the
+confirmation prompt. Passing only one of them replaces that prompt and keeps the
+confirmation.
+
+The draft release is created before the tag is pushed. If the tag went first, the
+workflow could find no release yet and create its own draft with generated notes.
 
 ## 2. Let CI Publish Assets
 

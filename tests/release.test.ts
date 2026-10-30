@@ -6,6 +6,8 @@ import {
   calculateNextVersion,
   ParsedVersion,
   buildGitHubReleaseCreateArgs,
+  buildReleaseTagCommands,
+  parseReleaseArgs,
 } from "../scripts/release";
 
 describe("parseVersion", () => {
@@ -88,5 +90,35 @@ describe("buildGitHubReleaseCreateArgs", () => {
     expect(args).not.toContain("main.js");
     expect(args).not.toContain("styles.css");
     expect(args).not.toContain("manifest.json");
+  });
+});
+
+describe("buildReleaseTagCommands", () => {
+  test("tags the release commit and pushes only that tag", () => {
+    expect(buildReleaseTagCommands("1.3.12")).toEqual([
+      ["tag", "1.3.12"],
+      ["push", "origin", "1.3.12"],
+    ]);
+  });
+});
+
+describe("parseReleaseArgs", () => {
+  test("returns no options when run interactively", () => {
+    expect(parseReleaseArgs([])).toEqual({});
+  });
+
+  test("reads an approved version and notes file", () => {
+    expect(parseReleaseArgs(["--version", "1.3.13", "--notes-file", "/tmp/notes.md"])).toEqual({
+      version: "1.3.13",
+      notesFile: "/tmp/notes.md",
+    });
+  });
+
+  test("rejects an option without a value", () => {
+    expect(() => parseReleaseArgs(["--version"])).toThrow("--version needs a value");
+  });
+
+  test("rejects unknown options", () => {
+    expect(() => parseReleaseArgs(["--yes"])).toThrow("Unknown option: --yes");
   });
 });
