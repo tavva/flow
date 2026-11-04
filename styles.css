@@ -1748,6 +1748,29 @@ select.flow-gtd-inline-select option,
   opacity: 0.6;
 }
 
+/* Outside ID (e.g. a ticket number) before the wording of an item from another plugin */
+.flow-gtd-focus-external-id {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 0.8em;
+  font-family: var(--font-monospace);
+}
+
+.flow-gtd-focus-edit-input {
+  flex: 1;
+  min-width: 0;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.flow-gtd-focus-edit-input.is-invalid {
+  border-color: var(--text-error);
+}
+
 .flow-gtd-focus-parent-context {
   font-size: 0.85em;
   opacity: 0.7;
