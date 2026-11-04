@@ -30,7 +30,7 @@ import { runAsync } from "./src/async-utils";
 import { resolveFocusFilePath } from "./src/focus-file-path";
 import { moveFocusFile } from "./src/focus-file-move";
 import { confirmExistingFocusFile } from "./src/focus-file-confirm-modal";
-import { FocusApi } from "./src/focus-api";
+import { FlowApi, FocusApi } from "./src/focus-api";
 import { resolveMovedFocusFilePath } from "./src/focus-file-operations";
 
 type InboxCommandConfig = {
@@ -53,7 +53,8 @@ export default class FlowGTDCoachPlugin extends Plugin {
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
   private registeredSphereCommandIds: string[] = [];
   // Public API for companion plugins: app.plugins.getPlugin("flow")?.api
-  api: FocusApi;
+  api: FlowApi;
+  private focusApi: FocusApi | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -270,7 +271,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
   }
 
   private startFocusApi(): void {
-    this.api = new FocusApi(this.app.vault, () => this.settings);
+    const focusApi = new FocusApi(this.app.vault, () => this.settings);
+    this.focusApi = focusApi;
+    this.api = focusApi;
 
     // Every writer, including sync from other devices, changes the focus file
     const checkFocusFile = (file: TAbstractFile) => {
@@ -279,20 +282,20 @@ export default class FlowGTDCoachPlugin extends Plugin {
         resolveFocusFilePath(this.settings.focusFilePath)
       );
       if (file.path === focusFilePath) {
-        runAsync(this.api.checkForChanges(), "Failed to check focus file for changes");
+        focusApi.checkForChangesWhenSettled();
       }
     };
     this.registerEvent(this.app.vault.on("modify", checkFocusFile));
     this.registerEvent(this.app.vault.on("create", checkFocusFile));
 
     // The first check records the starting state; companions read it with getFocusItems
-    runAsync(this.api.checkForChanges(), "Failed to read focus file for change tracking");
+    runAsync(focusApi.checkForChanges(), "Failed to read focus file for change tracking");
 
     this.app.workspace.trigger("flow:api-ready", this.api);
   }
 
   onunload() {
-    this.api?.clearCallbacks();
+    this.focusApi?.dispose();
     this.app.workspace.trigger("flow:api-unloaded");
 
     // Clear the auto-clear interval

@@ -51,31 +51,34 @@ const newTicket = {
   externalId: "ABC-123",
 };
 
-// A vault holding only the focus file, written through the real persistence code
+// A vault of focus files, written through the real persistence code
 function createVault(initial: FocusItem[] = []) {
-  let content = initial.map((item) => JSON.stringify(item)).join("\n");
-  const file = new TFile(FOCUS_PATH);
+  const toJsonl = (items: FocusItem[]) => items.map((item) => JSON.stringify(item)).join("\n");
+  const files = new Map<string, string>([[FOCUS_PATH, toJsonl(initial)]]);
   const vault = {
-    getAbstractFileByPath: jest.fn((path: string) => (path === FOCUS_PATH ? file : null)),
-    read: jest.fn(async () => content),
-    modify: jest.fn(async (_file: TFile, value: string) => {
-      content = value;
+    getAbstractFileByPath: jest.fn((path: string) => (files.has(path) ? new TFile(path) : null)),
+    read: jest.fn(async (file: TFile) => files.get(file.path) ?? ""),
+    modify: jest.fn(async (file: TFile, value: string) => {
+      files.set(file.path, value);
     }),
     adapter: { stat: jest.fn(async () => ({ type: "folder" })) },
   } as unknown as Vault;
   return {
     vault,
-    items: () =>
-      content
+    items: (path = FOCUS_PATH) =>
+      (files.get(path) ?? "")
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line) as FocusItem),
     // Stands in for a change synced from another device
-    replaceContent: (items: FocusItem[]) => {
-      content = items.map((item) => JSON.stringify(item)).join("\n");
+    replaceContent: (items: FocusItem[], path = FOCUS_PATH) => {
+      files.set(path, toJsonl(items));
     },
   };
 }
+
+const SETTLE_MS = 20;
+const waitToSettle = () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS * 3));
 
 async function createApi(initial: FocusItem[] = []) {
   const store = createVault(initial);
@@ -84,7 +87,7 @@ async function createApi(initial: FocusItem[] = []) {
     spheres: ["personal", "work"],
     focusFilePath: FOCUS_PATH,
   };
-  const api = new FocusApi(store.vault, () => settings);
+  const api = new FocusApi(store.vault, () => settings, SETTLE_MS);
   await api.checkForChanges();
   return { api, settings, ...store };
 }
@@ -210,7 +213,7 @@ describe("FocusApi", () => {
       expect(items().map((item) => item.text)).toEqual([newTicket.text, "Review section 2"]);
     });
 
-    it.each(["text", "sphere", "sourceName", "externalId"] as const)(
+    it.each(["text", "sphere", "sourceName", "sourceLabel", "externalId"] as const)(
       "rejects an empty %s and writes nothing",
       async (field) => {
         const { api, items, vault } = await createApi();
@@ -222,6 +225,26 @@ describe("FocusApi", () => {
         expect(vault.modify).not.toHaveBeenCalled();
       }
     );
+
+    it.each(["javascript:alert(1)", "file:///etc/passwd", "not a url", ""])(
+      "rejects the url %p and writes nothing",
+      async (url) => {
+        const { api, items } = await createApi();
+
+        await expect(api.addFocusItem({ ...newTicket, url })).rejects.toThrow(
+          new ValidationError("Focus item url must be an http or https link")
+        );
+        expect(items()).toEqual([]);
+      }
+    );
+
+    it("accepts an http link", async () => {
+      const { api, items } = await createApi();
+
+      await api.addFocusItem({ ...newTicket, url: "http://localhost:8080/issue/1" });
+
+      expect(items()).toHaveLength(1);
+    });
   });
 
   describe("updateFocusItem", () => {
@@ -259,7 +282,17 @@ describe("FocusApi", () => {
       );
     });
 
-    it.each(["text", "sphere"] as const)("rejects an empty %s", async (field) => {
+    it("rejects a url that isn't an http or https link", async () => {
+      const item = externalItem("ABC-1");
+      const { api, items } = await createApi([item]);
+
+      await expect(api.updateFocusItem("ABC-1", { url: "javascript:alert(1)" })).rejects.toThrow(
+        ValidationError
+      );
+      expect(items()).toEqual([item]);
+    });
+
+    it.each(["text", "sphere", "sourceLabel"] as const)("rejects an empty %s", async (field) => {
       const item = externalItem("ABC-1");
       const { api, items } = await createApi([item]);
 
@@ -419,15 +452,130 @@ describe("FocusApi", () => {
       expect(callback).not.toHaveBeenCalled();
     });
 
-    it("stops calling every callback once callbacks are cleared", async () => {
+    it("forgets a source once its last callback unsubscribes", async () => {
       const { api } = await createApi();
+      const unsubscribeFirst = api.onFocusChange("linear", jest.fn());
+      const unsubscribeSecond = api.onFocusChange("linear", jest.fn());
+
+      unsubscribeFirst();
+      expect((api as any).callbacks.has("linear")).toBe(true);
+      unsubscribeSecond();
+      expect((api as any).callbacks.has("linear")).toBe(false);
+    });
+
+    it("gives each callback its own copy of the change", async () => {
+      const item = externalItem("ABC-1");
+      const { api, replaceContent } = await createApi([item]);
+      const seen: string[] = [];
+      api.onFocusChange("linear", (change) => {
+        change.item.text = "Changed by a callback";
+      });
+      api.onFocusChange("linear", (change) => seen.push(change.item.text));
+
+      replaceContent([{ ...item, text: "Synced wording" }]);
+      await api.checkForChanges();
+      await api.checkForChanges();
+
+      expect(seen).toEqual(["Synced wording"]);
+    });
+
+    it("returns items the caller can change without affecting later events", async () => {
+      const item = externalItem("ABC-1");
+      const { api } = await createApi([item]);
+      const changes = recordChanges(api);
+
+      const [returned] = await api.getFocusItems("linear");
+      returned.text = "Changed by the caller";
+      await api.checkForChanges();
+
+      expect(changes).toEqual([]);
+    });
+
+    it("resolves a write that succeeded even if the change check then fails", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+      const { api, items } = await createApi();
+      const failure = new Error("Read failed");
+      jest.spyOn(api, "checkForChanges").mockRejectedValueOnce(failure);
+
+      await expect(api.addFocusItem(newTicket)).resolves.toEqual(expect.any(String));
+
+      expect(items()).toHaveLength(1);
+      expect(consoleError).toHaveBeenCalledWith("Failed to check focus file for changes", failure);
+      consoleError.mockRestore();
+    });
+
+    it("reports nothing when the focus file setting points at a different file", async () => {
+      const { api, settings, replaceContent } = await createApi([externalItem("ABC-1")]);
+      const changes = recordChanges(api);
+      replaceContent([externalItem("ABC-9")], "Other/Focus.md");
+
+      settings.focusFilePath = "Other/Focus.md";
+      await api.checkForChanges();
+      expect(changes).toEqual([]);
+
+      replaceContent([externalItem("ABC-9"), externalItem("ABC-10")], "Other/Focus.md");
+      await api.checkForChanges();
+      expect(changes).toEqual([{ type: "added", item: externalItem("ABC-10") }]);
+    });
+
+    it("waits for the file to settle, so a passing half-synced state reports nothing", async () => {
+      const item = externalItem("ABC-1");
+      const { api, replaceContent } = await createApi([item]);
+      const changes = recordChanges(api);
+      const check = jest.spyOn(api, "checkForChanges");
+
+      replaceContent([]); // Sync empties the file for a moment
+      api.checkForChangesWhenSettled();
+      replaceContent([{ ...item, text: "Synced wording" }]);
+      api.checkForChangesWhenSettled();
+      await waitToSettle();
+      await api.checkForChanges();
+
+      expect(check).toHaveBeenCalledTimes(2); // One settled check, then the one above
+      expect(changes).toEqual([
+        { type: "edited", item: { ...item, text: "Synced wording" }, previous: item },
+      ]);
+    });
+
+    it("logs a failed settled check", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+      const { api, vault } = await createApi();
+      const failure = new Error("Read failed");
+      (vault.read as jest.Mock).mockRejectedValueOnce(failure);
+
+      api.checkForChangesWhenSettled();
+      await waitToSettle();
+
+      expect(consoleError).toHaveBeenCalledWith("Failed to check focus file for changes", failure);
+      consoleError.mockRestore();
+    });
+  });
+
+  describe("after Flow unloads", () => {
+    it("stops calling callbacks and cancels a waiting check", async () => {
+      const { api, replaceContent } = await createApi();
       const callback = jest.fn();
       api.onFocusChange("linear", callback);
+      replaceContent([externalItem("ABC-1")]);
+      api.checkForChangesWhenSettled();
 
-      api.clearCallbacks();
-      await api.addFocusItem(newTicket);
+      api.dispose();
+      await waitToSettle();
+      await api.checkForChanges();
 
       expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("refuses writes and new callbacks", async () => {
+      const { api, items } = await createApi([externalItem("ABC-1")]);
+      api.dispose();
+
+      await expect(api.addFocusItem(newTicket)).rejects.toThrow("Flow has been unloaded");
+      await expect(api.completeFocusItem("ABC-1")).rejects.toThrow("Flow has been unloaded");
+      const callback = jest.fn();
+      api.onFocusChange("linear", callback)();
+      expect((api as any).callbacks.size).toBe(0);
+      expect(items()).toEqual([externalItem("ABC-1")]);
     });
 
     it("logs a throwing callback and still calls the others", async () => {

@@ -91,7 +91,10 @@ export async function archiveClearedTasks(
         .map((item) => {
           if (isExternalFocusItem(item)) {
             const { sourceLabel, externalId, url } = item.external;
-            return `- [${sourceLabel} ${externalId}](${url}) ${item.text}`;
+            // Escape the link text and wrap the url in <> so neither can break the link
+            const label = `${sourceLabel} ${externalId}`.replace(/[\\[\]]/g, "\\$&");
+            const target = url.replace(/</g, "%3C").replace(/>/g, "%3E");
+            return `- [${label}](<${target}>) ${item.text}`;
           }
 
           const wikilinkPath = item.file.replace(/\.md$/, "");
