@@ -16,6 +16,7 @@ import { ActionLineFinder } from "./action-line-finder";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { FileWriter } from "./file-writer";
 import { loadFocusItems, updateFocusItems } from "./focus-persistence";
+import { isVaultFocusItem } from "./focus-item";
 import { resolveFocusFilePath } from "./focus-file-path";
 import { SphereDataLoader, SphereViewData, SphereProjectSummary } from "./sphere-data-loader";
 import { extractContexts } from "./context-tags";
@@ -274,7 +275,8 @@ export class SphereView extends ItemView {
       const file = item.getAttribute("data-focus-file");
       const action = item.getAttribute("data-focus-action");
       const inFocus = focusItems.some(
-        (focusItem) => focusItem.file === file && focusItem.text === action
+        (focusItem) =>
+          isVaultFocusItem(focusItem) && focusItem.file === file && focusItem.text === action
       );
       if (inFocus) {
         item.classList.add("sphere-action-in-focus");
@@ -784,7 +786,8 @@ export class SphereView extends ItemView {
     const focusFilePath = this.settings.focusFilePath;
     const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
     const inFocus = focusItems.some(
-      (focusItem) => focusItem.file === file && focusItem.text === action
+      (focusItem) =>
+        isVaultFocusItem(focusItem) && focusItem.file === file && focusItem.text === action
     );
     if (inFocus) {
       item.addClass("sphere-action-in-focus");
@@ -969,7 +972,11 @@ export class SphereView extends ItemView {
     try {
       await updateFocusItems(
         this.app.vault,
-        (items) => items.filter((item) => !(item.file === file && item.lineNumber === lineNumber)),
+        (items) =>
+          items.filter(
+            (item) =>
+              !(isVaultFocusItem(item) && item.file === file && item.lineNumber === lineNumber)
+          ),
         focusFilePath
       );
     } catch (error) {
@@ -988,7 +995,9 @@ export class SphereView extends ItemView {
   private async isOnFocus(file: string, lineNumber: number): Promise<boolean> {
     const focusFilePath = this.settings.focusFilePath;
     const focusItems = await loadFocusItems(this.app.vault, focusFilePath);
-    return focusItems.some((item) => item.file === file && item.lineNumber === lineNumber);
+    return focusItems.some(
+      (item) => isVaultFocusItem(item) && item.file === file && item.lineNumber === lineNumber
+    );
   }
 
   private async activateFocusView(): Promise<void> {
