@@ -25,6 +25,10 @@ Flow gets everything out of your head and into a trusted system, so you can focu
 - **Waiting For** — Track items you're waiting on others to complete
 - **Planning Mode** — Build your focus list by selecting actions from sphere views
 
+## A note on AI-assisted engineering
+
+The first version of Flow was handcrafted, but all my code now is written by AI, including code in this plugin. I've been a software engineer for 29 years, have been CTO at several companies, have built a lot of software both individually and as part of different size teams. I stand by the architecture and code in this plugin, and have checks in my workflow to manage security and correctness.
+
 ## Quick Start
 
 [![Install in Obsidian](https://img.shields.io/badge/Install%20in-Obsidian-7C3AED?logo=obsidian&style=for-the-badge)](https://obsidian.md/plugins?id=flow)
