@@ -93,7 +93,7 @@ The interface is `FlowApi` in [`src/focus-api.ts`](src/focus-api.ts); copy it in
 | Method                                | What it does                                                                                                                     |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `addFocusItem(input)`                 | Adds an item with `text`, `sphere`, `sourceName`, `sourceLabel`, `url` and `externalId`, and returns its new `id`                |
-| `updateFocusItem(id, changes)`        | Changes any of `text`, `sphere`, `sourceLabel` or `url`                                                                          |
+| `updateFocusItem(id, changes)`        | Changes any of `text`, `sphere`, `sourceLabel`, `url` or `externalId`                                                            |
 | `completeFocusItem(id)`               | Marks the item complete; it stays in Focus under Completed Today                                                                 |
 | `removeFocusItem(id)`                 | Takes the item out of Focus                                                                                                      |
 | `getFocusItems(sourceName)`           | Returns your source's items, including completed ones                                                                            |

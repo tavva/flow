@@ -125,7 +125,13 @@ export interface FlowApi {
 
   updateFocusItem(
     id: string,
-    changes: Partial<{ text: string; sphere: string; sourceLabel: string; url: string }>
+    changes: Partial<{
+      text: string;
+      sphere: string;
+      sourceLabel: string;
+      url: string;
+      externalId: string; // Changes when the source renames its record, e.g. ABC-5 → XYZ-12
+    }>
   ): Promise<void>;
 
   completeFocusItem(id: string): Promise<void>; // Sets completedAt
@@ -172,7 +178,7 @@ the API, auto-clear, and edits synced in from another device.
   `src/focus-api.ts` that matches external items by `id` and returns
   `FocusChange[]`: new ids are `added`, missing ids are `removed`, a newly set
   `completedAt` is `completed`, any other change to `text`, `sphere`,
-  `sourceLabel` or `url` is `edited`.
+  `sourceLabel`, `url` or `externalId` is `edited`.
 - Each change goes to the callbacks registered for its `sourceName`. A
   throwing callback is logged and doesn't stop the others.
 - Pin and reorder changes aren't reported.
