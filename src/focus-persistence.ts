@@ -4,6 +4,7 @@
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 import { ValidationError } from "./errors";
+import { hasValidExternalSource } from "./focus-item";
 
 import { resolveFocusFilePath } from "./focus-file-path";
 import { DEFAULT_SETTINGS } from "./types/settings";
@@ -61,7 +62,16 @@ function parseJsonlFormat(content: string): FocusItem[] {
     if (!trimmed) continue;
 
     try {
-      const item = JSON.parse(trimmed) as FocusItem;
+      const parsed: unknown = JSON.parse(trimmed);
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        ("external" in parsed && !hasValidExternalSource(parsed))
+      ) {
+        console.warn("Skipping invalid line in focus file:", trimmed.substring(0, 50));
+        continue;
+      }
+      const item = parsed as FocusItem;
       if (!item.contexts) {
         item.contexts = [];
       }

@@ -1,9 +1,17 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer, ViewStateResult, Editor } from "obsidian";
+import {
+  WorkspaceLeaf,
+  TFile,
+  setIcon,
+  MarkdownRenderer,
+  ViewStateResult,
+  Editor,
+  Notice,
+} from "obsidian";
 import { ExternalFocusItem, FocusItem, PluginSettings, FlowProject, VaultFocusItem } from "./types";
-import { isExternalFocusItem, isSameFocusItem, isVaultFocusItem } from "./focus-item";
+import { isExternalFocusItem, isSameFocusItem, isVaultFocusItem, isWebUrl } from "./focus-item";
 import { FocusValidator } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
@@ -48,6 +56,25 @@ interface FlowWorkspaceTrigger {
   ): void;
 }
 
+const ITEM_GONE_MESSAGE =
+  "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view.";
+
+/**
+ * Find an item in the latest focus list. A vault item whose line number was updated
+ * elsewhere (another view or device) is still found by its file, time added and line.
+ */
+function findFocusItemIndex(items: FocusItem[], item: FocusItem): number {
+  const index = items.findIndex((i) => isSameFocusItem(i, item));
+  if (index !== -1 || isExternalFocusItem(item)) return index;
+  return items.findIndex(
+    (i) =>
+      isVaultFocusItem(i) &&
+      i.file === item.file &&
+      i.addedAt === item.addedAt &&
+      i.lineContent === item.lineContent
+  );
+}
+
 export class FocusView extends RefreshingView {
   private settings: PluginSettings;
   private validator: FocusValidator;
@@ -62,6 +89,9 @@ export class FocusView extends RefreshingView {
   private focusLoadVersion = 0;
   private loadedFocusSnapshot: string | null = null;
   private selectedContexts: string[] = [];
+  // While a wording edit is open, re-rendering would throw it away, so refreshes wait
+  private editingItem: ExternalFocusItem | null = null;
+  private refreshDeferred = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -130,6 +160,10 @@ export class FocusView extends RefreshingView {
   }
 
   async onOpen() {
+    if (this.editingItem) {
+      this.refreshDeferred = true;
+      return;
+    }
     this.cleanup();
     const container = this.contentEl;
     container.empty();
@@ -245,7 +279,7 @@ export class FocusView extends RefreshingView {
   ): Promise<boolean> {
     let found = false;
     await this.updateFocus((items) => {
-      const current = items.find((i) => isSameFocusItem(i, item));
+      const current = items[findFocusItemIndex(items, item)];
       if (current) {
         change(current);
         found = true;
@@ -267,6 +301,10 @@ export class FocusView extends RefreshingView {
   }
 
   protected async performRefresh(): Promise<void> {
+    if (this.editingItem) {
+      this.refreshDeferred = true;
+      return;
+    }
     try {
       // Reload focus items from file to pick up changes from other views
       const loadVersion = await this.loadFocus();
@@ -961,7 +999,11 @@ export class FocusView extends RefreshingView {
     textSpan.createSpan({ cls: "flow-gtd-focus-external-id", text: item.external.externalId });
     textSpan.createSpan({ text: item.text });
     textSpan.addEventListener("click", () => {
-      window.open(item.external.url);
+      if (isWebUrl(item.external.url)) {
+        window.open(item.external.url);
+      } else {
+        new Notice("This item's link isn't a web address, so it can't be opened.");
+      }
     });
   }
 
@@ -989,9 +1031,18 @@ export class FocusView extends RefreshingView {
     input.setAttribute("aria-label", "Wording");
 
     let finished = false;
-    const stopEditing = () => {
+    this.editingItem = item;
+    const endEdit = () => {
       finished = true;
+      this.editingItem = null;
+    };
+    const stopEditing = () => {
+      endEdit();
       input.replaceWith(textSpan);
+      if (this.refreshDeferred) {
+        this.refreshDeferred = false;
+        this.scheduleRefresh();
+      }
     };
 
     input.addEventListener("keydown", (e) => {
@@ -1007,7 +1058,9 @@ export class FocusView extends RefreshingView {
           input.setAttribute("aria-invalid", "true");
           return;
         }
-        finished = true;
+        // Saving re-renders from the latest file, which covers any deferred refresh
+        endEdit();
+        this.refreshDeferred = false;
         runAsync(
           this.updateItemText(item, text).catch((error) => {
             stopEditing();
@@ -1217,7 +1270,7 @@ export class FocusView extends RefreshingView {
       // External items have no vault line; completing only records the time
       if (
         await this.updateFocusItem(item, (current) => {
-          current.completedAt = Date.now();
+          current.completedAt ??= Date.now();
         })
       ) {
         await this.onOpen(); // Re-render
@@ -1252,16 +1305,18 @@ export class FocusView extends RefreshingView {
 
       // Set completedAt instead of removing from focus
       const found = await this.updateFocusItem(item, (current) => {
-        current.completedAt = Date.now();
+        current.completedAt ??= Date.now();
       });
 
-      if (found) {
-        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
-          file: item.file,
-          action: item.text,
-        });
-        await this.onOpen(); // Re-render
+      if (!found) {
+        new Notice(ITEM_GONE_MESSAGE);
+        return;
       }
+      (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
+        file: item.file,
+        action: item.text,
+      });
+      await this.onOpen(); // Re-render
     }
   }
 
@@ -1291,13 +1346,15 @@ export class FocusView extends RefreshingView {
         if (isVaultFocusItem(current)) current.lineContent = updatedLine;
       });
 
-      if (found) {
-        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
-          file: item.file,
-          action: item.text,
-        });
-        await this.onOpen(); // Re-render
+      if (!found) {
+        new Notice(ITEM_GONE_MESSAGE);
+        return;
       }
+      (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
+        file: item.file,
+        action: item.text,
+      });
+      await this.onOpen(); // Re-render
     }
   }
 
@@ -1309,13 +1366,17 @@ export class FocusView extends RefreshingView {
   }
 
   private async removeFromFocus(item: FocusItem): Promise<void> {
-    await this.updateFocus((items) => items.filter((i) => !isSameFocusItem(i, item)));
+    await this.updateFocus((items) => {
+      const index = findFocusItemIndex(items, item);
+      if (index !== -1) items.splice(index, 1);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 
   private async pinItem(item: FocusItem): Promise<void> {
     await this.updateFocus((items) => {
-      const index = items.findIndex((i) => isSameFocusItem(i, item));
+      const index = findFocusItemIndex(items, item);
       if (index === -1) return items;
 
       // Set isPinned flag
@@ -1363,8 +1424,8 @@ export class FocusView extends RefreshingView {
 
     const draggedItem = this.draggedItem;
     await this.updateFocus((items) => {
-      const draggedIndex = items.findIndex((i) => isSameFocusItem(i, draggedItem));
-      const targetIndex = items.findIndex((i) => isSameFocusItem(i, dropTarget));
+      const draggedIndex = findFocusItemIndex(items, draggedItem);
+      const targetIndex = findFocusItemIndex(items, dropTarget);
       if (draggedIndex === -1 || targetIndex === -1) return items;
 
       // Remove dragged item and insert at target position

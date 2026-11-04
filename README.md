@@ -73,6 +73,9 @@ Flow creates missing folders and moves your existing focus file automatically. I
 
 Other Obsidian plugins can put items into your focus that have no line in your vault, such as a ticket from an issue tracker. These items show in the Focus view under their source's name. Clicking one opens it at its source, and the pencil button changes its wording. Completing or removing one tells the plugin that added it.
 
+> [!WARNING]
+> **Update Flow on every device before you install a plugin that adds Focus items.** Flow 1.3.12 and earlier don't know about these items: when their Focus view refreshes, they remove them from the focus file. That removal then syncs to your other devices, and the plugin that added the items is told they were removed. Older versions can't be fixed, so update Flow everywhere you use this vault first.
+
 ### For plugin developers
 
 Flow publishes an API on its plugin instance. Look it up once the workspace layout is ready, because Obsidian loads plugins in no set order:
@@ -101,8 +104,17 @@ The interface is `FlowApi` in [`src/focus-api.ts`](src/focus-api.ts); copy it in
 | `onFocusChange(sourceName, callback)` | Calls `callback` with `added`, `edited`, `completed` or `removed` changes to your source's items, and returns a function to stop |
 
 - `sourceName` identifies your plugin's items (for example `"linear"`); `sourceLabel` is what the user sees (for example a workspace name). `externalId` is your record's own ID, and one record can have several items.
-- Calls with an unknown `id` reject with an error, and `addFocusItem` rejects empty `text`, `sphere`, `sourceName` or `externalId`.
-- Change events cover every change to the focus file: the Focus view, your own API calls, auto-clear and edits synced from another device. Pinning and reordering aren't reported. There are no events for the state when Flow starts; call `getFocusItems` and work from that. Treat events as hints that something changed: the file is the source of truth.
+- `url` must be an `http` or `https` link. Flow won't open anything else.
+- Calls with an unknown `id` reject with an error. `addFocusItem` rejects empty `text`, `sphere`, `sourceName`, `sourceLabel` or `externalId`, and `updateFocusItem` rejects an empty value for any field it changes.
+- When Flow unloads, the API object you hold stops working: writes reject, and callbacks stop. Get the API again after the next `flow:api-ready`.
+- Objects you receive, from `getFocusItems` or in change events, are your own copies. Changing them doesn't change Focus.
+
+#### Change events
+
+- Change events cover every change to the focus file: the Focus view, your own API calls, auto-clear and edits synced from another device. Pinning and reordering aren't reported. There are no events for the state when Flow starts; call `getFocusItems` and work from that.
+- Flow compares the focus file with the last version it saw. Changes made close together arrive together, compared against that earlier version. For example, items you add inside a `flow:api-ready` handler, before Flow has read the file, are part of the starting state and get no `added` event. An item added and removed between two comparisons isn't reported at all.
+- After a change from outside Flow (such as sync), Flow waits for the file to stay unchanged for a second before comparing.
+- Treat events as hints that something changed: the file is the source of truth. This matters most for `removed`. A sync can briefly leave the focus file empty or cut short, or bring back an older copy from a device that was offline, and an out-of-date Flow on another device can remove your items (see the warning above). Before you act on a `removed` event outside Flow, such as removing a label in your own tool, wait a few seconds and confirm with `getFocusItems` that the item is still gone.
 - `apiVersion` changes only when an existing method changes in a way that breaks callers. New methods don't change it.
 
 ## Focus File Format

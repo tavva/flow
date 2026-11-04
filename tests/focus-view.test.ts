@@ -1,7 +1,7 @@
 // tests/focus-view.test.ts
 import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { ExternalFocusItem, FocusItem } from "../src/types";
-import { WorkspaceLeaf, MarkdownRenderer } from "obsidian";
+import { WorkspaceLeaf, MarkdownRenderer, Notice } from "obsidian";
 
 jest.mock("obsidian");
 
@@ -2105,6 +2105,25 @@ describe("FocusView", () => {
       open.mockRestore();
     });
 
+    it("refuses to open a link that isn't a web address", async () => {
+      const open = jest.spyOn(window, "open").mockImplementation(() => null);
+      (Notice as any).mockConstructor.mockClear();
+      const bad = ticket("ROO-1", {
+        external: { ...ticket("ROO-1").external, url: "javascript:alert(1)" },
+      });
+      const container = await openWith([bad]);
+
+      (
+        itemFor(container, "ROO-1").querySelector(".flow-gtd-focus-item-text") as HTMLElement
+      ).click();
+
+      expect(open).not.toHaveBeenCalled();
+      expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+        "This item's link isn't a web address, so it can't be opened."
+      );
+      open.mockRestore();
+    });
+
     it("offers editing but not converting to waiting for", async () => {
       const container = await openWith([ticket("ROO-1"), { ...vaultAction }]);
 
@@ -2184,6 +2203,77 @@ describe("FocusView", () => {
     });
 
     describe("actions right after another writer changed Focus", () => {
+      it("keeps the first completion time when another device completed the item first", async () => {
+        const completedElsewhere = Date.now() - 1000;
+        const container = await openWith([ticket("ROO-1")]);
+        mockFocusItems = [ticket("ROO-1", { completedAt: completedElsewhere })];
+
+        button(itemFor(container, "ROO-1"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([ticket("ROO-1", { completedAt: completedElsewhere })]);
+      });
+
+      it("finds a vault item whose line number another device updated", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n- [ ] Other\n\n- [ ] Write the plan");
+        (view as any).validator = {
+          validateItem: jest.fn().mockResolvedValue({ found: true, updatedLineNumber: 5 }),
+        };
+        const container = await openWith([vaultAction]);
+        const movedAction = { ...vaultAction, lineNumber: 5 };
+        mockFocusItems = [movedAction];
+
+        button(itemFor(container, "Write the plan"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([{ ...movedAction, completedAt: expect.any(Number) }]);
+      });
+
+      it("says so when a completed vault item is no longer in Focus", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n## Next actions\n\n- [ ] Write the plan");
+        (view as any).validator = { validateItem: jest.fn().mockResolvedValue({ found: true }) };
+        (Notice as any).mockConstructor.mockClear();
+        const container = await openWith([vaultAction]);
+        mockFocusItems = [];
+
+        button(itemFor(container, "Write the plan"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([]);
+        expect(mockApp.workspace.trigger).not.toHaveBeenCalled();
+        expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+          "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view."
+        );
+      });
+
+      it("says so when an item converted to waiting for is no longer in Focus", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n## Next actions\n\n- [ ] Write the plan");
+        (view as any).validator = { validateItem: jest.fn().mockResolvedValue({ found: true }) };
+        (Notice as any).mockConstructor.mockClear();
+        const container = await openWith([vaultAction]);
+        mockFocusItems = [];
+
+        button(itemFor(container, "Write the plan"), "Convert to waiting for")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([]);
+        expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+          "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view."
+        );
+      });
+
       // Another plugin or a synced device writes before the view has refreshed
       const writeFromOutside = (items: FocusItem[]) => {
         mockFocusItems = items;
@@ -2277,6 +2367,49 @@ describe("FocusView", () => {
         input.dispatchEvent(
           new input.ownerDocument.defaultView!.KeyboardEvent("keydown", { key, bubbles: true })
         );
+
+      it("holds a background refresh until the edit is cancelled", async () => {
+        const input = await startEditing();
+        const scheduleRefresh = jest
+          .spyOn(view as any, "scheduleRefresh")
+          .mockImplementation(() => {});
+        (mockLoadFocusItems as jest.Mock).mockClear();
+
+        await (view as any).performRefresh();
+        await view.onOpen();
+
+        expect(mockLoadFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.contains(input)).toBe(true);
+        expect(scheduleRefresh).not.toHaveBeenCalled();
+
+        press(input, "Escape");
+        expect(scheduleRefresh).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not schedule a refresh on cancel when none was held", async () => {
+        const input = await startEditing();
+        const scheduleRefresh = jest
+          .spyOn(view as any, "scheduleRefresh")
+          .mockImplementation(() => {});
+
+        press(input, "Escape");
+
+        expect(scheduleRefresh).not.toHaveBeenCalled();
+      });
+
+      it("shows the latest file after saving an edit that held a refresh", async () => {
+        const input = await startEditing();
+        await (view as any).performRefresh();
+        mockFocusItems = [ticket("ROO-1"), ticket("ROO-2")];
+
+        input.value = "Write section 2";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(itemFor(view.contentEl, "Write section 2")).toBeDefined();
+        expect(itemFor(view.contentEl, "ROO-2")).toBeDefined();
+        expect((view as any).refreshDeferred).toBe(false);
+      });
 
       it("replaces the text with an input holding the current wording", async () => {
         const input = await startEditing();

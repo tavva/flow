@@ -5,7 +5,14 @@ import { Vault } from "obsidian";
 import { ExternalFocusItem, FocusItem, PluginSettings } from "./types";
 import { ValidationError } from "./errors";
 import { loadFocusItems, updateFocusItems } from "./focus-persistence";
-import { isExternalFocusItem } from "./focus-item";
+import { isExternalFocusItem, isWebUrl } from "./focus-item";
+import { resolveFocusFilePath } from "./focus-file-path";
+import { resolveMovedFocusFilePath } from "./focus-file-operations";
+import { clearActiveTimeout, setActiveTimeout, TimerHandle } from "./obsidian-platform";
+
+// How long the focus file must stay unchanged after a modify event before Flow compares it,
+// so half-synced states (an empty or truncated file) settle first.
+export const FOCUS_CHANGE_SETTLE_MS = 1000;
 
 export interface NewExternalFocusItem {
   text: string;
@@ -90,6 +97,13 @@ function requireText(value: unknown, field: string): string {
   return value;
 }
 
+function requireWebUrl(value: unknown): string {
+  if (!isWebUrl(value)) {
+    throw new ValidationError("Focus item url must be an http or https link");
+  }
+  return value as string;
+}
+
 function findExternalItem(items: FocusItem[], id: string): ExternalFocusItem {
   const item = items.find((entry) => isExternalFocusItem(entry) && entry.id === id);
   if (!item || !isExternalFocusItem(item)) {
@@ -101,12 +115,16 @@ function findExternalItem(items: FocusItem[], id: string): ExternalFocusItem {
 export class FocusApi implements FlowApi {
   readonly apiVersion = 1;
   private callbacks = new Map<string, Set<FocusChangeCallback>>();
-  private snapshot: FocusItem[] | null = null;
+  // The focus list as last compared, and the file it was read from
+  private snapshot: { path: string; items: FocusItem[] } | null = null;
   private pendingCheck: Promise<void> = Promise.resolve();
+  private settleTimer: TimerHandle | null = null;
+  private disposed = false;
 
   constructor(
     private vault: Vault,
-    private getSettings: () => PluginSettings
+    private getSettings: () => PluginSettings,
+    private settleMs = FOCUS_CHANGE_SETTLE_MS
   ) {}
 
   async addFocusItem(input: NewExternalFocusItem): Promise<string> {
@@ -118,8 +136,8 @@ export class FocusApi implements FlowApi {
       addedAt: Date.now(),
       external: {
         sourceName: requireText(input.sourceName, "sourceName"),
-        sourceLabel: input.sourceLabel,
-        url: input.url,
+        sourceLabel: requireText(input.sourceLabel, "sourceLabel"),
+        url: requireWebUrl(input.url),
         externalId: requireText(input.externalId, "externalId"),
       },
       contexts: [],
@@ -131,12 +149,17 @@ export class FocusApi implements FlowApi {
   async updateFocusItem(id: string, changes: ExternalFocusItemChanges): Promise<void> {
     const text = changes.text === undefined ? undefined : requireText(changes.text, "text").trim();
     const sphere = changes.sphere === undefined ? undefined : requireText(changes.sphere, "sphere");
+    const sourceLabel =
+      changes.sourceLabel === undefined
+        ? undefined
+        : requireText(changes.sourceLabel, "sourceLabel");
+    const url = changes.url === undefined ? undefined : requireWebUrl(changes.url);
     await this.write((items) => {
       const item = findExternalItem(items, id);
       if (text !== undefined) item.text = text;
       if (sphere !== undefined) item.sphere = sphere;
-      if (changes.sourceLabel !== undefined) item.external.sourceLabel = changes.sourceLabel;
-      if (changes.url !== undefined) item.external.url = changes.url;
+      if (sourceLabel !== undefined) item.external.sourceLabel = sourceLabel;
+      if (url !== undefined) item.external.url = url;
       return items;
     });
   }
@@ -157,6 +180,7 @@ export class FocusApi implements FlowApi {
     });
   }
 
+  // Items are parsed fresh from the file on every call, so callers get their own objects
   async getFocusItems(sourceName: string): Promise<ExternalFocusItem[]> {
     const items = await loadFocusItems(this.vault, this.getSettings().focusFilePath);
     return items.filter(
@@ -170,11 +194,15 @@ export class FocusApi implements FlowApi {
   }
 
   onFocusChange(sourceName: string, callback: FocusChangeCallback): () => void {
+    if (this.disposed) return () => {};
     const callbacks = this.callbacks.get(sourceName) ?? new Set<FocusChangeCallback>();
     callbacks.add(callback);
     this.callbacks.set(sourceName, callbacks);
     return () => {
       callbacks.delete(callback);
+      if (callbacks.size === 0 && this.callbacks.get(sourceName) === callbacks) {
+        this.callbacks.delete(sourceName);
+      }
     };
   }
 
@@ -188,25 +216,64 @@ export class FocusApi implements FlowApi {
     return check;
   }
 
-  clearCallbacks(): void {
+  /**
+   * Check for changes once the focus file has stayed unchanged for a moment.
+   * Used for vault events, which arrive in bursts while a sync is writing the file.
+   */
+  checkForChangesWhenSettled(): void {
+    if (this.disposed) return;
+    if (this.settleTimer !== null) clearActiveTimeout(this.settleTimer);
+    this.settleTimer = setActiveTimeout(() => {
+      this.settleTimer = null;
+      this.checkForChanges().catch((error) => {
+        console.error("Failed to check focus file for changes", error);
+      });
+    }, this.settleMs);
+  }
+
+  /** Stop all callbacks and refuse further writes. Called when Flow unloads. */
+  dispose(): void {
+    this.disposed = true;
     this.callbacks.clear();
+    if (this.settleTimer !== null) {
+      clearActiveTimeout(this.settleTimer);
+      this.settleTimer = null;
+    }
+  }
+
+  private focusFilePath(): string {
+    return resolveMovedFocusFilePath(
+      this.vault,
+      resolveFocusFilePath(this.getSettings().focusFilePath)
+    );
   }
 
   private async write(update: (items: FocusItem[]) => FocusItem[]): Promise<void> {
+    if (this.disposed) {
+      throw new Error("Flow has been unloaded; get the API again once Flow is ready");
+    }
     await updateFocusItems(this.vault, update, this.getSettings().focusFilePath);
-    await this.checkForChanges();
+    // The write has succeeded; a failed check must not make the caller retry it
+    try {
+      await this.checkForChanges();
+    } catch (error) {
+      console.error("Failed to check focus file for changes", error);
+    }
   }
 
   private async compareWithSnapshot(): Promise<void> {
-    const items = await loadFocusItems(this.vault, this.getSettings().focusFilePath);
+    const path = this.focusFilePath();
+    const items = await loadFocusItems(this.vault, path);
     const previous = this.snapshot;
-    this.snapshot = items;
-    if (previous === null) return;
+    this.snapshot = { path, items };
+    // A first read, or a different focus file, only records the starting state
+    if (previous === null || previous.path !== path) return;
 
-    for (const change of diffExternalFocusItems(previous, items)) {
+    for (const change of diffExternalFocusItems(previous.items, items)) {
       for (const callback of this.callbacks.get(change.item.external.sourceName) ?? []) {
         try {
-          callback(change);
+          // Each callback gets its own copy, so changing it can't affect Flow or other callbacks
+          callback(structuredClone(change));
         } catch (error) {
           console.error("Focus change callback failed", error);
         }

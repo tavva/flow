@@ -381,5 +381,27 @@ describe("focus-persistence JSONL format", () => {
       ]);
       expect(await loadFocusItems(mockVault)).toEqual([vaultItem, externalItem]);
     });
+
+    it.each([
+      ["a null source", { ...externalItem, external: null }],
+      ["no id", { ...externalItem, id: undefined }],
+      ["a source missing its url", { ...externalItem, external: { sourceName: "linear" } }],
+      [
+        "a source with a non-text label",
+        { ...externalItem, external: { ...externalItem.external, sourceLabel: 3 } },
+      ],
+    ])("skips an external line with %s and warns", async (_case, badItem) => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const file = new TFile("flow-focus-data/focus.md");
+      mockVault.getAbstractFileByPath.mockReturnValue(file);
+      mockVault.read.mockResolvedValue(
+        [JSON.stringify(vaultItem), JSON.stringify(badItem), "42"].join("\n")
+      );
+
+      expect(await loadFocusItems(mockVault)).toEqual([vaultItem]);
+      expect(warn).toHaveBeenCalledTimes(2);
+      expect(warn).toHaveBeenCalledWith("Skipping invalid line in focus file:", expect.any(String));
+      warn.mockRestore();
+    });
   });
 });
