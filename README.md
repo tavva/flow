@@ -69,6 +69,84 @@ Choose **Settings → Flow → Output Files & Folders → Focus File** to set th
 
 Flow creates missing folders and moves your existing focus file automatically. If the destination already exists, Flow asks whether to use that file instead; neither file is overwritten or merged. Cancelling or a failed move keeps your current location.
 
+## Focus Items From Other Plugins
+
+Other Obsidian plugins can put items into your focus that have no line in your vault, such as a ticket from an issue tracker. These items show in the Focus view under their source's name. Clicking one opens it at its source, and the pencil button changes its wording. Completing or removing one tells the plugin that added it.
+
+### For plugin developers
+
+Flow publishes an API on its plugin instance. Look it up once the workspace layout is ready, because Obsidian loads plugins in no set order:
+
+```typescript
+this.app.workspace.onLayoutReady(() => {
+  const flow = this.app.plugins.getPlugin("flow")?.api;
+  if (flow?.apiVersion === 1) {
+    // Use the API
+  }
+});
+```
+
+`app.plugins` isn't in Obsidian's public typings, so declare the narrow type you use. Flow also fires `flow:api-ready` (with the API) on the workspace when it loads and `flow:api-unloaded` when it unloads, so you can notice Flow being enabled, disabled or reloaded later.
+
+The interface is `FlowApi` in [`src/focus-api.ts`](src/focus-api.ts); copy it into your plugin.
+
+| Method                                | What it does                                                                                                                     |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `addFocusItem(input)`                 | Adds an item with `text`, `sphere`, `sourceName`, `sourceLabel`, `url` and `externalId`, and returns its new `id`                |
+| `updateFocusItem(id, changes)`        | Changes any of `text`, `sphere`, `sourceLabel` or `url`                                                                          |
+| `completeFocusItem(id)`               | Marks the item complete; it stays in Focus under Completed Today                                                                 |
+| `removeFocusItem(id)`                 | Takes the item out of Focus                                                                                                      |
+| `getFocusItems(sourceName)`           | Returns your source's items, including completed ones                                                                            |
+| `getSpheres()`                        | Returns the sphere names set in Flow's settings                                                                                  |
+| `onFocusChange(sourceName, callback)` | Calls `callback` with `added`, `edited`, `completed` or `removed` changes to your source's items, and returns a function to stop |
+
+- `sourceName` identifies your plugin's items (for example `"linear"`); `sourceLabel` is what the user sees (for example a workspace name). `externalId` is your record's own ID, and one record can have several items.
+- Calls with an unknown `id` reject with an error, and `addFocusItem` rejects empty `text`, `sphere`, `sourceName` or `externalId`.
+- Change events cover every change to the focus file: the Focus view, your own API calls, auto-clear and edits synced from another device. Pinning and reordering aren't reported. There are no events for the state when Flow starts; call `getFocusItems` and work from that. Treat events as hints that something changed: the file is the source of truth.
+- `apiVersion` changes only when an existing method changes in a way that breaks callers. New methods don't change it.
+
+## Focus File Format
+
+The focus file (`flow-focus-data/focus.md` unless changed in settings) is JSONL: one JSON object per line, in the order the Focus view shows them. Other tools may read it directly. A vault item looks like:
+
+```json
+{
+  "file": "Projects/Ship v1.0.md",
+  "lineNumber": 12,
+  "lineContent": "- [ ] Write release notes",
+  "text": "Write release notes",
+  "sphere": "work",
+  "isGeneral": false,
+  "addedAt": 1793520000000,
+  "contexts": []
+}
+```
+
+An item from another plugin looks like:
+
+```json
+{
+  "id": "7c1e…",
+  "text": "Draft section 2 of the evals plan",
+  "sphere": "work",
+  "addedAt": 1793520000000,
+  "external": {
+    "sourceName": "linear",
+    "sourceLabel": "Rootcause",
+    "url": "https://linear.app/rootcause/issue/ROO-123/evals-plan",
+    "externalId": "ROO-123"
+  },
+  "contexts": []
+}
+```
+
+- A line with `external` is an item from another plugin. Any other line is a vault item with `file` (vault-relative path), `lineNumber`, `lineContent`, `text`, `sphere`, `isGeneral` and `addedAt`.
+- `addedAt` and `completedAt` are milliseconds since the epoch.
+- `isPinned: true` means the item is in the Pinned section.
+- `completedAt` is set once the item is completed. Completed items stay in the file until they're removed or auto-cleared.
+- Skip lines that fail to parse, as Flow does.
+- Flow may add new fields. Ignore fields you don't know.
+
 ## Project Structure
 
 Flow projects use YAML frontmatter:

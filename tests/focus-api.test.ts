@@ -1,0 +1,461 @@
+// ABOUTME: Tests the Focus API for other plugins against an in-memory vault and real persistence.
+// ABOUTME: Covers adding, changing, completing and removing items, and change events.
+
+import { TFile, Vault } from "obsidian";
+import { ExternalFocusItem, FocusItem, PluginSettings, VaultFocusItem } from "../src/types";
+import { DEFAULT_SETTINGS } from "../src/types/settings";
+import { ValidationError } from "../src/errors";
+import { FocusApi, FocusChange, diffExternalFocusItems } from "../src/focus-api";
+import { updateFocusItems } from "../src/focus-persistence";
+
+jest.mock("obsidian");
+
+const FOCUS_PATH = "flow-focus-data/focus.md";
+
+const vaultItem = (text: string): VaultFocusItem => ({
+  file: "Projects/Plan.md",
+  lineNumber: 5,
+  lineContent: `- [ ] ${text}`,
+  text,
+  sphere: "work",
+  isGeneral: false,
+  addedAt: 1,
+  contexts: [],
+});
+
+const externalItem = (
+  id: string,
+  overrides: Partial<ExternalFocusItem> = {},
+  sourceName = "linear"
+): ExternalFocusItem => ({
+  id,
+  text: `Ticket ${id}`,
+  sphere: "work",
+  addedAt: 2,
+  external: {
+    sourceName,
+    sourceLabel: "Rootcause",
+    url: `https://linear.app/rootcause/issue/${id}`,
+    externalId: id,
+  },
+  contexts: [],
+  ...overrides,
+});
+
+const newTicket = {
+  text: "Draft section 2 of the evals plan",
+  sphere: "work",
+  sourceName: "linear",
+  sourceLabel: "Rootcause",
+  url: "https://linear.app/rootcause/issue/ROO-123/evals-plan",
+  externalId: "ROO-123",
+};
+
+// A vault holding only the focus file, written through the real persistence code
+function createVault(initial: FocusItem[] = []) {
+  let content = initial.map((item) => JSON.stringify(item)).join("\n");
+  const file = new TFile(FOCUS_PATH);
+  const vault = {
+    getAbstractFileByPath: jest.fn((path: string) => (path === FOCUS_PATH ? file : null)),
+    read: jest.fn(async () => content),
+    modify: jest.fn(async (_file: TFile, value: string) => {
+      content = value;
+    }),
+    adapter: { stat: jest.fn(async () => ({ type: "folder" })) },
+  } as unknown as Vault;
+  return {
+    vault,
+    items: () =>
+      content
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line) as FocusItem),
+    // Stands in for a change synced from another device
+    replaceContent: (items: FocusItem[]) => {
+      content = items.map((item) => JSON.stringify(item)).join("\n");
+    },
+  };
+}
+
+async function createApi(initial: FocusItem[] = []) {
+  const store = createVault(initial);
+  const settings: PluginSettings = {
+    ...DEFAULT_SETTINGS,
+    spheres: ["personal", "work"],
+    focusFilePath: FOCUS_PATH,
+  };
+  const api = new FocusApi(store.vault, () => settings);
+  await api.checkForChanges();
+  return { api, settings, ...store };
+}
+
+function recordChanges(api: FocusApi, sourceName = "linear") {
+  const changes: FocusChange[] = [];
+  api.onFocusChange(sourceName, (change) => changes.push(change));
+  return changes;
+}
+
+describe("diffExternalFocusItems", () => {
+  it("reports added and removed items", () => {
+    const kept = externalItem("ROO-1");
+    const gone = externalItem("ROO-2");
+    const added = externalItem("ROO-3");
+
+    expect(diffExternalFocusItems([kept, gone], [kept, added])).toEqual([
+      { type: "added", item: added },
+      { type: "removed", item: gone },
+    ]);
+  });
+
+  it("reports a newly completed item", () => {
+    const before = externalItem("ROO-1");
+    const after = { ...before, completedAt: 100 };
+
+    expect(diffExternalFocusItems([before], [after])).toEqual([{ type: "completed", item: after }]);
+  });
+
+  it("does not report an item that was already completed", () => {
+    const before = externalItem("ROO-1", { completedAt: 100 });
+
+    expect(diffExternalFocusItems([before], [{ ...before }])).toEqual([]);
+  });
+
+  it.each([
+    ["text", { text: "New wording" }],
+    ["sphere", { sphere: "personal" }],
+  ])("reports a change of %s as an edit", (_field, overrides) => {
+    const before = externalItem("ROO-1");
+    const after = { ...before, ...overrides };
+
+    expect(diffExternalFocusItems([before], [after])).toEqual([
+      { type: "edited", item: after, previous: before },
+    ]);
+  });
+
+  it.each([
+    ["sourceLabel", { sourceLabel: "Acme" }],
+    ["url", { url: "https://linear.app/acme/issue/ROO-1" }],
+  ])("reports a change of %s as an edit", (_field, sourceChanges) => {
+    const before = externalItem("ROO-1");
+    const after = { ...before, external: { ...before.external, ...sourceChanges } };
+
+    expect(diffExternalFocusItems([before], [after])).toEqual([
+      { type: "edited", item: after, previous: before },
+    ]);
+  });
+
+  it("ignores pinning and reordering", () => {
+    const first = externalItem("ROO-1");
+    const second = externalItem("ROO-2");
+
+    expect(diffExternalFocusItems([first, second], [{ ...second, isPinned: true }, first])).toEqual(
+      []
+    );
+  });
+
+  it("ignores vault items", () => {
+    expect(diffExternalFocusItems([vaultItem("Old")], [vaultItem("New")])).toEqual([]);
+  });
+
+  it("reports an item completed and edited in one change", () => {
+    const before = externalItem("ROO-1");
+    const after = { ...before, text: "New wording", completedAt: 100 };
+
+    expect(diffExternalFocusItems([before], [after])).toEqual([
+      { type: "edited", item: after, previous: before },
+      { type: "completed", item: after },
+    ]);
+  });
+});
+
+describe("FocusApi", () => {
+  it("has API version 1", async () => {
+    const { api } = await createApi();
+    expect(api.apiVersion).toBe(1);
+  });
+
+  describe("addFocusItem", () => {
+    it("appends an external item after existing items and returns its id", async () => {
+      const existing = vaultItem("Existing action");
+      const { api, items } = await createApi([existing]);
+
+      const id = await api.addFocusItem(newTicket);
+
+      expect(items()).toEqual([
+        existing,
+        {
+          id,
+          text: newTicket.text,
+          sphere: "work",
+          addedAt: expect.any(Number),
+          external: {
+            sourceName: "linear",
+            sourceLabel: "Rootcause",
+            url: newTicket.url,
+            externalId: "ROO-123",
+          },
+          contexts: [],
+        },
+      ]);
+      expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it("gives each item its own id, even for the same outside record", async () => {
+      const { api, items } = await createApi();
+
+      const first = await api.addFocusItem(newTicket);
+      const second = await api.addFocusItem({ ...newTicket, text: "Review section 2" });
+
+      expect(first).not.toBe(second);
+      expect(items().map((item) => item.text)).toEqual([newTicket.text, "Review section 2"]);
+    });
+
+    it.each(["text", "sphere", "sourceName", "externalId"] as const)(
+      "rejects an empty %s and writes nothing",
+      async (field) => {
+        const { api, items, vault } = await createApi();
+
+        await expect(api.addFocusItem({ ...newTicket, [field]: "  " })).rejects.toThrow(
+          new ValidationError(`Focus item ${field} must not be empty`)
+        );
+        expect(items()).toEqual([]);
+        expect(vault.modify).not.toHaveBeenCalled();
+      }
+    );
+  });
+
+  describe("updateFocusItem", () => {
+    it("changes only the given fields", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await api.updateFocusItem("ROO-1", { text: "New wording", url: "https://example.com/1" });
+
+      expect(items()).toEqual([
+        {
+          ...item,
+          text: "New wording",
+          external: { ...item.external, url: "https://example.com/1" },
+        },
+      ]);
+    });
+
+    it("changes the sphere and source label", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await api.updateFocusItem("ROO-1", { sphere: "personal", sourceLabel: "Acme" });
+
+      expect(items()).toEqual([
+        { ...item, sphere: "personal", external: { ...item.external, sourceLabel: "Acme" } },
+      ]);
+    });
+
+    it("rejects an unknown id", async () => {
+      const { api } = await createApi([externalItem("ROO-1")]);
+
+      await expect(api.updateFocusItem("missing", { text: "New" })).rejects.toThrow(
+        new ValidationError("No Focus item with id missing")
+      );
+    });
+
+    it.each(["text", "sphere"] as const)("rejects an empty %s", async (field) => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await expect(api.updateFocusItem("ROO-1", { [field]: "" })).rejects.toThrow(ValidationError);
+      expect(items()).toEqual([item]);
+    });
+  });
+
+  describe("completeFocusItem", () => {
+    it("sets completedAt and keeps the item in Focus", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await api.completeFocusItem("ROO-1");
+
+      expect(items()).toEqual([{ ...item, completedAt: expect.any(Number) }]);
+    });
+
+    it("keeps the first completion time when completed again", async () => {
+      const item = externalItem("ROO-1", { completedAt: 100 });
+      const { api, items } = await createApi([item]);
+
+      await api.completeFocusItem("ROO-1");
+
+      expect(items()).toEqual([item]);
+    });
+
+    it("rejects an unknown id", async () => {
+      const { api } = await createApi();
+
+      await expect(api.completeFocusItem("missing")).rejects.toThrow(ValidationError);
+    });
+  });
+
+  describe("removeFocusItem", () => {
+    it("removes only that item", async () => {
+      const kept = vaultItem("Keep me");
+      const { api, items } = await createApi([kept, externalItem("ROO-1")]);
+
+      await api.removeFocusItem("ROO-1");
+
+      expect(items()).toEqual([kept]);
+    });
+
+    it("rejects an unknown id", async () => {
+      const { api } = await createApi();
+
+      await expect(api.removeFocusItem("missing")).rejects.toThrow(ValidationError);
+    });
+  });
+
+  it("never treats a vault item as an external item with that id", async () => {
+    const { api } = await createApi([vaultItem("Projects/Plan.md")]);
+
+    await expect(api.removeFocusItem("Projects/Plan.md")).rejects.toThrow(ValidationError);
+  });
+
+  it("returns the external items for one source, including completed ones", async () => {
+    const linear = externalItem("ROO-1");
+    const done = externalItem("ROO-2", { completedAt: 100 });
+    const github = externalItem("GH-1", {}, "github");
+    const { api } = await createApi([vaultItem("Vault"), linear, github, done]);
+
+    expect(await api.getFocusItems("linear")).toEqual([linear, done]);
+  });
+
+  it("returns a copy of the configured spheres", async () => {
+    const { api, settings } = await createApi();
+
+    const spheres = api.getSpheres();
+    spheres.push("changed");
+
+    expect(api.getSpheres()).toEqual(["personal", "work"]);
+    expect(settings.spheres).toEqual(["personal", "work"]);
+  });
+
+  it("keeps both changes when the API and another writer update Focus at once", async () => {
+    const { api, vault, items } = await createApi([externalItem("ROO-1")]);
+
+    await Promise.all([
+      api.addFocusItem(newTicket),
+      updateFocusItems(vault, (current) => [...current, vaultItem("From the view")], FOCUS_PATH),
+      api.completeFocusItem("ROO-1"),
+    ]);
+
+    expect(items().map((item) => item.text)).toEqual([
+      "Ticket ROO-1",
+      newTicket.text,
+      "From the view",
+    ]);
+    expect(items()[0].completedAt).toEqual(expect.any(Number));
+  });
+
+  describe("change events", () => {
+    it("reports each API change once to the source that owns the item", async () => {
+      const { api } = await createApi();
+      const linearChanges = recordChanges(api, "linear");
+      const githubChanges = recordChanges(api, "github");
+
+      const id = await api.addFocusItem(newTicket);
+      await api.updateFocusItem(id, { text: "New wording" });
+      await api.completeFocusItem(id);
+      await api.removeFocusItem(id);
+
+      expect(linearChanges.map((change) => change.type)).toEqual([
+        "added",
+        "edited",
+        "completed",
+        "removed",
+      ]);
+      expect(linearChanges[1]).toEqual({
+        type: "edited",
+        item: expect.objectContaining({ id, text: "New wording" }),
+        previous: expect.objectContaining({ id, text: newTicket.text }),
+      });
+      expect(githubChanges).toEqual([]);
+    });
+
+    it("reports changes written directly to the file, such as sync", async () => {
+      const item = externalItem("ROO-1");
+      const { api, replaceContent } = await createApi([item]);
+      const changes = recordChanges(api);
+
+      replaceContent([{ ...item, completedAt: 100 }]);
+      await api.checkForChanges();
+
+      expect(changes).toEqual([{ type: "completed", item: { ...item, completedAt: 100 } }]);
+    });
+
+    it("reports nothing for the state at startup or when nothing changed", async () => {
+      const { api } = await createApi([externalItem("ROO-1")]);
+      const changes = recordChanges(api);
+
+      await api.checkForChanges();
+
+      expect(changes).toEqual([]);
+    });
+
+    it("reports each change once when checks overlap", async () => {
+      const { api, replaceContent } = await createApi();
+      const changes = recordChanges(api);
+
+      replaceContent([externalItem("ROO-1")]);
+      await Promise.all([api.checkForChanges(), api.checkForChanges(), api.checkForChanges()]);
+
+      expect(changes.map((change) => change.type)).toEqual(["added"]);
+    });
+
+    it("stops calling a callback after it unsubscribes", async () => {
+      const { api } = await createApi();
+      const callback = jest.fn();
+      const unsubscribe = api.onFocusChange("linear", callback);
+
+      unsubscribe();
+      await api.addFocusItem(newTicket);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("stops calling every callback once callbacks are cleared", async () => {
+      const { api } = await createApi();
+      const callback = jest.fn();
+      api.onFocusChange("linear", callback);
+
+      api.clearCallbacks();
+      await api.addFocusItem(newTicket);
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it("logs a throwing callback and still calls the others", async () => {
+      const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+      const { api } = await createApi();
+      const failure = new Error("Callback broke");
+      api.onFocusChange("linear", () => {
+        throw failure;
+      });
+      const changes = recordChanges(api);
+
+      await api.addFocusItem(newTicket);
+
+      expect(changes.map((change) => change.type)).toEqual(["added"]);
+      expect(consoleError).toHaveBeenCalledWith("Focus change callback failed", failure);
+      consoleError.mockRestore();
+    });
+
+    it("keeps checking after a failed read", async () => {
+      const { api, vault, replaceContent } = await createApi();
+      const changes = recordChanges(api);
+      (vault.read as jest.Mock).mockRejectedValueOnce(new Error("Read failed"));
+
+      await expect(api.checkForChanges()).rejects.toThrow("Read failed");
+      replaceContent([externalItem("ROO-1")]);
+      await api.checkForChanges();
+
+      expect(changes.map((change) => change.type)).toEqual(["added"]);
+    });
+  });
+});

@@ -402,4 +402,31 @@ describe("archiveClearedTasks", () => {
     // Should NOT archive completed item
     expect(createdContent).not.toContain("Completed task");
   });
+
+  it("archives an external item as a link to its source", async () => {
+    const items: FocusItem[] = [
+      {
+        id: "7c1e",
+        text: "Draft section 2 of the evals plan",
+        sphere: "work",
+        addedAt: Date.now(),
+        external: {
+          sourceName: "linear",
+          sourceLabel: "Rootcause",
+          url: "https://linear.app/rootcause/issue/ROO-123/evals-plan",
+          externalId: "ROO-123",
+        },
+      },
+    ];
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, "Focus Archive.md", new Date());
+
+    expect(mockVault.create).toHaveBeenCalledWith(
+      "Focus Archive.md",
+      expect.stringContaining(
+        "- [Rootcause ROO-123](https://linear.app/rootcause/issue/ROO-123/evals-plan) Draft section 2 of the evals plan\n"
+      )
+    );
+  });
 });

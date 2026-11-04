@@ -1,6 +1,6 @@
 // tests/focus-view.test.ts
 import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
-import { FocusItem } from "../src/types";
+import { ExternalFocusItem, FocusItem } from "../src/types";
 import { WorkspaceLeaf, MarkdownRenderer } from "obsidian";
 
 jest.mock("obsidian");
@@ -1989,6 +1989,258 @@ describe("FocusView", () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(openFileSpy).toHaveBeenCalledWith("Projects/A.md");
+    });
+  });
+
+  describe("External items", () => {
+    const ticket = (id: string, overrides: Partial<ExternalFocusItem> = {}): ExternalFocusItem => ({
+      id,
+      text: `Draft **section** ${id}`,
+      sphere: "work",
+      addedAt: 1000,
+      external: {
+        sourceName: "linear",
+        sourceLabel: "Rootcause",
+        url: `https://linear.app/rootcause/issue/${id}`,
+        externalId: id,
+      },
+      contexts: [],
+      ...overrides,
+    });
+    const vaultAction: FocusItem = {
+      file: "Projects/Plan.md",
+      lineNumber: 5,
+      lineContent: "- [ ] Write the plan",
+      text: "Write the plan",
+      sphere: "work",
+      isGeneral: true,
+      addedAt: 1000,
+      contexts: [],
+    };
+
+    // Item rows render asynchronously after onOpen returns
+    const flushRendering = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    async function openWith(items: FocusItem[]): Promise<HTMLElement> {
+      mockFocusItems = items;
+      await view.onOpen();
+      await flushRendering();
+      return view.contentEl;
+    }
+
+    function itemFor(container: HTMLElement, text: string): HTMLElement {
+      const item = Array.from(container.querySelectorAll<HTMLElement>(".flow-gtd-focus-item")).find(
+        (el) => el.textContent?.includes(text)
+      );
+      if (!item) throw new Error(`No rendered item containing ${text}`);
+      return item;
+    }
+
+    function button(item: HTMLElement, title: string): HTMLButtonElement | undefined {
+      return Array.from(item.querySelectorAll("button")).find((btn) => btn.title === title);
+    }
+
+    it("shows the wording as plain text with its outside id, grouped under the source label", async () => {
+      const renderSpy = jest.spyOn(MarkdownRenderer, "render");
+      const container = await openWith([ticket("ROO-1"), vaultAction]);
+
+      const headings = Array.from(container.querySelectorAll("h3")).map((h) => h.textContent);
+      expect(headings).toEqual(["Rootcause", "General actions"]);
+
+      const item = itemFor(container, "ROO-1");
+      const text = item.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(text.querySelector(".flow-gtd-focus-external-id")?.textContent).toBe("ROO-1");
+      expect(text.textContent).toBe("ROO-1Draft **section** ROO-1");
+      expect(renderSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "Draft **section** ROO-1",
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+      renderSpy.mockRestore();
+    });
+
+    it("sorts outside sources by label and shows them before general actions", async () => {
+      const acme = ticket("ACME-1", {
+        external: { ...ticket("ACME-1").external, sourceLabel: "Acme" },
+      });
+      const container = await openWith([vaultAction, ticket("ROO-1"), acme]);
+
+      const headings = Array.from(container.querySelectorAll("h3")).map((h) => h.textContent);
+      expect(headings).toEqual(["Acme", "Rootcause", "General actions"]);
+    });
+
+    it("opens the item's link when its text is clicked", async () => {
+      const open = jest.spyOn(window, "open").mockImplementation(() => null);
+      const container = await openWith([ticket("ROO-1")]);
+
+      (
+        itemFor(container, "ROO-1").querySelector(".flow-gtd-focus-item-text") as HTMLElement
+      ).click();
+
+      expect(open).toHaveBeenCalledWith("https://linear.app/rootcause/issue/ROO-1");
+      expect(mockApp.workspace.getLeaf).not.toHaveBeenCalled();
+      open.mockRestore();
+    });
+
+    it("offers editing but not converting to waiting for", async () => {
+      const container = await openWith([ticket("ROO-1"), { ...vaultAction }]);
+
+      const external = itemFor(container, "ROO-1");
+      expect(button(external, "Edit wording")).toBeDefined();
+      expect(button(external, "Convert to waiting for")).toBeUndefined();
+
+      const vault = itemFor(container, "Write the plan");
+      expect(button(vault, "Edit wording")).toBeUndefined();
+      expect(button(vault, "Convert to waiting for")).toBeDefined();
+    });
+
+    it("shows the source label on a pinned item and offers editing there", async () => {
+      const container = await openWith([ticket("ROO-1", { isPinned: true })]);
+
+      const item = itemFor(container, "ROO-1");
+      expect(item.querySelector(".flow-gtd-focus-project-name")?.textContent).toBe("Rootcause");
+      expect(button(item, "Edit wording")).toBeDefined();
+      expect(button(item, "Convert to waiting for")).toBeUndefined();
+    });
+
+    it("lists a completed item under its source label in Completed Today", async () => {
+      const container = await openWith([ticket("ROO-1", { completedAt: Date.now() })]);
+
+      const completed = itemFor(container, "ROO-1");
+      expect(completed.classList.contains("flow-gtd-focus-completed")).toBe(true);
+      expect(
+        completed.closest(".flow-gtd-focus-sphere-section")?.querySelector("h4")?.textContent
+      ).toBe("Rootcause");
+    });
+
+    it("completes an item without touching any vault file", async () => {
+      const container = await openWith([ticket("ROO-1"), ticket("ROO-2")]);
+
+      button(itemFor(container, "ROO-1"), "Mark as complete")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems[0].completedAt).toEqual(expect.any(Number));
+      expect(mockFocusItems[1].completedAt).toBeUndefined();
+      expect(mockApp.vault.modify).not.toHaveBeenCalled();
+      expect(mockApp.workspace.trigger).not.toHaveBeenCalled();
+    });
+
+    it("removes only the chosen item when items share a time added", async () => {
+      const container = await openWith([ticket("ROO-1"), ticket("ROO-2")]);
+
+      button(itemFor(container, "ROO-1"), "Remove from focus")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems.map((item) => (item as ExternalFocusItem).id)).toEqual(["ROO-2"]);
+    });
+
+    it("pins only the chosen item", async () => {
+      const container = await openWith([ticket("ROO-1"), ticket("ROO-2")]);
+
+      button(itemFor(container, "ROO-2"), "Pin to top")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems.map((item) => [(item as ExternalFocusItem).id, item.isPinned])).toEqual(
+        [
+          ["ROO-2", true],
+          ["ROO-1", undefined],
+        ]
+      );
+    });
+
+    it("keeps external items through refresh without validating them", async () => {
+      const validateItem = jest.fn().mockResolvedValue({ found: false });
+      (view as any).validator = { validateItem };
+      await openWith([ticket("ROO-1"), vaultAction]);
+
+      await (view as any).performRefresh();
+
+      expect(validateItem).toHaveBeenCalledTimes(1);
+      expect(validateItem).toHaveBeenCalledWith(vaultAction);
+      expect(mockFocusItems).toEqual([ticket("ROO-1")]);
+    });
+
+    describe("editing the wording", () => {
+      async function startEditing(): Promise<HTMLInputElement> {
+        const container = await openWith([ticket("ROO-1")]);
+        button(itemFor(container, "ROO-1"), "Edit wording")!.click();
+        const input = container.querySelector<HTMLInputElement>(".flow-gtd-focus-edit-input");
+        if (!input) throw new Error("No edit input");
+        return input;
+      }
+
+      const press = (input: HTMLInputElement, key: string) =>
+        input.dispatchEvent(
+          new input.ownerDocument.defaultView!.KeyboardEvent("keydown", { key, bubbles: true })
+        );
+
+      it("replaces the text with an input holding the current wording", async () => {
+        const input = await startEditing();
+
+        expect(input.value).toBe("Draft **section** ROO-1");
+        expect(view.contentEl.querySelector(".flow-gtd-focus-item-text")).toBeNull();
+      });
+
+      it("saves the new wording on Enter", async () => {
+        const input = await startEditing();
+
+        input.value = "  Write section 2  ";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([{ ...ticket("ROO-1"), text: "Write section 2" }]);
+        expect(itemFor(view.contentEl, "Write section 2")).toBeDefined();
+      });
+
+      it("puts the text back without saving on Escape", async () => {
+        const input = await startEditing();
+        (mockSaveFocusItems as jest.Mock).mockClear();
+
+        input.value = "Something else";
+        press(input, "Escape");
+
+        expect(mockSaveFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.querySelector(".flow-gtd-focus-edit-input")).toBeNull();
+        expect(itemFor(view.contentEl, "Draft **section** ROO-1")).toBeDefined();
+      });
+
+      it("refuses empty wording and keeps the input open", async () => {
+        const input = await startEditing();
+        (mockSaveFocusItems as jest.Mock).mockClear();
+
+        input.value = "   ";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockSaveFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.contains(input)).toBe(true);
+        expect(input.classList.contains("is-invalid")).toBe(true);
+        expect(input.getAttribute("aria-invalid")).toBe("true");
+      });
+
+      it("puts the text back when the save fails", async () => {
+        const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+        const input = await startEditing();
+        mockFocusItems = [ticket("ROO-1"), ticket("ROO-2")]; // Another writer changed Focus
+
+        input.value = "Write section 2";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockFocusItems.map((item) => item.text)).toEqual([
+          "Draft **section** ROO-1",
+          "Draft **section** ROO-2",
+        ]);
+        expect(view.contentEl.contains(input)).toBe(false);
+        expect(itemFor(view.contentEl, "Draft **section** ROO-1")).toBeDefined();
+        expect(consoleError).toHaveBeenCalledWith(
+          "Failed to edit focus item",
+          expect.objectContaining({ message: expect.stringContaining("Focus list changed") })
+        );
+        consoleError.mockRestore();
+      });
     });
   });
 });
