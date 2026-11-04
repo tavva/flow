@@ -142,17 +142,7 @@ export class FocusView extends RefreshingView {
     const loadVersion = await this.loadFocus();
     if (loadVersion !== this.focusLoadVersion) return;
 
-    // Clean up old completed items (before midnight)
-    const midnight = this.getMidnightTimestamp();
-    const originalLength = this.focusItems.length;
-    this.focusItems = this.focusItems.filter(
-      (item) => !item.completedAt || item.completedAt >= midnight
-    );
-
-    // Save if any items were removed
-    if (this.focusItems.length < originalLength) {
-      await this.saveFocus();
-    }
+    await this.removeCompletedBeforeToday();
 
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
@@ -222,29 +212,54 @@ export class FocusView extends RefreshingView {
     return loadVersion;
   }
 
-  private async saveFocus(): Promise<void> {
+  /**
+   * Apply an edit to the latest focus file under the focus lock, so changes other writers
+   * made since this view loaded (other plugins, sync, other views) are kept.
+   */
+  private async updateFocus(edit: (items: FocusItem[]) => FocusItem[]): Promise<void> {
     if (this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
       throw new Error("Focus file changed. Refresh the Focus view before trying again.");
     }
     const filePath = this.loadedFocusFilePath;
     const loadVersion = this.focusLoadVersion;
-    const expected = this.loadedFocusSnapshot;
-    // Capture the edit now; later UI mutations must not change a queued write.
-    const proposed = JSON.stringify(this.focusItems);
-    await updateFocusItems(
+    const items = await updateFocusItems(
       this.app.vault,
       (current) => {
         if (filePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
           throw new Error("Focus file changed. Refresh the Focus view before trying again.");
         }
-        if (expected === null || JSON.stringify(current) !== expected) {
-          throw new Error("Focus list changed. Refresh the Focus view before trying again.");
-        }
-        return JSON.parse(proposed) as FocusItem[];
+        return edit(current);
       },
       filePath
     );
-    if (loadVersion === this.focusLoadVersion) this.loadedFocusSnapshot = proposed;
+    if (loadVersion === this.focusLoadVersion) {
+      this.focusItems = items;
+      this.loadedFocusSnapshot = JSON.stringify(items);
+    }
+  }
+
+  /** Change one item in the latest focus file. Returns false if the item is no longer there. */
+  private async updateFocusItem(
+    item: FocusItem,
+    change: (current: FocusItem) => void
+  ): Promise<boolean> {
+    let found = false;
+    await this.updateFocus((items) => {
+      const current = items.find((i) => isSameFocusItem(i, item));
+      if (current) {
+        change(current);
+        found = true;
+      }
+      return items;
+    });
+    return found;
+  }
+
+  private async removeCompletedBeforeToday(): Promise<void> {
+    const midnight = this.getMidnightTimestamp();
+    const isCurrent = (item: FocusItem) => !item.completedAt || item.completedAt >= midnight;
+    if (this.focusItems.every(isCurrent)) return;
+    await this.updateFocus((items) => items.filter(isCurrent));
   }
 
   async onClose() {
@@ -257,35 +272,21 @@ export class FocusView extends RefreshingView {
       const loadVersion = await this.loadFocus();
       if (loadVersion !== this.focusLoadVersion) return;
 
-      // Clean up old completed items (before midnight)
-      const midnight = this.getMidnightTimestamp();
-      const originalLength = this.focusItems.length;
-      this.focusItems = this.focusItems.filter(
-        (item) => !item.completedAt || item.completedAt >= midnight
+      await this.removeCompletedBeforeToday();
+
+      // Validate all remaining active vault items; external items have no vault line to check
+      const activeItems = this.focusItems.filter(
+        (item): item is VaultFocusItem => isVaultFocusItem(item) && !item.completedAt
       );
-
-      // Save if any items were removed during cleanup
-      if (this.focusItems.length < originalLength) {
-        await this.saveFocus();
-      }
-
-      // Validate all remaining active items (skip completed items)
-      const activeItems = this.focusItems.filter((item) => !item.completedAt);
-      const validatedItems: FocusItem[] = [...this.focusItems.filter((item) => item.completedAt)];
-      let needsSave = false;
+      const removedItems: VaultFocusItem[] = [];
+      const movedItems: { item: VaultFocusItem; lineNumber: number }[] = [];
 
       for (const item of activeItems) {
-        // External items have no vault line to check
-        if (isExternalFocusItem(item)) {
-          validatedItems.push(item);
-          continue;
-        }
-
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {
           // Item no longer exists or line content changed significantly
-          needsSave = true;
+          removedItems.push(item);
           continue;
         }
 
@@ -301,19 +302,15 @@ export class FocusView extends RefreshingView {
             // If marked as complete [x], remove from focus
             // Note: We keep waiting-for [w] items in the focus
             if (isCompletedCheckbox(line)) {
-              needsSave = true;
+              removedItems.push(item);
               continue;
             }
           }
         }
 
-        // Item is still valid and not complete
+        // Item is still valid and not complete; update its line number if it moved
         if (validation.updatedLineNumber && validation.updatedLineNumber !== item.lineNumber) {
-          // Update line number if it moved
-          validatedItems.push({ ...item, lineNumber: validation.updatedLineNumber });
-          needsSave = true;
-        } else {
-          validatedItems.push(item);
+          movedItems.push({ item, lineNumber: validation.updatedLineNumber });
         }
       }
 
@@ -323,9 +320,17 @@ export class FocusView extends RefreshingView {
         this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)
       )
         return;
-      if (needsSave) {
-        this.focusItems = validatedItems;
-        await this.saveFocus();
+      if (removedItems.length > 0 || movedItems.length > 0) {
+        await this.updateFocus((items) =>
+          items
+            .filter((item) => !removedItems.some((removed) => isSameFocusItem(item, removed)))
+            .map((item) => {
+              const moved = movedItems.find((entry) => isSameFocusItem(item, entry.item));
+              return moved && isVaultFocusItem(item)
+                ? { ...item, lineNumber: moved.lineNumber }
+                : item;
+            })
+        );
       }
 
       // Re-render the view
@@ -343,13 +348,13 @@ export class FocusView extends RefreshingView {
       }
 
       // Render context filter buttons (using all items so all contexts are discoverable)
-      this.renderContextFilter(container, validatedItems);
+      this.renderContextFilter(container, this.focusItems);
 
       // Show current projects box
       this.renderCurrentProjectsBox(container);
 
       // Apply context filter
-      const filteredItems = this.filterItemsByContext(validatedItems);
+      const filteredItems = this.filterItemsByContext(this.focusItems);
 
       if (filteredItems.length === 0) {
         this.renderEmptyMessage(container);
@@ -1210,11 +1215,13 @@ export class FocusView extends RefreshingView {
   private async markItemComplete(item: FocusItem): Promise<void> {
     if (isExternalFocusItem(item)) {
       // External items have no vault line; completing only records the time
-      const focusIndex = this.focusItems.findIndex((i) => isSameFocusItem(i, item));
-      if (focusIndex === -1) return;
-      this.focusItems[focusIndex].completedAt = Date.now();
-      await this.saveFocus();
-      await this.onOpen(); // Re-render
+      if (
+        await this.updateFocusItem(item, (current) => {
+          current.completedAt = Date.now();
+        })
+      ) {
+        await this.onOpen(); // Re-render
+      }
       return;
     }
 
@@ -1244,11 +1251,11 @@ export class FocusView extends RefreshingView {
       await this.app.vault.modify(file, lines.join("\n"));
 
       // Set completedAt instead of removing from focus
-      const focusIndex = this.focusItems.findIndex((i) => isSameFocusItem(i, item));
+      const found = await this.updateFocusItem(item, (current) => {
+        current.completedAt = Date.now();
+      });
 
-      if (focusIndex !== -1) {
-        this.focusItems[focusIndex].completedAt = Date.now();
-        await this.saveFocus();
+      if (found) {
         (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
           file: item.file,
           action: item.text,
@@ -1280,11 +1287,11 @@ export class FocusView extends RefreshingView {
       await this.app.vault.modify(file, lines.join("\n"));
 
       // Update the item's lineContent in the focus instead of removing it
-      const focusItem = this.focusItems.find((i) => isSameFocusItem(i, item));
+      const found = await this.updateFocusItem(item, (current) => {
+        if (isVaultFocusItem(current)) current.lineContent = updatedLine;
+      });
 
-      if (focusItem && isVaultFocusItem(focusItem)) {
-        focusItem.lineContent = updatedLine;
-        await this.saveFocus();
+      if (found) {
         (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
           file: item.file,
           action: item.text,
@@ -1295,46 +1302,39 @@ export class FocusView extends RefreshingView {
   }
 
   private async updateItemText(item: ExternalFocusItem, text: string): Promise<void> {
-    const focusItem = this.focusItems.find((i) => isSameFocusItem(i, item));
-    if (!focusItem) return;
-    focusItem.text = text;
-    await this.saveFocus();
+    await this.updateFocusItem(item, (current) => {
+      current.text = text;
+    });
     await this.onOpen(); // Re-render
   }
 
   private async removeFromFocus(item: FocusItem): Promise<void> {
-    this.focusItems = this.focusItems.filter((i) => !isSameFocusItem(i, item));
-    await this.saveFocus();
+    await this.updateFocus((items) => items.filter((i) => !isSameFocusItem(i, item)));
     await this.onOpen(); // Re-render
   }
 
   private async pinItem(item: FocusItem): Promise<void> {
-    // Find item in focusItems
-    const index = this.focusItems.findIndex((i) => isSameFocusItem(i, item));
+    await this.updateFocus((items) => {
+      const index = items.findIndex((i) => isSameFocusItem(i, item));
+      if (index === -1) return items;
 
-    if (index === -1) return;
+      // Set isPinned flag
+      items[index].isPinned = true;
 
-    // Set isPinned flag
-    this.focusItems[index].isPinned = true;
-
-    // Move to end of pinned section
-    const pinnedCount = this.focusItems.filter((i) => i.isPinned).length;
-    const [pinnedItem] = this.focusItems.splice(index, 1);
-    this.focusItems.splice(pinnedCount - 1, 0, pinnedItem);
-
-    await this.saveFocus();
+      // Move to end of pinned section
+      const pinnedCount = items.filter((i) => i.isPinned).length;
+      const [pinnedItem] = items.splice(index, 1);
+      items.splice(pinnedCount - 1, 0, pinnedItem);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 
   private async unpinItem(item: FocusItem): Promise<void> {
-    const index = this.focusItems.findIndex((i) => isSameFocusItem(i, item));
-
-    if (index === -1) return;
-
     // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
-    this.focusItems[index].isPinned = false;
-
-    await this.saveFocus();
+    await this.updateFocusItem(item, (current) => {
+      current.isPinned = false;
+    });
     await this.onOpen(); // Re-render
   }
 
@@ -1361,18 +1361,17 @@ export class FocusView extends RefreshingView {
     e.preventDefault();
     if (!this.draggedItem || this.draggedItem === dropTarget) return;
 
-    // Find indices in focusItems
     const draggedItem = this.draggedItem;
-    const draggedIndex = this.focusItems.findIndex((i) => isSameFocusItem(i, draggedItem));
-    const targetIndex = this.focusItems.findIndex((i) => isSameFocusItem(i, dropTarget));
+    await this.updateFocus((items) => {
+      const draggedIndex = items.findIndex((i) => isSameFocusItem(i, draggedItem));
+      const targetIndex = items.findIndex((i) => isSameFocusItem(i, dropTarget));
+      if (draggedIndex === -1 || targetIndex === -1) return items;
 
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    // Remove dragged item and insert at target position
-    const [item] = this.focusItems.splice(draggedIndex, 1);
-    this.focusItems.splice(targetIndex, 0, item);
-
-    await this.saveFocus();
+      // Remove dragged item and insert at target position
+      const [item] = items.splice(draggedIndex, 1);
+      items.splice(targetIndex, 0, item);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 
