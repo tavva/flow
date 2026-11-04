@@ -21,6 +21,7 @@ export interface NewExternalFocusItem {
   sourceLabel: string;
   url: string;
   externalId: string;
+  projectName?: string | null; // Leave out, or pass null or "", for no project
 }
 
 export type ExternalFocusItemChanges = Partial<{
@@ -29,6 +30,7 @@ export type ExternalFocusItemChanges = Partial<{
   sourceLabel: string;
   url: string;
   externalId: string;
+  projectName: string | null; // null or "" clears it
 }>;
 
 export type FocusChange =
@@ -74,7 +76,8 @@ export function diffExternalFocusItems(before: FocusItem[], after: FocusItem[]):
       item.sphere !== previous.sphere ||
       item.external.sourceLabel !== previous.external.sourceLabel ||
       item.external.url !== previous.external.url ||
-      item.external.externalId !== previous.external.externalId
+      item.external.externalId !== previous.external.externalId ||
+      item.external.projectName !== previous.external.projectName
     ) {
       changes.push({ type: "edited", item, previous });
     }
@@ -97,6 +100,15 @@ function requireText(value: unknown, field: string): string {
     throw new ValidationError(`Focus item ${field} must not be empty`);
   }
   return value;
+}
+
+// A missing project is undefined; null and blank text both mean no project
+function optionalText(value: unknown, field: string): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== "string") {
+    throw new ValidationError(`Focus item ${field} must be text or null`);
+  }
+  return value.trim() === "" ? undefined : value.trim();
 }
 
 function requireWebUrl(value: unknown): string {
@@ -131,6 +143,7 @@ export class FocusApi implements FlowApi {
 
   async addFocusItem(input: NewExternalFocusItem): Promise<string> {
     const text = requireText(input.text, "text").trim();
+    const projectName = optionalText(input.projectName, "projectName");
     const item: ExternalFocusItem = {
       id: crypto.randomUUID(),
       text,
@@ -141,6 +154,7 @@ export class FocusApi implements FlowApi {
         sourceLabel: requireText(input.sourceLabel, "sourceLabel"),
         url: requireWebUrl(input.url),
         externalId: requireText(input.externalId, "externalId"),
+        ...(projectName === undefined ? {} : { projectName }),
       },
       contexts: [],
     };
@@ -158,6 +172,8 @@ export class FocusApi implements FlowApi {
     const url = changes.url === undefined ? undefined : requireWebUrl(changes.url);
     const externalId =
       changes.externalId === undefined ? undefined : requireText(changes.externalId, "externalId");
+    const changesProject = changes.projectName !== undefined;
+    const projectName = optionalText(changes.projectName, "projectName");
     await this.write((items) => {
       const item = findExternalItem(items, id);
       if (text !== undefined) item.text = text;
@@ -165,6 +181,10 @@ export class FocusApi implements FlowApi {
       if (sourceLabel !== undefined) item.external.sourceLabel = sourceLabel;
       if (url !== undefined) item.external.url = url;
       if (externalId !== undefined) item.external.externalId = externalId;
+      if (changesProject) {
+        if (projectName === undefined) delete item.external.projectName;
+        else item.external.projectName = projectName;
+      }
       return items;
     });
   }

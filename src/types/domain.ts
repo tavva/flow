@@ -64,6 +64,7 @@ export interface ExternalSource {
   sourceLabel: string; // Shown as a chip, e.g. "Rootcause"
   url: string; // Opened when the item is clicked
   externalId: string; // The source's own ID, e.g. "ROO-123"
+  projectName?: string; // The source's project, e.g. "Proptics"; shown under the item's wording
 }
 
 export type FocusItem = VaultFocusItem | ExternalFocusItem;

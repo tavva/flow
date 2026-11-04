@@ -139,6 +139,7 @@ describe("diffExternalFocusItems", () => {
     ["sourceLabel", { sourceLabel: "Acme" }],
     ["url", { url: "https://linear.app/acme/issue/ROO-1" }],
     ["externalId", { externalId: "RC-12" }],
+    ["projectName", { projectName: "Proptics" }],
   ])("reports a change of %s as an edit", (_field, sourceChanges) => {
     const before = externalItem("ROO-1");
     const after = { ...before, external: { ...before.external, ...sourceChanges } };
@@ -239,6 +240,31 @@ describe("FocusApi", () => {
       }
     );
 
+    it("stores a trimmed project name", async () => {
+      const { api, items } = await createApi();
+
+      await api.addFocusItem({ ...newTicket, projectName: "  Proptics " });
+
+      expect(items()[0]).toMatchObject({ external: { projectName: "Proptics" } });
+    });
+
+    it.each([null, "", "   "])("stores no project name for %p", async (projectName) => {
+      const { api, items } = await createApi();
+
+      await api.addFocusItem({ ...newTicket, projectName });
+
+      expect("projectName" in (items()[0] as ExternalFocusItem).external).toBe(false);
+    });
+
+    it("rejects a project name that isn't text and writes nothing", async () => {
+      const { api, items } = await createApi();
+
+      await expect(
+        api.addFocusItem({ ...newTicket, projectName: 3 as unknown as string })
+      ).rejects.toThrow(new ValidationError("Focus item projectName must be text or null"));
+      expect(items()).toEqual([]);
+    });
+
     it("accepts an http link", async () => {
       const { api, items } = await createApi();
 
@@ -282,6 +308,61 @@ describe("FocusApi", () => {
       await api.updateFocusItem("ROO-1", { externalId: "RC-12" });
 
       expect(items()).toEqual([{ ...item, external: { ...item.external, externalId: "RC-12" } }]);
+    });
+
+    it("sets and changes the project name", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await api.updateFocusItem("ROO-1", { projectName: "Proptics" });
+      expect(items()).toEqual([
+        { ...item, external: { ...item.external, projectName: "Proptics" } },
+      ]);
+
+      await api.updateFocusItem("ROO-1", { projectName: "Evals" });
+      expect(items()).toEqual([{ ...item, external: { ...item.external, projectName: "Evals" } }]);
+    });
+
+    it.each([null, ""])("clears the project name when given %p", async (projectName) => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([
+        { ...item, external: { ...item.external, projectName: "Proptics" } },
+      ]);
+
+      await api.updateFocusItem("ROO-1", { projectName });
+
+      expect(items()).toEqual([item]);
+    });
+
+    it("keeps the project name when the change leaves it out", async () => {
+      const item = externalItem("ROO-1");
+      const withProject = { ...item, external: { ...item.external, projectName: "Proptics" } };
+      const { api, items } = await createApi([withProject]);
+
+      await api.updateFocusItem("ROO-1", { text: "New wording" });
+
+      expect(items()).toEqual([{ ...withProject, text: "New wording" }]);
+    });
+
+    it("reports clearing the project name as an edit", async () => {
+      const item = externalItem("ROO-1");
+      const withProject = { ...item, external: { ...item.external, projectName: "Proptics" } };
+      const { api } = await createApi([withProject]);
+      const changes = recordChanges(api);
+
+      await api.updateFocusItem("ROO-1", { projectName: null });
+
+      expect(changes).toEqual([{ type: "edited", item, previous: withProject }]);
+    });
+
+    it("rejects a project name that isn't text", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await expect(
+        api.updateFocusItem("ROO-1", { projectName: 3 as unknown as string })
+      ).rejects.toThrow(ValidationError);
+      expect(items()).toEqual([item]);
     });
 
     it("rejects an unknown id", async () => {

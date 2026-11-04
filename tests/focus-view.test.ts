@@ -2082,6 +2082,29 @@ describe("FocusView", () => {
       renderSpy.mockRestore();
     });
 
+    it("shows the outside project under the wording when there is one", async () => {
+      const container = await openWith([
+        ticket("ROO-1", {
+          external: {
+            sourceName: "linear",
+            sourceLabel: "Rootcause",
+            url: "https://linear.app/rootcause/issue/ROO-1",
+            externalId: "ROO-1",
+            projectName: "Proptics",
+          },
+        }),
+        ticket("ROO-2"),
+      ]);
+
+      const withProject = itemFor(container, "ROO-1");
+      expect(withProject.querySelector(".flow-gtd-focus-external-project")?.textContent).toBe(
+        "Proptics"
+      );
+      expect(
+        itemFor(container, "ROO-2").querySelector(".flow-gtd-focus-external-project")
+      ).toBeNull();
+    });
+
     it("sorts outside sources by label and shows them before general actions", async () => {
       const acme = ticket("ACME-1", {
         external: { ...ticket("ACME-1").external, sourceLabel: "Acme" },

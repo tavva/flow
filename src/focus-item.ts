@@ -34,7 +34,10 @@ export function hasValidExternalSource(item: object): boolean {
   const { id, external } = item as { id?: unknown; external?: unknown };
   if (typeof id !== "string" || typeof external !== "object" || external === null) return false;
   const source = external as Record<string, unknown>;
-  return ["sourceName", "sourceLabel", "url", "externalId"].every(
-    (field) => typeof source[field] === "string"
+  return (
+    ["sourceName", "sourceLabel", "url", "externalId"].every(
+      (field) => typeof source[field] === "string"
+    ) &&
+    (source.projectName === undefined || typeof source.projectName === "string")
   );
 }

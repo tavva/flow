@@ -998,6 +998,12 @@ export class FocusView extends RefreshingView {
     // Wording from another plugin is shown as plain text, never rendered as markdown
     textSpan.createSpan({ cls: "flow-gtd-focus-external-id", text: item.external.externalId });
     textSpan.createSpan({ text: item.text });
+    if (item.external.projectName) {
+      textSpan.createSpan({
+        cls: "flow-gtd-focus-external-project",
+        text: item.external.projectName,
+      });
+    }
     textSpan.addEventListener("click", () => {
       if (isWebUrl(item.external.url)) {
         window.open(item.external.url);

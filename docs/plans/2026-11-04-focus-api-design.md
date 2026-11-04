@@ -48,6 +48,7 @@ export interface ExternalSource {
   sourceLabel: string; // Shown as a chip, e.g. "Rootcause"
   url: string; // Opened when the item is clicked
   externalId: string; // The source's own ID, e.g. "ROO-123"
+  projectName?: string; // The source's project, e.g. "Proptics"; shown under the wording
 }
 
 export type FocusItem = VaultFocusItem | ExternalFocusItem;
@@ -121,6 +122,7 @@ export interface FlowApi {
     sourceLabel: string;
     url: string;
     externalId: string;
+    projectName?: string | null; // Optional; null or "" means no project
   }): Promise<string>; // Returns the new item's id
 
   updateFocusItem(
@@ -131,6 +133,7 @@ export interface FlowApi {
       sourceLabel: string;
       url: string;
       externalId: string; // Changes when the source renames its record, e.g. ROO-5 → RC-12
+      projectName: string | null; // null or "" clears it
     }>
   ): Promise<void>;
 
@@ -178,7 +181,7 @@ the API, auto-clear, and edits synced in from another device.
   `src/focus-api.ts` that matches external items by `id` and returns
   `FocusChange[]`: new ids are `added`, missing ids are `removed`, a newly set
   `completedAt` is `completed`, any other change to `text`, `sphere`,
-  `sourceLabel`, `url` or `externalId` is `edited`.
+  `sourceLabel`, `url`, `externalId` or `projectName` is `edited`.
 - Each change goes to the callbacks registered for its `sourceName`. A
   throwing callback is logged and doesn't stop the others.
 - Pin and reorder changes aren't reported.
