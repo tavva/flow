@@ -132,6 +132,7 @@ export interface FlowApi {
   removeFocusItem(id: string): Promise<void>;
 
   getFocusItems(sourceName: string): Promise<ExternalFocusItem[]>;
+  getSpheres(): string[]; // Sphere names from Flow's settings
 
   onFocusChange(sourceName: string, callback: (change: FocusChange) => void): () => void;
 }
@@ -146,6 +147,7 @@ export type FocusChange =
 `completeFocusItem` is added to the four operations agreed earlier because a
 companion needs it when the outside record closes (a Linear ticket marked
 done).
+`getSpheres` lets a companion offer a sphere dropdown in its settings.
 
 Every write goes through `updateFocusItems`, so it holds the focus file lock,
 reads the latest file and never overwrites another writer's change. Calls with
