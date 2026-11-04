@@ -28,6 +28,7 @@ export type ExternalFocusItemChanges = Partial<{
   sphere: string;
   sourceLabel: string;
   url: string;
+  externalId: string;
 }>;
 
 export type FocusChange =
@@ -72,7 +73,8 @@ export function diffExternalFocusItems(before: FocusItem[], after: FocusItem[]):
       item.text !== previous.text ||
       item.sphere !== previous.sphere ||
       item.external.sourceLabel !== previous.external.sourceLabel ||
-      item.external.url !== previous.external.url
+      item.external.url !== previous.external.url ||
+      item.external.externalId !== previous.external.externalId
     ) {
       changes.push({ type: "edited", item, previous });
     }
@@ -154,12 +156,15 @@ export class FocusApi implements FlowApi {
         ? undefined
         : requireText(changes.sourceLabel, "sourceLabel");
     const url = changes.url === undefined ? undefined : requireWebUrl(changes.url);
+    const externalId =
+      changes.externalId === undefined ? undefined : requireText(changes.externalId, "externalId");
     await this.write((items) => {
       const item = findExternalItem(items, id);
       if (text !== undefined) item.text = text;
       if (sphere !== undefined) item.sphere = sphere;
       if (sourceLabel !== undefined) item.external.sourceLabel = sourceLabel;
       if (url !== undefined) item.external.url = url;
+      if (externalId !== undefined) item.external.externalId = externalId;
       return items;
     });
   }

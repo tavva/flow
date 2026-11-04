@@ -138,6 +138,7 @@ describe("diffExternalFocusItems", () => {
   it.each([
     ["sourceLabel", { sourceLabel: "Acme" }],
     ["url", { url: "https://linear.app/acme/issue/ROO-1" }],
+    ["externalId", { externalId: "RC-12" }],
   ])("reports a change of %s as an edit", (_field, sourceChanges) => {
     const before = externalItem("ROO-1");
     const after = { ...before, external: { ...before.external, ...sourceChanges } };
@@ -274,6 +275,15 @@ describe("FocusApi", () => {
       ]);
     });
 
+    it("changes the external ID", async () => {
+      const item = externalItem("ROO-1");
+      const { api, items } = await createApi([item]);
+
+      await api.updateFocusItem("ROO-1", { externalId: "RC-12" });
+
+      expect(items()).toEqual([{ ...item, external: { ...item.external, externalId: "RC-12" } }]);
+    });
+
     it("rejects an unknown id", async () => {
       const { api } = await createApi([externalItem("ROO-1")]);
 
@@ -292,13 +302,18 @@ describe("FocusApi", () => {
       expect(items()).toEqual([item]);
     });
 
-    it.each(["text", "sphere", "sourceLabel"] as const)("rejects an empty %s", async (field) => {
-      const item = externalItem("ROO-1");
-      const { api, items } = await createApi([item]);
+    it.each(["text", "sphere", "sourceLabel", "externalId"] as const)(
+      "rejects an empty %s",
+      async (field) => {
+        const item = externalItem("ROO-1");
+        const { api, items } = await createApi([item]);
 
-      await expect(api.updateFocusItem("ROO-1", { [field]: "" })).rejects.toThrow(ValidationError);
-      expect(items()).toEqual([item]);
-    });
+        await expect(api.updateFocusItem("ROO-1", { [field]: "" })).rejects.toThrow(
+          ValidationError
+        );
+        expect(items()).toEqual([item]);
+      }
+    );
   });
 
   describe("completeFocusItem", () => {
