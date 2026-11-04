@@ -4,7 +4,7 @@
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "./types";
 import { ValidationError } from "./errors";
-import { hasValidExternalSource } from "./focus-item";
+import { hasValidExternalSource, isExternalFocusItem } from "./focus-item";
 
 import { resolveFocusFilePath } from "./focus-file-path";
 import { DEFAULT_SETTINGS } from "./types/settings";
@@ -72,6 +72,15 @@ function parseJsonlFormat(content: string): FocusItem[] {
         continue;
       }
       const item = parsed as FocusItem;
+      // A bad project name is dropped rather than skipping the line, which would delete the item
+      if (
+        isExternalFocusItem(item) &&
+        item.external.projectName !== undefined &&
+        typeof item.external.projectName !== "string"
+      ) {
+        console.warn("Ignoring a project name that isn't text in focus file:", item.id);
+        delete item.external.projectName;
+      }
       if (!item.contexts) {
         item.contexts = [];
       }

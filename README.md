@@ -153,7 +153,7 @@ An item from another plugin looks like:
 ```
 
 - A line with `external` is an item from another plugin. Any other line is a vault item with `file` (vault-relative path), `lineNumber`, `lineContent`, `text`, `sphere`, `isGeneral` and `addedAt`.
-- `external.projectName` is the item's project in the other plugin's tool. It's optional: a line without it has no project.
+- `external.projectName` is the item's project in the other plugin's tool. It's optional: a line without it has no project. Writers should leave the field out rather than write `null`; Flow ignores a value that isn't text and keeps the item.
 - `addedAt` and `completedAt` are milliseconds since the epoch.
 - `isPinned: true` means the item is in the Pinned section.
 - `completedAt` is set once the item is completed. Completed items stay in the file until they're removed or auto-cleared.
