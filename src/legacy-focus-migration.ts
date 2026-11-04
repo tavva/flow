@@ -5,6 +5,7 @@ import { App, Modal, TFile, Vault } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { updateFocusItems } from "./focus-persistence";
+import { isExternalFocusItem, isVaultFocusItem } from "./focus-item";
 import { FocusView, FOCUS_VIEW_TYPE } from "./focus-view";
 import { wrapAsyncEvent } from "./async-utils";
 import { getProjectSphere } from "./frontmatter";
@@ -95,7 +96,10 @@ export async function migrateLegacyFocusItems(
   for (const legacy of legacyItems) {
     // Check for duplicate
     const isDuplicate = existingFocus.some(
-      (existing) => existing.file === legacy.file && existing.lineContent === legacy.lineContent
+      (existing) =>
+        isVaultFocusItem(existing) &&
+        existing.file === legacy.file &&
+        existing.lineContent === legacy.lineContent
     );
 
     if (isDuplicate) {
@@ -378,17 +382,21 @@ export async function checkAndPromptLegacyMigration(
             await updateFocusItems(
               app.vault,
               (focusItems) =>
-                focusItems.map((item) => ({
-                  ...item,
-                  lineContent: item.lineContent
-                    .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
-                    .replace(/\s+$/, "")
-                    .replace(/\s{2,}/g, " "),
-                  text: item.text
-                    .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
-                    .replace(/\s+$/, "")
-                    .replace(/\s{2,}/g, " "),
-                })),
+                focusItems.map((item) =>
+                  isExternalFocusItem(item)
+                    ? item
+                    : {
+                        ...item,
+                        lineContent: item.lineContent
+                          .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                          .replace(/\s+$/, "")
+                          .replace(/\s{2,}/g, " "),
+                        text: item.text
+                          .replace(new RegExp(`\\s*${LEGACY_TAG}`, "g"), "")
+                          .replace(/\s+$/, "")
+                          .replace(/\s{2,}/g, " "),
+                      }
+                ),
               focusFilePath
             );
 

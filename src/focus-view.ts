@@ -1,8 +1,17 @@
 // ABOUTME: Leaf view displaying curated focus of next actions from across the vault.
 // ABOUTME: Allows marking items complete, converting to waiting-for, or removing from list.
 
-import { WorkspaceLeaf, TFile, setIcon, MarkdownRenderer, ViewStateResult, Editor } from "obsidian";
-import { FocusItem, PluginSettings, FlowProject } from "./types";
+import {
+  WorkspaceLeaf,
+  TFile,
+  setIcon,
+  MarkdownRenderer,
+  ViewStateResult,
+  Editor,
+  Notice,
+} from "obsidian";
+import { ExternalFocusItem, FocusItem, PluginSettings, FlowProject, VaultFocusItem } from "./types";
+import { isExternalFocusItem, isSameFocusItem, isVaultFocusItem, isWebUrl } from "./focus-item";
 import { FocusValidator } from "./focus-validator";
 import { FlowProjectScanner } from "./flow-scanner";
 import { getProjectDisplayName } from "./project-hierarchy";
@@ -16,8 +25,9 @@ import { resolveFocusFilePath } from "./focus-file-path";
 export const FOCUS_VIEW_TYPE = "flow-gtd-focus-view";
 
 interface GroupedFocusItems {
-  projectActions: { [filePath: string]: FocusItem[] };
-  generalActions: { [sphere: string]: FocusItem[] };
+  projectActions: { [filePath: string]: VaultFocusItem[] };
+  externalActions: { [sourceLabel: string]: ExternalFocusItem[] };
+  generalActions: { [sphere: string]: VaultFocusItem[] };
 }
 
 interface ViewWithEditor {
@@ -46,6 +56,25 @@ interface FlowWorkspaceTrigger {
   ): void;
 }
 
+const ITEM_GONE_MESSAGE =
+  "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view.";
+
+/**
+ * Find an item in the latest focus list. A vault item whose line number was updated
+ * elsewhere (another view or device) is still found by its file, time added and line.
+ */
+function findFocusItemIndex(items: FocusItem[], item: FocusItem): number {
+  const index = items.findIndex((i) => isSameFocusItem(i, item));
+  if (index !== -1 || isExternalFocusItem(item)) return index;
+  return items.findIndex(
+    (i) =>
+      isVaultFocusItem(i) &&
+      i.file === item.file &&
+      i.addedAt === item.addedAt &&
+      i.lineContent === item.lineContent
+  );
+}
+
 export class FocusView extends RefreshingView {
   private settings: PluginSettings;
   private validator: FocusValidator;
@@ -60,6 +89,9 @@ export class FocusView extends RefreshingView {
   private focusLoadVersion = 0;
   private loadedFocusSnapshot: string | null = null;
   private selectedContexts: string[] = [];
+  // While a wording edit is open, re-rendering would throw it away, so refreshes wait
+  private editingItem: ExternalFocusItem | null = null;
+  private refreshDeferred = false;
 
   constructor(leaf: WorkspaceLeaf, settings: PluginSettings, saveSettings: () => Promise<void>) {
     super(leaf);
@@ -128,6 +160,10 @@ export class FocusView extends RefreshingView {
   }
 
   async onOpen() {
+    if (this.editingItem) {
+      this.refreshDeferred = true;
+      return;
+    }
     this.cleanup();
     const container = this.contentEl;
     container.empty();
@@ -140,17 +176,7 @@ export class FocusView extends RefreshingView {
     const loadVersion = await this.loadFocus();
     if (loadVersion !== this.focusLoadVersion) return;
 
-    // Clean up old completed items (before midnight)
-    const midnight = this.getMidnightTimestamp();
-    const originalLength = this.focusItems.length;
-    this.focusItems = this.focusItems.filter(
-      (item) => !item.completedAt || item.completedAt >= midnight
-    );
-
-    // Save if any items were removed
-    if (this.focusItems.length < originalLength) {
-      await this.saveFocus();
-    }
+    await this.removeCompletedBeforeToday();
 
     // Load all projects for parent context
     this.allProjects = await this.scanner.scanProjects();
@@ -165,7 +191,7 @@ export class FocusView extends RefreshingView {
       }
       const cache = this.app.metadataCache.getFileCache(file);
       if (cache?.listItems && cache.listItems.length > 0) {
-        return this.focusItems.some((item) => item.file === file.path);
+        return this.focusItems.some((item) => isVaultFocusItem(item) && item.file === file.path);
       }
       return false;
     });
@@ -220,29 +246,54 @@ export class FocusView extends RefreshingView {
     return loadVersion;
   }
 
-  private async saveFocus(): Promise<void> {
+  /**
+   * Apply an edit to the latest focus file under the focus lock, so changes other writers
+   * made since this view loaded (other plugins, sync, other views) are kept.
+   */
+  private async updateFocus(edit: (items: FocusItem[]) => FocusItem[]): Promise<void> {
     if (this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
       throw new Error("Focus file changed. Refresh the Focus view before trying again.");
     }
     const filePath = this.loadedFocusFilePath;
     const loadVersion = this.focusLoadVersion;
-    const expected = this.loadedFocusSnapshot;
-    // Capture the edit now; later UI mutations must not change a queued write.
-    const proposed = JSON.stringify(this.focusItems);
-    await updateFocusItems(
+    const items = await updateFocusItems(
       this.app.vault,
       (current) => {
         if (filePath !== resolveFocusFilePath(this.settings.focusFilePath)) {
           throw new Error("Focus file changed. Refresh the Focus view before trying again.");
         }
-        if (expected === null || JSON.stringify(current) !== expected) {
-          throw new Error("Focus list changed. Refresh the Focus view before trying again.");
-        }
-        return JSON.parse(proposed) as FocusItem[];
+        return edit(current);
       },
       filePath
     );
-    if (loadVersion === this.focusLoadVersion) this.loadedFocusSnapshot = proposed;
+    if (loadVersion === this.focusLoadVersion) {
+      this.focusItems = items;
+      this.loadedFocusSnapshot = JSON.stringify(items);
+    }
+  }
+
+  /** Change one item in the latest focus file. Returns false if the item is no longer there. */
+  private async updateFocusItem(
+    item: FocusItem,
+    change: (current: FocusItem) => void
+  ): Promise<boolean> {
+    let found = false;
+    await this.updateFocus((items) => {
+      const current = items[findFocusItemIndex(items, item)];
+      if (current) {
+        change(current);
+        found = true;
+      }
+      return items;
+    });
+    return found;
+  }
+
+  private async removeCompletedBeforeToday(): Promise<void> {
+    const midnight = this.getMidnightTimestamp();
+    const isCurrent = (item: FocusItem) => !item.completedAt || item.completedAt >= midnight;
+    if (this.focusItems.every(isCurrent)) return;
+    await this.updateFocus((items) => items.filter(isCurrent));
   }
 
   async onClose() {
@@ -250,34 +301,30 @@ export class FocusView extends RefreshingView {
   }
 
   protected async performRefresh(): Promise<void> {
+    if (this.editingItem) {
+      this.refreshDeferred = true;
+      return;
+    }
     try {
       // Reload focus items from file to pick up changes from other views
       const loadVersion = await this.loadFocus();
       if (loadVersion !== this.focusLoadVersion) return;
 
-      // Clean up old completed items (before midnight)
-      const midnight = this.getMidnightTimestamp();
-      const originalLength = this.focusItems.length;
-      this.focusItems = this.focusItems.filter(
-        (item) => !item.completedAt || item.completedAt >= midnight
+      await this.removeCompletedBeforeToday();
+
+      // Validate all remaining active vault items; external items have no vault line to check
+      const activeItems = this.focusItems.filter(
+        (item): item is VaultFocusItem => isVaultFocusItem(item) && !item.completedAt
       );
-
-      // Save if any items were removed during cleanup
-      if (this.focusItems.length < originalLength) {
-        await this.saveFocus();
-      }
-
-      // Validate all remaining active items (skip completed items)
-      const activeItems = this.focusItems.filter((item) => !item.completedAt);
-      const validatedItems: FocusItem[] = [...this.focusItems.filter((item) => item.completedAt)];
-      let needsSave = false;
+      const removedItems: VaultFocusItem[] = [];
+      const movedItems: { item: VaultFocusItem; lineNumber: number }[] = [];
 
       for (const item of activeItems) {
         const validation = await this.validator.validateItem(item);
 
         if (!validation.found) {
           // Item no longer exists or line content changed significantly
-          needsSave = true;
+          removedItems.push(item);
           continue;
         }
 
@@ -293,19 +340,15 @@ export class FocusView extends RefreshingView {
             // If marked as complete [x], remove from focus
             // Note: We keep waiting-for [w] items in the focus
             if (isCompletedCheckbox(line)) {
-              needsSave = true;
+              removedItems.push(item);
               continue;
             }
           }
         }
 
-        // Item is still valid and not complete
+        // Item is still valid and not complete; update its line number if it moved
         if (validation.updatedLineNumber && validation.updatedLineNumber !== item.lineNumber) {
-          // Update line number if it moved
-          validatedItems.push({ ...item, lineNumber: validation.updatedLineNumber });
-          needsSave = true;
-        } else {
-          validatedItems.push(item);
+          movedItems.push({ item, lineNumber: validation.updatedLineNumber });
         }
       }
 
@@ -315,9 +358,17 @@ export class FocusView extends RefreshingView {
         this.loadedFocusFilePath !== resolveFocusFilePath(this.settings.focusFilePath)
       )
         return;
-      if (needsSave) {
-        this.focusItems = validatedItems;
-        await this.saveFocus();
+      if (removedItems.length > 0 || movedItems.length > 0) {
+        await this.updateFocus((items) =>
+          items
+            .filter((item) => !removedItems.some((removed) => isSameFocusItem(item, removed)))
+            .map((item) => {
+              const moved = movedItems.find((entry) => isSameFocusItem(item, entry.item));
+              return moved && isVaultFocusItem(item)
+                ? { ...item, lineNumber: moved.lineNumber }
+                : item;
+            })
+        );
       }
 
       // Re-render the view
@@ -335,13 +386,13 @@ export class FocusView extends RefreshingView {
       }
 
       // Render context filter buttons (using all items so all contexts are discoverable)
-      this.renderContextFilter(container, validatedItems);
+      this.renderContextFilter(container, this.focusItems);
 
       // Show current projects box
       this.renderCurrentProjectsBox(container);
 
       // Apply context filter
-      const filteredItems = this.filterItemsByContext(validatedItems);
+      const filteredItems = this.filterItemsByContext(this.focusItems);
 
       if (filteredItems.length === 0) {
         this.renderEmptyMessage(container);
@@ -417,11 +468,18 @@ export class FocusView extends RefreshingView {
   }
 
   private groupItems(items: FocusItem[]): GroupedFocusItems {
-    const projectActions: { [filePath: string]: FocusItem[] } = {};
-    const generalActions: { [sphere: string]: FocusItem[] } = {};
+    const projectActions: { [filePath: string]: VaultFocusItem[] } = {};
+    const externalActions: { [sourceLabel: string]: ExternalFocusItem[] } = {};
+    const generalActions: { [sphere: string]: VaultFocusItem[] } = {};
 
     items.forEach((item) => {
-      if (item.isGeneral) {
+      if (isExternalFocusItem(item)) {
+        const label = item.external.sourceLabel;
+        if (!externalActions[label]) {
+          externalActions[label] = [];
+        }
+        externalActions[label].push(item);
+      } else if (item.isGeneral) {
         if (!generalActions[item.sphere]) {
           generalActions[item.sphere] = [];
         }
@@ -434,7 +492,7 @@ export class FocusView extends RefreshingView {
       }
     });
 
-    return { projectActions, generalActions };
+    return { projectActions, externalActions, generalActions };
   }
 
   private renderGroupedItems(container: HTMLElement, items: FocusItem[]) {
@@ -476,6 +534,21 @@ export class FocusView extends RefreshingView {
           this.renderFileGroup(projectSection, filePath, grouped.projectActions[filePath]);
         });
     }
+
+    // One section per outside source, e.g. a Linear workspace
+    Object.keys(grouped.externalActions)
+      .sort()
+      .forEach((sourceLabel) => {
+        const sourceSection = container.createDiv({ cls: "flow-gtd-focus-section" });
+        sourceSection.createEl("h3", {
+          text: sourceLabel,
+          cls: "flow-gtd-focus-section-title",
+        });
+        const itemsList = sourceSection.createEl("ul", { cls: "flow-gtd-focus-items" });
+        grouped.externalActions[sourceLabel].forEach((item) => {
+          runAsync(this.renderItem(itemsList, item), "Failed to render focus item");
+        });
+      });
 
     // General Actions section
     if (Object.keys(grouped.generalActions).length > 0) {
@@ -538,6 +611,17 @@ export class FocusView extends RefreshingView {
           });
       }
 
+      // Render actions from other plugins
+      Object.keys(grouped.externalActions)
+        .sort()
+        .forEach((sourceLabel) => {
+          this.renderCompletedSourceGroup(
+            section,
+            sourceLabel,
+            grouped.externalActions[sourceLabel]
+          );
+        });
+
       // Render general actions
       if (Object.keys(grouped.generalActions).length > 0) {
         Object.keys(grouped.generalActions)
@@ -575,6 +659,24 @@ export class FocusView extends RefreshingView {
     }
 
     const itemsList = fileSection.createEl("ul", { cls: "flow-gtd-focus-items" });
+    items.forEach((item) => {
+      runAsync(this.renderCompletedItem(itemsList, item), "Failed to render completed focus item");
+    });
+  }
+
+  private renderCompletedSourceGroup(
+    container: HTMLElement,
+    sourceLabel: string,
+    items: ExternalFocusItem[]
+  ) {
+    const sourceSection = container.createDiv({ cls: "flow-gtd-focus-sphere-section" });
+
+    sourceSection.createEl("h4", {
+      text: sourceLabel,
+      cls: "flow-gtd-focus-sphere-header",
+    });
+
+    const itemsList = sourceSection.createEl("ul", { cls: "flow-gtd-focus-items" });
     items.forEach((item) => {
       runAsync(this.renderCompletedItem(itemsList, item), "Failed to render completed focus item");
     });
@@ -642,9 +744,7 @@ export class FocusView extends RefreshingView {
   private async renderItem(container: HTMLElement, item: FocusItem) {
     const itemEl = container.createEl("li", { cls: "flow-gtd-focus-item" });
 
-    // Check if this is a waiting-for item
-    const checkboxStatus = this.getCheckboxStatusChar(item.lineContent);
-    const isWaitingFor = checkboxStatus.toLowerCase() === "w";
+    const isWaitingFor = this.isWaitingFor(item);
 
     // Add handshake emoji for waiting-for items (outside the item box)
     if (isWaitingFor) {
@@ -657,11 +757,7 @@ export class FocusView extends RefreshingView {
     const textSpan = itemEl.createSpan({
       cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
     });
-    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
-
-    textSpan.addEventListener("click", (e) => {
-      this.handleRenderedTextClick(e, item);
-    });
+    await this.renderItemText(textSpan, item);
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
 
@@ -706,8 +802,8 @@ export class FocusView extends RefreshingView {
       );
     }
 
-    // Only show "Convert to waiting for" button for non-waiting items
-    if (!isWaitingFor) {
+    // Only show "Convert to waiting for" button for non-waiting vault items
+    if (isVaultFocusItem(item) && !isWaitingFor) {
       const waitingBtn = secondaryActions.createEl("button", {
         cls: "flow-gtd-focus-action-btn",
         text: "🕐",
@@ -719,6 +815,10 @@ export class FocusView extends RefreshingView {
           await this.convertToWaitingFor(item);
         }, "Failed to convert focus item to waiting")
       );
+    }
+
+    if (isExternalFocusItem(item)) {
+      this.renderEditButton(secondaryActions, textSpan, item);
     }
 
     const removeBtn = secondaryActions.createEl("button", {
@@ -758,8 +858,13 @@ export class FocusView extends RefreshingView {
     // Content wrapper for project name + action text
     const contentWrapper = itemEl.createDiv({ cls: "flow-gtd-focus-pinned-content" });
 
-    // Show project name for project actions (not general actions)
-    if (!item.isGeneral) {
+    // Show where the item comes from: its source, or its project (not general actions)
+    if (isExternalFocusItem(item)) {
+      contentWrapper.createSpan({
+        cls: "flow-gtd-focus-project-name",
+        text: item.external.sourceLabel,
+      });
+    } else if (!item.isGeneral) {
       const displayName = getProjectDisplayName(item.file, this.allProjects);
       contentWrapper.createSpan({
         cls: "flow-gtd-focus-project-name",
@@ -767,9 +872,7 @@ export class FocusView extends RefreshingView {
       });
     }
 
-    // Check if this is a waiting-for item
-    const checkboxStatus = this.getCheckboxStatusChar(item.lineContent);
-    const isWaitingFor = checkboxStatus.toLowerCase() === "w";
+    const isWaitingFor = this.isWaitingFor(item);
 
     // Action text row (with waiting indicator if needed)
     const actionRow = contentWrapper.createDiv({ cls: "flow-gtd-focus-pinned-action-row" });
@@ -785,11 +888,7 @@ export class FocusView extends RefreshingView {
     const textSpan = actionRow.createSpan({
       cls: `flow-gtd-focus-item-text${isWaitingFor ? " is-waiting" : ""}`,
     });
-    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
-
-    textSpan.addEventListener("click", (e) => {
-      this.handleRenderedTextClick(e, item);
-    });
+    await this.renderItemText(textSpan, item);
 
     const actionsSpan = itemEl.createSpan({ cls: "flow-gtd-focus-item-actions" });
 
@@ -832,8 +931,8 @@ export class FocusView extends RefreshingView {
       }, "Failed to unpin focus item")
     );
 
-    // Only show "Convert to waiting for" button for non-waiting items
-    if (!isWaitingFor) {
+    // Only show "Convert to waiting for" button for non-waiting vault items
+    if (isVaultFocusItem(item) && !isWaitingFor) {
       const waitingBtn = secondaryActions.createEl("button", {
         cls: "flow-gtd-focus-action-btn",
         text: "🕐",
@@ -845,6 +944,10 @@ export class FocusView extends RefreshingView {
           await this.convertToWaitingFor(item);
         }, "Failed to convert pinned focus item to waiting")
       );
+    }
+
+    if (isExternalFocusItem(item)) {
+      this.renderEditButton(secondaryActions, textSpan, item);
     }
 
     const removeBtn = secondaryActions.createEl("button", {
@@ -874,13 +977,112 @@ export class FocusView extends RefreshingView {
     const textSpan = itemEl.createSpan({
       cls: "flow-gtd-focus-item-text is-completed",
     });
-    await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
-
-    textSpan.addEventListener("click", (e) => {
-      this.handleRenderedTextClick(e, item);
-    });
+    await this.renderItemText(textSpan, item);
 
     // No action buttons for completed items
+  }
+
+  private isWaitingFor(item: FocusItem): boolean {
+    return isVaultFocusItem(item) && this.getCheckboxStatusChar(item.lineContent) === "w";
+  }
+
+  private async renderItemText(textSpan: HTMLElement, item: FocusItem): Promise<void> {
+    if (isVaultFocusItem(item)) {
+      await MarkdownRenderer.render(this.app, item.text, textSpan, item.file, this);
+      textSpan.addEventListener("click", (e) => {
+        this.handleRenderedTextClick(e, item);
+      });
+      return;
+    }
+
+    // Wording from another plugin is shown as plain text, never rendered as markdown
+    textSpan.createSpan({ cls: "flow-gtd-focus-external-id", text: item.external.externalId });
+    textSpan.createSpan({ text: item.text });
+    if (item.external.projectName) {
+      textSpan.createSpan({
+        cls: "flow-gtd-focus-external-project",
+        text: item.external.projectName,
+      });
+    }
+    textSpan.addEventListener("click", () => {
+      if (isWebUrl(item.external.url)) {
+        window.open(item.external.url);
+      } else {
+        new Notice("This item's link isn't a web address, so it can't be opened.");
+      }
+    });
+  }
+
+  private renderEditButton(
+    container: HTMLElement,
+    textSpan: HTMLElement,
+    item: ExternalFocusItem
+  ): void {
+    const editBtn = container.createEl("button", {
+      cls: "flow-gtd-focus-action-btn",
+      text: "✏️",
+    });
+    editBtn.title = "Edit wording";
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.startEditingText(textSpan, item);
+    });
+  }
+
+  // Swaps the item's text for an input: Enter saves, Escape or leaving the input cancels
+  private startEditingText(textSpan: HTMLElement, item: ExternalFocusItem): void {
+    // Created inside the text span, then moved into its place by replaceWith below
+    const input = textSpan.createEl("input", { type: "text", cls: "flow-gtd-focus-edit-input" });
+    input.value = item.text;
+    input.setAttribute("aria-label", "Wording");
+
+    let finished = false;
+    this.editingItem = item;
+    const endEdit = () => {
+      finished = true;
+      this.editingItem = null;
+    };
+    const stopEditing = () => {
+      endEdit();
+      input.replaceWith(textSpan);
+      if (this.refreshDeferred) {
+        this.refreshDeferred = false;
+        this.scheduleRefresh();
+      }
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.isComposing) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        stopEditing();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) {
+          input.classList.add("is-invalid");
+          input.setAttribute("aria-invalid", "true");
+          return;
+        }
+        // Saving re-renders from the latest file, which covers any deferred refresh
+        endEdit();
+        this.refreshDeferred = false;
+        runAsync(
+          this.updateItemText(item, text).catch((error) => {
+            stopEditing();
+            throw error;
+          }),
+          "Failed to edit focus item"
+        );
+      }
+    });
+    input.addEventListener("blur", () => {
+      if (!finished) stopEditing();
+    });
+
+    textSpan.replaceWith(input);
+    input.focus();
+    input.select();
   }
 
   private renderLoadingState(container: HTMLElement) {
@@ -987,7 +1189,7 @@ export class FocusView extends RefreshingView {
     }
   }
 
-  private handleRenderedTextClick(e: MouseEvent, item: FocusItem): void {
+  private handleRenderedTextClick(e: MouseEvent, item: VaultFocusItem): void {
     const target = e.target;
     if (!(target instanceof HTMLElement)) {
       runAsync(this.openFile(item.file, item.lineNumber), "Failed to open rendered focus item");
@@ -1070,6 +1272,18 @@ export class FocusView extends RefreshingView {
   }
 
   private async markItemComplete(item: FocusItem): Promise<void> {
+    if (isExternalFocusItem(item)) {
+      // External items have no vault line; completing only records the time
+      if (
+        await this.updateFocusItem(item, (current) => {
+          current.completedAt ??= Date.now();
+        })
+      ) {
+        await this.onOpen(); // Re-render
+      }
+      return;
+    }
+
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot mark item complete: item not found");
@@ -1096,24 +1310,23 @@ export class FocusView extends RefreshingView {
       await this.app.vault.modify(file, lines.join("\n"));
 
       // Set completedAt instead of removing from focus
-      const focusIndex = this.focusItems.findIndex(
-        (i) =>
-          i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
-      );
+      const found = await this.updateFocusItem(item, (current) => {
+        current.completedAt ??= Date.now();
+      });
 
-      if (focusIndex !== -1) {
-        this.focusItems[focusIndex].completedAt = Date.now();
-        await this.saveFocus();
-        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
-          file: item.file,
-          action: item.text,
-        });
-        await this.onOpen(); // Re-render
+      if (!found) {
+        new Notice(ITEM_GONE_MESSAGE);
+        return;
       }
+      (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-completed", {
+        file: item.file,
+        action: item.text,
+      });
+      await this.onOpen(); // Re-render
     }
   }
 
-  private async convertToWaitingFor(item: FocusItem): Promise<void> {
+  private async convertToWaitingFor(item: VaultFocusItem): Promise<void> {
     const validation = await this.validator.validateItem(item);
     if (!validation.found) {
       console.error("Cannot convert item: item not found");
@@ -1135,63 +1348,60 @@ export class FocusView extends RefreshingView {
       await this.app.vault.modify(file, lines.join("\n"));
 
       // Update the item's lineContent in the focus instead of removing it
-      const focusIndex = this.focusItems.findIndex(
-        (i) =>
-          i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
-      );
+      const found = await this.updateFocusItem(item, (current) => {
+        if (isVaultFocusItem(current)) current.lineContent = updatedLine;
+      });
 
-      if (focusIndex !== -1) {
-        this.focusItems[focusIndex].lineContent = updatedLine;
-        await this.saveFocus();
-        (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
-          file: item.file,
-          action: item.text,
-        });
-        await this.onOpen(); // Re-render
+      if (!found) {
+        new Notice(ITEM_GONE_MESSAGE);
+        return;
       }
+      (this.app.workspace as FlowWorkspaceTrigger).trigger("flow:action-waiting", {
+        file: item.file,
+        action: item.text,
+      });
+      await this.onOpen(); // Re-render
     }
   }
 
+  private async updateItemText(item: ExternalFocusItem, text: string): Promise<void> {
+    await this.updateFocusItem(item, (current) => {
+      current.text = text;
+    });
+    await this.onOpen(); // Re-render
+  }
+
   private async removeFromFocus(item: FocusItem): Promise<void> {
-    this.focusItems = this.focusItems.filter(
-      (i) =>
-        !(i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt)
-    );
-    await this.saveFocus();
+    await this.updateFocus((items) => {
+      const index = findFocusItemIndex(items, item);
+      if (index !== -1) items.splice(index, 1);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 
   private async pinItem(item: FocusItem): Promise<void> {
-    // Find item in focusItems
-    const index = this.focusItems.findIndex(
-      (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
-    );
+    await this.updateFocus((items) => {
+      const index = findFocusItemIndex(items, item);
+      if (index === -1) return items;
 
-    if (index === -1) return;
+      // Set isPinned flag
+      items[index].isPinned = true;
 
-    // Set isPinned flag
-    this.focusItems[index].isPinned = true;
-
-    // Move to end of pinned section
-    const pinnedCount = this.focusItems.filter((i) => i.isPinned).length;
-    const [pinnedItem] = this.focusItems.splice(index, 1);
-    this.focusItems.splice(pinnedCount - 1, 0, pinnedItem);
-
-    await this.saveFocus();
+      // Move to end of pinned section
+      const pinnedCount = items.filter((i) => i.isPinned).length;
+      const [pinnedItem] = items.splice(index, 1);
+      items.splice(pinnedCount - 1, 0, pinnedItem);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 
   private async unpinItem(item: FocusItem): Promise<void> {
-    const index = this.focusItems.findIndex(
-      (i) => i.file === item.file && i.lineNumber === item.lineNumber && i.addedAt === item.addedAt
-    );
-
-    if (index === -1) return;
-
     // Clear isPinned flag (item stays in array, position doesn't matter for unpinned)
-    this.focusItems[index].isPinned = false;
-
-    await this.saveFocus();
+    await this.updateFocusItem(item, (current) => {
+      current.isPinned = false;
+    });
     await this.onOpen(); // Re-render
   }
 
@@ -1218,27 +1428,17 @@ export class FocusView extends RefreshingView {
     e.preventDefault();
     if (!this.draggedItem || this.draggedItem === dropTarget) return;
 
-    // Find indices in focusItems
-    const draggedIndex = this.focusItems.findIndex(
-      (i) =>
-        i.file === this.draggedItem!.file &&
-        i.lineNumber === this.draggedItem!.lineNumber &&
-        i.addedAt === this.draggedItem!.addedAt
-    );
-    const targetIndex = this.focusItems.findIndex(
-      (i) =>
-        i.file === dropTarget.file &&
-        i.lineNumber === dropTarget.lineNumber &&
-        i.addedAt === dropTarget.addedAt
-    );
+    const draggedItem = this.draggedItem;
+    await this.updateFocus((items) => {
+      const draggedIndex = findFocusItemIndex(items, draggedItem);
+      const targetIndex = findFocusItemIndex(items, dropTarget);
+      if (draggedIndex === -1 || targetIndex === -1) return items;
 
-    if (draggedIndex === -1 || targetIndex === -1) return;
-
-    // Remove dragged item and insert at target position
-    const [item] = this.focusItems.splice(draggedIndex, 1);
-    this.focusItems.splice(targetIndex, 0, item);
-
-    await this.saveFocus();
+      // Remove dragged item and insert at target position
+      const [item] = items.splice(draggedIndex, 1);
+      items.splice(targetIndex, 0, item);
+      return items;
+    });
     await this.onOpen(); // Re-render
   }
 

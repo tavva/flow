@@ -140,6 +140,15 @@ Project description and context.
 - **FocusValidator** (`src/focus-validator.ts`) - Validates items when source files change
 - **FocusAutoClear** (`src/focus-auto-clear.ts`) - Automatic daily clearing at configured time
 - **WaitingForValidator** (`src/waiting-for-validator.ts`) - Validates/resolves waiting-for items
+- **FocusItem helpers** (`src/focus-item.ts`) - Tells vault and external items apart; `isSameFocusItem` is the one way to match items
+- **FocusApi** (`src/focus-api.ts`) - Public API on the plugin instance (`plugin.api`) that lets other plugins add, change, complete, remove and watch external items
+
+`FocusItem` is a union. A `VaultFocusItem` points at an action line (`file`, `lineNumber`,
+`lineContent`). An `ExternalFocusItem` comes from another plugin, has an `id` and an `external`
+source, and has no line in the vault: never validate, edit or open a file for one. Narrow with
+`isExternalFocusItem` / `isVaultFocusItem` before reading line fields. Other tools read
+`focus.md` directly, so its format is a contract documented in the README ("Focus File
+Format"); only add fields, never rename or remove them.
 
 ### Task Status Cycling
 

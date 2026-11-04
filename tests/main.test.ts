@@ -8,6 +8,7 @@ import { FOCUS_VIEW_TYPE } from "../src/focus-view";
 import { SPHERE_VIEW_TYPE } from "../src/sphere-view";
 import { DEFAULT_SETTINGS } from "../src/types";
 import { saveFocusItems } from "../src/focus-persistence";
+import { FocusApi } from "../src/focus-api";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
 // Mock the view modules
@@ -482,6 +483,88 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
       expect(freshPlugin.settings).toBeDefined();
       expect(freshPlugin.settings.legacyFocusMigrationDismissed).toBe(false);
       expect(freshPlugin.settings.spheres).toEqual(DEFAULT_SETTINGS.spheres);
+    });
+  });
+
+  describe("Focus API", () => {
+    const externalLine = JSON.stringify({
+      id: "7c1e",
+      text: "Draft section 2",
+      sphere: "work",
+      addedAt: 1,
+      external: {
+        sourceName: "linear",
+        sourceLabel: "Acme",
+        url: "https://linear.app/acme/issue/ABC-123",
+        externalId: "ABC-123",
+      },
+    });
+
+    function vaultHandler(eventName: string): (file: TFile) => void {
+      const call = (mockApp.vault.on as jest.Mock).mock.calls.find(([name]) => name === eventName);
+      return call[1];
+    }
+
+    it("publishes the API on the plugin and announces it", () => {
+      expect(plugin.api.apiVersion).toBe(1);
+      expect(mockApp.workspace.trigger).toHaveBeenCalledWith("flow:api-ready", plugin.api);
+    });
+
+    // The concrete API object behind plugin.api, which companions only see as FlowApi
+    const focusApi = () => (plugin as unknown as { focusApi: FocusApi }).focusApi;
+
+    it("publishes the same object it uses for change tracking", () => {
+      expect(plugin.api).toBe(focusApi());
+    });
+
+    it.each(["modify", "create"])(
+      "checks for changes once the focus file settles after a %s event",
+      (eventName) => {
+        const settled = jest
+          .spyOn(focusApi(), "checkForChangesWhenSettled")
+          .mockImplementation(() => {});
+
+        vaultHandler(eventName)(new TFile(DEFAULT_SETTINGS.focusFilePath));
+
+        expect(settled).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it("ignores events for other files", () => {
+      const settled = jest.spyOn(focusApi(), "checkForChangesWhenSettled");
+
+      vaultHandler("modify")(new TFile("Projects/Plan.md"));
+      vaultHandler("create")(new TFile("Projects/Plan.md"));
+
+      expect(settled).not.toHaveBeenCalled();
+    });
+
+    it("reports a change found in the focus file to the source's callbacks", async () => {
+      const callback = jest.fn();
+      plugin.api.onFocusChange("linear", callback);
+      (mockApp.vault.adapter.exists as jest.Mock).mockResolvedValue(true);
+      (mockApp.vault.adapter.read as jest.Mock).mockResolvedValue(externalLine);
+
+      await focusApi().checkForChanges();
+
+      expect(callback).toHaveBeenCalledWith({
+        type: "added",
+        item: expect.objectContaining({ id: "7c1e" }),
+      });
+    });
+
+    it("announces unloading, stops calling change callbacks and refuses writes", async () => {
+      const callback = jest.fn();
+      plugin.api.onFocusChange("linear", callback);
+
+      plugin.onunload();
+      (mockApp.vault.adapter.exists as jest.Mock).mockResolvedValue(true);
+      (mockApp.vault.adapter.read as jest.Mock).mockResolvedValue(externalLine);
+      await focusApi().checkForChanges();
+
+      expect(mockApp.workspace.trigger).toHaveBeenCalledWith("flow:api-unloaded");
+      expect(callback).not.toHaveBeenCalled();
+      await expect(plugin.api.removeFocusItem("7c1e")).rejects.toThrow("Flow has been unloaded");
     });
   });
 

@@ -2,7 +2,7 @@
 // ABOUTME: Uses exact match first, then searches file for matching content.
 
 import { App, TFile } from "obsidian";
-import { FocusItem } from "./types";
+import { VaultFocusItem } from "./types";
 
 export interface ValidationResult {
   found: boolean;
@@ -14,7 +14,7 @@ export interface ValidationResult {
 export class FocusValidator {
   constructor(private app: App) {}
 
-  async validateItem(item: FocusItem): Promise<ValidationResult> {
+  async validateItem(item: VaultFocusItem): Promise<ValidationResult> {
     // Check if file exists
     const file = this.app.vault.getAbstractFileByPath(item.file);
     if (!(file instanceof TFile)) {

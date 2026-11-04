@@ -27,6 +27,7 @@ export class Vault {
   getAbstractFileByPath = jest.fn();
   createFolder = jest.fn();
   getMarkdownFiles = jest.fn().mockReturnValue([]);
+  on = jest.fn(() => ({ unload: jest.fn() }));
   adapter = {
     exists: jest.fn().mockResolvedValue(false),
     read: jest.fn().mockResolvedValue(""),

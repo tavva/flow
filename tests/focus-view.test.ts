@@ -1,7 +1,7 @@
 // tests/focus-view.test.ts
 import { FocusView, FOCUS_VIEW_TYPE } from "../src/focus-view";
-import { FocusItem } from "../src/types";
-import { WorkspaceLeaf, MarkdownRenderer } from "obsidian";
+import { ExternalFocusItem, FocusItem } from "../src/types";
+import { WorkspaceLeaf, MarkdownRenderer, Notice } from "obsidian";
 
 jest.mock("obsidian");
 
@@ -88,7 +88,7 @@ describe("FocusView", () => {
     mockSettings.focusFilePath = "GTD/Focus.md";
     await (view as any).loadFocus();
     expect(mockLoadFocusItems).toHaveBeenLastCalledWith(mockApp.vault, "GTD/Focus.md");
-    await (view as any).saveFocus();
+    await (view as any).updateFocus((items: FocusItem[]) => items);
     expect(mockSaveFocusItems).toHaveBeenLastCalledWith(mockApp.vault, [], "GTD/Focus.md");
 
     mockSettings.focusFilePath = "Other/Focus.md";
@@ -101,29 +101,50 @@ describe("FocusView", () => {
     await (view as any).loadFocus();
     (mockSaveFocusItems as jest.Mock).mockClear();
     mockSettings.focusFilePath = "B.md";
-    await expect((view as any).saveFocus()).rejects.toThrow("Focus file changed");
+    await expect((view as any).updateFocus((items: FocusItem[]) => items)).rejects.toThrow(
+      "Focus file changed"
+    );
     expect(mockSaveFocusItems).not.toHaveBeenCalled();
   });
 
-  it("rejects a stale view save without overwriting newer additions", async () => {
-    mockFocusItems = [{ file: "A.md", text: "A", lineNumber: 1 } as FocusItem];
+  const action = (text: string): FocusItem => ({
+    file: `${text}.md`,
+    lineNumber: 1,
+    lineContent: `- [ ] ${text}`,
+    text,
+    sphere: "work",
+    isGeneral: false,
+    addedAt: 1,
+  });
+
+  it("applies a view edit to the latest file, keeping newer additions", async () => {
+    const itemA = action("A");
+    mockFocusItems = [itemA];
     await (view as any).loadFocus();
-    (view as any).focusItems[0].isPinned = true;
-    mockFocusItems = [...mockFocusItems, { file: "B.md", text: "B", lineNumber: 1 } as FocusItem];
-    await expect((view as any).saveFocus()).rejects.toThrow("Focus list changed");
-    expect(mockSaveFocusItems).not.toHaveBeenCalled();
-    expect(mockFocusItems.map((item) => item.text)).toEqual(["A", "B"]);
+    mockFocusItems = [...mockFocusItems, action("B")];
+
+    await (view as any).pinItem(itemA);
+
+    expect(mockFocusItems.map((item) => [item.text, item.isPinned])).toEqual([
+      ["A", true],
+      ["B", undefined],
+    ]);
   });
 
-  it("blocks cached edits after a failed refresh even if the next read succeeds", async () => {
-    mockFocusItems = [{ file: "A.md", text: "A", lineNumber: 1 } as FocusItem];
+  it("applies an edit to the latest file after a failed refresh", async () => {
+    const itemA = action("A");
+    mockFocusItems = [itemA];
     await (view as any).loadFocus();
     (mockLoadFocusItems as jest.Mock).mockRejectedValueOnce(new Error("Read failed"));
     await expect((view as any).loadFocus()).rejects.toThrow("Read failed");
-    (view as any).focusItems[0].isPinned = true;
-    await expect((view as any).saveFocus()).rejects.toThrow("Focus list changed");
-    expect(mockSaveFocusItems).not.toHaveBeenCalled();
-    expect(mockFocusItems[0].isPinned).toBeUndefined();
+    mockFocusItems = [...mockFocusItems, action("B")];
+
+    await (view as any).pinItem(itemA);
+
+    expect(mockFocusItems.map((item) => [item.text, item.isPinned])).toEqual([
+      ["A", true],
+      ["B", undefined],
+    ]);
   });
 
   it("discards a refresh of the old file when a new file loads during validation", async () => {
@@ -1989,6 +2010,492 @@ describe("FocusView", () => {
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(openFileSpy).toHaveBeenCalledWith("Projects/A.md");
+    });
+  });
+
+  describe("External items", () => {
+    const ticket = (id: string, overrides: Partial<ExternalFocusItem> = {}): ExternalFocusItem => ({
+      id,
+      text: `Draft **section** ${id}`,
+      sphere: "work",
+      addedAt: 1000,
+      external: {
+        sourceName: "linear",
+        sourceLabel: "Acme",
+        url: `https://linear.app/acme/issue/${id}`,
+        externalId: id,
+      },
+      contexts: [],
+      ...overrides,
+    });
+    const vaultAction: FocusItem = {
+      file: "Projects/Plan.md",
+      lineNumber: 5,
+      lineContent: "- [ ] Write the plan",
+      text: "Write the plan",
+      sphere: "work",
+      isGeneral: true,
+      addedAt: 1000,
+      contexts: [],
+    };
+
+    // Item rows render asynchronously after onOpen returns
+    const flushRendering = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    async function openWith(items: FocusItem[]): Promise<HTMLElement> {
+      mockFocusItems = items;
+      await view.onOpen();
+      await flushRendering();
+      return view.contentEl;
+    }
+
+    function itemFor(container: HTMLElement, text: string): HTMLElement {
+      const item = Array.from(container.querySelectorAll<HTMLElement>(".flow-gtd-focus-item")).find(
+        (el) => el.textContent?.includes(text)
+      );
+      if (!item) throw new Error(`No rendered item containing ${text}`);
+      return item;
+    }
+
+    function button(item: HTMLElement, title: string): HTMLButtonElement | undefined {
+      return Array.from(item.querySelectorAll("button")).find((btn) => btn.title === title);
+    }
+
+    it("shows the wording as plain text with its outside id, grouped under the source label", async () => {
+      const renderSpy = jest.spyOn(MarkdownRenderer, "render");
+      const container = await openWith([ticket("ABC-1"), vaultAction]);
+
+      const headings = Array.from(container.querySelectorAll("h3")).map((h) => h.textContent);
+      expect(headings).toEqual(["Acme", "General actions"]);
+
+      const item = itemFor(container, "ABC-1");
+      const text = item.querySelector(".flow-gtd-focus-item-text") as HTMLElement;
+      expect(text.querySelector(".flow-gtd-focus-external-id")?.textContent).toBe("ABC-1");
+      expect(text.textContent).toBe("ABC-1Draft **section** ABC-1");
+      expect(renderSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "Draft **section** ABC-1",
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+      renderSpy.mockRestore();
+    });
+
+    it("shows the outside project under the wording when there is one", async () => {
+      const container = await openWith([
+        ticket("ABC-1", {
+          external: {
+            sourceName: "linear",
+            sourceLabel: "Acme",
+            url: "https://linear.app/acme/issue/ABC-1",
+            externalId: "ABC-1",
+            projectName: "Website relaunch",
+          },
+        }),
+        ticket("ABC-2"),
+      ]);
+
+      const withProject = itemFor(container, "ABC-1");
+      expect(withProject.querySelector(".flow-gtd-focus-external-project")?.textContent).toBe(
+        "Website relaunch"
+      );
+      expect(
+        itemFor(container, "ABC-2").querySelector(".flow-gtd-focus-external-project")
+      ).toBeNull();
+    });
+
+    it("sorts outside sources by label and shows them before general actions", async () => {
+      const abacus = ticket("ABACUS-1", {
+        external: { ...ticket("ABACUS-1").external, sourceLabel: "Abacus" },
+      });
+      const container = await openWith([vaultAction, ticket("ABC-1"), abacus]);
+
+      const headings = Array.from(container.querySelectorAll("h3")).map((h) => h.textContent);
+      expect(headings).toEqual(["Abacus", "Acme", "General actions"]);
+    });
+
+    it("opens the item's link when its text is clicked", async () => {
+      const open = jest.spyOn(window, "open").mockImplementation(() => null);
+      const container = await openWith([ticket("ABC-1")]);
+
+      (
+        itemFor(container, "ABC-1").querySelector(".flow-gtd-focus-item-text") as HTMLElement
+      ).click();
+
+      expect(open).toHaveBeenCalledWith("https://linear.app/acme/issue/ABC-1");
+      expect(mockApp.workspace.getLeaf).not.toHaveBeenCalled();
+      open.mockRestore();
+    });
+
+    it("refuses to open a link that isn't a web address", async () => {
+      const open = jest.spyOn(window, "open").mockImplementation(() => null);
+      (Notice as any).mockConstructor.mockClear();
+      const bad = ticket("ABC-1", {
+        external: { ...ticket("ABC-1").external, url: "javascript:alert(1)" },
+      });
+      const container = await openWith([bad]);
+
+      (
+        itemFor(container, "ABC-1").querySelector(".flow-gtd-focus-item-text") as HTMLElement
+      ).click();
+
+      expect(open).not.toHaveBeenCalled();
+      expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+        "This item's link isn't a web address, so it can't be opened."
+      );
+      open.mockRestore();
+    });
+
+    it("offers editing but not converting to waiting for", async () => {
+      const container = await openWith([ticket("ABC-1"), { ...vaultAction }]);
+
+      const external = itemFor(container, "ABC-1");
+      expect(button(external, "Edit wording")).toBeDefined();
+      expect(button(external, "Convert to waiting for")).toBeUndefined();
+
+      const vault = itemFor(container, "Write the plan");
+      expect(button(vault, "Edit wording")).toBeUndefined();
+      expect(button(vault, "Convert to waiting for")).toBeDefined();
+    });
+
+    it("shows the source label on a pinned item and offers editing there", async () => {
+      const container = await openWith([ticket("ABC-1", { isPinned: true })]);
+
+      const item = itemFor(container, "ABC-1");
+      expect(item.querySelector(".flow-gtd-focus-project-name")?.textContent).toBe("Acme");
+      expect(button(item, "Edit wording")).toBeDefined();
+      expect(button(item, "Convert to waiting for")).toBeUndefined();
+    });
+
+    it("lists a completed item under its source label in Completed Today", async () => {
+      const container = await openWith([ticket("ABC-1", { completedAt: Date.now() })]);
+
+      const completed = itemFor(container, "ABC-1");
+      expect(completed.classList.contains("flow-gtd-focus-completed")).toBe(true);
+      expect(
+        completed.closest(".flow-gtd-focus-sphere-section")?.querySelector("h4")?.textContent
+      ).toBe("Acme");
+    });
+
+    it("completes an item without touching any vault file", async () => {
+      const container = await openWith([ticket("ABC-1"), ticket("ABC-2")]);
+
+      button(itemFor(container, "ABC-1"), "Mark as complete")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems[0].completedAt).toEqual(expect.any(Number));
+      expect(mockFocusItems[1].completedAt).toBeUndefined();
+      expect(mockApp.vault.modify).not.toHaveBeenCalled();
+      expect(mockApp.workspace.trigger).not.toHaveBeenCalled();
+    });
+
+    it("removes only the chosen item when items share a time added", async () => {
+      const container = await openWith([ticket("ABC-1"), ticket("ABC-2")]);
+
+      button(itemFor(container, "ABC-1"), "Remove from focus")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems.map((item) => (item as ExternalFocusItem).id)).toEqual(["ABC-2"]);
+    });
+
+    it("pins only the chosen item", async () => {
+      const container = await openWith([ticket("ABC-1"), ticket("ABC-2")]);
+
+      button(itemFor(container, "ABC-2"), "Pin to top")!.click();
+      await flushRendering();
+
+      expect(mockFocusItems.map((item) => [(item as ExternalFocusItem).id, item.isPinned])).toEqual(
+        [
+          ["ABC-2", true],
+          ["ABC-1", undefined],
+        ]
+      );
+    });
+
+    it("keeps external items through refresh without validating them", async () => {
+      const validateItem = jest.fn().mockResolvedValue({ found: false });
+      (view as any).validator = { validateItem };
+      await openWith([ticket("ABC-1"), vaultAction]);
+
+      await (view as any).performRefresh();
+
+      expect(validateItem).toHaveBeenCalledTimes(1);
+      expect(validateItem).toHaveBeenCalledWith(vaultAction);
+      expect(mockFocusItems).toEqual([ticket("ABC-1")]);
+    });
+
+    describe("actions right after another writer changed Focus", () => {
+      it("keeps the first completion time when another device completed the item first", async () => {
+        const completedElsewhere = Date.now() - 1000;
+        const container = await openWith([ticket("ABC-1")]);
+        mockFocusItems = [ticket("ABC-1", { completedAt: completedElsewhere })];
+
+        button(itemFor(container, "ABC-1"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([ticket("ABC-1", { completedAt: completedElsewhere })]);
+      });
+
+      it("finds a vault item whose line number another device updated", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n- [ ] Other\n\n- [ ] Write the plan");
+        (view as any).validator = {
+          validateItem: jest.fn().mockResolvedValue({ found: true, updatedLineNumber: 5 }),
+        };
+        const container = await openWith([vaultAction]);
+        const movedAction = { ...vaultAction, lineNumber: 5 };
+        mockFocusItems = [movedAction];
+
+        button(itemFor(container, "Write the plan"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([{ ...movedAction, completedAt: expect.any(Number) }]);
+      });
+
+      it("says so when a completed vault item is no longer in Focus", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n## Next actions\n\n- [ ] Write the plan");
+        (view as any).validator = { validateItem: jest.fn().mockResolvedValue({ found: true }) };
+        (Notice as any).mockConstructor.mockClear();
+        const container = await openWith([vaultAction]);
+        mockFocusItems = [];
+
+        button(itemFor(container, "Write the plan"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([]);
+        expect(mockApp.workspace.trigger).not.toHaveBeenCalled();
+        expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+          "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view."
+        );
+      });
+
+      it("says so when an item converted to waiting for is no longer in Focus", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n## Next actions\n\n- [ ] Write the plan");
+        (view as any).validator = { validateItem: jest.fn().mockResolvedValue({ found: true }) };
+        (Notice as any).mockConstructor.mockClear();
+        const container = await openWith([vaultAction]);
+        mockFocusItems = [];
+
+        button(itemFor(container, "Write the plan"), "Convert to waiting for")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([]);
+        expect((Notice as any).mockConstructor).toHaveBeenCalledWith(
+          "This action is no longer in Focus, so Focus wasn't updated. Refresh the Focus view."
+        );
+      });
+
+      // Another plugin or a synced device writes before the view has refreshed
+      const writeFromOutside = (items: FocusItem[]) => {
+        mockFocusItems = items;
+      };
+
+      it("completes an external item and keeps the outside addition", async () => {
+        const container = await openWith([ticket("ABC-1")]);
+        writeFromOutside([ticket("ABC-1"), ticket("ABC-2")]);
+
+        button(itemFor(container, "ABC-1"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([
+          { ...ticket("ABC-1"), completedAt: expect.any(Number) },
+          ticket("ABC-2"),
+        ]);
+      });
+
+      it("keeps an outside edit to another item when editing the wording", async () => {
+        const container = await openWith([ticket("ABC-1"), ticket("ABC-2")]);
+        writeFromOutside([ticket("ABC-1"), ticket("ABC-2", { text: "Changed elsewhere" })]);
+
+        button(itemFor(container, "ABC-1"), "Edit wording")!.click();
+        const input = container.querySelector<HTMLInputElement>(".flow-gtd-focus-edit-input")!;
+        input.value = "Write section 2";
+        input.dispatchEvent(
+          new input.ownerDocument.defaultView!.KeyboardEvent("keydown", { key: "Enter" })
+        );
+        await flushRendering();
+
+        expect(mockFocusItems.map((item) => item.text)).toEqual([
+          "Write section 2",
+          "Changed elsewhere",
+        ]);
+      });
+
+      it("completes a vault item and keeps the outside addition", async () => {
+        const { TFile } = require("obsidian");
+        const sourceFile = new TFile();
+        sourceFile.path = "Projects/Plan.md";
+        mockApp.vault.getAbstractFileByPath.mockReturnValue(sourceFile);
+        mockApp.vault.read.mockResolvedValue("# Plan\n\n## Next actions\n\n- [ ] Write the plan");
+        (view as any).validator = { validateItem: jest.fn().mockResolvedValue({ found: true }) };
+        const container = await openWith([vaultAction]);
+        writeFromOutside([vaultAction, ticket("ABC-2")]);
+
+        button(itemFor(container, "Write the plan"), "Mark as complete")!.click();
+        await flushRendering();
+
+        expect(mockApp.vault.modify).toHaveBeenCalledWith(
+          sourceFile,
+          expect.stringContaining("- [x] Write the plan ✅")
+        );
+        expect(mockFocusItems).toEqual([
+          { ...vaultAction, completedAt: expect.any(Number) },
+          ticket("ABC-2"),
+        ]);
+      });
+
+      it("removes a vault item and keeps the outside addition", async () => {
+        const container = await openWith([vaultAction]);
+        writeFromOutside([vaultAction, ticket("ABC-2")]);
+
+        button(itemFor(container, "Write the plan"), "Remove from focus")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([ticket("ABC-2")]);
+      });
+
+      it("does not bring back an item that another writer removed", async () => {
+        const container = await openWith([ticket("ABC-1"), ticket("ABC-2")]);
+        writeFromOutside([ticket("ABC-2")]);
+
+        button(itemFor(container, "ABC-1"), "Pin to top")!.click();
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([ticket("ABC-2")]);
+      });
+    });
+
+    describe("editing the wording", () => {
+      async function startEditing(): Promise<HTMLInputElement> {
+        const container = await openWith([ticket("ABC-1")]);
+        button(itemFor(container, "ABC-1"), "Edit wording")!.click();
+        const input = container.querySelector<HTMLInputElement>(".flow-gtd-focus-edit-input");
+        if (!input) throw new Error("No edit input");
+        return input;
+      }
+
+      const press = (input: HTMLInputElement, key: string) =>
+        input.dispatchEvent(
+          new input.ownerDocument.defaultView!.KeyboardEvent("keydown", { key, bubbles: true })
+        );
+
+      it("holds a background refresh until the edit is cancelled", async () => {
+        const input = await startEditing();
+        const scheduleRefresh = jest
+          .spyOn(view as any, "scheduleRefresh")
+          .mockImplementation(() => {});
+        (mockLoadFocusItems as jest.Mock).mockClear();
+
+        await (view as any).performRefresh();
+        await view.onOpen();
+
+        expect(mockLoadFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.contains(input)).toBe(true);
+        expect(scheduleRefresh).not.toHaveBeenCalled();
+
+        press(input, "Escape");
+        expect(scheduleRefresh).toHaveBeenCalledTimes(1);
+      });
+
+      it("does not schedule a refresh on cancel when none was held", async () => {
+        const input = await startEditing();
+        const scheduleRefresh = jest
+          .spyOn(view as any, "scheduleRefresh")
+          .mockImplementation(() => {});
+
+        press(input, "Escape");
+
+        expect(scheduleRefresh).not.toHaveBeenCalled();
+      });
+
+      it("shows the latest file after saving an edit that held a refresh", async () => {
+        const input = await startEditing();
+        await (view as any).performRefresh();
+        mockFocusItems = [ticket("ABC-1"), ticket("ABC-2")];
+
+        input.value = "Write section 2";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(itemFor(view.contentEl, "Write section 2")).toBeDefined();
+        expect(itemFor(view.contentEl, "ABC-2")).toBeDefined();
+        expect((view as any).refreshDeferred).toBe(false);
+      });
+
+      it("replaces the text with an input holding the current wording", async () => {
+        const input = await startEditing();
+
+        expect(input.value).toBe("Draft **section** ABC-1");
+        expect(view.contentEl.querySelector(".flow-gtd-focus-item-text")).toBeNull();
+      });
+
+      it("saves the new wording on Enter", async () => {
+        const input = await startEditing();
+
+        input.value = "  Write section 2  ";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([{ ...ticket("ABC-1"), text: "Write section 2" }]);
+        expect(itemFor(view.contentEl, "Write section 2")).toBeDefined();
+      });
+
+      it("puts the text back without saving on Escape", async () => {
+        const input = await startEditing();
+        (mockSaveFocusItems as jest.Mock).mockClear();
+
+        input.value = "Something else";
+        press(input, "Escape");
+
+        expect(mockSaveFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.querySelector(".flow-gtd-focus-edit-input")).toBeNull();
+        expect(itemFor(view.contentEl, "Draft **section** ABC-1")).toBeDefined();
+      });
+
+      it("refuses empty wording and keeps the input open", async () => {
+        const input = await startEditing();
+        (mockSaveFocusItems as jest.Mock).mockClear();
+
+        input.value = "   ";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockSaveFocusItems).not.toHaveBeenCalled();
+        expect(view.contentEl.contains(input)).toBe(true);
+        expect(input.classList.contains("is-invalid")).toBe(true);
+        expect(input.getAttribute("aria-invalid")).toBe("true");
+      });
+
+      it("puts the text back when the save fails", async () => {
+        const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+        const input = await startEditing();
+        (mockLoadFocusItems as jest.Mock).mockRejectedValueOnce(new Error("Read failed"));
+
+        input.value = "Write section 2";
+        press(input, "Enter");
+        await flushRendering();
+
+        expect(mockFocusItems).toEqual([ticket("ABC-1")]);
+        expect(view.contentEl.contains(input)).toBe(false);
+        expect(itemFor(view.contentEl, "Draft **section** ABC-1")).toBeDefined();
+        expect(consoleError).toHaveBeenCalledWith(
+          "Failed to edit focus item",
+          expect.objectContaining({ message: "Read failed" })
+        );
+        consoleError.mockRestore();
+      });
     });
   });
 });

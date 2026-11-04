@@ -402,4 +402,58 @@ describe("archiveClearedTasks", () => {
     // Should NOT archive completed item
     expect(createdContent).not.toContain("Completed task");
   });
+
+  it("archives an external item as a link to its source", async () => {
+    const items: FocusItem[] = [
+      {
+        id: "7c1e",
+        text: "Draft section 2 of the onboarding guide",
+        sphere: "work",
+        addedAt: Date.now(),
+        external: {
+          sourceName: "linear",
+          sourceLabel: "Acme",
+          url: "https://linear.app/acme/issue/ABC-123/onboarding-guide",
+          externalId: "ABC-123",
+        },
+      },
+    ];
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, "Focus Archive.md", new Date());
+
+    expect(mockVault.create).toHaveBeenCalledWith(
+      "Focus Archive.md",
+      expect.stringContaining(
+        "- [Acme ABC-123](<https://linear.app/acme/issue/ABC-123/onboarding-guide>) Draft section 2 of the onboarding guide\n"
+      )
+    );
+  });
+
+  it("escapes characters that would break an external item's archive link", async () => {
+    const items: FocusItem[] = [
+      {
+        id: "7c1e",
+        text: "Fix it",
+        sphere: "work",
+        addedAt: Date.now(),
+        external: {
+          sourceName: "linear",
+          sourceLabel: "Team [beta]",
+          url: "https://example.com/a>b<c (1)",
+          externalId: "A\\1",
+        },
+      },
+    ];
+    mockVault.getAbstractFileByPath.mockReturnValue(null);
+
+    await archiveClearedTasks(mockVault as any, items, "Focus Archive.md", new Date());
+
+    expect(mockVault.create).toHaveBeenCalledWith(
+      "Focus Archive.md",
+      expect.stringContaining(
+        "- [Team \\[beta\\] A\\\\1](<https://example.com/a%3Eb%3Cc (1)>) Fix it\n"
+      )
+    );
+  });
 });

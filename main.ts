@@ -1,7 +1,7 @@
 // ABOUTME: Registers Flow commands, views, settings, and lifecycle services.
 // ABOUTME: Coordinates inbox processing, focus management, and project tools.
 
-import { Plugin, Notice, MarkdownView } from "obsidian";
+import { Plugin, Notice, MarkdownView, TAbstractFile } from "obsidian";
 import { PluginSettings, DEFAULT_SETTINGS } from "./src/types";
 import { FlowGTDSettingTab } from "./src/settings-tab";
 import { SphereView, SPHERE_VIEW_TYPE } from "./src/sphere-view";
@@ -30,6 +30,8 @@ import { runAsync } from "./src/async-utils";
 import { resolveFocusFilePath } from "./src/focus-file-path";
 import { moveFocusFile } from "./src/focus-file-move";
 import { confirmExistingFocusFile } from "./src/focus-file-confirm-modal";
+import { FlowApi, FocusApi } from "./src/focus-api";
+import { resolveMovedFocusFilePath } from "./src/focus-file-operations";
 
 type InboxCommandConfig = {
   id: string;
@@ -50,6 +52,9 @@ export default class FlowGTDCoachPlugin extends Plugin {
   private autoClearInterval: TimerHandle | null = null;
   private projectCoverDisplay: ProjectCoverDisplay | null = null;
   private registeredSphereCommandIds: string[] = [];
+  // Public API for companion plugins: app.plugins.getPlugin("flow")?.api
+  api: FlowApi;
+  private focusApi: FocusApi | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -261,9 +266,38 @@ export default class FlowGTDCoachPlugin extends Plugin {
 
     // Add settings tab
     this.addSettingTab(new FlowGTDSettingTab(this.app, this));
+
+    this.startFocusApi();
+  }
+
+  private startFocusApi(): void {
+    const focusApi = new FocusApi(this.app.vault, () => this.settings);
+    this.focusApi = focusApi;
+    this.api = focusApi;
+
+    // Every writer, including sync from other devices, changes the focus file
+    const checkFocusFile = (file: TAbstractFile) => {
+      const focusFilePath = resolveMovedFocusFilePath(
+        this.app.vault,
+        resolveFocusFilePath(this.settings.focusFilePath)
+      );
+      if (file.path === focusFilePath) {
+        focusApi.checkForChangesWhenSettled();
+      }
+    };
+    this.registerEvent(this.app.vault.on("modify", checkFocusFile));
+    this.registerEvent(this.app.vault.on("create", checkFocusFile));
+
+    // The first check records the starting state; companions read it with getFocusItems
+    runAsync(focusApi.checkForChanges(), "Failed to read focus file for change tracking");
+
+    this.app.workspace.trigger("flow:api-ready", this.api);
   }
 
   onunload() {
+    this.focusApi?.dispose();
+    this.app.workspace.trigger("flow:api-unloaded");
+
     // Clear the auto-clear interval
     if (this.autoClearInterval !== null) {
       clearActiveInterval(this.autoClearInterval);

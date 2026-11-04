@@ -3,6 +3,7 @@
 
 import { TFile, Vault } from "obsidian";
 import { FocusItem } from "./types";
+import { isExternalFocusItem } from "./focus-item";
 
 /**
  * Determines if the focus should be cleared based on the configured time and last clear timestamp
@@ -88,6 +89,14 @@ export async function archiveClearedTasks(
     tasksContent =
       activeItems
         .map((item) => {
+          if (isExternalFocusItem(item)) {
+            const { sourceLabel, externalId, url } = item.external;
+            // Escape the link text and wrap the url in <> so neither can break the link
+            const label = `${sourceLabel} ${externalId}`.replace(/[\\[\]]/g, "\\$&");
+            const target = url.replace(/</g, "%3C").replace(/>/g, "%3E");
+            return `- [${label}](<${target}>) ${item.text}`;
+          }
+
           const wikilinkPath = item.file.replace(/\.md$/, "");
 
           if (item.isGeneral) {
