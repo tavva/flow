@@ -485,6 +485,72 @@ describe("FlowGTDCoachPlugin - View Focusing", () => {
     });
   });
 
+  describe("Focus API", () => {
+    const externalLine = JSON.stringify({
+      id: "7c1e",
+      text: "Draft section 2",
+      sphere: "work",
+      addedAt: 1,
+      external: {
+        sourceName: "linear",
+        sourceLabel: "Acme",
+        url: "https://linear.app/acme/issue/ABC-123",
+        externalId: "ABC-123",
+      },
+    });
+
+    function vaultHandler(eventName: string): (file: TFile) => void {
+      const call = (mockApp.vault.on as jest.Mock).mock.calls.find(([name]) => name === eventName);
+      return call[1];
+    }
+
+    it("publishes the API on the plugin and announces it", () => {
+      expect(plugin.api.apiVersion).toBe(1);
+      expect(mockApp.workspace.trigger).toHaveBeenCalledWith("flow:api-ready", plugin.api);
+    });
+
+    it.each(["modify", "create"])(
+      "reports changes when the focus file sees a %s event",
+      async (eventName) => {
+        const callback = jest.fn();
+        plugin.api.onFocusChange("linear", callback);
+        (mockApp.vault.adapter.exists as jest.Mock).mockResolvedValue(true);
+        (mockApp.vault.adapter.read as jest.Mock).mockResolvedValue(externalLine);
+
+        vaultHandler(eventName)(new TFile(DEFAULT_SETTINGS.focusFilePath));
+        await plugin.api.checkForChanges();
+
+        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledWith({
+          type: "added",
+          item: expect.objectContaining({ id: "7c1e" }),
+        });
+      }
+    );
+
+    it("ignores events for other files", () => {
+      const check = jest.spyOn(plugin.api, "checkForChanges");
+
+      vaultHandler("modify")(new TFile("Projects/Plan.md"));
+      vaultHandler("create")(new TFile("Projects/Plan.md"));
+
+      expect(check).not.toHaveBeenCalled();
+    });
+
+    it("announces unloading and stops calling change callbacks", async () => {
+      const callback = jest.fn();
+      plugin.api.onFocusChange("linear", callback);
+
+      plugin.onunload();
+      (mockApp.vault.adapter.exists as jest.Mock).mockResolvedValue(true);
+      (mockApp.vault.adapter.read as jest.Mock).mockResolvedValue(externalLine);
+      await plugin.api.checkForChanges();
+
+      expect(mockApp.workspace.trigger).toHaveBeenCalledWith("flow:api-unloaded");
+      expect(callback).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Sphere command re-registration", () => {
     it("should update sphere commands when spheres change", async () => {
       // Initial spheres are "personal" and "work" from DEFAULT_SETTINGS

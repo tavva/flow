@@ -336,4 +336,50 @@ describe("focus-persistence JSONL format", () => {
       expect(mockVault.createFolder).toHaveBeenCalledWith("flow-focus-data");
     });
   });
+
+  describe("external items", () => {
+    const vaultItem: FocusItem = {
+      file: "Projects/Test.md",
+      lineNumber: 10,
+      lineContent: "- [ ] Task 1",
+      text: "Task 1",
+      sphere: "work",
+      isGeneral: false,
+      addedAt: 1700000000000,
+      contexts: [],
+    };
+    const externalItem: FocusItem = {
+      id: "7c1e",
+      text: "Draft section 2 of the onboarding guide",
+      sphere: "work",
+      addedAt: 1700000001000,
+      isPinned: true,
+      external: {
+        sourceName: "linear",
+        sourceLabel: "Acme",
+        url: "https://linear.app/acme/issue/ABC-123/onboarding-guide",
+        externalId: "ABC-123",
+      },
+      contexts: [],
+    };
+
+    it("saves and loads a mix of vault and external items unchanged", async () => {
+      const file = new TFile("flow-focus-data/focus.md");
+      let content = "";
+      mockVault.getAbstractFileByPath.mockReturnValue(file);
+      (mockVault.adapter.stat as jest.Mock).mockResolvedValue({ type: "folder" });
+      mockVault.modify.mockImplementation(async (_file, value) => {
+        content = value;
+      });
+      mockVault.read.mockImplementation(async () => content);
+
+      await saveFocusItems(mockVault, [vaultItem, externalItem]);
+
+      expect(content.split("\n")).toEqual([
+        JSON.stringify(vaultItem),
+        JSON.stringify(externalItem),
+      ]);
+      expect(await loadFocusItems(mockVault)).toEqual([vaultItem, externalItem]);
+    });
+  });
 });
