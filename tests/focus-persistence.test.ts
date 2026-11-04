@@ -3,7 +3,12 @@
 
 import { Vault, TFile, TFolder } from "obsidian";
 import { FocusItem } from "../src/types";
-import { loadFocusItems, saveFocusItems, FOCUS_FILE_PATH } from "../src/focus-persistence";
+import {
+  loadFocusItems,
+  saveFocusItems,
+  updateFocusItems,
+  FOCUS_FILE_PATH,
+} from "../src/focus-persistence";
 
 jest.mock("obsidian");
 
@@ -390,10 +395,6 @@ describe("focus-persistence JSONL format", () => {
         "a source with a non-text label",
         { ...externalItem, external: { ...externalItem.external, sourceLabel: 3 } },
       ],
-      [
-        "a source with a non-text project name",
-        { ...externalItem, external: { ...externalItem.external, projectName: 3 } },
-      ],
     ])("skips an external line with %s and warns", async (_case, badItem) => {
       const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
       const file = new TFile("flow-focus-data/focus.md");
@@ -405,6 +406,50 @@ describe("focus-persistence JSONL format", () => {
       expect(await loadFocusItems(mockVault)).toEqual([vaultItem]);
       expect(warn).toHaveBeenCalledTimes(2);
       expect(warn).toHaveBeenCalledWith("Skipping invalid line in focus file:", expect.any(String));
+      warn.mockRestore();
+    });
+
+    it.each([null, 3, { name: "Website relaunch" }])(
+      "keeps an external item whose project name is %p, without the project, and warns",
+      async (projectName) => {
+        const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+        const file = new TFile("flow-focus-data/focus.md");
+        mockVault.getAbstractFileByPath.mockReturnValue(file);
+        mockVault.read.mockResolvedValue(
+          JSON.stringify({
+            ...externalItem,
+            external: { ...externalItem.external, projectName },
+          })
+        );
+
+        expect(await loadFocusItems(mockVault)).toEqual([externalItem]);
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledWith(
+          "Ignoring a project name that isn't text in focus file:",
+          externalItem.id
+        );
+        warn.mockRestore();
+      }
+    );
+
+    it("keeps the item when a bad project name is read and the file is written again", async () => {
+      const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+      const file = new TFile("flow-focus-data/focus.md");
+      let content = JSON.stringify({
+        ...externalItem,
+        external: { ...externalItem.external, projectName: null },
+      });
+      mockVault.getAbstractFileByPath.mockReturnValue(file);
+      (mockVault.adapter.stat as jest.Mock).mockResolvedValue({ type: "folder" });
+      mockVault.read.mockImplementation(async () => content);
+      mockVault.modify.mockImplementation(async (_file: TFile, data: string) => {
+        content = data;
+      });
+
+      await updateFocusItems(mockVault, (items) => items);
+
+      expect(content).toBe(JSON.stringify(externalItem));
+      expect(warn).toHaveBeenCalledTimes(1);
       warn.mockRestore();
     });
   });
