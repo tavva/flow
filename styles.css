@@ -1760,6 +1760,12 @@ select.flow-gtd-inline-select option,
   font-family: var(--font-monospace);
 }
 
+.flow-gtd-focus-external-project {
+  display: block;
+  color: var(--text-faint);
+  font-size: 0.8em;
+}
+
 .flow-gtd-focus-edit-input {
   flex: 1;
   min-width: 0;

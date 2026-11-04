@@ -139,6 +139,7 @@ describe("diffExternalFocusItems", () => {
     ["sourceLabel", { sourceLabel: "Abacus" }],
     ["url", { url: "https://linear.app/abacus/issue/ABC-1" }],
     ["externalId", { externalId: "XYZ-12" }],
+    ["projectName", { projectName: "Website relaunch" }],
   ])("reports a change of %s as an edit", (_field, sourceChanges) => {
     const before = externalItem("ABC-1");
     const after = { ...before, external: { ...before.external, ...sourceChanges } };
@@ -239,6 +240,31 @@ describe("FocusApi", () => {
       }
     );
 
+    it("stores a trimmed project name", async () => {
+      const { api, items } = await createApi();
+
+      await api.addFocusItem({ ...newTicket, projectName: "  Website relaunch " });
+
+      expect(items()[0]).toMatchObject({ external: { projectName: "Website relaunch" } });
+    });
+
+    it.each([null, "", "   "])("stores no project name for %p", async (projectName) => {
+      const { api, items } = await createApi();
+
+      await api.addFocusItem({ ...newTicket, projectName });
+
+      expect("projectName" in (items()[0] as ExternalFocusItem).external).toBe(false);
+    });
+
+    it("rejects a project name that isn't text and writes nothing", async () => {
+      const { api, items } = await createApi();
+
+      await expect(
+        api.addFocusItem({ ...newTicket, projectName: 3 as unknown as string })
+      ).rejects.toThrow(new ValidationError("Focus item projectName must be text or null"));
+      expect(items()).toEqual([]);
+    });
+
     it("accepts an http link", async () => {
       const { api, items } = await createApi();
 
@@ -282,6 +308,69 @@ describe("FocusApi", () => {
       await api.updateFocusItem("ABC-1", { externalId: "XYZ-12" });
 
       expect(items()).toEqual([{ ...item, external: { ...item.external, externalId: "XYZ-12" } }]);
+    });
+
+    it("sets and changes the project name", async () => {
+      const item = externalItem("ABC-1");
+      const { api, items } = await createApi([item]);
+
+      await api.updateFocusItem("ABC-1", { projectName: "Website relaunch" });
+      expect(items()).toEqual([
+        { ...item, external: { ...item.external, projectName: "Website relaunch" } },
+      ]);
+
+      await api.updateFocusItem("ABC-1", { projectName: "Onboarding" });
+      expect(items()).toEqual([
+        { ...item, external: { ...item.external, projectName: "Onboarding" } },
+      ]);
+    });
+
+    it.each([null, ""])("clears the project name when given %p", async (projectName) => {
+      const item = externalItem("ABC-1");
+      const { api, items } = await createApi([
+        { ...item, external: { ...item.external, projectName: "Website relaunch" } },
+      ]);
+
+      await api.updateFocusItem("ABC-1", { projectName });
+
+      expect(items()).toEqual([item]);
+    });
+
+    it("keeps the project name when the change leaves it out", async () => {
+      const item = externalItem("ABC-1");
+      const withProject = {
+        ...item,
+        external: { ...item.external, projectName: "Website relaunch" },
+      };
+      const { api, items } = await createApi([withProject]);
+
+      await api.updateFocusItem("ABC-1", { text: "New wording" });
+
+      expect(items()).toEqual([{ ...withProject, text: "New wording" }]);
+    });
+
+    it("reports clearing the project name as an edit", async () => {
+      const item = externalItem("ABC-1");
+      const withProject = {
+        ...item,
+        external: { ...item.external, projectName: "Website relaunch" },
+      };
+      const { api } = await createApi([withProject]);
+      const changes = recordChanges(api);
+
+      await api.updateFocusItem("ABC-1", { projectName: null });
+
+      expect(changes).toEqual([{ type: "edited", item, previous: withProject }]);
+    });
+
+    it("rejects a project name that isn't text", async () => {
+      const item = externalItem("ABC-1");
+      const { api, items } = await createApi([item]);
+
+      await expect(
+        api.updateFocusItem("ABC-1", { projectName: 3 as unknown as string })
+      ).rejects.toThrow(ValidationError);
+      expect(items()).toEqual([item]);
     });
 
     it("rejects an unknown id", async () => {

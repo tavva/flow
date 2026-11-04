@@ -90,17 +90,18 @@ this.app.workspace.onLayoutReady(() => {
 
 The interface is `FlowApi` in [`src/focus-api.ts`](src/focus-api.ts); copy it into your plugin.
 
-| Method                                | What it does                                                                                                                     |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `addFocusItem(input)`                 | Adds an item with `text`, `sphere`, `sourceName`, `sourceLabel`, `url` and `externalId`, and returns its new `id`                |
-| `updateFocusItem(id, changes)`        | Changes any of `text`, `sphere`, `sourceLabel`, `url` or `externalId`                                                            |
-| `completeFocusItem(id)`               | Marks the item complete; it stays in Focus under Completed Today                                                                 |
-| `removeFocusItem(id)`                 | Takes the item out of Focus                                                                                                      |
-| `getFocusItems(sourceName)`           | Returns your source's items, including completed ones                                                                            |
-| `getSpheres()`                        | Returns the sphere names set in Flow's settings                                                                                  |
-| `onFocusChange(sourceName, callback)` | Calls `callback` with `added`, `edited`, `completed` or `removed` changes to your source's items, and returns a function to stop |
+| Method                                | What it does                                                                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `addFocusItem(input)`                 | Adds an item with `text`, `sphere`, `sourceName`, `sourceLabel`, `url`, `externalId` and optionally `projectName`, and returns its new `id` |
+| `updateFocusItem(id, changes)`        | Changes any of `text`, `sphere`, `sourceLabel`, `url`, `externalId` or `projectName`                                                        |
+| `completeFocusItem(id)`               | Marks the item complete; it stays in Focus under Completed Today                                                                            |
+| `removeFocusItem(id)`                 | Takes the item out of Focus                                                                                                                 |
+| `getFocusItems(sourceName)`           | Returns your source's items, including completed ones                                                                                       |
+| `getSpheres()`                        | Returns the sphere names set in Flow's settings                                                                                             |
+| `onFocusChange(sourceName, callback)` | Calls `callback` with `added`, `edited`, `completed` or `removed` changes to your source's items, and returns a function to stop            |
 
 - `sourceName` identifies your plugin's items (for example `"linear"`); `sourceLabel` is what the user sees (for example a workspace name). `externalId` is your record's own ID, and one record can have several items.
+- `projectName` is the project the record belongs to in your tool (for example a Linear project). Flow shows it under the item's wording, so items from the same source can be told apart. It's optional: pass `null` or `""` to `updateFocusItem` to clear it.
 - `url` must be an `http` or `https` link. Flow won't open anything else.
 - Calls with an unknown `id` reject with an error. `addFocusItem` rejects empty `text`, `sphere`, `sourceName`, `sourceLabel` or `externalId`, and `updateFocusItem` rejects an empty value for any field it changes.
 - When Flow unloads, the API object you hold stops working: writes reject, and callbacks stop. Get the API again after the next `flow:api-ready`.
@@ -144,13 +145,15 @@ An item from another plugin looks like:
     "sourceName": "linear",
     "sourceLabel": "Acme",
     "url": "https://linear.app/acme/issue/ABC-123/onboarding-guide",
-    "externalId": "ABC-123"
+    "externalId": "ABC-123",
+    "projectName": "Website relaunch"
   },
   "contexts": []
 }
 ```
 
 - A line with `external` is an item from another plugin. Any other line is a vault item with `file` (vault-relative path), `lineNumber`, `lineContent`, `text`, `sphere`, `isGeneral` and `addedAt`.
+- `external.projectName` is the item's project in the other plugin's tool. It's optional: a line without it has no project.
 - `addedAt` and `completedAt` are milliseconds since the epoch.
 - `isPinned: true` means the item is in the Pinned section.
 - `completedAt` is set once the item is completed. Completed items stay in the file until they're removed or auto-cleared.

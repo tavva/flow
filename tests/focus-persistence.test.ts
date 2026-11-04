@@ -390,6 +390,10 @@ describe("focus-persistence JSONL format", () => {
         "a source with a non-text label",
         { ...externalItem, external: { ...externalItem.external, sourceLabel: 3 } },
       ],
+      [
+        "a source with a non-text project name",
+        { ...externalItem, external: { ...externalItem.external, projectName: 3 } },
+      ],
     ])("skips an external line with %s and warns", async (_case, badItem) => {
       const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
       const file = new TFile("flow-focus-data/focus.md");
