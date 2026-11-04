@@ -36,15 +36,34 @@ export interface PersonNote {
   creationDate?: string;
 }
 
-export interface FocusItem {
-  file: string; // Full path to source file
-  lineNumber: number; // Last known line number
-  lineContent: string; // Full line content for validation
+interface FocusItemBase {
   text: string; // Display text (action without checkbox)
   sphere: string; // Which sphere this belongs to
-  isGeneral: boolean; // true if from Next Actions file
   addedAt: number; // Timestamp
   isPinned?: boolean; // true if item is in pinned section
   completedAt?: number; // Timestamp when marked complete
   contexts?: string[]; // GTD context tags (#context/X) from the action line
 }
+
+// A Focus item that points at an action line in the vault
+export interface VaultFocusItem extends FocusItemBase {
+  file: string; // Full path to source file
+  lineNumber: number; // Last known line number
+  lineContent: string; // Full line content for validation
+  isGeneral: boolean; // true if from Next Actions file
+}
+
+// A Focus item added by another plugin, with no line in the vault
+export interface ExternalFocusItem extends FocusItemBase {
+  id: string; // Stable ID, assigned by Flow
+  external: ExternalSource;
+}
+
+export interface ExternalSource {
+  sourceName: string; // Owning plugin's source, e.g. "linear"
+  sourceLabel: string; // Shown as a chip, e.g. "Rootcause"
+  url: string; // Opened when the item is clicked
+  externalId: string; // The source's own ID, e.g. "ROO-123"
+}
+
+export type FocusItem = VaultFocusItem | ExternalFocusItem;

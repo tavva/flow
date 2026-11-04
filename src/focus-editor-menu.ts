@@ -5,6 +5,7 @@ import { App, Editor, Menu, MarkdownView, TFile } from "obsidian";
 import { FocusItem, PluginSettings } from "./types";
 import { FOCUS_VIEW_TYPE } from "./focus-view";
 import { updateFocusItems } from "./focus-persistence";
+import { isVaultFocusItem } from "./focus-item";
 import { isCheckboxLine, extractActionText } from "./checkbox-utils";
 import { runAsync } from "./async-utils";
 import { revealLeaf } from "./obsidian-platform";
@@ -44,7 +45,9 @@ export async function determineActionSphere(
  * Check if an action is already on the focus
  */
 export function isActionOnFocus(filePath: string, lineNumber: number, focus: FocusItem[]): boolean {
-  return focus.some((item) => item.file === filePath && item.lineNumber === lineNumber);
+  return focus.some(
+    (item) => isVaultFocusItem(item) && item.file === filePath && item.lineNumber === lineNumber
+  );
 }
 
 /**
@@ -130,7 +133,10 @@ async function toggleFocusFromMenu(
     app.vault,
     (items) => {
       if (isActionOnFocus(filePath, lineNumber, items)) {
-        return items.filter((item) => !(item.file === filePath && item.lineNumber === lineNumber));
+        return items.filter(
+          (item) =>
+            !(isVaultFocusItem(item) && item.file === filePath && item.lineNumber === lineNumber)
+        );
       }
       return [
         ...items,
