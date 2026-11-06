@@ -28,7 +28,7 @@ describe("InboxModalState discardItem", () => {
 
     await state.discardItem(item);
 
-    expect(discardInboxItem).toHaveBeenCalledWith(item, state.deletionOffsets);
+    expect(discardInboxItem).toHaveBeenCalledWith(item);
     expect(state.editableItems).toHaveLength(0);
     expect(render).toHaveBeenCalledWith("editable");
   });

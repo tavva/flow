@@ -12,11 +12,18 @@ export interface InboxItem {
 
 // Finds the line whose trimmed text is the item's content. The file may have changed since it
 // was scanned, so the recorded index is only a hint for choosing between duplicate lines.
-function findLineIndex(lines: string[], content: string, recordedIndex: number): number | undefined {
+function findLineIndex(
+  lines: string[],
+  content: string,
+  recordedIndex: number
+): number | undefined {
   let nearest: number | undefined;
   lines.forEach((line, index) => {
     if (line.trim() !== content) return;
-    if (nearest === undefined || Math.abs(index - recordedIndex) < Math.abs(nearest - recordedIndex)) {
+    if (
+      nearest === undefined ||
+      Math.abs(index - recordedIndex) < Math.abs(nearest - recordedIndex)
+    ) {
       nearest = index;
     }
   });

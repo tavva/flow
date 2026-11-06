@@ -3,7 +3,7 @@
 import { InboxScanner, InboxItem } from "../src/inbox-scanner";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { InboxProcessingController } from "../src/inbox-processing-controller";
-import { DEFAULT_SETTINGS, GTDProcessingResult, PluginSettings } from "../src/types";
+import { DEFAULT_SETTINGS, PluginSettings } from "../src/types";
 import { EditableItem } from "../src/inbox-types";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
@@ -96,7 +96,6 @@ describe("Inbox deletion handling", () => {
     expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three", "Line four"].join("\n"));
 
     // After first deletion, "Line four" is now on line 3 (not line 4)
-    // In production, DeletionOffsetManager handles this adjustment
     const secondItem: InboxItem = {
       type: "line",
       content: "Line four",
@@ -106,76 +105,6 @@ describe("Inbox deletion handling", () => {
 
     await scanner.deleteInboxItem(secondItem);
     expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three"].join("\n"));
-  });
-
-  it("tracks per-file deletions when saving multiple processed inbox items", async () => {
-    const controller = new InboxProcessingController(app as unknown as App, settings);
-    const renderCallback = jest.fn();
-    const state = new InboxModalState(app as unknown as App, controller, settings, renderCallback);
-
-    const deleteMock = jest.fn().mockResolvedValue(undefined);
-
-    (state as any).controller.inboxScanner = {
-      deleteInboxItem: deleteMock,
-    } as Pick<InboxScanner, "deleteInboxItem">;
-
-    (state as any).controller.writer = {};
-
-    const baseResult: GTDProcessingResult = {
-      isActionable: true,
-      category: "next-action",
-      nextAction: "Line content",
-      reasoning: "test",
-      recommendedAction: "trash",
-      recommendedActionReasoning: "test",
-    };
-
-    const processedItems = [
-      {
-        original: "Line two",
-        result: baseResult,
-        selectedAction: "trash",
-        selectedSpheres: [],
-        inboxItem: {
-          type: "line",
-          content: "Line two",
-          sourceFile: inboxFile,
-          lineNumber: 2,
-        },
-      },
-      {
-        original: "Line four",
-        result: baseResult,
-        selectedAction: "trash",
-        selectedSpheres: [],
-        inboxItem: {
-          type: "line",
-          content: "Line four",
-          sourceFile: inboxFile,
-          lineNumber: 4,
-        },
-      },
-    ] as any;
-
-    // Convert processedItems to editableItems format
-    const editableItems = processedItems.map((item: any) => ({
-      original: item.original,
-      inboxItem: item.inboxItem,
-      isAIProcessed: true,
-      result: item.result,
-      selectedProject: item.selectedProject,
-      selectedAction: item.selectedAction,
-      selectedSpheres: item.selectedSpheres,
-      editedName: item.editedName,
-      editedProjectTitle: item.editedProjectTitle,
-    }));
-    state.editableItems = editableItems;
-
-    await state.saveAllItems();
-
-    expect(deleteMock).toHaveBeenCalledTimes(2);
-    expect(deleteMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ lineNumber: 2 }));
-    expect(deleteMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ lineNumber: 3 }));
   });
 
   it("deletes the correct line when file has empty lines", async () => {
