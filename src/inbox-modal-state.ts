@@ -54,7 +54,6 @@ class DiscardItemConfirmationModal extends Modal {
 
 export class InboxModalState {
   public editableItems: EditableItem[] = [];
-  public deletionOffsets = new Map<string, number>();
   public existingProjects: FlowProject[] = [];
   public existingPersons: PersonNote[] = [];
   public isLoadingInbox = true;
@@ -145,7 +144,7 @@ export class InboxModalState {
 
   async saveAndRemoveItem(item: EditableItem) {
     try {
-      await this.controller.saveItem(item, this.deletionOffsets);
+      await this.controller.saveItem(item);
       this.editableItems = this.editableItems.filter((current) => current !== item);
 
       // Auto-expand the first remaining item
@@ -183,7 +182,7 @@ export class InboxModalState {
   async discardItem(item: EditableItem) {
     if (item.inboxItem) {
       try {
-        await this.controller.discardInboxItem(item, this.deletionOffsets);
+        await this.controller.discardInboxItem(item);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         new Notice(`Error discarding item: ${message}`);
@@ -210,7 +209,6 @@ export class InboxModalState {
     }
 
     new Notice(`Saving ${this.editableItems.length} remaining items...`);
-    this.deletionOffsets.clear();
 
     const itemsToSave = [...this.editableItems];
     for (const item of itemsToSave) {

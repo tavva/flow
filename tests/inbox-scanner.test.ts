@@ -1,11 +1,14 @@
+// ABOUTME: Tests for deleting processed inbox items from their source files.
+// ABOUTME: Covers line matching across a processing session and note archiving.
 import { InboxScanner, InboxItem } from "../src/inbox-scanner";
 import { InboxModalState } from "../src/inbox-modal-state";
 import { InboxProcessingController } from "../src/inbox-processing-controller";
-import { GTDProcessingResult, PluginSettings } from "../src/types";
+import { DEFAULT_SETTINGS, PluginSettings } from "../src/types";
+import { EditableItem } from "../src/inbox-types";
 import { generateDeterministicFakeApiKey } from "./test-utils";
 
 jest.mock("obsidian");
-import { App, TFile, Vault } from "obsidian";
+import { App, Notice, TFile, TFolder, Vault } from "obsidian";
 
 describe("Inbox deletion handling", () => {
   let app: App;
@@ -93,7 +96,6 @@ describe("Inbox deletion handling", () => {
     expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three", "Line four"].join("\n"));
 
     // After first deletion, "Line four" is now on line 3 (not line 4)
-    // In production, DeletionOffsetManager handles this adjustment
     const secondItem: InboxItem = {
       type: "line",
       content: "Line four",
@@ -103,76 +105,6 @@ describe("Inbox deletion handling", () => {
 
     await scanner.deleteInboxItem(secondItem);
     expect(fileContents[inboxFile.path]).toBe(["Line one", "Line three"].join("\n"));
-  });
-
-  it("tracks per-file deletions when saving multiple processed inbox items", async () => {
-    const controller = new InboxProcessingController(app as unknown as App, settings);
-    const renderCallback = jest.fn();
-    const state = new InboxModalState(app as unknown as App, controller, settings, renderCallback);
-
-    const deleteMock = jest.fn().mockResolvedValue(undefined);
-
-    (state as any).controller.inboxScanner = {
-      deleteInboxItem: deleteMock,
-    } as Pick<InboxScanner, "deleteInboxItem">;
-
-    (state as any).controller.writer = {};
-
-    const baseResult: GTDProcessingResult = {
-      isActionable: true,
-      category: "next-action",
-      nextAction: "Line content",
-      reasoning: "test",
-      recommendedAction: "trash",
-      recommendedActionReasoning: "test",
-    };
-
-    const processedItems = [
-      {
-        original: "Line two",
-        result: baseResult,
-        selectedAction: "trash",
-        selectedSpheres: [],
-        inboxItem: {
-          type: "line",
-          content: "Line two",
-          sourceFile: inboxFile,
-          lineNumber: 2,
-        },
-      },
-      {
-        original: "Line four",
-        result: baseResult,
-        selectedAction: "trash",
-        selectedSpheres: [],
-        inboxItem: {
-          type: "line",
-          content: "Line four",
-          sourceFile: inboxFile,
-          lineNumber: 4,
-        },
-      },
-    ] as any;
-
-    // Convert processedItems to editableItems format
-    const editableItems = processedItems.map((item: any) => ({
-      original: item.original,
-      inboxItem: item.inboxItem,
-      isAIProcessed: true,
-      result: item.result,
-      selectedProject: item.selectedProject,
-      selectedAction: item.selectedAction,
-      selectedSpheres: item.selectedSpheres,
-      editedName: item.editedName,
-      editedProjectTitle: item.editedProjectTitle,
-    }));
-    state.editableItems = editableItems;
-
-    await state.saveAllItems();
-
-    expect(deleteMock).toHaveBeenCalledTimes(2);
-    expect(deleteMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ lineNumber: 2 }));
-    expect(deleteMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ lineNumber: 3 }));
   });
 
   it("deletes the correct line when file has empty lines", async () => {
@@ -203,5 +135,145 @@ describe("Inbox deletion handling", () => {
     ].join("\n");
 
     expect(fileContents[fileWithEmptyLines.path]).toBe(expectedContent);
+  });
+});
+
+describe("Inbox line deletion during a processing session", () => {
+  const settings: PluginSettings = {
+    ...DEFAULT_SETTINGS,
+    inboxFilesFolderPath: "Flow Inbox Files",
+    inboxFolderPath: "Flow Inbox Folder",
+    spheres: ["personal"],
+  };
+
+  let app: App;
+  let inboxFile: TFile;
+  let fileContents: Record<string, string>;
+  let persist: jest.Mock;
+  let state: InboxModalState;
+
+  const startSession = async (lines: string[]) => {
+    fileContents[inboxFile.path] = lines.join("\n");
+    await state.loadInboxItems();
+  };
+
+  const itemFor = (content: string): EditableItem => {
+    const item = state.editableItems.find((candidate) => candidate.original === content);
+    if (!item) throw new Error(`No editable item for "${content}"`);
+    return item;
+  };
+
+  beforeEach(() => {
+    app = new App();
+    const vault = app.vault as unknown as Vault;
+    inboxFile = new TFile("Flow Inbox Files/inbox.md", "inbox");
+    fileContents = {};
+
+    (vault.getAbstractFileByPath as jest.Mock).mockImplementation((path: string) =>
+      path === settings.inboxFilesFolderPath ? new TFolder(path, "Flow Inbox Files") : null
+    );
+    (vault.getMarkdownFiles as jest.Mock).mockReturnValue([inboxFile]);
+    (vault.read as jest.Mock).mockImplementation((file: TFile) =>
+      Promise.resolve(fileContents[file.path] ?? "")
+    );
+    (vault.modify as jest.Mock).mockImplementation((file: TFile, newContent: string) => {
+      fileContents[file.path] = newContent;
+      return Promise.resolve();
+    });
+
+    persist = jest.fn().mockResolvedValue(undefined);
+    const controller = new InboxProcessingController(app, settings, {
+      scanner: { scanProjects: jest.fn().mockResolvedValue([]) } as any,
+      personScanner: { scanPersons: jest.fn().mockResolvedValue([]) } as any,
+      writer: {} as any,
+      persistenceService: { persist } as any,
+    });
+    state = new InboxModalState(app, controller, settings, jest.fn());
+  });
+
+  it("deletes the processed lines when items are processed bottom-up", async () => {
+    await startSession(["A", "B", "C", "D"]);
+
+    await state.saveAndRemoveItem(itemFor("C"));
+    await state.saveAndRemoveItem(itemFor("B"));
+
+    expect(fileContents[inboxFile.path]).toBe(["A", "D"].join("\n"));
+  });
+
+  it("deletes the right lines when saving all after saving some individually", async () => {
+    await startSession(["A", "B", "C", "D"]);
+
+    await state.saveAndRemoveItem(itemFor("C"));
+    await state.saveAllItems();
+
+    expect(fileContents[inboxFile.path]).toBe("");
+    expect(persist).toHaveBeenCalledTimes(4);
+  });
+
+  it("deletes the processed line when a line was added above it after scanning", async () => {
+    await startSession(["A", "B", "C"]);
+    fileContents[inboxFile.path] = ["Captured elsewhere", "A", "B", "C"].join("\n");
+
+    await state.saveAndRemoveItem(itemFor("B"));
+
+    expect(fileContents[inboxFile.path]).toBe(["Captured elsewhere", "A", "C"].join("\n"));
+  });
+
+  it("deletes the processed line when a line above it was removed after scanning", async () => {
+    await startSession(["A", "B", "C"]);
+    fileContents[inboxFile.path] = ["B", "C"].join("\n");
+
+    await state.saveAndRemoveItem(itemFor("B"));
+
+    expect(fileContents[inboxFile.path]).toBe("C");
+  });
+
+  it("matches lines that carry surrounding whitespace in the file", async () => {
+    await startSession(["A", "  B  ", "C"]);
+
+    await state.saveAndRemoveItem(itemFor("B"));
+
+    expect(fileContents[inboxFile.path]).toBe(["A", "C"].join("\n"));
+  });
+
+  it("deletes the duplicate nearest the recorded line", async () => {
+    await startSession(["Same", "Other", "Same"]);
+    const secondCopy = state.editableItems[2];
+
+    await state.saveAndRemoveItem(secondCopy);
+
+    expect(fileContents[inboxFile.path]).toBe(["Same", "Other"].join("\n"));
+  });
+
+  it("leaves the file alone and keeps the item when its line has gone", async () => {
+    await startSession(["A", "B", "C"]);
+    fileContents[inboxFile.path] = ["A", "C"].join("\n");
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const item = itemFor("B");
+
+    await state.saveAndRemoveItem(item);
+
+    expect(fileContents[inboxFile.path]).toBe(["A", "C"].join("\n"));
+    expect(persist).not.toHaveBeenCalled();
+    expect(state.editableItems).toContain(item);
+    expect(Notice.mockConstructor).toHaveBeenCalledWith(
+      expect.stringContaining('Could not find "B" in Flow Inbox Files/inbox.md')
+    );
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
+  });
+
+  it("does not discard anything when the line to discard has gone", async () => {
+    await startSession(["A", "B", "C"]);
+    fileContents[inboxFile.path] = ["A", "C"].join("\n");
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    const item = itemFor("B");
+
+    await state.discardItem(item);
+
+    expect(fileContents[inboxFile.path]).toBe(["A", "C"].join("\n"));
+    expect(state.editableItems).toContain(item);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
   });
 });

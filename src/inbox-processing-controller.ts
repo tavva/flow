@@ -1,3 +1,5 @@
+// ABOUTME: Coordinates inbox processing: loads inbox items and reference data,
+// ABOUTME: and saves or discards items by removing them from the inbox.
 import { App } from "obsidian";
 import { FlowProjectScanner } from "./flow-scanner";
 import { PersonScanner } from "./person-scanner";
@@ -5,7 +7,6 @@ import { FileWriter } from "./file-writer";
 import { FlowProject, PluginSettings, PersonNote } from "./types";
 import { InboxItem, InboxScanner } from "./inbox-scanner";
 import { InboxItemPersistenceService } from "./inbox-item-persistence";
-import { DeletionOffsetManager } from "./deletion-offset-manager";
 import { EditableItem } from "./inbox-types";
 import { filterTemplates, filterLiveProjects } from "./project-filters";
 
@@ -15,7 +16,6 @@ interface ControllerDependencies {
   writer?: FileWriter;
   inboxScanner?: Pick<InboxScanner, "getAllInboxItems" | "deleteInboxItem">;
   persistenceService?: InboxItemPersistenceService;
-  deletionOffsetManagerFactory?: (offsets: Map<string, number>) => DeletionOffsetManager;
 }
 
 export class InboxProcessingController {
@@ -24,7 +24,6 @@ export class InboxProcessingController {
   private writer: FileWriter;
   private inboxScanner: InboxScanner;
   private persistence: InboxItemPersistenceService;
-  private createDeletionManager: (offsets: Map<string, number>) => DeletionOffsetManager;
   private settings: PluginSettings;
 
   constructor(
@@ -44,9 +43,6 @@ export class InboxProcessingController {
     this.persistence =
       dependencies.persistenceService ??
       new InboxItemPersistenceService(this.writer, app, settings, saveSettings);
-    this.createDeletionManager =
-      dependencies.deletionOffsetManagerFactory ??
-      ((offsets) => new DeletionOffsetManager(offsets));
   }
 
   async loadExistingProjects(): Promise<FlowProject[]> {
@@ -81,10 +77,10 @@ export class InboxProcessingController {
     }));
   }
 
-  async saveItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
+  async saveItem(item: EditableItem): Promise<void> {
     // If this is a note item, capture the source link before persisting
     if (item.inboxItem) {
-      const sourceLink = await this.removeInboxItem(item.inboxItem, deletionOffsets);
+      const sourceLink = await this.inboxScanner.deleteInboxItem(item.inboxItem);
       if (sourceLink) {
         item.sourceNoteLink = sourceLink;
       }
@@ -93,22 +89,11 @@ export class InboxProcessingController {
     await this.persistence.persist(item);
   }
 
-  async discardInboxItem(item: EditableItem, deletionOffsets: Map<string, number>): Promise<void> {
+  async discardInboxItem(item: EditableItem): Promise<void> {
     if (!item.inboxItem) {
       return;
     }
 
-    await this.removeInboxItem(item.inboxItem, deletionOffsets);
-  }
-
-  private async removeInboxItem(
-    inboxItem: InboxItem,
-    deletionOffsets: Map<string, number>
-  ): Promise<string | undefined> {
-    const deletionManager = this.createDeletionManager(deletionOffsets);
-    const inboxItemToDelete = deletionManager.prepareForDeletion(inboxItem);
-    const sourceLink = await this.inboxScanner.deleteInboxItem(inboxItemToDelete);
-    deletionManager.recordDeletion(inboxItem);
-    return sourceLink;
+    await this.inboxScanner.deleteInboxItem(item.inboxItem);
   }
 }
